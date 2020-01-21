@@ -76,15 +76,16 @@ class TradeRec(BaseModel):
         return self.stock_name
 
     class Meta:
-        ordering = ['-pub_time']
+        ordering = ['-created_time']
         verbose_name = _('交易记录')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
     def get_absolute_url(self):
-        return reverse('traderec:detailbyid', kwargs={
-            'traderec_id': self.id,
+        return reverse('investmgr:detailbyid', kwargs={
+            'investmgr_id': self.id,
             'year': self.created_time.year,
             'month': self.created_time.month,
             'day': self.created_time.day
         })
+        
