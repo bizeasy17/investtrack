@@ -54,6 +54,13 @@ INSTALLED_APPS = [
     'easy_thumbnails',
     'crispy_forms',
     'tushare',
+
+    # local application
+    'users.apps.UsersConfig',
+    'investmgr.apps.InvestmgrConfig',
+    'dashboard.apps.DashboardConfig',
+    'notifications.apps.NotificationsConfig',
+
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -124,7 +131,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'investtrack',
-        'USER': 'it_usr',  
+        'USER': 'db_usr',  
         'PASSWORD': 'password',  
         'HOST': '127.0.0.1',  
         'PORT': 5432,

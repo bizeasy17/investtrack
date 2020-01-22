@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
+# token settings (not sure should put it here)
+ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 
 # Create your models here.
 class BaseModel(models.Model):
@@ -68,9 +70,9 @@ class TradeRec(BaseModel):
         'TradeStrategy', verbose_name=_('策略'), on_delete=models.SET_NULL, blank=True, null=True)
     # tags = models.ManyToManyField('Tag', verbose_name=_('标签集合'), blank=True)
     featured_image = models.ImageField(
-        _('特色图片'), upload_to='investmgr_pictures/%Y/%m/%d/', blank=True, null=True)
-    stock_positions_master = models.ForeignKey('Positions', verbose_name=_('股票持仓'), blank=False, null=True,
-                                               on_delete=models.CASCADE)
+        _('特色图片'), upload_to='investmgr_pictures/%Y/%m/%d/', blank=True, null=True, editable=False)
+    in_stock_positions = models.ForeignKey('Positions', verbose_name=_('股票持仓'), blank=False, null=True,
+                                               on_delete=models.CASCADE, editable=False)
     is_deleted = models.BooleanField(
         _('是否被删除'), blank=False, null=False, default=False)
 
@@ -107,22 +109,19 @@ class TradeRec(BaseModel):
                 self.market = 'SZ'
 
         # 更新持仓
-        p = Positions.objects.filter(trader=get_user_model(
-        ), stock_code=self.stock_code, is_liquadated='n')
-        if p is None:
+        p = Positions.objects.filter(trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
+        if p.count() == 0:
             # 新建仓
-            p = Positions.objects.create_position(
-                self.stock_name, self.stock_code)
-        p.calculate_position(self.price, self.lots)
-        self.stock_positions_master = p
+            p = Positions(market=self.market, stock_name=self.stock_name, stock_code=self.stock_code)
+            self.in_stock_positions = p
+        else:
+            # 增仓或者减仓
+            p = p[0]
+            self.in_stock_positions = p
+
+        p.update_stock_position(self.direction, self.price, self.lots) 
         super().save(*args, **kwargs)
 
-
-class PositionManager(models.Manager):
-    def create_position(self, stock_name, stock_code):
-        pos = self.create(stock_name=stock_name, stock_code=stock_code)
-        # do something with the book
-        return pos
 
 # 目前持有仓位数据model
 class Positions(BaseModel):
@@ -138,81 +137,77 @@ class Positions(BaseModel):
         _('持仓价格'), blank=False, null=False)
     current_price = models.FloatField(
         _('股票现价'), blank=False, null=False)
-    profit = models.FloatField(_('利润'), blank=False, null=False)
-    cash = models.FloatField(_('投入现金额'), blank=False, null=False)
-    lots = models.PositiveIntegerField(_('持仓量(手)'), default=100)
+    profit = models.FloatField(_('利润'), blank=False, null=False, default=0.0)
+    cash = models.FloatField(_('投入现金额'), blank=False, null=False, default=0.0)
+    lots = models.PositiveIntegerField(_('持仓量(手)'), default=0)
     position = models.CharField(
         _('仓位'), max_length=50, blank=False, null=False)
     is_liquadated = models.BooleanField(
         _('是否清仓'), blank=False, null=False, default=False, db_index=True)
 
-    objects = PositionManager()
-
     def __str__(self):
         return self.stock_name
 
-    def save(self, *args, **kwargs):
-        self.pos_cal_algorithm(self)
-        super().save(*args, **kwargs)
-
     # 持仓算法
-    def calculate_position(self, direction, price, lots):
-        user = get_user_model()
-        df = ts.get_realtime_quotes(self.stock_code)
+    def update_stock_position(self, trade_direction, trade_price, trade_lots):
+        df = ts.get_realtime_quotes(self.stock_code.split('.')[0]) # 需要再判断一下ts_code
         realtime_price = df[['price']]
 
-        # 已经有持仓
-        if current_stock_position is not None:
-            if direction == 'b':
-                # 已有仓位加仓
+        # 计算持仓股利润
+        # 持仓利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 目前持仓价格) * 持仓数量(手) * 100 (1手=100股)
+        self.profit = self.profit + \
+            (realtime_price - self.position_price) * self.lots * 100
+
+        if trade_direction == 'b':
+            # 已有仓位加仓
+            '''
+            1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
+            2. 持仓价格 = 
+            2.1 如果利润是(负-)的
+                每手亏损 = 利润 / (已有持仓+新增持仓量(手)）
+                持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
+            2.2 如果利润是(正+)的
+                每手利润 = 利润 / (已有持仓+新增持仓量(手)）
+                持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
+            '''
+            # 计算
+            self.profit = self.profit + \
+                (realtime_price - trade_price) * trade_lots * 100
+            new_position_price = realtime_price - self.profit / \
+                (trade_lots + self.lots)
+            self.position_price = new_position_price
+            self.current_price = realtime_price
+            self.lots = trade_lots + self.lots
+        else:  # 已有仓位减仓
+            if self.lots == trade_lots:
+                # 清仓，设置is_liquadated = True
+                self.is_liquadated = True
+                self.lots = 0
+                self.cash = 0
+                self.current_price = realtime_price
+            else:
+                    # 普通减仓
                 '''
                 1. 利润 = 原持仓利润 + (当前股票价格：如果未收盘/收盘价 - 交易价格) * 本次交易量(手) * 100 (1手=100股)
                 2. 持仓价格 = 
                 2.1 如果利润是(负-)的
-                    每手亏损 = 利润 / (已有持仓+新增持仓量(手)）
+                    每手亏损 = 利润 / (已有持仓-卖出量(手)）
                     持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
                 2.2 如果利润是(正+)的
-                    每手利润 = 利润 / (已有持仓+新增持仓量(手)）
+                    每手利润 = 利润 / (已有持仓-卖出量(手)）
                     持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
                 '''
-                profit = current_stock_position.profit + \
-                    (realtime_price - price) * lots * 100
-                new_position_price = realtime_price - profit / \
-                    (lots + current_stock_position.lots)
-                current_stock_position.position_price = new_position_price
-                current_stock_position.current_price = realtime_price
-                current_stock_position.profit = profit
-                current_stock_position.lots = lots + current_stock_position.lots
-                current_stock_position.save()
-            else:  # 已有仓位减仓
-                if trade_rec.flag == 'l':
-                    # 清仓，设置is_liquadated = 'y'
-                    current_stock_position.is_liquadated = 'y'
-                else:
-                     # 普通减仓
-                    '''
-                    1. 利润 = 原持仓利润 + (当前股票价格：如果未收盘/收盘价 - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-                    2. 持仓价格 = 
-                    2.1 如果利润是(负-)的
-                        每手亏损 = 利润 / (已有持仓-卖出量(手)）
-                        持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
-                    2.2 如果利润是(正+)的
-                        每手利润 = 利润 / (已有持仓-卖出量(手)）
-                        持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
-                    '''
-                    profit = current_stock_position.profit + \
-                        (realtime_price - price) * lots * 100
-                    new_position_price = realtime_price - profit / \
-                        (lots - current_stock_position.lots)
-                    current_stock_position.position_price = new_position_price
-                    current_stock_position.current_price = realtime_price
-                    current_stock_position.profit = profit
-                    current_stock_position.lots = lots + current_stock_position.lots
-                    current_stock_position.save()
-            return current_stock_position
+                self.profit = self.profit + \
+                    (realtime_price - trade_price) * trade_lots * 100
+                new_position_price = realtime_price - self.profit / \
+                    (self.lots - trade_lots)
+                self.position_price = new_position_price
+                self.current_price = realtime_price
+
+        self.save()
 
     class Meta:
-        ordering = ['-last_mod_time']
+        ordering = ['stock_code']
         verbose_name = _('持仓')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
@@ -273,3 +268,27 @@ class TradeStrategy(BaseModel):
 
         parse(self)
         return strategies
+
+class StockNameCodeMap(BaseModel):
+    STOCK_MARKET_CHOICES = (
+        ('SH', _('上海')),
+        ('SZ', _('深圳')),
+    )
+
+    market = models.CharField(
+        _('股票市场'), choices=STOCK_MARKET_CHOICES, max_length=50, blank=True, null=True)
+    stock_name = models.CharField(
+        _('股票名称'), max_length=50, blank=False, null=False, unique=True)
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False, unique=True)
+    is_valid = models.BooleanField(
+        _('是否退市'), blank=False, null=False, default=False)
+
+    def __str__(self):
+        return self.stock_name
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('股票代码表')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'

@@ -25,12 +25,12 @@ urlpatterns = [
     # App urls
     path('dashboard/', include('dashboard.urls')),
     path('notifications/', include('notifications.urls')),
-    path('track/', include('investmgr.urls')),
+    path('invest/', include('investmgr.urls')),
     # simple pages
     re_path(r'^about/$',
         TemplateView.as_view(template_name='pages/about.html'), name='about'),
     # 3rd Party Apps
-    url(r'mdeditor/', include('mdeditor.urls')),
+    # url(r'mdeditor/', include('mdeditor.urls')),
 ]
 
 
