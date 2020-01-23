@@ -13,6 +13,8 @@ from django.utils.translation import ugettext_lazy as _
 ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 
 # Create your models here.
+
+
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)
     created_time = models.DateTimeField(_('创建时间'), default=now)
@@ -55,10 +57,10 @@ class TradeRec(BaseModel):
     trade_time = models.DateTimeField(
         '交易时间', default=now, blank=False, null=False)
     price = models.FloatField(_('交易价格'), blank=False, null=False)
-    lots = models.PositiveIntegerField(_('交易量(手)'), default=100)
+    target_position = models.PositiveIntegerField(
+        _('目标仓位（手）'), blank=False, null=False, default=100)
+    board_lots = models.PositiveIntegerField(_('本次交易量(手)'), default=100)
     cash = models.FloatField(_('投入现金额'), blank=True, null=True)
-    position = models.CharField(
-        _('交易仓位'), max_length=50, blank=False, null=False)
     visible = models.CharField(_('可见性'), max_length=1,
                                choices=VISIBLE_CHOICES, default='s')
     comment_status = models.CharField(
@@ -72,7 +74,7 @@ class TradeRec(BaseModel):
     featured_image = models.ImageField(
         _('特色图片'), upload_to='investmgr_pictures/%Y/%m/%d/', blank=True, null=True, editable=False)
     in_stock_positions = models.ForeignKey('Positions', verbose_name=_('股票持仓'), blank=False, null=True,
-                                               on_delete=models.CASCADE, editable=False)
+                                           on_delete=models.CASCADE, editable=False)
     is_deleted = models.BooleanField(
         _('是否被删除'), blank=False, null=False, default=False)
 
@@ -109,17 +111,20 @@ class TradeRec(BaseModel):
                 self.market = 'SZ'
 
         # 更新持仓
-        p = Positions.objects.filter(trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
+        p = Positions.objects.filter(
+            trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
         if p.count() == 0:
             # 新建仓
-            p = Positions(market=self.market, stock_name=self.stock_name, stock_code=self.stock_code)
+            p = Positions(market=self.market,
+                          stock_name=self.stock_name, stock_code=self.stock_code)
             self.in_stock_positions = p
         else:
             # 增仓或者减仓
             p = p[0]
             self.in_stock_positions = p
 
-        p.update_stock_position(self.direction, self.price, self.lots) 
+        p.update_stock_position(
+            self.direction, self.target_position, self.board_lots, self.price, self.cash, self.trader)
         super().save(*args, **kwargs)
 
 
@@ -134,14 +139,14 @@ class Positions(BaseModel):
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
                                on_delete=models.CASCADE)
     position_price = models.FloatField(
-        _('持仓价格'), blank=False, null=False)
+        _('持仓价格'), blank=False, null=False, default=0)
     current_price = models.FloatField(
-        _('股票现价'), blank=False, null=False)
-    profit = models.FloatField(_('利润'), blank=False, null=False, default=0.0)
-    cash = models.FloatField(_('投入现金额'), blank=False, null=False, default=0.0)
+        _('股票现价'), blank=False, null=False, default=0)
+    profit = models.FloatField(_('利润'), blank=False, null=False, default=0)
+    cash = models.FloatField(_('投入现金额'), blank=False, null=False, default=0)
     lots = models.PositiveIntegerField(_('持仓量(手)'), default=0)
-    position = models.CharField(
-        _('仓位'), max_length=50, blank=False, null=False)
+    target_position = models.FloatField(
+        _('仓位'), blank=False, null=False, default='0')
     is_liquadated = models.BooleanField(
         _('是否清仓'), blank=False, null=False, default=False, db_index=True)
 
@@ -149,14 +154,24 @@ class Positions(BaseModel):
         return self.stock_name
 
     # 持仓算法
-    def update_stock_position(self, trade_direction, trade_price, trade_lots):
-        df = ts.get_realtime_quotes(self.stock_code.split('.')[0]) # 需要再判断一下ts_code
-        realtime_price = df[['price']]
+    def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
+        self.trader = trader
+        self.cash += trade_cash
+        if self.target_position == 0:
+            self.target_position = target_position
+
+        # 获得实时报价
+        realtime_df = ts.get_realtime_quotes(
+            str(self.stock_code).split('.')[0])  # 需要再判断一下ts_code
+        realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                   'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+        realtime_price = realtime_df['price'].mean()
 
         # 计算持仓股利润
         # 持仓利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 目前持仓价格) * 持仓数量(手) * 100 (1手=100股)
-        self.profit = self.profit + \
-            (realtime_price - self.position_price) * self.lots * 100
+        if self.lots != 0 or self.position_price != 0:
+            self.profit = self.profit + \
+                float((realtime_price - self.position_price) * self.lots * 100)
 
         if trade_direction == 'b':
             # 已有仓位加仓
@@ -268,6 +283,7 @@ class TradeStrategy(BaseModel):
 
         parse(self)
         return strategies
+
 
 class StockNameCodeMap(BaseModel):
     STOCK_MARKET_CHOICES = (
