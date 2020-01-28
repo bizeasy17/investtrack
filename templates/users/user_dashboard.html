@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+<!-- Page Content -->
+<div class="row">
+
+    <!-- Post Content Column -->
+    <div class="col-lg-8">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Title -->
+                <span class="mt-4">{% trans '实时行情数据' %}</span>
+                <!-- Date/Time -->
+                <p>Posted on January 1, 2019 at 12:00 PM</p>
+            </div>
+            <div class="col-md-4">
+                <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
+                    <button type="button" class="btn btn-danger" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">{% trans '买 +' %}</button>
+                    <button type="button" class="btn btn-success" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">{% trans '卖 -' %}</button>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="row col-lg-12" id="collapseExample">
+            <form action="{% url 'users:create_trade' %}" enctype="multipart/form-data" id="traderec-form" method="post"
+                role="form">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-2">
+                        <input class="form-control" type="text" placeholder="{% trans '股票名或代码' %}">
+                    </div>
+                    <div class="form-group col-md-3 mb-2">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">￥</span>
+                            </div>
+                            <input class="form-control" type="text" placeholder="{% trans '当前价格' %}">
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3 mb-2">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">￥</span>
+                            </div>
+                            <input type="text" class="form-control" placeholder="{% trans '价格' %}" aria-label="Amount (to the nearest RMB)">
+                        </div>
+                    </div>
+                    <div class="form-group col-md-3 mb-2">
+                        <input class="form-control" type="text" placeholder="{% trans '数量' %}" step="100" data-bind="value:replyNumber">
+                    </div>
+                    <div class="form-group col-md-3 mb-2">
+                        <input class="form-control" type="text" placeholder="{% trans '金额' %}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group  col-md-6 mb-3">
+                        <div class="input-group-prepend">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">{% trans '策略' %}</button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#">Action</a>
+                                <a class="dropdown-item" href="#">Another action</a>
+                                <a class="dropdown-item" href="#">Something else here</a>
+                                <div role="separator" class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Separated link</a>
+                            </div>
+                        </div>
+                        <input class="form-control" type="text" placeholder="{% trans '请选择策略' %}">
+                    </div>
+                    <div class="form-group col-md-3 mb-2">
+                        <input class="form-control" type="text" placeholder="{% trans '目标仓位(股)' %}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-outline-success">{% trans '递交' %}</button>
+            </form>
+        </div>
+        <hr>
+        <!-- Preview Image -->
+        <img class="img-fluid rounded" src="http://placehold.it/900x300" alt="">
+
+        <hr>
+
+        <!-- Post Content -->
+        <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ducimus, vero, obcaecati, aut, error
+            quam sapiente nemo saepe quibusdam sit excepturi nam quia corporis eligendi eos magni recusandae laborum
+            minus inventore?</p>
+
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut, tenetur natus doloremque laborum quos iste
+            ipsum rerum obcaecati impedit odit illo dolorum ab tempora nihil dicta earum fugiat. Temporibus,
+            voluptatibus.</p>
+
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eos, doloribus, dolorem iusto blanditiis unde eius
+            illum consequuntur neque dicta incidunt ullam ea hic porro optio ratione repellat perspiciatis. Enim, iure!
+        </p>
+
+        <blockquote class="blockquote">
+            <p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante.</p>
+            <footer class="blockquote-footer">Someone famous in
+                <cite title="Source Title">Source Title</cite>
+            </footer>
+        </blockquote>
+
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Error, nostrum, aliquid, animi, ut quas placeat
+            totam sunt tempora commodi nihil ullam alias modi dicta saepe minima ab quo voluptatem obcaecati?</p>
+
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Harum, dolor quis. Sunt, ut, explicabo, aliquam
+            tenetur ratione tempore quidem voluptates cupiditate voluptas illo saepe quaerat numquam recusandae? Qui,
+            necessitatibus, est!</p>
+
+        <hr>
+    </div>
+
+    <!-- Sidebar Widgets Column -->
+    <div class="col-md-4">
+
+        <!-- Search Widget -->
+        <div class="card my-4">
+            <h5 class="card-header">{% trans '搜索' %}</h5>
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="{% trans '股票名或代码' %}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-secondary" type="button">{% trans '搜索' %}</button>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Widget -->
+        <div class="card my-4">
+            <h5 class="card-header">{% trans '我的持仓' %}</h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{% trans '名称' %}</th>
+                        <th scope="col">{% trans '代码' %}</th>
+                        <th scope="col">{% trans '持仓' %}</th>
+                        <th scope="col">{% trans '现价' %}</th>
+                        <th scope="col">{% trans '获利' %}</th>
+                    </tr>
+                </thead>
+                <tbody> 
+                    {% if trade_info %}
+                        {% for position in trade_info.positions %}
+                        <tr>
+                        <th scope="row"> {{ position.stock_name }} </th>
+                        <th scope="col">{{ position.stock_code }}</th>
+                        <td>{{ position.lots }}</td>
+                        <td>{{ position.position_price }}</td>
+                        {% if position.profit > 0 %} 
+                            <td class="text-danger">{{ position.profit }}</td>
+                        {% else %} 
+                            <td class="text-success">{{ position.profit }}</td>
+                        {% endif %}
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Categories Widget -->
+        <div class="card my-4">
+            <h5 class="card-header">{% trans '最近交易' %}</h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{% trans '名称' %}</th>
+                        <th scope="col">{% trans '代码' %}</th>
+                        <th scope="col">{% trans '价格' %}</th>
+                        <th scope="col">{% trans '股数' %}</th>
+                        <th scope="col">{% trans '操作' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if trade_info %}
+                    {% for detail in trade_info.tradedetails %}
+                    <tr>
+                        <th scope="row"> {{ detail.stock_name }} </th>
+                        <th scope="col">{{ detail.stock_code }}</th>
+                        <td>{{ detail.price }}</td>
+                        <td>{{ detail.board_lots }}</td>
+                        {% if detail.direction == 's' %}
+                        <td><span class="badge badge-pill badge-success">{% trans '买出' %}</span></td>
+                        {% else %}
+                        <td><span class="badge badge-pill badge-danger">{% trans '买入' %}</span></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Side Widget -->
+        <div class="card my-4">
+            <h5 class="card-header">{% trans '我的自选股' %}</h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{% trans '名称' %}</th>
+                        <th scope="col">{% trans '代码' %}</th>
+                        <th scope="col">{% trans '价格' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">万科A</th>
+                        <th scope="col">000002</th>
+                        <td>28.98</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+<!-- /.row -->
+
+</div>
+<!-- /.container -->
+{% endblock content %}
+
+{% block javascript %}
+<script
+    src="https://cdn.polyfill.io/v2/polyfill.js?features=default,String.prototype.repeat,Array.prototype.find,Array.prototype.findIndex,Math.trunc,Math.sign"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
+<script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}" type="text/javascript"></script>
+
+<!-- place project specific Javascript in this file -->
+<script src="{% static 'js/stockquotes.js' %}" type="text/javascript"></script>
+{% endblock javascript %}

@@ -4,6 +4,8 @@ from . import views
 
 app_name = 'users'
 urlpatterns = [
-    re_path(r'^(?P<username>[\w.@+-]+)/$',
-        views.UserDetailView.as_view(), name='detail'),
+    path('<pk>/dashboard/',
+         views.UserDashboardView.as_view(), name='dashboard'),
+    path('trade/create',
+         views.TradeRecCreateView.as_view(), name='create_trade'),
 ]

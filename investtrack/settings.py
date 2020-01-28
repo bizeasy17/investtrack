@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     # local application
     'users.apps.UsersConfig',
     'investmgr.apps.InvestmgrConfig',
-    'dashboard.apps.DashboardConfig',
+    # 'dashboard.apps.DashboardConfig',
     'notifications.apps.NotificationsConfig',
 
 ]

@@ -18,7 +18,7 @@ ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)
     created_time = models.DateTimeField(_('创建时间'), default=now)
-    last_mod_time = models.DateTimeField(_('修改时间'), default=now)
+    last_mod_time = models.DateTimeField(_('最后更新时间'), default=now)
 
     class Meta:
         abstract = True
@@ -57,10 +57,12 @@ class TradeRec(BaseModel):
     trade_time = models.DateTimeField(
         '交易时间', default=now, blank=False, null=False)
     price = models.FloatField(_('交易价格'), blank=False, null=False)
+    current_price = models.FloatField(
+        _('股票现价'), blank=False, null=False, default=0)
     target_position = models.PositiveIntegerField(
-        _('目标仓位（手）'), blank=False, null=False, default=100)
-    board_lots = models.PositiveIntegerField(_('本次交易量(手)'), default=100)
-    cash = models.FloatField(_('投入现金额'), blank=True, null=True)
+        _('目标仓位（股）'), blank=False, null=False, default=100)
+    board_lots = models.PositiveIntegerField(_('本次交易量(股)'), default=100)
+    cash = models.FloatField(_('交易现金额'), blank=True, null=True)
     visible = models.CharField(_('可见性'), max_length=1,
                                choices=VISIBLE_CHOICES, default='s')
     comment_status = models.CharField(
@@ -75,14 +77,14 @@ class TradeRec(BaseModel):
         _('特色图片'), upload_to='investmgr_pictures/%Y/%m/%d/', blank=True, null=True, editable=False)
     in_stock_positions = models.ForeignKey('Positions', verbose_name=_('股票持仓'), blank=False, null=True,
                                            on_delete=models.CASCADE, editable=False)
-    is_deleted = models.BooleanField(
-        _('是否被删除'), blank=False, null=False, default=False)
+    is_liquadated = models.BooleanField(
+        _('是否已清仓'), blank=False, null=False, default=False, editable=False)
 
     def __str__(self):
         return self.stock_name
 
     class Meta:
-        ordering = ['-created_time']
+        ordering = ['-last_mod_time']
         verbose_name = _('交易记录')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
@@ -100,31 +102,44 @@ class TradeRec(BaseModel):
         names = list(map(lambda s: (s.name, s.get_absolute_url()), tree))
         return names
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  
         # 自动给股票代码加上.SH或者.SZ
-        if self.stock_code.isnumeric():
-            if str(self.stock_code)[0] == '6':
-                self.stock_code = + self.stock_code + '.SH'
-                self.market = 'SH'
-            else:
-                self.stock_code = self.stock_code + '.SZ'
-                self.market = 'SZ'
+        if self.stock_name.isnumeric():# 用户的输入为股票代码
+            code = self.stock_name 
+            map = StockNameCodeMap.objects.filter(stock_code=code)
+            if map.count() > 0:
+                self.stock_name = map[0].stock_name
+                self.stock_code = map[0].stock_code
+            #else: not found
+        else:  # 用户的输入为股票名称
+            map = StockNameCodeMap.objects.filter(stock_name=self.stock_name)
+            if map.count() > 0:
+                self.stock_code = map[0].stock_code
 
-        # 更新持仓
-        p = Positions.objects.filter(
-            trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
-        if p.count() == 0:
-            # 新建仓
-            p = Positions(market=self.market,
-                          stock_name=self.stock_name, stock_code=self.stock_code)
-            self.in_stock_positions = p
+        if str(self.stock_code)[0] == '6':
+            self.stock_code = + self.stock_code + '.SH'
+            self.market = 'SH'
         else:
-            # 增仓或者减仓
-            p = p[0]
-            self.in_stock_positions = p
-
-        p.update_stock_position(
-            self.direction, self.target_position, self.board_lots, self.price, self.cash, self.trader)
+            self.stock_code = self.stock_code + '.SZ'
+            self.market = 'SZ'
+        
+        if not self.pk:  # 非更新持仓 
+            p = Positions.objects.filter(
+                trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
+            if p.count() == 0:
+                if self.direction == 's': 
+                    return
+                # 新建仓
+                p = Positions(market=self.market,
+                            stock_name=self.stock_name, stock_code=self.stock_code)
+                self.in_stock_positions = p
+            else:
+                # 增仓或者减仓
+                p = p[0]
+                self.in_stock_positions = p
+            # 更新持仓信息后返回是否清仓
+            self.is_liquadated = p.update_stock_position(
+                self.direction, self.target_position, self.board_lots, self.price, self.cash, self.trader)
         super().save(*args, **kwargs)
 
 
@@ -143,10 +158,11 @@ class Positions(BaseModel):
     current_price = models.FloatField(
         _('股票现价'), blank=False, null=False, default=0)
     profit = models.FloatField(_('利润'), blank=False, null=False, default=0)
+    # profit_ratio = models.FloatField(_('利润率'), blank=False, null=False, default=0.0)
     cash = models.FloatField(_('投入现金额'), blank=False, null=False, default=0)
-    lots = models.PositiveIntegerField(_('持仓量(手)'), default=0)
-    target_position = models.FloatField(
-        _('仓位'), blank=False, null=False, default='0')
+    lots = models.PositiveIntegerField(_('持仓量(股)'), default=0)
+    target_position = models.PositiveIntegerField(
+        _('目标仓位（股）'), blank=False, null=False, default=0)
     is_liquadated = models.BooleanField(
         _('是否清仓'), blank=False, null=False, default=False, db_index=True)
 
@@ -156,7 +172,6 @@ class Positions(BaseModel):
     # 持仓算法
     def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
         self.trader = trader
-        self.cash += trade_cash
         if self.target_position == 0:
             self.target_position = target_position
 
@@ -166,14 +181,29 @@ class Positions(BaseModel):
         realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
         realtime_price = realtime_df['price'].mean()
+        self.current_price = realtime_price
 
-        # 计算持仓股利润
+        # 计算现有持仓股利润
+        # 什么时候计算？
         # 持仓利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 目前持仓价格) * 持仓数量(手) * 100 (1手=100股)
         if self.lots != 0 or self.position_price != 0:
-            self.profit = self.profit + \
-                float((realtime_price - self.position_price) * self.lots * 100)
+            self.profit = round(
+                (realtime_price - self.position_price) * self.lots, 2)
 
-        if trade_direction == 'b':
+        if trade_direction == 's':  # 如果已有仓位减仓
+            trade_lots = 0 - trade_lots
+            trade_cash = 0 - trade_cash
+
+            if self.lots == abs(trade_lots):
+                # 清仓，设置is_liquadated = True
+                self.is_liquadated = True
+                self.lots = 0
+                self.cash = 0
+                
+        else:    
+            self.profit = round(self.profit +
+                                (realtime_price - trade_price) * abs(trade_lots), 2)
+
             # 已有仓位加仓
             '''
             1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
@@ -185,41 +215,25 @@ class Positions(BaseModel):
                 每手利润 = 利润 / (已有持仓+新增持仓量(手)）
                 持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
             '''
-            # 计算
-            self.profit = self.profit + \
-                (realtime_price - trade_price) * trade_lots * 100
-            new_position_price = realtime_price - self.profit / \
-                (trade_lots + self.lots)
-            self.position_price = new_position_price
-            self.current_price = realtime_price
+            self.position_price = round(realtime_price - self.profit /
+                                        (trade_lots + self.lots), 2)
             self.lots = trade_lots + self.lots
-        else:  # 已有仓位减仓
-            if self.lots == trade_lots:
-                # 清仓，设置is_liquadated = True
-                self.is_liquadated = True
-                self.lots = 0
-                self.cash = 0
-                self.current_price = realtime_price
-            else:
-                    # 普通减仓
-                '''
-                1. 利润 = 原持仓利润 + (当前股票价格：如果未收盘/收盘价 - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-                2. 持仓价格 = 
-                2.1 如果利润是(负-)的
-                    每手亏损 = 利润 / (已有持仓-卖出量(手)）
-                    持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
-                2.2 如果利润是(正+)的
-                    每手利润 = 利润 / (已有持仓-卖出量(手)）
-                    持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
-                '''
-                self.profit = self.profit + \
-                    (realtime_price - trade_price) * trade_lots * 100
-                new_position_price = realtime_price - self.profit / \
-                    (self.lots - trade_lots)
-                self.position_price = new_position_price
-                self.current_price = realtime_price
+            self.cash += trade_cash
 
+        '''
+        1. 利润 = 原持仓利润 + (当前股票价格：如果未收盘/收盘价 - 交易价格) * 本次交易量(手) * 100 (1手=100股)
+        2. 持仓价格 = 
+        2.1 如果利润是(负-)的
+            每手亏损 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
+        2.2 如果利润是(正+)的
+            每手利润 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
+        '''
+        
         self.save()
+        
+        return self.is_liquadated
 
     class Meta:
         ordering = ['stock_code']
@@ -227,9 +241,32 @@ class Positions(BaseModel):
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
+class TradeSettings(BaseModel):
+    
+    SETTING_CHOICES = (
+        ('TARGET_POSITION', _('目标仓位')),
+    )
+    name = models.CharField(_('参数名'), choices=SETTING_CHOICES, max_length=50, blank=False, null=False)
+    value = models.CharField(_('参数值'), max_length=50, blank=False, null=False)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
+                                on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = _('交易参数设置')
+        verbose_name_plural = verbose_name
 
 class TradeStrategy(BaseModel):
     """"""
+    PERIOD_CHOICE = {
+        ('mm', _('月线')),
+        ('wk', _('周线')),
+        ('dd', _('日线')),
+        ('60', _('60分钟')),
+        ('30', _('30分钟')),
+        ('15', _('15分钟')),
+    }
+    applied_period = models.CharField(_('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='60')
     name = models.CharField(_('策略名'), max_length=30, unique=True)
     parent_strategy = models.ForeignKey(
         'self', verbose_name=_('父级策略'), blank=True, null=True, on_delete=models.CASCADE)

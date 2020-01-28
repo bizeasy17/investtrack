@@ -23,9 +23,9 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     # App urls
-    path('dashboard/', include('dashboard.urls')),
+    path('users/', include('users.urls')),
     path('notifications/', include('notifications.urls')),
-    path('invest/', include('investmgr.urls')),
+    # path('invest/', include('investmgr.urls')),
     # simple pages
     re_path(r'^about/$',
         TemplateView.as_view(template_name='pages/about.html'), name='about'),
