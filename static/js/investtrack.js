@@ -20,6 +20,8 @@ Issues with the above approach:
 */
 $('.form-group').removeClass('row');
 
+
+
 /* Notifications JS basic client */
 $(function () {
     let emptyMessage = 'You have no unread notification';
@@ -127,4 +129,5 @@ $(function () {
                 break;
         };
     });
+    
 });

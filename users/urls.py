@@ -6,6 +6,6 @@ app_name = 'users'
 urlpatterns = [
     path('<pk>/dashboard/',
          views.UserDashboardView.as_view(), name='dashboard'),
-    path('trade/create',
-         views.TradeRecCreateView.as_view(), name='create_trade'),
+    path('invest/create',
+         views.create_trade, name='create_trade'),
 ]

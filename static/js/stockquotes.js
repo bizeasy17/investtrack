@@ -10,6 +10,7 @@ $(function () {
     var stockNameBaseEndpoint = 'stocks/name/';
     var chartCanvas = document.getElementById('myStockChart').getContext('2d');
 
+
     // when lost focus get the code auto filled
     $('#id_stock_name').blur(function(){
         // if(validateStockName()){
