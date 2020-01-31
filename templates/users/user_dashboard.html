@@ -144,7 +144,7 @@
             <div class="card-body">
                 <div class="input-group">
                     <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '股票名或代码' %}">
-                    
+                    <input type="hidden" id="hiddenTscode">
                     <span class="input-group-btn">
                         <button class="btn btn-secondary" type="button" id="stockSearch">{% trans '查行情' %}</button>
                     </span>
@@ -258,5 +258,6 @@
 <script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}" type="text/javascript"></script>
 
 <!-- place project specific Javascript in this file -->
+<!-- <script src="{% static 'js/charts-utils.js' %}" type="text/javascript"></script> -->
 <script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
 {% endblock javascript %}

@@ -1,6 +1,10 @@
+// Set new default font family and font color to mimic Bootstrap's default styling
+Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+Chart.defaults.global.defaultFontColor = '#858796';
+
 $(function () {
     var csrftoken = Cookies.get('csrftoken');
-    var stockBaseEndpoint = '/users/invest/';
+    var userStockBaseEndpoint = '/users/invest/';
     var investBaseEndpoint = '/invest/stocks/';
 
     // function definition start
@@ -8,22 +12,22 @@ $(function () {
     // end
 
     // search auto-complete
-    $('.advancedAutoComplete').autoComplete({
-        resolver: 'custom',
-        events: {
-            search: function (qry, callback) {
-                // let's do a custom ajax call
-                $.ajax(
-                    './testdata/test-dict.json',
-                    {
-                        data: { 'qry': qry }
-                    }
-                ).done(function (res) {
-                    callback(res.results)
-                });
-            }
-        }
-    });
+    // $('.advancedAutoComplete').autoComplete({
+    //     resolver: 'custom',
+    //     events: {
+    //         search: function (qry, callback) {
+    //             // let's do a custom ajax call
+    //             $.ajax(
+    //                 './testdata/test-dict.json',
+    //                 {
+    //                     data: { 'qry': qry }
+    //                 }
+    //             ).done(function (res) {
+    //                 callback(res.results)
+    //             });
+    //         }
+    //     }
+    // });
 
     // assign the selected strategy
     $('.dropdown-item').click(function(){
@@ -135,7 +139,7 @@ $(function () {
         var direction = $('#direction').val();
 
         $.ajax({
-            url: stockBaseEndpoint + 'create',
+            url: userStockBaseEndpoint + 'create',
             headers: { 'X-CSRFToken': csrftoken },
             method: 'POST',
             dataType: 'json',
@@ -168,14 +172,82 @@ $(function () {
     });
 
     // render the stock charts
+    function formatDate(date) {
+        var dayNames = [
+            "01", "02", "03",
+            "04", "05", "06", "07",
+            "08", "09", "10",
+            "11", "12", "13", "14",
+            "15", "16", "17", "18",
+            "19", "20", "21", "22",
+            "23", "24", "25", "26",
+            "27", "28", "29", "30", "31"
+        ];
+
+        var monthNames = [
+            "01", "02", "03",
+            "04", "05", "06", "07",
+            "08", "09", "10",
+            "11", "12"
+        ];
+
+        var dayIndex = date.getDate();
+        var monthIndex = date.getMonth();
+        var year = date.getFullYear();
+
+        return year + '' + monthNames[monthIndex] + '' + dayNames[dayIndex-1];
+    }
+
+    var update = function () {
+        var dataset = chart.config.data.datasets[0];
+
+        // candlestick vs ohlc
+        var type = document.getElementById('type').value;
+        dataset.type = type;
+
+        // color
+        var colorScheme = document.getElementById('color-scheme').value;
+        if (colorScheme === 'neon') {
+            dataset.color = {
+                up: '#01ff01',
+                down: '#fe0000',
+                unchanged: '#999',
+            };
+        } else {
+            delete dataset.color;
+        }
+
+        // border
+        var border = document.getElementById('border').value;
+        var defaultOpts = Chart.defaults.global.elements[type];
+        if (border === 'true') {
+            dataset.borderColor = defaultOpts.borderColor;
+        } else {
+            dataset.borderColor = {
+                up: defaultOpts.color.up,
+                down: defaultOpts.color.down,
+                unchanged: defaultOpts.color.up
+            };
+        }
+
+        chart.update();
+    };
+
+    var chartShowDays = 60
+    var dt = new Date();
+    var priorDt = new Date(dt.getTime() - (chartShowDays * 24 * 60 * 60 * 1000));
+    var startDate = formatDate(priorDt);
+    var endDate = formatDate(dt);
     var chartCanvas = document.getElementById('stockChart').getContext('2d');
 
+    // 页面默认加载上证指数日K（D)
+    var chart;
     $.ajax({
-        url: klineEndpoint,
+        url: investBaseEndpoint + 'get-index-price/sh/' + startDate + '/' + endDate + '/D/',
         success: function(data){
             // ctx1.canvas.width = 1000;
             // ctx1.canvas.height = 250;
-            var chart = new Chart(chartCanvas, {
+            chart = new Chart(chartCanvas, {
                 type: 'candlestick',
                 data: {
                     datasets: [{
@@ -219,15 +291,44 @@ $(function () {
         }
     });
     
-    
-
     document.getElementById('update').addEventListener('click', update);
 
-    $('stockSearch').addEventListener('click', function() {
-        chart.data.datasets.forEach(function(dataset) {
-
-            dataset.data = getRandomData(initialDateStr, barCount + getRandomInt(10));
+    $('#searchNameOrCode').blur(function(){
+        var code = $('#searchNameOrCode').val();
+        $.ajax({
+            url: investBaseEndpoint + 'get-tscode/' + code,
+            success: function (data) {
+                if(data!='err'){
+                    if(data.charAt(0)=='6'){
+                        $('#hiddenTscode').val(data+'.SH');
+                    }else{
+                        $('#hiddenTscode').val(data+'.SZ');
+                    }
+                    // chart.label = data;
+                }else{
+                    $('#hiddenTscode').val('');
+                }
+            }
         });
-        update();
     });
+
+    document.getElementById('stockSearch').addEventListener('click', function() {
+        if ($('#hiddenTscode').val() != ''){
+            var ts_code = $('#hiddenTscode').val();
+            $.ajax({
+                url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
+                success: function (data) {
+                    chart.data.datasets.forEach(function (dataset) {
+                        dataset.data = data;
+                    });
+                    update();
+                }
+            })
+        }
+    });
+    // var test = function () {
+    //     alert('document.getElementbyID');
+    // };
+    // document.getElementById('stockSearch').addEventListener('click', test);
 });
+    

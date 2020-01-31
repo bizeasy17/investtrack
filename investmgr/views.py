@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
+from django.utils.translation import ugettext_lazy as _
 
 from .models import StockNameCodeMap
 
@@ -29,6 +30,24 @@ def get_realtime_price(request, stock_name_or_code):
 
     return JsonResponse({'price': realtime_price}, safe=False)
 
+def get_tscode_by(request, stock_name_or_code):
+    if request.method == 'GET':
+        ts_code = ''
+        if not stock_name_or_code.isnumeric():
+            map = StockNameCodeMap.objects.filter(
+                stock_name=stock_name_or_code)
+        else:
+            map = StockNameCodeMap.objects.filter(
+                stock_code=stock_name_or_code)
+        
+        if map.count() > 0:
+            ts_code = map[0].stock_code
+            # 获得ts_code
+            return JsonResponse(ts_code, safe=False)
+       
+    return JsonResponse('err', safe=False)
+
+
 
 def get_index_price_by(request, index_name, start_date, end_date, period):
     df = []
@@ -51,10 +70,10 @@ def get_index_price_by(request, index_name, start_date, end_date, period):
                         o = vv
                     elif kk == 'high':
                         h = vv
-                    elif kk == 'low':
-                        l = vv
                     elif kk == 'close':
                         c = vv
+                    elif kk == 'low':
+                        l = vv
 
                 data.append(
                     {
@@ -80,19 +99,19 @@ def get_index_price_by(request, index_name, start_date, end_date, period):
             return JsonResponse(data[::-1], safe=False)
             # return JsonResponse(stock_his_data_dic, safe=False)
 
-    return JsonResponse(df, safe=False)
+    return JsonResponse({'error':_('输入信息有误，无相关数据')}, safe=False)
 
 
-def get_history_stock_price_by(request, stock_name_or_code, period):
+def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date, period):
     # if this is a GET request we need to process the form data
     pro = ts.pro_api()
-    start_date = ''
-    end_date = ''
-    ts_code = ''
+    # start_date = ''
+    # end_date = ''
+    # ts_code = ''
 
     if request.method == 'GET':
         # create a form instance and populate it with data from the request:
-        df = pro.daily(ts_code=ts_code, start_date=start_date,
+        df = pro.daily(ts_code=stock_name_or_code, start_date=start_date,
                        end_date=end_date)
         data = []
         if df is not None and len(df) > 0:
@@ -107,3 +126,5 @@ def get_history_stock_price_by(request, stock_name_or_code, period):
                     }
                 )
         return JsonResponse(data[::-1], safe=False)
+
+    return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)

@@ -350,6 +350,10 @@ class StockNameCodeMap(BaseModel):
     def __str__(self):
         return self.stock_name
 
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
     class Meta:
         ordering = ['-last_mod_time']
         verbose_name = _('股票代码表')
