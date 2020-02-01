@@ -13,4 +13,7 @@ urlpatterns = [
          views.get_index_price_by),
     path('stocks/get-stock-price/<stock_name_or_code>/<start_date>/<end_date>/<period>/',
          views.get_history_stock_price_by),
+        #  test
+    path('testAjax/<rq_data>',
+         views.test_ajax),
 ]

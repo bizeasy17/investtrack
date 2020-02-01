@@ -6,7 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
-from .models import StockNameCodeMap
+from .models import StockNameCodeMap, TradeRec
 
 
 # Create your views here.
@@ -102,6 +102,23 @@ def get_index_price_by(request, index_name, start_date, end_date, period):
     return JsonResponse({'error':_('输入信息有误，无相关数据')}, safe=False)
 
 
+def get_traderec(request, stock_code, trade_date):
+    traderec_list = TradeRec.objects.filter(trader=request.user.id,
+        stock_code=stock_code, trade_time__startswith=trade_date,)
+
+    traderec = []
+    if traderec_list is not None and len(traderec_list) > 0:
+        for rec in traderec_list:
+            traderec.append({
+                'name': rec.stock_name,
+                'code': rec.stock_code,
+                'direction': rec.direction,
+                'price': rec.price,
+                'cash': rec.cash,
+            })
+
+    return traderec
+
 def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date, period):
     # if this is a GET request we need to process the form data
     pro = ts.pro_api()
@@ -116,15 +133,57 @@ def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date
         data = []
         if df is not None and len(df) > 0:
             for d in df.values:
+                trade_date = datetime.strptime(d[1], '%Y%m%d')
+                traderec = get_traderec(
+                    request, stock_name_or_code, trade_date.date())
                 data.append(
                     {
-                        't': datetime.strptime(d[1], "%Y%m%d"),
+                        't': trade_date,
                         'o': d[2],
                         'h': d[3],
                         'l': d[4],
                         'c': d[5],
+                        'r': traderec,
                     }
                 )
         return JsonResponse(data[::-1], safe=False)
 
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
+
+
+def get_history_stock_price_by1(request, stock_name_or_code, start_date, end_date, period):
+    # if this is a GET request we need to process the form data
+    pro = ts.pro_api()
+    # start_date = ''
+    # end_date = ''
+    # ts_code = ''
+
+    if request.method == 'GET':
+        # create a form instance and populate it with data from the request:
+        df = pro.daily(ts_code=stock_name_or_code, start_date=start_date,
+                       end_date=end_date)
+        data = []
+        if df is not None and len(df) > 0:
+            for d in df.values:
+                trade_date = datetime.strptime(d[1], '%Y%m%d')
+                traderec = get_traderec(
+                    request, stock_name_or_code, trade_date.date())
+                data.append(
+                    {
+                        't': trade_date,
+                        'o': d[2],
+                        'h': d[3],
+                        'l': d[4],
+                        'c': d[5],
+                        'r': traderec,
+                    }
+                )
+        return JsonResponse(data[::-1], safe=False)
+
+    return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
+
+def test_ajax(request, rq_data):
+    if rq_data=='ok':
+        return JsonResponse({'code': 'ok'}, safe=False)
+    elif rq_data=='err':
+        return JsonResponse({'code': 'err'}, safe=False)
