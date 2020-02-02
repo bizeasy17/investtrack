@@ -188,7 +188,7 @@
             model.candleClose = vscale.getPixelForValue(Number(indexData.c));
 
             // JH, to get the buy/sell on this day - 2020-1-14
-            model.candleHasTradeRec = indexData.r;
+            // model.candleHasTradeRec = indexData.r;
             model.candleBuyOrSell = indexData.d;
         },
     
@@ -218,10 +218,16 @@
     
     globalOpts.elements.financial = {
         color: {
-            up: 'rgba(80, 160, 115, 1)',
-            down: 'rgba(215, 85, 65, 1)',
+            up: 'rgba(215, 85, 65, 1)',
+            down: 'rgba(80, 160, 115, 1)',
             unchanged: 'rgba(90, 90, 90, 1)',
         }
+        // 中国以外其他国家的k线颜色与中国相反
+        // color: {
+        //     up: 'rgba(80, 160, 115, 1)',
+        //     down: 'rgba(215, 85, 65, 1)',
+        //     unchanged: 'rgba(90, 90, 90, 1)',
+        // }
     };
     
     function isVertical(bar) {
@@ -340,7 +346,7 @@
             var l = vm.candleLow;
             var c = vm.candleClose;
             // JH, get if buy/sell indicates, 2020-1-14
-            var hasRec = vm.candleHasTradeRec;
+            // var hasRec = vm.candleHasTradeRec;
             var buyOrSell = vm.candleBuyOrSell;
     
             var borderColors = vm.borderColor;
@@ -378,16 +384,17 @@
             ctx.closePath();
 
             // draw the arrow if there is record buy/sell on the day
-            if (hasRec=='y') {
+            if (buyOrSell!='') {
                 ctx.beginPath();
                 if (buyOrSell=='b') {
                     // ctx.moveTo(x, l);  
                     ctx.strokeText(buyOrSell,x-2,l+5)
-                } else {
+                } else if(buyOrSell=='s'){
                     // ctx.moveTo(x, h);
                     ctx.strokeText(buyOrSell,x-2,h-5)
+                }else if(buyOrSell=='b&s'){
+                    ctx.strokeText(buyOrSell,x-10,l+6)
                 }
-                
             }   
         },
     });

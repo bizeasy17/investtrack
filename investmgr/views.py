@@ -30,6 +30,7 @@ def get_realtime_price(request, stock_name_or_code):
 
     return JsonResponse({'price': realtime_price}, safe=False)
 
+
 def get_tscode_by(request, stock_name_or_code):
     if request.method == 'GET':
         ts_code = ''
@@ -39,14 +40,13 @@ def get_tscode_by(request, stock_name_or_code):
         else:
             map = StockNameCodeMap.objects.filter(
                 stock_code=stock_name_or_code)
-        
+
         if map.count() > 0:
             ts_code = map[0].stock_code
             # 获得ts_code
             return JsonResponse(ts_code, safe=False)
-       
-    return JsonResponse('err', safe=False)
 
+    return JsonResponse('err', safe=False)
 
 
 def get_index_price_by(request, index_name, start_date, end_date, period):
@@ -63,7 +63,7 @@ def get_index_price_by(request, index_name, start_date, end_date, period):
             if not stock_his_data_dic:
                 return JsonResponse(df, safe=False)
 
-            for k,v in stock_his_data_dic.items():
+            for k, v in stock_his_data_dic.items():
                 t = datetime.strptime(k, "%Y-%m-%d")
                 for kk, vv in v.items():
                     if kk == 'open':
@@ -99,12 +99,12 @@ def get_index_price_by(request, index_name, start_date, end_date, period):
             return JsonResponse(data[::-1], safe=False)
             # return JsonResponse(stock_his_data_dic, safe=False)
 
-    return JsonResponse({'error':_('输入信息有误，无相关数据')}, safe=False)
+    return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
 
 def get_traderec(request, stock_code, trade_date):
     traderec_list = TradeRec.objects.filter(trader=request.user.id,
-        stock_code=stock_code, trade_time__startswith=trade_date,)
+                                            stock_code=stock_code, trade_time__startswith=trade_date,)
 
     traderec = []
     if traderec_list is not None and len(traderec_list) > 0:
@@ -118,6 +118,21 @@ def get_traderec(request, stock_code, trade_date):
             })
 
     return traderec
+
+
+def get_traderec_direction(request, stock_code, trade_date):
+    traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                            stock_code=stock_code, trade_time__startswith=trade_date,).order_by('direction').distinct('direction')
+    buy_sell = ''
+    if traderec_list is not None and len(traderec_list) > 0:
+        for rec in traderec_list:
+            if buy_sell == '':
+                buy_sell = rec.direction
+            else:
+                buy_sell = buy_sell + '&' + rec.direction
+
+    return buy_sell
+
 
 def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date, period):
     # if this is a GET request we need to process the form data
@@ -134,7 +149,7 @@ def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date
         if df is not None and len(df) > 0:
             for d in df.values:
                 trade_date = datetime.strptime(d[1], '%Y%m%d')
-                traderec = get_traderec(
+                buy_sell = get_traderec_direction(
                     request, stock_name_or_code, trade_date.date())
                 data.append(
                     {
@@ -143,7 +158,7 @@ def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date
                         'h': d[3],
                         'l': d[4],
                         'c': d[5],
-                        'r': traderec,
+                        'd': buy_sell,
                     }
                 )
         return JsonResponse(data[::-1], safe=False)
@@ -182,8 +197,9 @@ def get_history_stock_price_by1(request, stock_name_or_code, start_date, end_dat
 
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
+
 def test_ajax(request, rq_data):
-    if rq_data=='ok':
+    if rq_data == 'ok':
         return JsonResponse({'code': 'ok'}, safe=False)
-    elif rq_data=='err':
+    elif rq_data == 'err':
         return JsonResponse({'code': 'err'}, safe=False)

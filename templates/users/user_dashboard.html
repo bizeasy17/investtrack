@@ -23,16 +23,16 @@
         <div class="row">
             <div class="col-lg-8">
                 <!-- Title -->
-                <h6 class="mt-4">{% trans '实时行情数据' %}</h6>
+                <h5 class="mt-4">{% trans '实时行情数据' %}</h5>
                 <!-- Date/Time -->
-                <p>Posted on January 1, 2019 at 12:00 PM</p>
+                <p>{% trans '数据获取于' %}{% now "Y-m-d H:i" %}</p>
             </div>
         </div>
         
         <hr>
         <div class="card mb-4 mr-3">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Bar Chart</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans 'k线图' %}:</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-bar">
@@ -40,7 +40,7 @@
                     </div>
                     <hr>
                 </div>
-                <div>
+                <div class="collapse">
                     Bar Type:
                     <select id="type">
                         <option value="candlestick" selected>Candlestick</option>
@@ -190,7 +190,7 @@
                     </tr>
                 </thead>
                 <tbody> 
-                    {% if trade_info %}
+                    {% if trade_info %} 
                         {% for position in trade_info.positions %}
                         <tr>
                         <th scope="row"> {{ position.stock_name }} </th>
@@ -209,7 +209,32 @@
             </table>
         </div>
 
-        <!-- Categories Widget -->
+        <!-- Side Widget Following -->
+        <div class="card my-4">
+            <h6 class="card-header">{% trans '我的自选股' %}</h6>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{% trans '名称' %}</th>
+                        <th scope="col">{% trans '代码' %}</th>
+                        <!-- <th scope="col">{% trans '价格' %}</th> -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if trade_info %}
+                    {% for following in trade_info.stocks_following %}
+                    <tr>
+                        <th scope="row"> {{ following.stock_code.stock_name }} </th>
+                        <th scope="col">{{ following.stock_code.stock_code }}</th>
+                
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Trasactions Widget top 10 -->
         <div class="card my-4">
             <h6 class="card-header">{% trans '最近交易' %}</h6>
             <table class="table table-hover">
@@ -242,26 +267,7 @@
             </table>
         </div>
 
-        <!-- Side Widget -->
-        <div class="card my-4">
-            <h6 class="card-header">{% trans '我的自选股' %}</h6>
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">{% trans '名称' %}</th>
-                        <th scope="col">{% trans '代码' %}</th>
-                        <th scope="col">{% trans '价格' %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th scope="row">万科A</th>
-                        <th scope="col">000002</th>
-                        <td>28.98</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        
 
     </div>
 

@@ -1,21 +1,23 @@
-import tushare as ts
 from decimal import *
+
+import tushare as ts
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.shortcuts import redirect, render, reverse
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
-from django.views.generic import DetailView, FormView, ListView
+from django.views.generic import View, DetailView, FormView, ListView
 
-from investmgr.models import Positions, TradeRec, TradeStrategy, StockNameCodeMap
+from investmgr.models import (Positions, StockNameCodeMap, TradeRec,
+                              TradeStrategy, StockFollowing)
 
 from .forms import UserTradeForm
 from .models import User
 
 
 # Create your views here.
-class UserDashboardView(LoginRequiredMixin, ListView):
+class UserDashboardView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
     # model = TradeRec
 
@@ -24,20 +26,26 @@ class UserDashboardView(LoginRequiredMixin, ListView):
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'trade_info'
 
-    def get_queryset(self):
-        tradedetails = TradeRec.objects.filter(
-            trader=self.request.user.id, )[:10]
-        trade_positions = Positions.objects.filter(
-            trader=self.request.user.id).exclude(lots=0)
-        strategies = TradeStrategy.objects.filter(creator=self.request.user.id)
-        # fav_stocks = StockFavorates.objects.filter(trader=self.request.user.id,)
-        queryset = {
-            'tradedetails': tradedetails,
-            'positions': trade_positions,
-            'strategies': strategies,
-            # 'fav_stocks': fav_stocks
-        }
-        return queryset
+    def get(self, request, *args, **kwargs):
+        username = self.kwargs['username']
+        req_user = User.objects.filter(username=username)
+        if req_user is not None and req_user.count() > 0:
+            tradedetails = TradeRec.objects.filter(
+                trader=req_user[0].id, )[:10]
+            trade_positions = Positions.objects.filter(
+                trader=req_user[0].id).exclude(lots=0)
+            strategies = TradeStrategy.objects.filter(creator=req_user[0].id)
+            stocks_following = StockFollowing.objects.filter(
+                trader=self.request.user.id,)
+            queryset = {
+                'tradedetails': tradedetails,
+                'positions': trade_positions,
+                'strategies': strategies,
+                'stocks_following': stocks_following,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+        else:
+            return HttpResponseRedirect(reverse('404'))
 
 
 @login_required

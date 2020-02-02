@@ -1,8 +1,4 @@
 import tushare as ts
-
-from django.contrib import admin
-from .models import TradeRec, TradeStrategy, TradeSettings, Positions, StockNameCodeMap
-
 # Register your models here.
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -10,8 +6,9 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-from .models import TradeRec, TradeStrategy, Positions, StockNameCodeMap
 from .forms import TradeRecAdminForm
+from .models import (Positions, StockFollowing, StockNameCodeMap, TradeRec,
+                     TradeSettings, TradeStrategy)
 
 # Register your models here.
 
@@ -41,7 +38,7 @@ class TradeRecAdmin(admin.ModelAdmin):
     list_display_links = ('stock_name', 'stock_code')
     list_filter = (TradeRecListFilter, 'strategy')
     exclude = ('created_time', 'last_mod_time')
-    
+
     form = TradeRecAdminForm
 
     def get_form(self, request, obj=None, *args, **kwargs):
@@ -69,6 +66,10 @@ class StockNameCodeMapAdmin(admin.ModelAdmin):
     exclude = ('last_mod_time', 'created_time')
 
 
+class StockFollowingAdmin(admin.ModelAdmin):
+    exclude = ('last_mod_time', 'created_time')
+
+
 class PositionsAdmin(admin.ModelAdmin):
     list_per_page = 20
     search_fields = ('stock_name', 'stock_code')
@@ -85,3 +86,4 @@ admin.site.register(TradeStrategy, StrategyAdmin)
 admin.site.register(TradeSettings, TradeSettingsAdmin)
 admin.site.register(StockNameCodeMap, StockNameCodeMapAdmin)
 admin.site.register(Positions, PositionsAdmin)
+admin.site.register(StockFollowing, StockFollowingAdmin)

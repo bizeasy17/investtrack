@@ -359,3 +359,23 @@ class StockNameCodeMap(BaseModel):
         verbose_name = _('股票代码表')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
+
+# 目前持有仓位数据model
+
+
+class StockFollowing(BaseModel):
+    stock_code = models.ForeignKey('StockNameCodeMap',
+                                   verbose_name=_('股票代码'), blank=False, null=False, on_delete=models.CASCADE)
+    trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
+                               on_delete=models.CASCADE)
+    is_following = models.BooleanField(
+        _('是否关注'), blank=False, null=False, default=True)
+
+    def __str__(self):
+        return str(self.stock_code.stock_name)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('自选股票')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'

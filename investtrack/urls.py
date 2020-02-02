@@ -29,6 +29,9 @@ urlpatterns = [
     # simple pages
     re_path(r'^about/$',
         TemplateView.as_view(template_name='pages/about.html'), name='about'),
+    re_path(r'^404/$',
+            TemplateView.as_view(template_name='pages/404.html'), name='404'),
+
     # 3rd Party Apps
     # url(r'mdeditor/', include('mdeditor.urls')),
 ]
