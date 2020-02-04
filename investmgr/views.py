@@ -1,8 +1,9 @@
-import tushare as ts
 import json
 from datetime import datetime
 
-from django.http import JsonResponse, HttpResponse
+import tushare as ts
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 
@@ -47,6 +48,50 @@ def get_tscode_by(request, stock_name_or_code):
             return JsonResponse(ts_code, safe=False)
 
     return JsonResponse('err', safe=False)
+
+def get_company_info_autocomplete(request, name_or_code):
+    # Sample format
+    # {
+	# "results": [
+    #         {
+    #             "id": 1, "text": "Google Cloud Platform",
+    #             "icon": "https://pbs.twimg.com/profile_images/966440541859688448/PoHJY3K8_400x400.jpg"
+    #         },
+    #         {
+    #             "id": 2, "text": "Amazon AWS",
+    #             "icon": "http://photos3.meetupstatic.com/photos/event/5/d/e/0/highres_263124032.jpeg"
+    #         },
+    #         {
+    #             "id": 3, "text": "Docker",
+    #             "icon": "https://www.docker.com/sites/default/files/legal/small_v.png"
+    #         }
+	# ]
+    # }
+
+    if request.method == 'GET':
+        if not name_or_code.isnumeric():
+            companies = StockNameCodeMap.objects.filter(
+                stock_name__startswith=name_or_code)[:10]
+        else:
+            companies = StockNameCodeMap.objects.filter(
+                stock_code__startswith=name_or_code)[:10]
+
+        # results = {}
+        c_list = []
+        if companies is not None and companies.count() > 0:
+            for c in companies:
+                # 获得ts_code
+                c_list.append({
+                    'id': c.stock_code,
+                    'ts_code': c.ts_code,
+                    'text': c.stock_name,
+                    'market': c.market,
+                })
+            # c_str = 'results:[' + c_str + ']'
+            # c_dict = json.loads(c_str)
+            return JsonResponse({'results':c_list}, safe=False)
+    empty = {'results':[]}
+    return JsonResponse(empty, safe=False)
 
 
 def get_index_price_by(request, index_name, start_date, end_date, period):
@@ -198,8 +243,34 @@ def get_history_stock_price_by1(request, stock_name_or_code, start_date, end_dat
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
 
-def test_ajax(request, rq_data):
-    if rq_data == 'ok':
-        return JsonResponse({'code': 'ok'}, safe=False)
-    elif rq_data == 'err':
-        return JsonResponse({'code': 'err'}, safe=False)
+@login_required
+def sync_company_list(request):
+    if request.method == 'GET':
+        pro = ts.pro_api()
+
+        # 查询当前所有正常上市交易的股票列表
+        data = pro.stock_basic(exchange='', list_status='',
+                               fields='ts_code,symbol,name,area,industry,fullname,enname,market,exchange,list_status,list_date,delist_date,is_hs')
+        company_list = StockNameCodeMap.objects.all()
+        if data is not None and len(data) > 0:
+            if company_list.count() != len(data):
+                for v in data.values:
+                    if str(v[1])[0] == '3':
+                        v[7] = 'CYB'
+                    elif str(v[1])[0] == '0':
+                        v[7] = 'ZXB'
+                    else:
+                        if str(v[1])[:3] == '688':
+                            v[7] = 'KCB'
+                        else:
+                            v[7] = 'ZB'
+
+                    company_list = StockNameCodeMap(ts_code=v[0], stock_code=v[1], stock_name=v[2], area=v[3],
+                                                    industry=v[4], fullname=v[5], en_name=v[6], market=v[7], exchange=v[8],
+                                                    list_status=v[9], list_date=datetime.strptime(v[10], '%Y%m%d'), delist_date=v[11],
+                                                    is_hs=v[12])
+                    company_list.save()
+        # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
+        return JsonResponse({'success': _('公司信息同步成功')}, safe=False)
+
+    return JsonResponse({'error': _('无法创建交易记录')}, safe=False)

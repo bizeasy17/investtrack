@@ -213,7 +213,7 @@ class Positions(BaseModel):
             # 已有仓位加仓
             '''
             1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-            2. 持仓价格 = 
+            2. 持仓价格 =
             2.1 如果利润是(负-)的
                 每手亏损 = 利润 / (已有持仓+新增持仓量(手)）
                 持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
@@ -228,7 +228,7 @@ class Positions(BaseModel):
 
         '''
         1. 利润 = 原持仓利润 + (当前股票价格：如果未收盘/收盘价 - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-        2. 持仓价格 = 
+        2. 持仓价格 =
         2.1 如果利润是(负-)的
             每手亏损 = 利润 / (已有持仓-卖出量(手)）
             持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
@@ -299,7 +299,7 @@ class TradeStrategy(BaseModel):
     def get_strategy_tree(self):
         """
         递归获得策略目录的父级
-        :return: 
+        :return:
         """
         strategies = []
 
@@ -314,7 +314,7 @@ class TradeStrategy(BaseModel):
     def get_sub_strategies(self):
         """
         获得当前分类目录所有子集
-        :return: 
+        :return:
         """
         strategies = []
         all_strategies = TradeStrategy.objects.all()
@@ -334,18 +334,60 @@ class TradeStrategy(BaseModel):
 
 class StockNameCodeMap(BaseModel):
     STOCK_MARKET_CHOICES = (
-        ('SH', _('上海')),
-        ('SZ', _('深圳')),
+        ('ZB', _('主板')),
+        ('ZXB', _('中小板')),
+        ('CYB', _('创业板')),
+        ('KCB', _('科创板')),
+
+    )
+
+    EXCHANGE_CHOICES = (
+        ('SSE', _('上交所')),
+        ('SZSE', _('深交所')),
+    )
+
+    LIST_STATUS_CHOICES = (
+        ('L', _('上市')),
+        ('D', _('退市')),
+        ('P', _('暂停上市')),
+    )
+
+    HS_CHOICES = (
+        ('N', _('否')),
+        ('H', _('沪股通')),
+        ('S', _('深股通')),
     )
 
     market = models.CharField(
-        _('股票市场'), choices=STOCK_MARKET_CHOICES, max_length=50, blank=True, null=True)
+        _('市场类型'), choices=STOCK_MARKET_CHOICES, max_length=50, blank=True, null=True)
     stock_name = models.CharField(
-        _('股票名称'), max_length=50, blank=False, null=False, unique=True)
+        _('股票名称'), max_length=50, blank=False, null=False, unique=True)  # name e.g. 平安银行
     stock_code = models.CharField(
-        _('股票代码'), max_length=50, blank=False, null=False, unique=True)
-    is_valid = models.BooleanField(
-        _('是否退市'), blank=False, null=False, default=False)
+        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+    # is_valid = models.BooleanField(
+    #     _('是否退市'), blank=False, null=False, default=False)
+
+    # new fields
+    exchange = models.CharField(
+        _('交易所代码'), choices=EXCHANGE_CHOICES, max_length=10, blank=True, null=True)
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False) # e.g. 000001.SZ
+    area = models.CharField(_('所在地域'), max_length=50,
+                            blank=True, null=True)
+    industry = models.CharField(
+        _('所属行业'), max_length=50, blank=True, null=True)
+    fullname = models.CharField(
+        _('股票全称'), max_length=100, blank=True, null=True)
+    en_name = models.CharField(_('英文全称'), max_length=100,
+                               blank=True, null=True)
+    list_status = models.CharField(
+        _('上市状态'), choices=LIST_STATUS_CHOICES, max_length=1, blank=True, null=True)
+    list_date = models.DateTimeField(
+        _('上市日期'), default=now, blank=True, null=True)
+    delist_date = models.DateTimeField(
+        _('退市日期'), default=now, blank=True, null=True)
+    is_hs = models.CharField(
+        _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
 
     def __str__(self):
         return self.stock_name

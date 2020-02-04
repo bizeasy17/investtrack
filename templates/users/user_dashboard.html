@@ -70,9 +70,10 @@
             <h6 class="card-header">{% trans '搜索' %}</h6>
             <div class="card-body">
                 <div class="input-group mb-2">
-                    <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '股票名或代码' %}">
+                    <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">
+                    
                     <input type="hidden" id="hiddenTscode">
-                    <span class="input-group-btn">
+                    <span class="input-group-btn d-none">
                         <button class="btn btn-secondary" type="button" id="stockSearch">{% trans '查行情' %}</button>
                     </span>
                 </div>

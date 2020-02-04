@@ -7,27 +7,44 @@ $(function () {
     var userStockBaseEndpoint = '/users/invest/';
     var investBaseEndpoint = '/invest/stocks/';
 
-    // function definition start
-    
-    // end
+    $('#searchNameOrCode').autoComplete({
+        resolver: 'custom',
+        formatResult: function (item) {
+            return {
+                value: item.id,
+                text:  item.id + " - " + item.text ,
+                html: [
+                    item.id + ' - ' + item.text,// +  '[' + item.market + ']',
+                ]
+            };
+        },
+        events: {
+            search: function (qry, callback) {
+                // let's do a custom ajax call
+                $.ajax(
+                    investBaseEndpoint + 'search-autocomplete/' + $('#searchNameOrCode').val(),
+                ).done(function (res) {
+                    callback(res.results)
+                });
+            }
+        }
+    });
 
-    // search auto-complete
-    // $('.advancedAutoComplete').autoComplete({
-    //     resolver: 'custom',
-    //     events: {
-    //         search: function (qry, callback) {
-    //             // let's do a custom ajax call
-    //             $.ajax(
-    //                 './testdata/test-dict.json',
-    //                 {
-    //                     data: { 'qry': qry }
-    //                 }
-    //             ).done(function (res) {
-    //                 callback(res.results)
-    //             });
-    //         }
-    //     }
-    // });
+    $('#searchNameOrCode').on('autocomplete.select', function (evt, item) {
+        var ts_code = item.ts_code
+        var code = item.id;
+        var ts_name = item.text;
+        $.ajax({
+            url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
+            success: function (data) {
+                chart.data.datasets.forEach(function (dataset) {
+                    dataset.data = data;
+                    dataset.label = ts_name + ' - ' + code;
+                });
+                update();
+            }
+        })
+    });
 
     // assign the selected strategy
     $('.strategy-item').click(function(){
@@ -295,26 +312,26 @@ $(function () {
     
     document.getElementById('update').addEventListener('click', update);
 
-    $('#searchNameOrCode').blur(function(){
-        var code = $('#searchNameOrCode').val();
-        $.ajax({
-            url: investBaseEndpoint + 'get-tscode/' + code,
-            success: function (data) {
-                if(data!='err'){
-                    if(data.charAt(0)=='6'){
-                        $('#hiddenTscode').val(data+'.SH');
-                    }else{
-                        $('#hiddenTscode').val(data+'.SZ');
-                    }
-                    $('#stockNameOrCode').val(data);
-                    getRealtimePrice();
-                    // chart.label = data;
-                }else{
-                    $('#hiddenTscode').val('');
-                }
-            }
-        });
-    });
+    // $('#searchNameOrCode').blur(function(){
+    //     var code = $('#searchNameOrCode').val();
+    //     $.ajax({
+    //         url: investBaseEndpoint + 'get-tscode/' + code,
+    //         success: function (data) {
+    //             if(data!='err'){
+    //                 if(data.charAt(0)=='6'){
+    //                     $('#hiddenTscode').val(data+'.SH');
+    //                 }else{
+    //                     $('#hiddenTscode').val(data+'.SZ');
+    //                 }
+    //                 $('#stockNameOrCode').val(data);
+    //                 getRealtimePrice();
+    //                 // chart.label = data;
+    //             }else{
+    //                 $('#hiddenTscode').val('');
+    //             }
+    //         }
+    //     });
+    // });
 
     document.getElementById('stockSearch').addEventListener('click', function() {
         if ($('#hiddenTscode').val() != ''){

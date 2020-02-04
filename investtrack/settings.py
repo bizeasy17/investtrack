@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'tushare',
 
     # local application
+    'siteadmins.apps.SiteadminsConfig',
     'users.apps.UsersConfig',
     'investmgr.apps.InvestmgrConfig',
     # 'dashboard.apps.DashboardConfig',
