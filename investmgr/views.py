@@ -166,8 +166,9 @@ def get_traderec(request, stock_code, trade_date):
 
 
 def get_traderec_direction(request, stock_code, trade_date):
+    code = stock_code.split('.')[0] #original format is 000001.SZ, only 000001 needed
     traderec_list = TradeRec.objects.filter(trader=request.user.id,
-                                            stock_code=stock_code, trade_time__startswith=trade_date,).order_by('direction').distinct('direction')
+                                            stock_code=code, trade_time__startswith=trade_date,).order_by('direction').distinct('direction')
     buy_sell = ''
     if traderec_list is not None and len(traderec_list) > 0:
         for rec in traderec_list:
