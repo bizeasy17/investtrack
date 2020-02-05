@@ -45,9 +45,17 @@ class TradeRec(BaseModel):
         ('s', _('卖出')),
     )
 
+    STOCK_MARKET_CHOICES = (
+        ('ZB', _('主板')),
+        ('ZXB', _('中小板')),
+        ('CYB', _('创业板')),
+        ('KCB', _('科创板')),
+
+    )
+
     # slug = models.SlugField(default='no-slug', max_length=200, blank=True)
     market = models.CharField(
-        _('股票市场'), max_length=10, blank=False, null=False, editable=False)
+        _('股票市场'), choices=STOCK_MARKET_CHOICES, max_length=10, blank=False, null=False, editable=False)
     stock_name = models.CharField(
         _('股票名称'), max_length=50, blank=False, null=False)
     stock_code = models.CharField(
@@ -107,24 +115,24 @@ class TradeRec(BaseModel):
 
     def save(self, *args, **kwargs):
         # 自动给股票代码加上.SH或者.SZ
-        if self.stock_name.isnumeric():  # 用户的输入为股票代码
-            code = self.stock_name
-            map = StockNameCodeMap.objects.filter(stock_code=code)
-            if map.count() > 0:
-                self.stock_name = map[0].stock_name
-                self.stock_code = map[0].stock_code
-            # else: not found
-        else:  # 用户的输入为股票名称
-            map = StockNameCodeMap.objects.filter(stock_name=self.stock_name)
-            if map.count() > 0:
-                self.stock_code = map[0].stock_code
+        # if self.stock_name.isnumeric():  # 用户的输入为股票代码
+        #     code = self.stock_name
+        #     map = StockNameCodeMap.objects.filter(stock_code=code)
+        #     if map.count() > 0:
+        #         self.stock_name = map[0].stock_name
+        #         self.stock_code = map[0].stock_code
+        #     # else: not found
+        # else:  # 用户的输入为股票名称
+        #     map = StockNameCodeMap.objects.filter(stock_name=self.stock_name)
+        #     if map.count() > 0:
+        #         self.stock_code = map[0].stock_code
 
-        if str(self.stock_code)[0] == '6':
-            self.stock_code = + self.stock_code + '.SH'
-            self.market = 'SH'
-        else:
-            self.stock_code = self.stock_code + '.SZ'
-            self.market = 'SZ'
+        # if str(self.stock_code)[0] == '6':
+        #     # self.stock_code = self.stock_code + '.SH'
+        #     self.market = 'SH'
+        # else:
+        #     # self.stock_code = self.stock_code + '.SZ'
+        #     self.market = 'SZ'
 
         if not self.pk:  # 非更新持仓
             p = Positions.objects.filter(
@@ -182,8 +190,8 @@ class Positions(BaseModel):
             self.target_position = target_position
 
         # 获得实时报价
-        ts_code = str(self.stock_code).split('.')[0]
-        realtime_df = ts.get_realtime_quotes(ts_code)  # 需要再判断一下ts_code
+        # ts_code = str(self.stock_code).split('.')[0]
+        realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
         realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
         realtime_price = round(Decimal(realtime_df['price'].mean()), 2)

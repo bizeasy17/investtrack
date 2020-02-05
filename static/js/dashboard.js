@@ -44,7 +44,48 @@ $(function () {
                 update();
             }
         })
+        getRealtimePrice(item.id, item.text, item.ts_code, item.market);
     });
+
+    // $('#stockNameOrCode').autoComplete({
+    //     resolver: 'custom',
+    //     formatResult: function (item) {
+    //         return {
+    //             value: item.id,
+    //             text: item.id + " - " + item.text,
+    //             html: [
+    //                 item.id + ' - ' + item.text,// +  '[' + item.market + ']',
+    //             ]
+    //         };
+    //     },
+    //     events: {
+    //         search: function (qry, callback) {
+    //             // let's do a custom ajax call
+    //             $.ajax(
+    //                 investBaseEndpoint + 'search-autocomplete/' + $('#stockNameOrCode').val(),
+    //             ).done(function (res) {
+    //                 callback(res.results)
+    //             });
+    //         }
+    //     }
+    // });
+
+    // $('#stockNameOrCode').on('autocomplete.select', function (evt, item) {
+    //     var ts_code = item.ts_code
+    //     var code = item.id;
+    //     var ts_name = item.text;
+    //     $.ajax({
+    //         url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
+    //         success: function (data) {
+    //             chart.data.datasets.forEach(function (dataset) {
+    //                 dataset.data = data;
+    //                 dataset.label = ts_name + ' - ' + code;
+    //             });
+    //             update();
+    //         }
+    //     })
+    //     getRealtimePrice(item.id, item.text);
+    // });
 
     // assign the selected strategy
     $('.strategy-item').click(function(){
@@ -54,27 +95,53 @@ $(function () {
 
     $('#btnBuy').click(function(){
         $('#direction').val('b');
+        $('#directionIndicate').text(' - 买入');
+        $('#directionIndicate').addClass('text-danger');
+        $('#directionIndicate').addClass('text-danger');
+        // $('#collapseCreate').removeClass('collapse')
+
+        // if ($('#collapseCreate').hasClass('collapse')){
+
+        // }
     });
 
-    $('btnSell').click(function(){
+    $('#btnSell').click(function(){
         $('#direction').val('s');
+        $('#directionIndicate').text(' - 卖出');
+        $('#directionIndicate').removeClass('text-danger');
+        $('#directionIndicate').addClass('text-success');
+        // if ($('#collapseCreate').hasClass('collapse')) {
+
+        // }
+
+        // $('#collapseCreate').removeClass('collapse')
+
     });
 
     // assign the selected strategy
-    var getRealtimePrice = function () {
-        var nameOrCode = $('#stockNameOrCode').val();
-        if (nameOrCode != '') {
+    var getRealtimePrice = function (code, name, ts_code, market) {
+        // $('#stockNameOrCode').val(code + ' - ' + name);
+        $('#hiddenName').val(name);
+        $('#hiddenCode').val(code);
+        $('#hiddenTscode').val(ts_code);
+        $('#hiddenMarket').val(market);
+
+        if (code != '') {
             $.ajax({
-                url: investBaseEndpoint + 'get-realtime-price/' + nameOrCode,
+                url: investBaseEndpoint + 'get-realtime-price/' + code,
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
-                data: {
-                    nameOrCode: nameOrCode
-                },
+                // data: {
+                //     nameOrCode: nameOrCode
+                // },
                 success: function (data) {
                     $('#currentPrice').val(data.price);
                     $('#tradePrice').val(data.price);
+                    var quantity = $('#quantity').val();
+
+                    // $('#quantity').val($('#quantity').val().toLocaleString());
+                    $('#cash').val(parseFloat(data.price * quantity).toLocaleString());
                     // $('input[type=number').digits();
                 },
                 statusCode: {
@@ -92,7 +159,7 @@ $(function () {
         }
     };
 
-    document.getElementById('stockNameOrCode').addEventListener('blur', getRealtimePrice);
+    // document.getElementById('stockNameOrCode').addEventListener('blur', getRealtimePrice, $(this).val());
 
     // assign the selected strategy
     $('#quantity').blur(function () {
@@ -145,10 +212,15 @@ $(function () {
     //     }
     // });
 
+    // $("#messages").alert('close');
+
     $('#btnSubmitTrade').click(function(){
         event.preventDefault();
 
-        var stockNameOrCode = $('#stockNameOrCode').val();
+        var name = $('#hiddenName').val();
+        var code = $('#hiddenCode').val();
+        var tsCode = $('#hiddenTscode').val();
+        var market = $('#hiddenMarket').val();
         var currentPrice = $('#currentPrice').val();
         var price = $('#tradePrice').val();
         var quantity = $('#quantity').val();
@@ -163,7 +235,10 @@ $(function () {
             method: 'POST',
             dataType: 'json',
             data: {
-                stockName: stockNameOrCode, 
+                name: name, 
+                code: code,
+                tsCode: tsCode,
+                market: market,
                 currentPrice: currentPrice,
                 price: price,
                 quantity: quantity,
@@ -174,17 +249,21 @@ $(function () {
                 // csrfmiddlewaretoken: '{{ csrf_token }}'
             },
             success: function (data) {
-                $(".error").remove();
+                $("#messages").removeClass('d-none');
+                $("#messageText").html('<strong>' + data.success + '</strong>.');
             },
             statusCode: {
                 403: function () {
-                    alert("403 forbidden");
+                    $("#messages").removeClass('d-none');
+                    $("#messageText").html('<strong>403 forbidden</strong>.');
                 },
                 404: function () {
-                    alert("404 page not found");
+                    $("#messages").removeClass('d-none');
+                    $("#messageText").html('<strong>404 page not found</strong>.');
                 },
                 500: function() {
-                    alert("500 internal server error");
+                    $("#messages").removeClass('d-none');
+                    $("#messageText").html('<strong>500 internal server error</strong>.');
                 }
             }
         });
@@ -333,54 +412,24 @@ $(function () {
     //     });
     // });
 
-    document.getElementById('stockSearch').addEventListener('click', function() {
-        if ($('#hiddenTscode').val() != ''){
-            var ts_code = $('#hiddenTscode').val();
-            $.ajax({
-                url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
-                success: function (data) {
-                    chart.data.datasets.forEach(function (dataset) {
-                        dataset.data = data;
-                        dataset.label = ts_code;
-                    });
-                    update();
-                }
-            })
-        }
-    });
+    // document.getElementById('stockSearch').addEventListener('click', function() {
+    //     if ($('#hiddenTscode').val() != ''){
+    //         var ts_code = $('#hiddenTscode').val();
+    //         $.ajax({
+    //             url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
+    //             success: function (data) {
+    //                 chart.data.datasets.forEach(function (dataset) {
+    //                     dataset.data = data;
+    //                     dataset.label = ts_code;
+    //                 });
+    //                 update();
+    //             }
+    //         })
+    //     }
+    // });
     // var test = function () {
     //     alert('document.getElementbyID');
     // };
     // document.getElementById('stockSearch').addEventListener('click', test);
-
-    $('#test').click(function(){
-        var rq = $('#testContent').val();
-        $.ajax({
-            url: investBaseEndpoint+'/testAjax/' + rq,
-            headers: { 'X-CSRFToken': csrftoken },
-            method: 'GET',
-            dataType: 'json',
-            data: {
-
-            },
-            success: function (data) {
-                $('#testInfo').append('<span>' + data + '</span>');
-            },
-            error: function(){
-                $('#testInfo').append('<p>An error has occurred</p>');
-            },
-            statusCode: {
-                403: function () {
-                    $('#testInfo').append('<span>403 forbidden</span>');
-                },
-                404: function () {
-                    $('#testInfo').append('<span>404 page not found</span>');
-                },
-                500: function () {
-                    $('#testInfo').append('<span>500 internal server error</span>');
-                }
-            }
-        });
-    });
 });
     

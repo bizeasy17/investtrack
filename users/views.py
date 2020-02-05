@@ -53,7 +53,10 @@ def create_trade(request):
     if request.method == 'POST':
         data = request.POST.copy()
         trader = request.user
-        stock_name = data.get('stockName')
+        company_name = data.get('name')
+        code = data.get('code')
+        ts_code = data.get('tsCode')
+        market = data.get('market')
         current_price = round(Decimal(data.get('currentPrice')), 2)
         price = round(Decimal(data.get('price')), 2)
         cash = round(Decimal(data.get('cash').replace(',', '')), 2)
@@ -62,7 +65,7 @@ def create_trade(request):
         target_position = data.get('targetPosition')
         direction = data.get('direction')
 
-        new_trade = TradeRec(trader=trader, stock_name=stock_name, direction=direction, current_price=current_price, price=price,
+        new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
                              board_lots=quantity, cash=cash, strategy=strategy[0], target_position=target_position)
         new_trade.save()
         # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
