@@ -43,7 +43,7 @@
                 </ul>
                 <ul class="navbar-nav mr-auto">
                   <!-- <li class="nav-item"><a class="nav-link" href="/">{% trans '数据报告' %} <span class="sr-only">(current)</span></a></li> -->
-                  <li class="nav-item"><a class="nav-link" href="/traderec/">{% trans '交易记录' %}</a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'user:trade_log' %}">{% trans '交易日志' %}</a></li>
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                   <li class="nav-item"><a class="nav-link" href="/about/">{% trans '关于我们' %}</a></li>
                 </ul>
@@ -85,8 +85,8 @@
         
       </div>
       <div id="header" class="container">
-        <div id="messages" class="alert alert-success fixed-bottom d-none p-3">
-          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <div id="messages" class="alert alert-success fixed-bottom p-3 fade show d-none">
+          <button type="button" class="close" aria-hidden="true">&times;</button>
           <div id="messageText">
           </div>
         </div>

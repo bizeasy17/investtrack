@@ -2,10 +2,12 @@ from django.urls import re_path, path
 
 from . import views
 
-app_name = 'users'
+app_name = 'user'
 urlpatterns = [
-    path('<username>/dashboard/',
+    path('dashboard/',
          views.UserDashboardView.as_view(), name='dashboard'),
-    path('invest/create',
+    path('tradelog/',
+         views.UserTradelogView.as_view(), name='trade_log'),
+    path('create-trade/',
          views.create_trade, name='create_trade'),
 ]

@@ -154,6 +154,19 @@ class TradeRec(BaseModel):
                 self.board_lots, self.price, self.cash, self.trader)
         super().save(*args, **kwargs)
 
+# First, define the Manager subclass.
+
+
+class PositionManager(models.Manager):
+    def get_queryset(self):
+        # 获得实时报价
+        # ts_code = str(self.stock_code).split('.')[0]
+        realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
+        realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                   'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+        realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
+
+        return super().get_queryset().filter()
 
 # 目前持有仓位数据model
 class Positions(BaseModel):
@@ -180,8 +193,20 @@ class Positions(BaseModel):
     is_liquadated = models.BooleanField(
         _('是否清仓'), blank=False, null=False, default=False, db_index=True)
 
+    # realtime_objects = PositionManager() # The position-specific manager.
+
     def __str__(self):
         return self.stock_name
+
+    def make_profit_updated(self):
+        # 获得实时报价
+        # ts_code = str(self.stock_code).split('.')[0]
+        realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
+        realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                   'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+        realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
+        self.profit = (realtime_price - self.current_price) * self.lots
+        self.save()
 
     # 持仓算法
     def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
@@ -260,6 +285,8 @@ class TradeSettings(BaseModel):
 
     SETTING_CHOICES = (
         ('TARGET_POSITION', _('目标仓位')),
+        ('SERVICE_FEE', _('交易手续费')),
+        ('STAMP_TAX', _('印花税')),
     )
     name = models.CharField(_('参数名'), choices=SETTING_CHOICES,
                             max_length=50, blank=False, null=False)

@@ -4,7 +4,7 @@ Chart.defaults.global.defaultFontColor = '#858796';
 
 $(function () {
     var csrftoken = Cookies.get('csrftoken');
-    var userStockBaseEndpoint = '/users/invest/';
+    var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
 
     $('#searchNameOrCode').autoComplete({
@@ -212,8 +212,15 @@ $(function () {
     //     }
     // });
 
-    // $("#messages").alert('close');
+    // $(".close").click(function(){
+    //     $("#messages").addClass('d-none');
+    // });
 
+    $('.close').click(function () {
+        // e.preventDefault();
+        $('#messages').addClass('d-none');
+    });
+    
     $('#btnSubmitTrade').click(function(){
         event.preventDefault();
 
@@ -230,7 +237,7 @@ $(function () {
         var direction = $('#direction').val();
 
         $.ajax({
-            url: userStockBaseEndpoint + 'create',
+            url: userBaseEndpoint + 'create-trade',
             headers: { 'X-CSRFToken': csrftoken },
             method: 'POST',
             dataType: 'json',
@@ -250,19 +257,24 @@ $(function () {
             },
             success: function (data) {
                 $("#messages").removeClass('d-none');
+                // $("#messages").addClass('d-block');
                 $("#messageText").html('<strong>' + data.success + '</strong>.');
+                // $("#messages").fadeOut(2000);
             },
             statusCode: {
                 403: function () {
-                    $("#messages").removeClass('d-none');
+                    $("#messages").removeClass('hidden');
+                    // $("#messages").addClass('d-block');
                     $("#messageText").html('<strong>403 forbidden</strong>.');
                 },
                 404: function () {
-                    $("#messages").removeClass('d-none');
+                    $("#messages").removeClass('hidden');
+                    // $("#messages").addClass('d-block');
                     $("#messageText").html('<strong>404 page not found</strong>.');
                 },
                 500: function() {
-                    $("#messages").removeClass('d-none');
+                    $("#messages").removeClass('hidden');
+                    // $("#messages").addClass('d-block');
                     $("#messageText").html('<strong>500 internal server error</strong>.');
                 }
             }
