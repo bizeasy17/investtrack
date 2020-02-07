@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<!-- /.container -->
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script
+    src="https://cdn.polyfill.io/v2/polyfill.js?features=default,String.prototype.repeat,Array.prototype.find,Array.prototype.findIndex,Math.trunc,Math.sign"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
+<script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}" type="text/javascript"></script>
+
+<!-- place project specific Javascript in this file -->
+<!-- <script src="{% static 'js/charts-utils.js' %}" type="text/javascript"></script> -->
+<script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
+{% endblock javascript %}

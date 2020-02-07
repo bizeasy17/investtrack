@@ -7,6 +7,8 @@ $(function () {
     var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
 
+    // $("#tradeDatetime").datepicker();
+
     $('#searchNameOrCode').autoComplete({
         resolver: 'custom',
         formatResult: function (item) {
@@ -116,6 +118,34 @@ $(function () {
 
         // $('#collapseCreate').removeClass('collapse')
 
+    });
+
+    $("#tblMyPosition tbody tr").click(function () {
+        // alert($(this).find('th').text()); // firstElementChild.innerText);
+        //get <td> element values here!!??
+        var rawNameCodeArray = $(this).find('th').text().split(' ');
+        var code = rawNameCodeArray[0];
+        var name = rawNameCodeArray[1];
+        var market = '', tsCode = code;
+
+        if(code.charAt(0)=='6'){
+            market = 'SH';
+            tsCode = tsCode + '.SH';
+        }else{
+            market = 'SZ';
+            tsCode = tsCode + '.SZ';
+        }
+        $.ajax({
+            url: investBaseEndpoint + 'get-stock-price/' + tsCode + '/' + startDate + '/' + endDate + '/D/',
+            success: function (data) {
+                chart.data.datasets.forEach(function (dataset) {
+                    dataset.data = data;
+                    dataset.label = name + ' - ' + code;
+                });
+                update();
+            }
+        })
+        getRealtimePrice(code, name, tsCode, market);
     });
 
     // assign the selected strategy
@@ -235,6 +265,7 @@ $(function () {
         var strategy = $('#pickedStrategyID').val();
         var targetPosition = $('#targetPosition').val();
         var direction = $('#direction').val();
+        var tradeTime = $('#tradeDatetime').val();
 
         $.ajax({
             url: userBaseEndpoint + 'create-trade',
@@ -253,6 +284,7 @@ $(function () {
                 strategy: strategy,
                 targetPosition: targetPosition,
                 direction: direction,
+                tradeTime: tradeTime,
                 // csrfmiddlewaretoken: '{{ csrf_token }}'
             },
             success: function (data) {

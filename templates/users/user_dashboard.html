@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static i18n %}
-{% load crispy_forms_tags thumbnail humanize %}
+{% load thumbnail humanize %}
 
 {% block title %}{% endblock %}
 
@@ -90,7 +90,7 @@
                 </div>
             </div>
         </div>
-        <div class="card my-4 collapse" id="collapseCreate">
+        <div class="card my-4 collapse small" id="collapseCreate">
             <h6 class="card-header">{% trans '添加交易记录' %}<span id="directionIndicate"></span></h6>
             <!-- <hr/> -->
             <div class="card-body">
@@ -146,10 +146,14 @@
                         </div>
                         <div class="form-row pl-3 pr-3">
                     
-                            <div class="form-group col-md-12 mb-2">
+                            <div class="form-group col-md-6 mb-2">
                                 <label for="validationDefaultUsername">{% trans '目标仓位(股)' %}</label>
                                 <input class="form-control" type="number" id="targetPosition" placeholder="{% trans '目标仓位(股)' %}" step="100"
                                     value="1000" data-bind="value:replyNumber">
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label for="validationDefaultUsername">{% trans '交易时间' %}</label>
+                                <input class="form-control" type="text"" id="tradeDatetime" placeholder="{% trans '交易时间' %}" value="{% now 'Y-m-d G:i' %}">
                             </div>
                         </div>
                         <div class="form-row pl-3 pr-3">
@@ -185,29 +189,31 @@
         <!-- Categories Widget -->
         <div class="card my-4 small">
             <h6 class="card-header">{% trans '我的持仓' %}</h6>
-            <table class="table table-hover">
+            <table class="table table-hover" id="tblMyPosition">
                 <thead>
                     <tr>
-                        <th scope="col">{% trans '名称' %}</th>
-                        <th scope="col">{% trans '代码' %}</th>
+                        <th scope="col">{% trans '股票' %}</th>
                         <th scope="col">{% trans '持仓' %}</th>
+                        <th scope="col">{% trans '成本' %}</th>
                         <th scope="col">{% trans '现价' %}</th>
-                        <th scope="col">{% trans '获利' %}</th>
+                        <th scope="col">{% trans '获利%' %}</th>
                     </tr>
                 </thead>
                 <tbody> 
                     {% if trade_info %} 
                         {% for position in trade_info.positions %}
                         <tr>
-                        <th scope="row"> {{ position.stock_name }} </th>
-                        <th scope="col">{{ position.stock_code }}</th>
-                        <td>{{ position.lots }}</td>
-                        <td>{{ position.position_price }}</td>
+                        <th scope="row">{{position.stock_code}} {{position.stock_name}} </th>
+                        <td>{{position.lots}}</td>
+                        <td>{{position.position_price}}</td>
+                        <td>{{position.current_price}}</td>
                         {% if position.profit > 0 %} 
-                            <td class="text-danger">{{ position.profit }}</td>
+                            <td class="text-danger">
                         {% else %} 
-                            <td class="text-success">{{ position.profit }}</td>
+                            <td class="text-success">                     
                         {% endif %}
+                            {{position.profit}}({{position.profit_ratio}})
+                            </td>
                         </tr>
                         {% endfor %}
                     {% endif %}
@@ -292,6 +298,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
 <script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/prettydate.min.js' %}" type="text/javascript"></script>
+
 
 <!-- place project specific Javascript in this file -->
 <!-- <script src="{% static 'js/charts-utils.js' %}" type="text/javascript"></script> -->

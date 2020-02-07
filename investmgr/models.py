@@ -184,7 +184,8 @@ class Positions(BaseModel):
         _('股票现价'), max_digits=5, decimal_places=2, blank=False, null=False, default=0)
     profit = models.DecimalField(
         _('利润'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
-    # profit_ratio = models.FloatField(_('利润率'), blank=False, null=False, default=0.0)
+    profit_ratio = models.CharField(
+        _('利润率'), max_length=100, blank=True, null=True)
     cash = models.DecimalField(
         _('投入现金额'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     lots = models.PositiveIntegerField(_('持仓量(股)'), default=0)
@@ -205,7 +206,10 @@ class Positions(BaseModel):
         realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
         realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
-        self.profit = (realtime_price - self.current_price) * self.lots
+        self.profit = (realtime_price - self.position_price) * self.lots
+        self.profit_ratio = str(
+            round((realtime_price - self.position_price) / self.position_price * 100,2)) + '%'
+        self.current_price = realtime_price
         self.save()
 
     # 持仓算法
@@ -269,6 +273,8 @@ class Positions(BaseModel):
             每手利润 = 利润 / (已有持仓-卖出量(手)）
             持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
         '''
+        self.profit_ratio = str(
+            round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
 
         self.save()
 

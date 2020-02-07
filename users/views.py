@@ -1,5 +1,5 @@
 from decimal import *
-
+from datetime import datetime
 import tushare as ts
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -31,7 +31,7 @@ class UserDashboardView(LoginRequiredMixin, View):
         req_user = request.user
         if req_user is not None:
             tradedetails = TradeRec.objects.filter(
-                trader=req_user.id, )[:8] #前台需要添加view more...
+                trader=req_user.id, )[:8]  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
                 trader=req_user.id).exclude(lots=0)[:8]
             # update the profit based on the realtime price
@@ -98,14 +98,15 @@ def create_trade(request):
         quantity = int(data.get('quantity'))
         target_position = data.get('targetPosition')
         direction = data.get('direction')
+        trade_time = data.get('tradeTime')
 
         new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
-                             board_lots=quantity, cash=cash, strategy=strategy[0], target_position=target_position)
+                             board_lots=quantity, cash=cash, strategy=strategy[0], target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M'))
         new_trade.save()
         # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
-        return JsonResponse({'success':_('成功创建交易记录')}, safe=False)
+        return JsonResponse({'success': _('成功创建交易记录')}, safe=False)
 
-    return JsonResponse({'error':_('无法创建交易记录')}, safe=False)
+    return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
 
 
 class TradeRecCreateView(LoginRequiredMixin, FormView):
@@ -126,6 +127,8 @@ class TradeRecCreateView(LoginRequiredMixin, FormView):
 #     model = User
 
 # custom 404, 403, 500 pages
+
+
 def my_custom_page_not_found_view(request, exception):
      # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'pages/404.html'

@@ -8,6 +8,6 @@ urlpatterns = [
          views.UserDashboardView.as_view(), name='dashboard'),
     path('tradelog/',
          views.UserTradelogView.as_view(), name='trade_log'),
-    path('create-trade/',
+    path('create-trade',
          views.create_trade, name='create_trade'),
 ]
