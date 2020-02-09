@@ -94,41 +94,45 @@ def get_company_info_autocomplete(request, name_or_code):
     return JsonResponse(empty, safe=False)
 
 
-def get_index_price_by(request, index_name, start_date, end_date, period):
+def get_stock_price_by(request, code, start_date, end_date, period):
     df = []
     index_list = ['sh', 'sz', 'hs300', 'sz50', 'zxb', 'cyb', 'kcb']
     if request.method == 'GET':
-        if index_name in index_list:
-            df = ts.get_hist_data(index_name, start=start_date,
-                                  end=end_date, ktype=period)
+        # if code in index_list:
+        df = ts.get_hist_data(code, start=start_date,
+                                end=end_date, ktype=period)
 
-            stock_his_data_dic = json.loads(df.to_json(orient='index'))
+        stock_his_data_dic = json.loads(df.to_json(orient='index'))
 
-            data = []
-            if not stock_his_data_dic:
-                return JsonResponse(df, safe=False)
+        data = []
+        if not stock_his_data_dic:
+            return JsonResponse(df, safe=False)
 
-            for k, v in stock_his_data_dic.items():
+        for k, v in stock_his_data_dic.items():
+            dt = str(k).split(' ')
+            if len(dt) > 1:
+                t = datetime.strptime(k, "%Y-%m-%d %H:%M:%S")
+            else:
                 t = datetime.strptime(k, "%Y-%m-%d")
-                for kk, vv in v.items():
-                    if kk == 'open':
-                        o = vv
-                    elif kk == 'high':
-                        h = vv
-                    elif kk == 'close':
-                        c = vv
-                    elif kk == 'low':
-                        l = vv
+            for kk, vv in v.items():
+                if kk == 'open':
+                    o = vv
+                elif kk == 'high':
+                    h = vv
+                elif kk == 'close':
+                    c = vv
+                elif kk == 'low':
+                    l = vv
 
-                data.append(
-                    {
-                        't': t,
-                        'o': o,
-                        'h': h,
-                        'l': l,
-                        'c': c,
-                    }
-                )
+            data.append(
+                {
+                    't': t,
+                    'o': o,
+                    'h': h,
+                    'l': l,
+                    'c': c,
+                }
+            )
 
             # if df is not None and len(df) > 0:
             #     for d in df.values:
@@ -141,8 +145,8 @@ def get_index_price_by(request, index_name, start_date, end_date, period):
             #                 'c': d[5],
             #             }
             #         )
-            return JsonResponse(data[::-1], safe=False)
-            # return JsonResponse(stock_his_data_dic, safe=False)
+        return JsonResponse(data[::-1], safe=False)
+        # return JsonResponse(stock_his_data_dic, safe=False)
 
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 

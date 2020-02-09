@@ -3,11 +3,57 @@ Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,Bli
 Chart.defaults.global.defaultFontColor = '#858796';
 
 $(function () {
+    var chart;
+
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
 
-    // $("#tradeDatetime").datepicker();
+    var chartShowDays15 = 5
+    var chartShowDays30 = 10
+    var chartShowDays60 = 15
+    var chartShowDays = 60
+    var chartShowDaysW = 180
+    var chartShowDaysM = 720
+
+    var dt = new Date();
+    var endDate = formatDate(dt, '-');   
+    var chartCanvas = document.getElementById('stockChart').getContext('2d');
+
+    // render the stock charts
+    // 更新当前所选股票信息
+    var getStartDate = function (period, format){
+        var priorDate;
+        if(period=='15')
+            priorDate = new Date(dt.getTime() - (chartShowDays15 * 24 * 60 * 60 * 1000));
+        else if(period=='30')
+            priorDate = new Date(dt.getTime() - (chartShowDays30 * 24 * 60 * 60 * 1000));
+        else if(period=='60')
+            priorDate = new Date(dt.getTime() - (chartShowDays60 * 24 * 60 * 60 * 1000));
+        else if(period=='D')
+            priorDate = new Date(dt.getTime() - (chartShowDays * 24 * 60 * 60 * 1000));
+        else if(period=='W')
+            priorDate = new Date(dt.getTime() - (chartShowDaysW * 24 * 60 * 60 * 1000));
+        else if(period=='M')
+            priorDate = new Date(dt.getTime() - (chartShowDaysM * 24 * 60 * 60 * 1000));
+
+        return formatDate(priorDate, format);
+    }
+
+    var updateChartFor = function (showName, showCode, tsCode, period) {
+        var startDate = getStartDate(period, '-');
+
+        $.ajax({
+            url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
+            success: function (data) {
+                chart.data.datasets.forEach(function (dataset) {
+                    dataset.data = data;
+                    dataset.label = showName + ' - ' + showCode;
+                });
+                update();
+            }
+        })
+    }
 
     $('#searchNameOrCode').autoComplete({
         resolver: 'custom',
@@ -33,61 +79,118 @@ $(function () {
     });
 
     $('#searchNameOrCode').on('autocomplete.select', function (evt, item) {
-        var ts_code = item.ts_code
         var code = item.id;
-        var ts_name = item.text;
-        $.ajax({
-            url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
-            success: function (data) {
-                chart.data.datasets.forEach(function (dataset) {
-                    dataset.data = data;
-                    dataset.label = ts_name + ' - ' + code;
-                });
-                update();
-            }
-        })
-        getRealtimePrice(item.id, item.text, item.ts_code, item.market);
+        var showCode = item.ts_code;
+        var showName = item.text;
+        var market = item.market;
+        var period = $('input:radio[name="period"]:checked').val();
+        // 设置当前选定股票
+        $('#hiddenCode').val(code);
+        $('#hiddenName').val(showName);
+        $('#hiddenTscode').val(showCode);
+        $('#hiddenMarket').val(market);
+
+        updateChartFor(showName, showCode, code, period)
+
+        updateRealtimePriceFor(code);
     });
 
-    // $('#stockNameOrCode').autoComplete({
-    //     resolver: 'custom',
-    //     formatResult: function (item) {
-    //         return {
-    //             value: item.id,
-    //             text: item.id + " - " + item.text,
-    //             html: [
-    //                 item.id + ' - ' + item.text,// +  '[' + item.market + ']',
-    //             ]
-    //         };
-    //     },
-    //     events: {
-    //         search: function (qry, callback) {
-    //             // let's do a custom ajax call
-    //             $.ajax(
-    //                 investBaseEndpoint + 'search-autocomplete/' + $('#stockNameOrCode').val(),
-    //             ).done(function (res) {
-    //                 callback(res.results)
-    //             });
-    //         }
-    //     }
-    // });
+    // assign the selected strategy
+    var updateRealtimePriceFor = function (code) {
+        if (code != '') {
+            $.ajax({
+                url: investBaseEndpoint + 'get-realtime-price/' + code,
+                // headers: { 'X-CSRFToken': csrftoken },
+                method: 'GET',
+                dataType: 'json',
+                // data: {
+                //     nameOrCode: nameOrCode
+                // },
+                success: function (data) {
+                    $('#currentPrice').val(data.price);
+                    $('#tradePrice').val(data.price);
+                    var quantity = $('#quantity').val();
 
-    // $('#stockNameOrCode').on('autocomplete.select', function (evt, item) {
-    //     var ts_code = item.ts_code
-    //     var code = item.id;
-    //     var ts_name = item.text;
-    //     $.ajax({
-    //         url: investBaseEndpoint + 'get-stock-price/' + ts_code + '/' + startDate + '/' + endDate + '/D/',
-    //         success: function (data) {
-    //             chart.data.datasets.forEach(function (dataset) {
-    //                 dataset.data = data;
-    //                 dataset.label = ts_name + ' - ' + code;
-    //             });
-    //             update();
-    //         }
-    //     })
-    //     getRealtimePrice(item.id, item.text);
-    // });
+                    // $('#quantity').val($('#quantity').val().toLocaleString());
+                    $('#cash').val(parseFloat(data.price * quantity).toLocaleString());
+                    // $('input[type=number').digits();
+                },
+                statusCode: {
+                    403: function () {
+                        alert("403 forbidden");
+                    },
+                    404: function () {
+                        alert("404 page not found");
+                    },
+                    500: function () {
+                        alert("500 internal server error");
+                    }
+                }
+            });
+        }
+    };
+
+    // 页面默认加载上证指数日K（D)
+    var initStockChart = function () {
+        var period = $('input:radio[name="period"]:checked').val();
+        var startDate = getStartDate(period, '-');
+        var code = $('input:radio[name="index"]:checked').val(); // e.g. sh
+        var showCode = $('input:radio[name="index"]:checked').attr('id')// e.g. 1A0001 上证
+        var showName = $('input:radio[name="index"]:checked').parent().text().trim();
+
+        $('#hiddenCode').val(code);
+        $('#hiddenName').val(showName);
+        $('#hiddenTscode').val(showCode);
+
+        $.ajax({
+            url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
+            success: function (data) {
+                // ctx1.canvas.width = 1000;
+                // ctx1.canvas.height = 250;
+                chart = new Chart(chartCanvas, {
+                    type: 'candlestick',
+                    data: {
+                        datasets: [{
+                            label: showName + '-' + showCode,
+                            data: data
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            xAxes: [{
+                                afterBuildTicks: function (scale, ticks) {
+                                    var majorUnit = scale._majorUnit;
+                                    var firstTick = ticks[0];
+                                    var i, ilen, val, tick, currMajor, lastMajor;
+
+                                    val = luxon.DateTime.fromMillis(ticks[0].value);
+                                    if ((majorUnit === 'minute' && val.second === 0)
+                                        || (majorUnit === 'hour' && val.minute === 0)
+                                        || (majorUnit === 'day' && val.hour === 9)
+                                        || (majorUnit === 'month' && val.day <= 3 && val.weekday === 1)
+                                        || (majorUnit === 'year' && val.month === 0)) {
+                                        firstTick.major = true;
+                                    } else {
+                                        firstTick.major = false;
+                                    }
+                                    lastMajor = val.get(majorUnit);
+
+                                    for (i = 1, ilen = ticks.length; i < ilen; i++) {
+                                        tick = ticks[i];
+                                        val = luxon.DateTime.fromMillis(tick.value);
+                                        currMajor = val.get(majorUnit);
+                                        tick.major = currMajor !== lastMajor;
+                                        lastMajor = currMajor;
+                                    }
+                                    return ticks;
+                                }
+                            }]
+                        }
+                    }
+                });
+            }
+        });
+    }
 
     // assign the selected strategy
     $('.strategy-item').click(function(){
@@ -125,70 +228,50 @@ $(function () {
         //get <td> element values here!!??
         var rawNameCodeArray = $(this).find('th').text().split(' ');
         var code = rawNameCodeArray[0];
-        var name = rawNameCodeArray[1];
-        var market = '', tsCode = code;
+        var showName = rawNameCodeArray[1];
+        var market = '', showCode = code;
+        var period = $('input:radio[name="period"]:checked').val();
 
-        if(code.charAt(0)=='6'){
+        if (showCode.charAt(0)=='6'){
             market = 'SH';
-            tsCode = tsCode + '.SH';
+            showCode = showCode + '.SH';
         }else{
             market = 'SZ';
-            tsCode = tsCode + '.SZ';
+            showCode = showCode + '.SZ';
         }
-        $.ajax({
-            url: investBaseEndpoint + 'get-stock-price/' + tsCode + '/' + startDate + '/' + endDate + '/D/',
-            success: function (data) {
-                chart.data.datasets.forEach(function (dataset) {
-                    dataset.data = data;
-                    dataset.label = name + ' - ' + code;
-                });
-                update();
-            }
-        })
-        getRealtimePrice(code, name, tsCode, market);
-    });
-
-    // assign the selected strategy
-    var getRealtimePrice = function (code, name, ts_code, market) {
-        // $('#stockNameOrCode').val(code + ' - ' + name);
-        $('#hiddenName').val(name);
         $('#hiddenCode').val(code);
-        $('#hiddenTscode').val(ts_code);
+        $('#hiddenName').val(showName);
+        $('#hiddenTscode').val(showCode);
         $('#hiddenMarket').val(market);
 
-        if (code != '') {
-            $.ajax({
-                url: investBaseEndpoint + 'get-realtime-price/' + code,
-                // headers: { 'X-CSRFToken': csrftoken },
-                method: 'GET',
-                dataType: 'json',
-                // data: {
-                //     nameOrCode: nameOrCode
-                // },
-                success: function (data) {
-                    $('#currentPrice').val(data.price);
-                    $('#tradePrice').val(data.price);
-                    var quantity = $('#quantity').val();
+        updateChartFor(showName, showCode, code, period);
+        updateRealtimePriceFor(code);
+    });
 
-                    // $('#quantity').val($('#quantity').val().toLocaleString());
-                    $('#cash').val(parseFloat(data.price * quantity).toLocaleString());
-                    // $('input[type=number').digits();
-                },
-                statusCode: {
-                    403: function () {
-                        alert("403 forbidden");
-                    },
-                    404: function () {
-                        alert("404 page not found");
-                    },
-                    500: function () {
-                        alert("500 internal server error");
-                    }
-                }
-            });
-        }
-    };
+    $('input:radio[name="period"]').change(function(){
+        // 设置当前选定股票
+        var code = $('#hiddenCode').val()
+        var showCode = $('#hiddenTscode').val();
+        var showName = $('#hiddenName').val();
+        var period = $(this).val();
+        
+        updateChartFor(showName, showCode, code, period);
+    });
 
+    $('input:radio[name="index"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        var code = this.value;
+        var showCode = this.id;
+        var showName = $(this).parent().text().trim();
+        var period = $('input:radio[name="period"]:checked').val();
+
+        $('#hiddenCode').val(code);
+        $('#hiddenName').val(showName);
+        $('#hiddenTscode').val(showCode);
+
+        updateChartFor(showName, showCode, code, period);
+    });
+    
     // document.getElementById('stockNameOrCode').addEventListener('blur', getRealtimePrice, $(this).val());
 
     // assign the selected strategy
@@ -313,8 +396,7 @@ $(function () {
         });
     });
 
-    // render the stock charts
-    function formatDate(date) {
+    function formatDate(date, conn) {
         var dayNames = [
             "01", "02", "03",
             "04", "05", "06", "07",
@@ -337,7 +419,7 @@ $(function () {
         var monthIndex = date.getMonth();
         var year = date.getFullYear();
 
-        return year + '' + monthNames[monthIndex] + '' + dayNames[dayIndex-1];
+        return year + conn + monthNames[monthIndex] + conn + dayNames[dayIndex-1];
     }
 
     var update = function () {
@@ -375,86 +457,9 @@ $(function () {
         chart.update();
     };
 
-    var chartShowDays = 60
-    var dt = new Date();
-    var priorDt = new Date(dt.getTime() - (chartShowDays * 24 * 60 * 60 * 1000));
-    var startDate = formatDate(priorDt);
-    var endDate = formatDate(dt);
-    var chartCanvas = document.getElementById('stockChart').getContext('2d');
-
-    // 页面默认加载上证指数日K（D)
-    var chart;
-    $.ajax({
-        url: investBaseEndpoint + 'get-index-price/sh/' + startDate + '/' + endDate + '/D/',
-        success: function(data){
-            // ctx1.canvas.width = 1000;
-            // ctx1.canvas.height = 250;
-            chart = new Chart(chartCanvas, {
-                type: 'candlestick',
-                data: {
-                    datasets: [{
-                        label: '上证指数',
-                        data: data
-                    }]
-                },
-                options: {
-                    scales: {
-                        xAxes: [{
-                            afterBuildTicks: function(scale, ticks) {
-                                var majorUnit = scale._majorUnit;
-                                var firstTick = ticks[0];
-                                var i, ilen, val, tick, currMajor, lastMajor;
-
-                                val = luxon.DateTime.fromMillis(ticks[0].value);
-                                if ((majorUnit === 'minute' && val.second === 0)
-                                        || (majorUnit === 'hour' && val.minute === 0)
-                                        || (majorUnit === 'day' && val.hour === 9)
-                                        || (majorUnit === 'month' && val.day <= 3 && val.weekday === 1)
-                                        || (majorUnit === 'year' && val.month === 0)) {
-                                    firstTick.major = true;
-                                } else {
-                                    firstTick.major = false;
-                                }
-                                lastMajor = val.get(majorUnit);
-
-                                for (i = 1, ilen = ticks.length; i < ilen; i++) {
-                                    tick = ticks[i];
-                                    val = luxon.DateTime.fromMillis(tick.value);
-                                    currMajor = val.get(majorUnit);
-                                    tick.major = currMajor !== lastMajor;
-                                    lastMajor = currMajor;
-                                }
-                                return ticks;
-                            }
-                        }]
-                    }
-                }
-            });
-        }
-    });
+    initStockChart();
     
-    document.getElementById('update').addEventListener('click', update);
-
-    // $('#searchNameOrCode').blur(function(){
-    //     var code = $('#searchNameOrCode').val();
-    //     $.ajax({
-    //         url: investBaseEndpoint + 'get-tscode/' + code,
-    //         success: function (data) {
-    //             if(data!='err'){
-    //                 if(data.charAt(0)=='6'){
-    //                     $('#hiddenTscode').val(data+'.SH');
-    //                 }else{
-    //                     $('#hiddenTscode').val(data+'.SZ');
-    //                 }
-    //                 $('#stockNameOrCode').val(data);
-    //                 getRealtimePrice();
-    //                 // chart.label = data;
-    //             }else{
-    //                 $('#hiddenTscode').val('');
-    //             }
-    //         }
-    //     });
-    // });
+    // document.getElementById('update').addEventListener('click', update);
 
     // document.getElementById('stockSearch').addEventListener('click', function() {
     //     if ($('#hiddenTscode').val() != ''){

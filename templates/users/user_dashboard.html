@@ -21,19 +21,41 @@
     <!-- Post Content Column -->
     <div class="col-lg-8">
         <div class="row">
-            <div class="col-lg-8">
+            <div class="col-lg-6">
                 <!-- Title -->
-                <h5 class="mt-4">{% trans '实时行情数据' %}</h5>
+                <h5 class="mt-2">{% trans '实时行情数据' %}</h5>
                 <!-- Date/Time -->
                 <p>{% trans '数据获取于' %}{% now "Y-m-d H:i" %}</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="btn-group btn-group-toggle mt-5 float-right" data-toggle="buttons">
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="optRt" autocomplete="off" value="R">{% trans '分时' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="opt15" autocomplete="off" value="15">{% trans '15' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="opt30" autocomplete="off" value="30">{% trans '30' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="opt60" autocomplete="off" value="60">{% trans '60' %} 
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="period" id="optDay" autocomplete="off" value="D" checked>{% trans '日线' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="W">{% trans '周线' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="M">{% trans '月线' %} 
+                    </label>
+                </div>
             </div>
         </div>
         
         <hr>
-        <div class="card mb-4 mr-3">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans 'k线图' %}:</h6>
-                </div>
+        <div class="card mb-4">
                 <div class="card-body">
                     <div class="chart-bar">
                     <canvas id="stockChart"></canvas>
@@ -61,27 +83,40 @@
                 </div>
             </div>
         <hr>
+        <div class="row">
+            <div class="col-lg-12">
+                <!-- （sh=上证指数 sz=深圳成指 hs300=沪深300指数 sz50=上证50 zxb=中小板 cyb=创业板） -->
+                <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
+                    <label class="btn btn-light active">
+                        <input type="radio" name="index" id="1A0001" autocomplete="off" value="sh" checked>{% trans '上证指数' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="index" id="399001" autocomplete="off" value="sz">{% trans '深圳成指' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="index" id="399006" autocomplete="off" value="cyb">{% trans '创业板' %}
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Sidebar Widgets Column -->
     <div class="col-md-4">
         <!-- Search Widget -->
-        <div class="card my-4">
-            <h6 class="card-header">{% trans '搜索' %}</h6>
-            <div class="card-body">
-                <div class="input-group mb-2">
+        <div class="p-1 my-4">
+            <h6 class="pl-2">{% trans '搜索' %}</h6>
+            <hr>
+            <div class="">
+                <div class="input-group mb-2 mt-1">
                     <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
-                    <span class="input-group-btn d-none">
-                        <button class="btn btn-secondary" type="button" id="stockSearch">{% trans '查行情' %}</button>
-                    </span>
                     <input type="hidden" id="hiddenCode">
                     <input type="hidden" id="hiddenName">
                     <input type="hidden" id="hiddenTscode">
                     <input type="hidden" id="hiddenMarket">
-
                 </div>
-                <div class="input-group float-right">
-                    <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
+                <div class="input-group">
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <button type="button" class="btn btn-danger" id="btnBuy" data-toggle="collapse" data-target="#collapseCreate"
                             aria-expanded="false" aria-controls="collapseCreate">{% trans '买 +' %}</button>
                         <button type="button" class="btn btn-success" id="btnSell" data-toggle="collapse" data-target="#collapseCreate"
@@ -90,10 +125,10 @@
                 </div>
             </div>
         </div>
-        <div class="card my-4 collapse small" id="collapseCreate">
-            <h6 class="card-header">{% trans '添加交易记录' %}<span id="directionIndicate"></span></h6>
-            <!-- <hr/> -->
-            <div class="card-body">
+        <div class="p-1 mt-1 my-4 collapse small" id="collapseCreate">
+            <h6 class="">{% trans '添加交易记录' %}<span id="directionIndicate"></span></h6>
+            <hr/>
+            <div class="">
                 <div class="row">
                     <form action="{% url 'user:create_trade' %}" enctype="multipart/form-data" id="traderecForm" method="post"
                         role="form">
@@ -186,10 +221,11 @@
             </div>
         </div>
 
-        <!-- Categories Widget -->
-        <div class="card my-4 small">
-            <h6 class="card-header">{% trans '我的持仓' %}</h6>
-            <table class="table table-hover" id="tblMyPosition">
+        <!-- Position Widget -->
+        <div class="p-1">
+            <h6 class="pl-2 mt-1">{% trans '我的持仓' %}</h6>
+            <!-- <hr> -->
+            <table class="table table-hover small" id="tblMyPosition">
                 <thead>
                     <tr>
                         <th scope="col">{% trans '股票' %}</th>
@@ -222,8 +258,8 @@
         </div>
 
         <!-- Side Widget Following -->
-        <div class="card my-4 small">
-            <h6 class="card-header">{% trans '我的自选股' %}</h6>
+        <div class="p-1 my-4 small">
+            <h6 class="pl-2">{% trans '我的自选股' %}</h6>
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -247,7 +283,7 @@
         </div>
 
         <!-- Trasactions Widget top 10 -->
-        <div class="card my-4 small">
+        <!-- <div class="card my-4 small">
             <h6 class="card-header">{% trans '最近交易' %}</h6>
             <table class="table table-hover">
                 <thead>
@@ -277,7 +313,7 @@
                     {% endif %}
                 </tbody>
             </table>
-        </div>
+        </div> -->
 
         
 
