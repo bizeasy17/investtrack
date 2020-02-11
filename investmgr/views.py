@@ -1,5 +1,6 @@
+# import datetime
 import json
-from datetime import datetime
+from datetime import date, datetime
 
 import tushare as ts
 from django.contrib.auth.decorators import login_required
@@ -30,6 +31,47 @@ def get_realtime_price(request, stock_name_or_code):
         realtime_price = realtime_df['price'].mean()
 
     return JsonResponse({'price': realtime_price}, safe=False)
+
+
+def get_realtime_price_for_kdata(request, code):
+    # 获得实时报价
+    realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
+    realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
+    realtime_price = {}
+    if len(realtime_df)>0:
+        if realtime_df['open'].mean() != 0:
+            t = datetime.strptime(str(realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
+            realtime_price = {
+                't': t,
+                'o': realtime_df['open'].mean(),
+                'h': realtime_df['high'].mean(),
+                'l': realtime_df['low'].mean(),
+                'c': realtime_df['price'].mean(),
+            } 
+
+    return realtime_price
+    # if request.method == 'GET':
+    #     return JsonResponse(realtime_price, safe=False)
+    # else:
+    #     return realtime_price
+
+
+def get_realtime_price_for_linechart(request, code):
+    # 获得实时报价
+    # realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
+    today_hist_df = ts.get_today_ticks(code)
+    today_hist_df = today_hist_df[['time', 'price',
+                               'pchange', 'change', 'volume', 'amount', 'type']]
+    # today_hist = {}
+    today_hist_dict = json.loads(today_hist_df.to_json(orient='index'))
+
+    if len(today_hist_dict) > 0:
+        if request.method == 'GET':
+            return JsonResponse(today_hist_dict, safe=False)
+        else:
+            return today_hist_df
+
 
 
 def get_tscode_by(request, stock_name_or_code):
@@ -108,12 +150,15 @@ def get_stock_price_by(request, code, start_date, end_date, period):
         if not stock_his_data_dic:
             return JsonResponse(df, safe=False)
 
+        # 按照从end date（从大到小）的顺序获取历史交易数据
+        isClosed = False
         for k, v in stock_his_data_dic.items():
             dt = str(k).split(' ')
             if len(dt) > 1:
                 t = datetime.strptime(k, "%Y-%m-%d %H:%M:%S")
             else:
-                t = datetime.strptime(k, "%Y-%m-%d")
+                t = datetime.strptime(k + ' 15:00:00', "%Y-%m-%d %H:%M:%S")
+
             for kk, vv in v.items():
                 if kk == 'open':
                     o = vv
@@ -123,7 +168,10 @@ def get_stock_price_by(request, code, start_date, end_date, period):
                     c = vv
                 elif kk == 'low':
                     l = vv
-
+            buy_sell = ''
+            if code not in index_list:
+                buy_sell = get_traderec_direction_by_period(
+                    request, code, t, period)
             data.append(
                 {
                     't': t,
@@ -131,8 +179,20 @@ def get_stock_price_by(request, code, start_date, end_date, period):
                     'h': h,
                     'l': l,
                     'c': c,
+                    'd': buy_sell,
                 }
             )
+        # 是否需要加入当天的k线数据
+        realtime_price = get_realtime_price_for_kdata(request, code)
+        # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
+        if len(realtime_price)>0 and realtime_price['t'].date() == data[0]['t'].date():
+            # if realtime_price['t'].date() < date.today():
+            isClosed = True
+        
+        # 未收盘，需要从实时行情append
+        data = data[::-1]
+        if not isClosed and period == 'D':
+            data.append(realtime_price)
 
             # if df is not None and len(df) > 0:
             #     for d in df.values:
@@ -145,7 +205,7 @@ def get_stock_price_by(request, code, start_date, end_date, period):
             #                 'c': d[5],
             #             }
             #         )
-        return JsonResponse(data[::-1], safe=False)
+        return JsonResponse(data, safe=False)
         # return JsonResponse(stock_his_data_dic, safe=False)
 
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
@@ -169,8 +229,98 @@ def get_traderec(request, stock_code, trade_date):
     return traderec
 
 
-def get_traderec_direction(request, stock_code, trade_date):
-    code = stock_code.split('.')[0] #original format is 000001.SZ, only 000001 needed
+def get_traderec_direction_by_period(request, code, trade_date, period):
+    # original format is 000001.SZ, only 000001 needed
+    buy_sell = ''
+    buy = False
+    sell = False
+    inputYear = trade_date.strftime('%Y')
+    inputMonth = trade_date.strftime('%m')
+    inputWeek = trade_date.strftime('%W')
+    inputDay = trade_date.strftime('%d')
+    inputHour = trade_date.strftime('%H')
+    inputMin = trade_date.strftime('%M')
+    # trade_date = datetime.strptime(trade_date, '%Y-%m-%d %H:%M:S')
+    import datetime
+    minus_hour = datetime.timedelta(hours=1)
+
+    traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                            stock_code=code,).order_by('direction')
+    if traderec_list is not None and len(traderec_list) > 0:
+        for rec in traderec_list:
+            recYear = rec.trade_time.strftime('%Y')
+            recMonth = rec.trade_time.strftime('%m')
+            recWeek = rec.trade_time.strftime('%W')
+            recDay = rec.trade_time.strftime('%d')
+            recHour = rec.trade_time.strftime('%H')
+            recMin = rec.trade_time.strftime('%M')
+            if period == 'M': # month
+                if recYear == inputYear and recMonth == inputMonth:
+                    if rec.direction == 'b':
+                        buy = True
+                    else:
+                        sell = True
+            elif period == 'W': # week
+                if recYear == inputYear and recWeek == inputWeek:
+                    if rec.direction == 'b':
+                        buy = True
+                    else:
+                        sell = True
+            elif period == 'D': # day
+                if recYear == inputYear and recDay == inputDay:
+                    if rec.direction == 'b':
+                        buy = True
+                    else:
+                        sell = True
+            elif period == '60': # 60 min
+                if recYear == inputYear and recMonth == inputMonth and recDay == inputDay and recHour == inputHour:
+                    if rec.direction == 'b':
+                        buy = True
+                    else:
+                        sell = True
+            elif period == '30':  # 15 min or # 30 min
+                if recYear == inputYear and recMonth == inputMonth and recDay == inputDay:
+                    inputHm = inputHour + ':' + inputMin
+                    if inputMin == '00':
+                        inputStartHm = (trade_date - minus_hour).strftime('%H') + ':30'
+                    elif inputMin == '30':
+                        inputStartHm = inputHour + ':00'
+                    recHm = recHour + ':' + recMin
+                    if recHm > inputStartHm and recHm < inputHm:
+                        if rec.direction == 'b':
+                            buy = True
+                        else:
+                            sell = True
+            elif period == '15': # 15 min
+               if recYear == inputYear and recMonth == inputMonth and recDay == inputDay and recHour == inputHour:
+                    inputHm = inputHour + ':' + inputMin
+                    if inputMin == '00':
+                        inputStartHm = (
+                            trade_date - minus_hour).strftime('%H') + ':45'
+                    elif inputMin == '15':
+                        inputStartHm = inputHour + ':00'
+                    elif inputMin == '30':
+                        inputStartHm = inputHour + ':15'
+                    elif inputMin == '45':
+                        inputStartHm = inputHour + ':30'
+                    recHm = recHour + ':' + recMin
+                    if recHm > inputStartHm and recHm < inputHm:
+                        if recMin < inputMin:
+                            if rec.direction == 'b':
+                                buy = True
+                            else:
+                                sell = True
+
+        if buy and sell:
+            buy_sell = 'b&s'
+        elif buy:
+            buy_sell = 'b'
+        elif sell:
+            buy_sell = 's'
+    return buy_sell
+
+def get_traderec_direction(request, code, trade_date):
+    code = code.split('.')[0] #original format is 000001.SZ, only 000001 needed
     traderec_list = TradeRec.objects.filter(trader=request.user.id,
                                             stock_code=code, trade_time__startswith=trade_date,).order_by('direction').distinct('direction')
     buy_sell = ''
@@ -209,38 +359,6 @@ def get_history_stock_price_by(request, stock_name_or_code, start_date, end_date
                         'l': d[4],
                         'c': d[5],
                         'd': buy_sell,
-                    }
-                )
-        return JsonResponse(data[::-1], safe=False)
-
-    return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
-
-
-def get_history_stock_price_by1(request, stock_name_or_code, start_date, end_date, period):
-    # if this is a GET request we need to process the form data
-    pro = ts.pro_api()
-    # start_date = ''
-    # end_date = ''
-    # ts_code = ''
-
-    if request.method == 'GET':
-        # create a form instance and populate it with data from the request:
-        df = pro.daily(ts_code=stock_name_or_code, start_date=start_date,
-                       end_date=end_date)
-        data = []
-        if df is not None and len(df) > 0:
-            for d in df.values:
-                trade_date = datetime.strptime(d[1], '%Y%m%d')
-                traderec = get_traderec(
-                    request, stock_name_or_code, trade_date.date())
-                data.append(
-                    {
-                        't': trade_date,
-                        'o': d[2],
-                        'h': d[3],
-                        'l': d[4],
-                        'c': d[5],
-                        'r': traderec,
                     }
                 )
         return JsonResponse(data[::-1], safe=False)

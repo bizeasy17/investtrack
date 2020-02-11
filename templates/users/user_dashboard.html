@@ -102,10 +102,10 @@
     </div>
 
     <!-- Sidebar Widgets Column -->
-    <div class="col-md-4">
+    <div class="col-lg-4">
         <!-- Search Widget -->
         <div class="p-1 my-4">
-            <h6 class="pl-2">{% trans '搜索' %}</h6>
+            <h6>{% trans '搜索' %}</h6>
             <hr>
             <div class="">
                 <div class="input-group mb-2 mt-1">
@@ -222,39 +222,56 @@
         </div>
 
         <!-- Position Widget -->
-        <div class="p-1">
-            <h6 class="pl-2 mt-1">{% trans '我的持仓' %}</h6>
-            <!-- <hr> -->
-            <table class="table table-hover small" id="tblMyPosition">
-                <thead>
-                    <tr>
-                        <th scope="col">{% trans '股票' %}</th>
-                        <th scope="col">{% trans '持仓' %}</th>
-                        <th scope="col">{% trans '成本' %}</th>
-                        <th scope="col">{% trans '现价' %}</th>
-                        <th scope="col">{% trans '获利%' %}</th>
-                    </tr>
-                </thead>
-                <tbody> 
-                    {% if trade_info %} 
-                        {% for position in trade_info.positions %}
-                        <tr>
-                        <th scope="row">{{position.stock_code}} {{position.stock_name}} </th>
-                        <td>{{position.lots}}</td>
-                        <td>{{position.position_price}}</td>
-                        <td>{{position.current_price}}</td>
-                        {% if position.profit > 0 %} 
-                            <td class="text-danger">
-                        {% else %} 
-                            <td class="text-success">                     
-                        {% endif %}
-                            {{position.profit}}({{position.profit_ratio}})
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
+        <div class="my-4">
+            <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header d-flex flex-row align-items-center justify-content-between">
+                    <h6>{% trans '我的持仓' %}</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <!-- <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i> -->
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <!-- <div class="dropdown-header">Dropdown Header:</div> -->
+                            <a class="dropdown-item" href="#" id="refreshPosition">{% trans '刷新' %}</a>
+                            <!--  -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    <table class="table table-hover small" id="tblMyPosition">
+                        <thead>
+                            <tr>
+                                <th scope="col">{% trans '股票' %}</th>
+                                <th scope="col">{% trans '持仓(成本)' %}</th>
+                                <!-- <th scope="col">{% trans '成本' %}</th> -->
+                                <th scope="col">{% trans '现价' %}</th>
+                                <th scope="col">{% trans '获利%' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody> 
+                            {% if trade_info %} 
+                                {% for position in trade_info.positions %}
+                                <tr>
+                                <th scope="row">{{position.stock_code}} {{position.stock_name}} </th>
+                                <td>{{position.lots}}({{position.position_price}})</td>
+                                <td>{{position.current_price}}</td>
+                                {% if position.profit > 0 %} 
+                                    <td class="text-danger">
+                                {% else %} 
+                                    <td class="text-success">                     
+                                {% endif %}
+                                    {{position.profit}}({{position.profit_ratio}})
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- Side Widget Following -->

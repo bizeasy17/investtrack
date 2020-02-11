@@ -206,6 +206,17 @@ class Positions(BaseModel):
         realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
         realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
+        realtime_bid = round(Decimal(realtime_df['bid'].mean()), 2)
+        realtime_pre_close = round(Decimal(realtime_df['pre_close'].mean()), 2)
+
+
+        if realtime_price != Decimal(0.00):
+            realtime_price = realtime_price
+        elif realtime_bid != Decimal(0.00):
+            realtime_price = realtime_bid
+        else:
+            realtime_price = realtime_pre_close
+        
         self.profit = (realtime_price - self.position_price) * self.lots
         self.profit_ratio = str(
             round((realtime_price - self.position_price) / self.position_price * 100,2)) + '%'

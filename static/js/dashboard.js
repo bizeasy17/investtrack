@@ -254,8 +254,23 @@ $(function () {
         var showCode = $('#hiddenTscode').val();
         var showName = $('#hiddenName').val();
         var period = $(this).val();
-        
-        updateChartFor(showName, showCode, code, period);
+
+        // 实时行情只能在开盘时候才可以9:30am - 15：00pm (CN time)
+        if ($(this).val() == 'R') {
+            var d = new Date();
+            var h = d.getHours();
+            var m = d.getMinutes();
+            var t = h + ":" + m;
+            if (t > "15:00" && t < "9:30") {
+                $("#messages").removeClass('d-none');
+                // $("#messages").addClass('d-block');
+                $("#messageText").html('<strong>非交易时间，实时行情不可用，请在交易时间查看.</strong>');
+            } else {
+                // x.innerHTML = t + ":交易时间";
+                // updateLineChartFor(showName, showCode, code, period);
+            }
+        }else   
+            updateChartFor(showName, showCode, code, period);
     });
 
     $('input:radio[name="index"]').change(function () {
@@ -378,17 +393,17 @@ $(function () {
             },
             statusCode: {
                 403: function () {
-                    $("#messages").removeClass('hidden');
+                    $("#messages").removeClass('d-none');
                     // $("#messages").addClass('d-block');
                     $("#messageText").html('<strong>403 forbidden</strong>.');
                 },
                 404: function () {
-                    $("#messages").removeClass('hidden');
+                    $("#messages").removeClass('d-none');
                     // $("#messages").addClass('d-block');
                     $("#messageText").html('<strong>404 page not found</strong>.');
                 },
                 500: function() {
-                    $("#messages").removeClass('hidden');
+                    $("#messages").removeClass('d-none');
                     // $("#messages").addClass('d-block');
                     $("#messageText").html('<strong>500 internal server error</strong>.');
                 }
