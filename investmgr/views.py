@@ -1,12 +1,13 @@
 # import datetime
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import tushare as ts
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
+from django.db.models.functions import ExtractWeek
 
 from .models import StockNameCodeMap, TradeRec
 
@@ -37,18 +38,19 @@ def get_realtime_price_for_kdata(request, code):
     # 获得实时报价
     realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
     realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
-                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
+                               'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
     realtime_price = {}
-    if len(realtime_df)>0:
+    if len(realtime_df) > 0:
         if realtime_df['open'].mean() != 0:
-            t = datetime.strptime(str(realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
+            t = datetime.strptime(str(
+                realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
             realtime_price = {
                 't': t,
                 'o': realtime_df['open'].mean(),
                 'h': realtime_df['high'].mean(),
                 'l': realtime_df['low'].mean(),
                 'c': realtime_df['price'].mean(),
-            } 
+            }
 
     return realtime_price
     # if request.method == 'GET':
@@ -62,7 +64,7 @@ def get_realtime_price_for_linechart(request, code):
     # realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
     today_hist_df = ts.get_today_ticks(code)
     today_hist_df = today_hist_df[['time', 'price',
-                               'pchange', 'change', 'volume', 'amount', 'type']]
+                                   'pchange', 'change', 'volume', 'amount', 'type']]
     # today_hist = {}
     today_hist_dict = json.loads(today_hist_df.to_json(orient='index'))
 
@@ -71,7 +73,6 @@ def get_realtime_price_for_linechart(request, code):
             return JsonResponse(today_hist_dict, safe=False)
         else:
             return today_hist_df
-
 
 
 def get_tscode_by(request, stock_name_or_code):
@@ -91,10 +92,11 @@ def get_tscode_by(request, stock_name_or_code):
 
     return JsonResponse('err', safe=False)
 
+
 def get_company_info_autocomplete(request, name_or_code):
     # Sample format
     # {
-	# "results": [
+        # "results": [
     #         {
     #             "id": 1, "text": "Google Cloud Platform",
     #             "icon": "https://pbs.twimg.com/profile_images/966440541859688448/PoHJY3K8_400x400.jpg"
@@ -107,7 +109,7 @@ def get_company_info_autocomplete(request, name_or_code):
     #             "id": 3, "text": "Docker",
     #             "icon": "https://www.docker.com/sites/default/files/legal/small_v.png"
     #         }
-	# ]
+        # ]
     # }
 
     if request.method == 'GET':
@@ -131,8 +133,8 @@ def get_company_info_autocomplete(request, name_or_code):
                 })
             # c_str = 'results:[' + c_str + ']'
             # c_dict = json.loads(c_str)
-            return JsonResponse({'results':c_list}, safe=False)
-    empty = {'results':[]}
+            return JsonResponse({'results': c_list}, safe=False)
+    empty = {'results': []}
     return JsonResponse(empty, safe=False)
 
 
@@ -142,7 +144,7 @@ def get_stock_price_by(request, code, start_date, end_date, period):
     if request.method == 'GET':
         # if code in index_list:
         df = ts.get_hist_data(code, start=start_date,
-                                end=end_date, ktype=period)
+                              end=end_date, ktype=period)
 
         stock_his_data_dic = json.loads(df.to_json(orient='index'))
 
@@ -185,10 +187,10 @@ def get_stock_price_by(request, code, start_date, end_date, period):
         # 是否需要加入当天的k线数据
         realtime_price = get_realtime_price_for_kdata(request, code)
         # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
-        if len(realtime_price)>0 and realtime_price['t'].date() == data[0]['t'].date():
+        if len(realtime_price) > 0 and realtime_price['t'].date() == data[0]['t'].date():
             # if realtime_price['t'].date() < date.today():
             isClosed = True
-        
+
         # 未收盘，需要从实时行情append
         data = data[::-1]
         if not isClosed and period == 'D':
@@ -234,82 +236,154 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
     buy_sell = ''
     buy = False
     sell = False
-    inputYear = trade_date.strftime('%Y')
-    inputMonth = trade_date.strftime('%m')
-    inputWeek = trade_date.strftime('%W')
-    inputDay = trade_date.strftime('%d')
-    inputHour = trade_date.strftime('%H')
-    inputMin = trade_date.strftime('%M')
+    input_year = trade_date.strftime('%Y')
+    input_month = trade_date.strftime('%m')
+    input_week = trade_date.strftime('%W')
+    input_day = trade_date.strftime('%d')
+    input_hour = trade_date.strftime('%H')
+    input_min = trade_date.strftime('%M')
     # trade_date = datetime.strptime(trade_date, '%Y-%m-%d %H:%M:S')
-    import datetime
-    minus_hour = datetime.timedelta(hours=1)
+    # import datetime
+    delta_hour = timedelta(hours=1)
+    delta_gmt8_hour = timedelta(hours=8)  # GMT+8, China Time
 
-    traderec_list = TradeRec.objects.filter(trader=request.user.id,
-                                            stock_code=code,).order_by('direction')
-    if traderec_list is not None and len(traderec_list) > 0:
-        for rec in traderec_list:
-            recYear = rec.trade_time.strftime('%Y')
-            recMonth = rec.trade_time.strftime('%m')
-            recWeek = rec.trade_time.strftime('%W')
-            recDay = rec.trade_time.strftime('%d')
-            recHour = rec.trade_time.strftime('%H')
-            recMin = rec.trade_time.strftime('%M')
-            if period == 'M': # month
-                if recYear == inputYear and recMonth == inputMonth:
-                    if rec.direction == 'b':
-                        buy = True
-                    else:
-                        sell = True
-            elif period == 'W': # week
-                if recYear == inputYear and recWeek == inputWeek:
-                    if rec.direction == 'b':
-                        buy = True
-                    else:
-                        sell = True
-            elif period == 'D': # day
-                if recYear == inputYear and recDay == inputDay:
-                    if rec.direction == 'b':
-                        buy = True
-                    else:
-                        sell = True
-            elif period == '60': # 60 min
-                if recYear == inputYear and recMonth == inputMonth and recDay == inputDay and recHour == inputHour:
-                    if rec.direction == 'b':
-                        buy = True
-                    else:
-                        sell = True
-            elif period == '30':  # 15 min or # 30 min
-                if recYear == inputYear and recMonth == inputMonth and recDay == inputDay:
-                    inputHm = inputHour + ':' + inputMin
-                    if inputMin == '00':
-                        inputStartHm = (trade_date - minus_hour).strftime('%H') + ':30'
-                    elif inputMin == '30':
-                        inputStartHm = inputHour + ':00'
-                    recHm = recHour + ':' + recMin
-                    if recHm > inputStartHm and recHm < inputHm:
-                        if rec.direction == 'b':
-                            buy = True
-                        else:
-                            sell = True
-            elif period == '15': # 15 min
-               if recYear == inputYear and recMonth == inputMonth and recDay == inputDay and recHour == inputHour:
-                    inputHm = inputHour + ':' + inputMin
-                    if inputMin == '00':
-                        inputStartHm = (
-                            trade_date - minus_hour).strftime('%H') + ':45'
-                    elif inputMin == '15':
-                        inputStartHm = inputHour + ':00'
-                    elif inputMin == '30':
-                        inputStartHm = inputHour + ':15'
-                    elif inputMin == '45':
-                        inputStartHm = inputHour + ':30'
-                    recHm = recHour + ':' + recMin
-                    if recHm > inputStartHm and recHm < inputHm:
-                        if recMin < inputMin:
-                            if rec.direction == 'b':
-                                buy = True
-                            else:
-                                sell = True
+    if period == 'M':  # month
+        traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                                stock_code=code, trade_time__year=input_year, trade_time__month=input_month).order_by('direction').distinct('direction')
+    elif period == 'W':  # week
+        traderec_list = TradeRec.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
+                                                stock_code=code, trade_time__year=input_year, week=input_week).order_by('direction').distinct('direction')
+    elif period == 'D':  # day
+        traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                                stock_code=code,
+                                                trade_time__startswith=trade_date.strftime('%Y-%m-%d')).order_by('direction').distinct('direction')
+    elif period == '60':  # 60 min
+        delta_hour = timedelta(hours=1)
+        traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                                stock_code=code, trade_time__year=input_year,
+                                                trade_time__month=input_month, trade_time__day=input_day,
+                                                trade_time__hour=(trade_date-delta_hour).strftime('%H')).order_by('direction').distinct('direction')
+    elif period == '30':  # 30 min
+        startMin = '0'
+        endMin = '29'
+        delta_hour = timedelta(hours=0)
+        if input_min == '00':
+            startMin = '30'
+            endMin = '59'
+            delta_hour = timedelta(hours=1)
+        elif input_min == '30':
+            startMin = '0'
+            endMin = '29'
+
+        traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                                stock_code=code, trade_time__year=input_year,
+                                                trade_time__month=input_month, trade_time__day=input_day,
+                                                trade_time__hour=(
+                                                    trade_date-delta_hour).strftime('%H'),
+                                                trade_time__minute__gte=startMin, trade_time__minute__lte=endMin,
+                                                ).order_by('direction').distinct('direction')
+    elif period == '15':  # 15 min
+        startMin = '0'
+        endMin = '29'
+        delta_hour = timedelta(hours=0)
+        if input_min == '00':
+            startMin = '45'
+            endMin = '59'
+            delta_hour = timedelta(hours=1)
+        elif input_min == '15':
+            startMin = '0'
+            endMin = '14'
+        elif input_min == '30':
+            startMin = '15'
+            endMin = '29'
+        elif input_min == '45':
+            startMin = '30'
+            endMin = '44'
+            
+        traderec_list = TradeRec.objects.filter(trader=request.user.id,
+                                                stock_code=code, trade_time__year=input_year,
+                                                trade_time__month=input_month, trade_time__day=input_day,
+                                                trade_time__hour=(
+                                                    trade_date-delta_hour).strftime('%H'),
+                                                trade_time__minute__gte=startMin, trade_time__minute__lte=endMin,
+                                                ).order_by('direction').distinct('direction')
+
+    for rec in traderec_list:
+        if rec.direction == 'b':
+            buy = True
+        else:
+            sell = True
+
+    # traderec_list = TradeRec.objects.filter(trader=request.user.id,
+    #                                         stock_code=code).order_by('direction')
+    # if traderec_list is not None and len(traderec_list) > 0:
+    #     for rec in traderec_list:
+    #         rec_trade_local_time = rec.trade_time + delta_gmt8_hour
+    #         recYear = rec_trade_local_time.strftime('%Y')
+    #         recMonth = rec_trade_local_time.strftime('%m')
+    #         recWeek = rec_trade_local_time.strftime('%W')
+    #         recDay = rec_trade_local_time.strftime('%d')
+    #         recHour = rec_trade_local_time.strftime('%H')
+    #         recMin = rec_trade_local_time.strftime('%M')
+    #         if period == 'M':  # month
+    #             traderec_list = TradeRec.objects.filter(trader=request.user.id,
+    #                                                     stock_code=code, trade_time__year=input_year, trade_time__month=input_month).order_by('direction').distinct('direction')
+    #             for rec in traderec_list:
+    #                 if recYear == input_year and recMonth == input_month:
+    #                     if rec.direction == 'b':
+    #                         buy = True
+    #                     else:
+    #                         sell = True
+    #         elif period == 'W':  # week
+    #             if recYear == input_year and recWeek == input_week:
+    #                 if rec.direction == 'b':
+    #                     buy = True
+    #                 else:
+    #                     sell = True
+    #         elif period == 'D':  # day
+    #             if recYear == input_year and recMonth == input_month and recDay == input_day:
+    #                 if rec.direction == 'b':
+    #                     buy = True
+    #                 else:
+    #                     sell = True
+    #         elif period == '60':  # 60 min
+    #             if recYear == input_year and recMonth == input_month and recDay == input_day and recHour == input_hour:
+    #                 if rec.direction == 'b':
+    #                     buy = True
+    #                 else:
+    #                     sell = True
+    #         elif period == '30':  # 15 min or # 30 min
+    #             if recYear == input_year and recMonth == input_month and recDay == input_day:
+    #                 inputHm = input_hour + ':' + input_min
+    #                 if input_min == '00':
+    #                     inputStartHm = (
+    #                         trade_date - minus_hour).strftime('%H') + ':30'
+    #                 elif input_min == '30':
+    #                     inputStartHm = input_hour + ':00'
+    #                 recHm = recHour + ':' + recMin
+    #                 if recHm > inputStartHm and recHm < inputHm:
+    #                     if rec.direction == 'b':
+    #                         buy = True
+    #                     else:
+    #                         sell = True
+    #         elif period == '15':  # 15 min
+    #             if recYear == input_year and recMonth == input_month and recDay == input_day and recHour == input_hour:
+    #                 inputHm = input_hour + ':' + input_min
+    #                 if input_min == '00':
+    #                     inputStartHm = (
+    #                         trade_date - minus_hour).strftime('%H') + ':45'
+    #                 elif input_min == '15':
+    #                     inputStartHm = input_hour + ':00'
+    #                 elif input_min == '30':
+    #                     inputStartHm = input_hour + ':15'
+    #                 elif input_min == '45':
+    #                     inputStartHm = input_hour + ':30'
+    #                 recHm = recHour + ':' + recMin
+    #                 if recHm > inputStartHm and recHm < inputHm:
+    #                     if rec.direction == 'b':
+    #                         buy = True
+    #                     else:
+    #                         sell = True
 
         if buy and sell:
             buy_sell = 'b&s'
@@ -319,8 +393,10 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
             buy_sell = 's'
     return buy_sell
 
+
 def get_traderec_direction(request, code, trade_date):
-    code = code.split('.')[0] #original format is 000001.SZ, only 000001 needed
+    # original format is 000001.SZ, only 000001 needed
+    code = code.split('.')[0]
     traderec_list = TradeRec.objects.filter(trader=request.user.id,
                                             stock_code=code, trade_time__startswith=trade_date,).order_by('direction').distinct('direction')
     buy_sell = ''
