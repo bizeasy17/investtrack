@@ -12,8 +12,7 @@ from asgiref.sync import async_to_sync
 
 from channels.layers import get_channel_layer
 
-from slugify import slugify
-
+from uuslug import slugify
 
 class NotificationQuerySet(models.query.QuerySet):
     """Personalized queryset created to improve model usability"""
@@ -144,8 +143,7 @@ class Notification(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(f'{self.recipient} {self.uuid_id} {self.verb}',
-                                to_lower=True, max_length=200)
+            self.slug = slugify(f'{self.recipient} {self.uuid_id} {self.verb}')
 
         super().save(*args, **kwargs)
 

@@ -1,6 +1,6 @@
 {% load static i18n thumbnail %}<!DOCTYPE html>
 
-<ul>
+<ul class="p-2">
   {% if notifications %}
     {% for notification in notifications %}
       <li class="clearfix">
@@ -12,9 +12,9 @@
         <p><small>{{ notification.timestamp }}</small></p>
       </li>
     {% endfor %}
-    <a type="button" class="btn btn-light text-center float-left" href="{% url 'notifications:unread' %}">{% trans 'See all' %}</a>
-    <a type="button" class="btn btn-light text-center float-right" href="{% url 'notifications:mark_all_read' %}">{% trans 'Mark all as read' %}</a>
+    <a type="button" class="btn btn-primary btn-sm float-right" href="{% url 'notifications:unread' %}">{% trans '查看所有' %}</a>
+    <a type="button" class="btn btn-success btn-sm float-right" href="{% url 'notifications:mark_all_read' %}">{% trans '标为已读' %}</a>
   {% else %}
-    <li class="text-center">{% trans 'You have no unread notification' %}</li>
+    <li class="text-center">{% trans '没有新消息' %}</li>
   {% endif %}
 </ul>

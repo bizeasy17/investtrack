@@ -5,8 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import ListView
 
-from models import Notification
-
+from .models import Notification
 
 class NotificationUnreadListView(LoginRequiredMixin, ListView):
     """Basic ListView implementation to show the unread notifications for

@@ -106,7 +106,6 @@
         <!-- Search Widget -->
         <div class="p-1 my-4">
             <h6>{% trans '搜索' %}</h6>
-            <hr>
             <div class="">
                 <div class="input-group mb-2 mt-1">
                     <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
@@ -223,7 +222,7 @@
 
         <!-- Position Widget -->
         <div class="my-4">
-            <div class="card shadow mb-4">
+            <div class="card shadow">
                 <!-- Card Header - Dropdown -->
                 <div class="card-header d-flex flex-row align-items-center justify-content-between">
                     <h6>{% trans '我的持仓' %}</h6>
@@ -241,13 +240,43 @@
                     </div>
                 </div>
                 <div class="card-body p-2">
+                    <!-- <div class="container small">
+                        <div class="row">
+                            <div class="col-3">
+                            {% trans '股票' %}
+                            </div>
+                            <div class="col-3">
+                            {% trans '持仓' %}
+                            </div>
+                            <div class="col-3">
+                            {% trans '现价(成本)' %}
+                            </div>
+                            <div class="col-3">
+                            {% trans '获利%' %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-3">
+                            {% trans '股票' %}
+                            </div>
+                            <div class="col-3">
+                            {% trans '持仓' %}
+                            </div>
+                            <div class="col-3">
+                            {% trans '现价(成本)' %}
+                            </div>
+                            <div class="col-3">
+                            {% trans '获利%' %}
+                            </div>
+                        </div>
+                    </div> -->
                     <table class="table table-hover small" id="tblMyPosition">
                         <thead>
                             <tr>
                                 <th scope="col">{% trans '股票' %}</th>
-                                <th scope="col">{% trans '持仓(成本)' %}</th>
+                                <th scope="col">{% trans '持仓' %}</th>
                                 <!-- <th scope="col">{% trans '成本' %}</th> -->
-                                <th scope="col">{% trans '现价' %}</th>
+                                <th scope="col">{% trans '成本(现价)' %}</th>
                                 <th scope="col">{% trans '获利%' %}</th>
                             </tr>
                         </thead>
@@ -255,9 +284,9 @@
                             {% if trade_info %} 
                                 {% for position in trade_info.positions %}
                                 <tr>
-                                <th scope="row">{{position.stock_code}} {{position.stock_name}} </th>
-                                <td>{{position.lots}}({{position.position_price}})</td>
-                                <td>{{position.current_price}}</td>
+                                <th scope="row">{{position.stock_code}} {{position.stock_name}}</th>
+                                <td>{{position.lots}}</td>
+                                <td>{{position.position_price}}({{position.current_price}})</td>
                                 {% if position.profit > 0 %} 
                                     <td class="text-danger">
                                 {% else %} 
@@ -275,65 +304,49 @@
         </div>
 
         <!-- Side Widget Following -->
-        <div class="p-1 my-4 small">
-            <h6 class="pl-2">{% trans '我的自选股' %}</h6>
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">{% trans '名称' %}</th>
-                        <th scope="col">{% trans '代码' %}</th>
-                        <!-- <th scope="col">{% trans '价格' %}</th> -->
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if trade_info %}
-                    {% for following in trade_info.stocks_following %}
-                    <tr>
-                        <th scope="row"> {{ following.stock_code.stock_name }} </th>
-                        <th scope="col">{{ following.stock_code.stock_code }}</th>
-                
-                    </tr>
-                    {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
+        <div class="my-4">
+            <div class="card shadow">
+                <div class="card-header d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="pl-2">{% trans '我的自选股' %}</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <!-- <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i> -->
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <!-- <div class="dropdown-header">Dropdown Header:</div> -->
+                            <a class="dropdown-item" href="#" id="refreshPosition">{% trans '刷新' %}</a>
+                            <!--  -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    <table class="table table-hover small">
+                        <thead>
+                            <tr>
+                                <th scope="col">{% trans '名称' %}</th>
+                                <th scope="col">{% trans '代码' %}</th>
+                                <!-- <th scope="col">{% trans '价格' %}</th> -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if trade_info %}
+                            {% for following in trade_info.stocks_following %}
+                            <tr>
+                                <th scope="row"> {{ following.stock_code.stock_name }} </th>
+                                <th scope="col">{{ following.stock_code.stock_code }}</th>
+                        
+                            </tr>
+                            {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- Trasactions Widget top 10 -->
-        <!-- <div class="card my-4 small">
-            <h6 class="card-header">{% trans '最近交易' %}</h6>
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th scope="col">{% trans '名称' %}</th>
-                        <th scope="col">{% trans '代码' %}</th>
-                        <th scope="col">{% trans '价格' %}</th>
-                        <th scope="col">{% trans '股数' %}</th>
-                        <th scope="col">{% trans '操作' %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if trade_info %}
-                    {% for detail in trade_info.tradedetails %}
-                    <tr>
-                        <th scope="row"> {{ detail.stock_name }} </th>
-                        <th scope="col">{{ detail.stock_code }}</th>
-                        <td>{{ detail.price }}</td>
-                        <td>{{ detail.board_lots }}</td>
-                        {% if detail.direction == 's' %}
-                        <td><span class="badge badge-pill badge-success">{% trans '买出' %}</span></td>
-                        {% else %}
-                        <td><span class="badge badge-pill badge-danger">{% trans '买入' %}</span></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
-        </div> -->
-
-        
-
     </div>
 
 </div>
@@ -351,10 +364,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
 <script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}" type="text/javascript"></script>
-<script src="{% static 'js/prettydate.min.js' %}" type="text/javascript"></script>
+<!-- <script src="{% static 'js/prettydate.min.js' %}" type="text/javascript"></script> -->
 
 
 <!-- place project specific Javascript in this file -->
 <!-- <script src="{% static 'js/charts-utils.js' %}" type="text/javascript"></script> -->
-<script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/stock_trade.js' %}" type="text/javascript"></script>
 {% endblock javascript %}

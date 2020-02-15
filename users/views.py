@@ -22,7 +22,41 @@ class UserDashboardView(LoginRequiredMixin, View):
     # model = TradeRec
 
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'users/user_dashboard.html'
+    template_name = 'users/dashboard.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'dashboard'
+
+    def get(self, request, *args, **kwargs):
+        # username = self.kwargs['username']
+        req_user = request.user
+        if req_user is not None:
+            tradedetails = TradeRec.objects.filter(
+                trader=req_user.id, )[:5]  # 前台需要添加view more...
+            trade_positions = Positions.objects.filter(
+                trader=req_user.id).exclude(lots=0)[:8]
+            # update the profit based on the realtime price
+            for p in trade_positions:
+                p.make_profit_updated()
+            strategies = TradeStrategy.objects.filter(creator=req_user.id)
+            stocks_following = StockFollowing.objects.filter(
+                trader=req_user.id,)[:10]
+            queryset = {
+                'details': tradedetails,
+                'positions': trade_positions,
+                'strategies': strategies,
+                'followings': stocks_following,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+        else:
+            return HttpResponseRedirect(reverse('404'))
+
+
+class UserStockTradeView(LoginRequiredMixin, View):
+    # form_class = UserTradeForm
+    # model = TradeRec
+
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'users/stock_trade.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'trade_info'
 
@@ -51,12 +85,32 @@ class UserDashboardView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse('404'))
 
 
-class UserTradelogView(LoginRequiredMixin, View):
+class UserProfileView(LoginRequiredMixin, DetailView):
     # form_class = UserTradeForm
     # model = TradeRec
 
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'users/tradelog.html'
+    model = User
+    template_name = 'users/user_profile.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'user_profile'
+
+    def get_queryset(self, request, *args, **kwargs):
+        # username = self.kwargs['username']
+        req_user = request.user
+        if req_user is not None:
+            user = User.objects.filter(
+                id=req_user.id,)# 前台需要添加view more...
+            queryset = {
+                'user': user,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+
+
+class UserTradelogView(LoginRequiredMixin, View):
+    # form_class = UserTradeForm
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'users/trade_log.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'trade_log'
 
@@ -65,17 +119,17 @@ class UserTradelogView(LoginRequiredMixin, View):
         req_user = request.user
         if req_user is not None:
             tradedetails = TradeRec.objects.filter(
-                trader=req_user.id, )[:5]  # 前台需要添加view more...
+                trader=req_user.id, )[:10]  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
                 trader=req_user.id).exclude(lots=0)[:5]
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)
             queryset = {
-                'tradedetails': tradedetails,
-                'positions': trade_positions,
-                'strategies': strategies,
-                'stocks_following': stocks_following,
+                'det': tradedetails,
+                'pos': trade_positions,
+                'str': strategies,
+                'fol': stocks_following,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
         else:
@@ -109,6 +163,25 @@ def create_trade(request):
     return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
 
 
+@login_required
+def refresh_position(request):
+    if request.method == 'GET':
+        trader = request.user
+        my_position = Positions.objects.find(trader=trader).update()
+        return JsonResponse(my_position, safe=False)
+
+    return JsonResponse({'code':'error', 'message': _('系统错误，请稍后再试')}, safe=False)
+
+
+@login_required
+def get_position_by_code(request, code):
+    if request.method == 'GET':
+        trader = request.user
+        my_position = Positions.objects.find(trader=trader, stock_code=code)
+        return JsonResponse(my_position, safe=False)
+
+    return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)
+
 class TradeRecCreateView(LoginRequiredMixin, FormView):
     # model = TradeRec
     """Basic CreateView implementation to create new articles."""
@@ -127,7 +200,6 @@ class TradeRecCreateView(LoginRequiredMixin, FormView):
 #     model = User
 
 # custom 404, 403, 500 pages
-
 
 def my_custom_page_not_found_view(request, exception):
      # template_name属性用于指定使用哪个模板进行渲染

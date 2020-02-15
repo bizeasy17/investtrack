@@ -1,6 +1,6 @@
 import logging
-from decimal import *
 from abc import ABCMeta, abstractmethod, abstractproperty
+from decimal import *
 
 import tushare as ts
 from django.conf import settings
@@ -90,6 +90,8 @@ class TradeRec(BaseModel):
                                            on_delete=models.CASCADE, editable=False)
     is_liquadated = models.BooleanField(
         _('是否已清仓'), blank=False, null=False, default=False, editable=False)
+    trade_account = models.ForeignKey(
+        'TradeAccount', verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.stock_name
@@ -169,6 +171,8 @@ class PositionManager(models.Manager):
         return super().get_queryset().filter()
 
 # 目前持有仓位数据model
+
+
 class Positions(BaseModel):
     market = models.CharField(
         _('股票市场'), max_length=10, blank=False, null=False)
@@ -193,7 +197,8 @@ class Positions(BaseModel):
         _('目标仓位（股）'), blank=False, null=False, default=0)
     is_liquadated = models.BooleanField(
         _('是否清仓'), blank=False, null=False, default=False, db_index=True)
-
+    trade_account = models.ForeignKey('TradeAccount', verbose_name=_(
+        '交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
     # realtime_objects = PositionManager() # The position-specific manager.
 
     def __str__(self):
@@ -209,17 +214,16 @@ class Positions(BaseModel):
         realtime_bid = round(Decimal(realtime_df['bid'].mean()), 2)
         realtime_pre_close = round(Decimal(realtime_df['pre_close'].mean()), 2)
 
-
         if realtime_price != Decimal(0.00):
             realtime_price = realtime_price
         elif realtime_bid != Decimal(0.00):
             realtime_price = realtime_bid
         else:
             realtime_price = realtime_pre_close
-        
+
         self.profit = (realtime_price - self.position_price) * self.lots
         self.profit_ratio = str(
-            round((realtime_price - self.position_price) / self.position_price * 100,2)) + '%'
+            round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
         self.current_price = realtime_price
         self.save()
 
@@ -423,7 +427,7 @@ class StockNameCodeMap(BaseModel):
     exchange = models.CharField(
         _('交易所代码'), choices=EXCHANGE_CHOICES, max_length=10, blank=True, null=True)
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False) # e.g. 000001.SZ
+        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
     area = models.CharField(_('所在地域'), max_length=50,
                             blank=True, null=True)
     industry = models.CharField(
@@ -454,9 +458,6 @@ class StockNameCodeMap(BaseModel):
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
-# 目前持有仓位数据model
-
-
 class StockFollowing(BaseModel):
     stock_code = models.ForeignKey('StockNameCodeMap',
                                    verbose_name=_('股票代码'), blank=False, null=False, on_delete=models.CASCADE)
@@ -471,5 +472,38 @@ class StockFollowing(BaseModel):
     class Meta:
         ordering = ['-last_mod_time']
         verbose_name = _('自选股票')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class TradeAccount(BaseModel):
+    TRADE_PROVIDER_CHOICES = (
+        ('htzq', _('华泰证券')),
+        ('zszq', _('招商证券')),
+        ('gfzq', _('广发证券')),
+        ('swhy', _('申万宏源')),
+    )
+
+    trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
+                               on_delete=models.CASCADE)
+    account_name = models.CharField(
+        _('账户名称'), max_length=50, blank=False, null=False)
+    account_balance = models.DecimalField(
+        _('账户余额'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
+    account_provider = models.CharField(
+        _('开户证券公司'), choices=TRADE_PROVIDER_CHOICES, max_length=50, blank=True, null=True)
+    trade_fee = models.FloatField(
+        _('交易手续费'), blank=False, null=False, default=0.0005)
+    activate_date = models.DateField(
+        _('开户时间'), blank=False, null=False, default=now)
+    is_valid = models.BooleanField(
+        _('是否有效'), blank=False, null=False, default=True)
+
+    def __str__(self):
+        return str(self.account_provider)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('股票账户')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

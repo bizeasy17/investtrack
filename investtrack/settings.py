@@ -144,7 +144,7 @@ WSGI_APPLICATION = 'investtrack.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'investtrack_mvp',
+        'NAME': 'investtrack',
         'USER': 'db_usr',
         'PASSWORD': 'password',
         'HOST': '127.0.0.1',

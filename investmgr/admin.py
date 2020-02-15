@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from .forms import TradeRecAdminForm
 from .models import (Positions, StockFollowing, StockNameCodeMap, TradeRec,
-                     TradeSettings, TradeStrategy)
+                     TradeSettings, TradeStrategy, TradeAccount)
 
 # Register your models here.
 
@@ -73,6 +73,9 @@ class StockFollowingAdmin(admin.ModelAdmin):
     exclude = ('last_mod_time', 'created_time')
 
 
+class TradeAccountAdmin(admin.ModelAdmin):
+    exclude = ('last_mod_time', 'created_time')
+
 class PositionsAdmin(admin.ModelAdmin):
     list_per_page = 20
     search_fields = ('stock_name', 'stock_code')
@@ -90,3 +93,4 @@ admin.site.register(TradeSettings, TradeSettingsAdmin)
 admin.site.register(StockNameCodeMap, StockNameCodeMapAdmin)
 admin.site.register(Positions, PositionsAdmin)
 admin.site.register(StockFollowing, StockFollowingAdmin)
+admin.site.register(TradeAccount, TradeAccountAdmin)
