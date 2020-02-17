@@ -4,10 +4,10 @@ from . import views
 
 app_name = 'user'
 urlpatterns = [
-    path('detail/',
+    path('profile/<user_name>',
          views.UserProfileView.as_view(), name='profile'),
     path('stock-trade/',
-         views.UserStockTradeView.as_view(), name='dashboard'),
+         views.UserStockTradeView.as_view(), name='stock_trade'),
     path('dashboard/',
          views.UserDashboardView.as_view(), name='dashboard'),
     path('tradelog/',

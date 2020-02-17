@@ -32,5 +32,4 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
                 else:
                     return render(request, self.default_template_name)
         else:
-            return HttpResponseRedirect(reverse('404'))
-
+            return HttpResponseRedirect(reverse('404'))   

@@ -14,7 +14,7 @@ class TradeRecAdminForm(forms.ModelForm):
     class Meta:
         model = TradeRec
         fields = ('direction', 'strategy', 'stock_name', #'stock_code', 
-                  'trade_time', 'current_price', 'price', 'target_position', 'board_lots', 'cash', 'target_position', 'trader', )
+                  'trade_time', 'current_price', 'price', 'target_position', 'board_lots', 'cash', 'target_position', 'trader', 'trade_account')
 
     # def clean(self):
     #     cleaned_data = self.cleaned_data

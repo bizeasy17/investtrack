@@ -19,6 +19,9 @@ urlpatterns = [
          views.get_stock_price_by),
     path('stocks/get-stock-price/<stock_name_or_code>/<start_date>/<end_date>/<period>/',
          views.get_history_stock_price_by),
+    # site manager
     path('stocks/sync-company-list/',
          views.sync_company_list),
+    path('stocks/exec-snapshot/<applied_period>',
+         views.execute_stock_snapshot),
 ]

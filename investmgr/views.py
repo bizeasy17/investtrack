@@ -9,7 +9,8 @@ from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.functions import ExtractWeek
 
-from .models import StockNameCodeMap, TradeRec
+from .models import (StockNameCodeMap, TradeRec, Positions, TradeProfitSnapshot)
+from users.models import User
 
 
 # Create your views here.
@@ -473,3 +474,22 @@ def sync_company_list(request):
         return JsonResponse({'success': _('公司信息同步成功')}, safe=False)
 
     return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
+
+
+@login_required
+def execute_stock_snapshot(request, applied_period):
+    if request.method == 'GET':
+        snapshot_date = date.today()
+        users = User.objects.filter(is_active=True)
+        if users is not None and len(users):
+            for user in users:     
+                user_positions = Positions.objects.filter(trader=user)
+                if user_positions is not None and len(user_positions)>=1:
+                    for position in user_positions:
+                        snapshot = TradeProfitSnapshot(trader=user)
+                        snapshot.take_snapshot(
+                            position, snapshot_date, applied_period)
+            return JsonResponse({'info': _('股票快照成功')}, safe=False)
+    return JsonResponse({'error': _('无法创建股票快照')}, safe=False)
+
+

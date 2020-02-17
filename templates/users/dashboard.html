@@ -13,7 +13,7 @@
 <div class="content-wrapper">
     <div class="row flex-grow mb-4">
         <div class="col-lg-3 grid-margin stretch-card">
-            <h5>{% trans '欢迎回来，'%}{{request.user.username}}</h5>
+            <!-- <h5>{% trans '欢迎回来，'%}{{request.user.username}}</h5> -->
             <input type="text"  id="searchDashboard" class="form-control" placeholder="{% trans '在此输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
                 
         </div>
@@ -26,10 +26,9 @@
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card shadow mb-4">
                         <div class="card-body">
-                            <p class="card-title">{% trans '投资收益曲线' %}</p>
-                            <!-- <p class="text-muted">25% more traffic than previous
-                                week</p> -->
-            
+                            <p class="card-title"><i class="fa fa-chart-line" ></i> {% trans '投资收益曲线' %}</p>
+                            <p class="text-muted">25% more traffic than previous
+                                week</p>
                             <canvas id="profitDevChart" height="150"></canvas>
                         </div>
                     </div>
@@ -38,7 +37,7 @@
                     <div class="card shadow">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                <p class="card-title">{% trans '本周收益' %}</p>
+                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '本周收益' %}</p>
                                 <p class="font-weight-medium">
                                 {%comment%} {% if dashboard %}
                                 {% if dashboard.positions[0].profit>0 %}
@@ -61,9 +60,8 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center
                                 justify-content-between flex-wrap">
-                                <p class="card-title">{% trans '本周交易成功率' %}</p>
-                                <p class="text-success font-weight-medium">45.39
-                                    %</p>
+                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '本周交易成功率' %}</p>
+                                <p class="text-success font-weight-medium">45.39%</p>
                             </div>
                             <div class="d-flex align-items-center flex-wrap
                                 mb-3">
@@ -134,13 +132,22 @@
             <div class="col-md-12 grid-margin stretch-card">
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <p class="card-title">{% trans '仓位管理' %}</p>
-                            <!-- <p class="text-muted">{% trans '最近更新' %} {% now "Y-m-d H:i" %}</p> -->
-                            <div class="regional-chart-legend d-flex
-                                align-items-center flex-wrap mb-1"
-                                id="positionLegend"></div>
-                            <canvas height="280" id="positionChart"></canvas>
+                        <div class="card-body pb-0">
+                            <div class="d-flex  justify-content-start mb-4">
+                                <div>
+                                    <p class="card-title mb-0 mr-1">
+                                        <i class="fa fa-chart-bar" ></i> {% trans '我的仓位' %}
+                                    </p>
+                                </div>
+                                <div><span class="badge badge-info badge-pill">2</span></div>
+                                <div class="ml-auto">
+                                    <a href="{% url 'user:stock_trade' %}">{% trans '管理' %}</a>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap pt-2 mb-4">
+                                <div class="regional-chart-legend d-flex align-items-center flex-wrap mb-1" id="positionLegend"></div>
+                                <canvas height="280" id="positionChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -148,8 +155,8 @@
                     <div class="card shadow mb-4">
                         <div class="card-body pb-0">
                             <div class="d-flex align-items-center mb-4">
-                                <p class="card-title mb-0 mr-1">{% trans '我的交易策略' %}</p>
-                                <div class="badge badge-info badge-pill">2</div>
+                                <p class="card-title mb-0 mr-1"><i class="fa fa-cog" ></i>  {% trans '我的交易策略' %}</p>
+                                <span class="badge badge-info badge-pill">2</span>
                             </div>
                             <div class="d-flex flex-wrap pt-2 small">
                                 {% if dashboard %}
