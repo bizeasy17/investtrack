@@ -31,7 +31,7 @@ ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 DEBUG = True
 
 # ALLOWED_HOSTS = ['127.0.0.1']
-
+STOCK_OUT_STRATEGY = 'FIFO'
 
 # Application definition
 

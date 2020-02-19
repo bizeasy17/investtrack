@@ -7,6 +7,7 @@ import tushare as ts
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models, transaction
+from django.db.models import Sum
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
@@ -15,6 +16,8 @@ from django.utils.translation import ugettext_lazy as _
 # ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 
 # Create your models here.
+
+
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)
     created_time = models.DateTimeField(_('创建时间'), default=now)
@@ -91,8 +94,8 @@ class TradeRec(BaseModel):
         _('是否已清仓'), blank=False, null=False, default=False, editable=False)
     trade_account = models.ForeignKey(
         'TradeAccount', verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
-    # sell_stock_refer = models.ForeignKey(
-    #     'TradeRec', verbose_name=_('卖出对应交易'), on_delete=models.CASCADE, blank=True, null=True)
+    sell_stock_refer = models.ForeignKey(
+        'TradeRec', verbose_name=_('对应买入交易'), on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.stock_name
@@ -507,6 +510,13 @@ class TradeAccount(BaseModel):
     def __str__(self):
         return str(self.account_provider)
 
+    def update_account_balance(self):
+        account_profit_sum = Positions.objects.filter(
+            trader=self.trader, trade_account=self, profit__gt=0).aggregate(sum_profit=Sum('profit'))
+        if account_profit_sum is not None:
+            self.account_balance += account_profit_sum['sum_profit']
+            self.save()
+
     class Meta:
         ordering = ['-last_mod_time']
         verbose_name = _('股票账户')
@@ -552,16 +562,16 @@ class TradeProfitSnapshot(BaseModel):
         _('快照时间'), blank=False, null=False, default=now)
     applied_period = models.CharField(
         _('收益周期'), choices=PERIOD_CHOICE, max_length=1, blank=True, null=False, default='d')
-    
+
     def __str__(self):
         return str(self.account_name)
 
-    def take_snapshot(self, position, snap_date, applied_period):        
-        position.make_profit_updated() # 更新持仓利润
+    def take_snapshot(self, position, snap_date, applied_period):
+        position.make_profit_updated()  # 更新持仓利润
         last_snap_date = snap_date - timedelta(days=1)
         last_snapshot = TradeProfitSnapshot.objects.filter(
-                trader=self.trader, account_name=position.trade_account, snap_date=last_snap_date).order_by('-snap_date')
-        if last_snapshot is not None and len(last_snapshot)>=1:
+            trader=self.trader, account_name=position.trade_account, snap_date=last_snap_date).order_by('-snap_date')
+        if last_snapshot is not None and len(last_snapshot) >= 1:
             self.profit_change = position.profit - last_snapshot[0].profit
         # 是否已经运行过snapshot
         snapshot_exists = False
@@ -578,18 +588,55 @@ class TradeProfitSnapshot(BaseModel):
                 today_snapshot.snap_date = snap_date
                 today_snapshot.applied_period = applied_period
                 today_snapshot.save()
-        
+
         if not snapshot_exists:
             # self.trader = trader
             self.account_name = position.trade_account
             self.profit = position.profit
-            self.profit_ratio = round(position.profit / position.trade_account.account_capital, 5)
+            self.profit_ratio = round(
+                position.profit / position.trade_account.account_capital, 5)
             self.snap_date = snap_date
             self.applied_period = applied_period
-            self.save()                
+            self.save()
 
     class Meta:
         ordering = ['-last_mod_time']
         verbose_name = _('收益快照')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
+
+
+class StockPositionTransaction(BaseModel):
+    TRANS_TYPE = (
+        ('b', _('买入')),
+        ('s', _('卖出')),
+        ('a', _('调整')),
+    )
+    trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
+                               on_delete=models.CASCADE)
+    account_name = models.ForeignKey('TradeAccount', verbose_name=_('股票账户'), blank=False, null=False,
+                                     on_delete=models.CASCADE)
+    stock_name = models.CharField(
+        _('股票名称'), max_length=50, blank=False, null=False)
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False)
+    transaction_type = models.CharField(_('交易类型'), max_length=1,
+                                       choices=TRANS_TYPE, default='b')
+    # 交易日期
+    trade_time = models.DateTimeField(
+        '交易时间', default=now, blank=False, null=False)
+    price = models.DecimalField(
+        _('交易价格'), max_digits=5, decimal_places=2, blank=False, null=False)
+    current_price = models.DecimalField(
+        _('股票现价'), max_digits=5, decimal_places=2, blank=False, null=False, default=0)
+    stock_positions = models.ForeignKey('Positions', verbose_name=_('股票持仓'), blank=False, null=True,
+                                        on_delete=models.CASCADE, editable=False)
+    from_lot = models.PositiveIntegerField(
+        _('初始持仓（股）'), default=100)
+    to_lot = models.PositiveIntegerField(
+        _('交易后持仓（股）'), default=100)
+    created_by = models.CharField(
+        _('创建人'), max_length=50, blank=False, null=False, editable=False, default='system')
+
+    def __str__(self):
+        return str(self.account_name)

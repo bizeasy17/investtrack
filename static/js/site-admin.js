@@ -6,7 +6,7 @@ $(function () {
         $('#execSpinner').removeClass('d-none');
         $(this).prop("disabled", true);
         $.ajax({
-            url: investBaseEndpoint + "exec-snapshot/" + appliedPeriod,
+            url: investBaseEndpoint + "exec-snapshot-test/" + appliedPeriod,
             method: "GET",
             dataType: "json",
             success: function (data) {

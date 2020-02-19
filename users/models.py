@@ -4,6 +4,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
+from investmgr.models import TradeAccount
+
 
 # Create your models here.
 class User(AbstractUser):
@@ -35,6 +37,9 @@ class User(AbstractUser):
         _('描述下你自己'), max_length=60, blank=True, null=True)
     bio = models.CharField(
         _('个人简介'), max_length=280, blank=True, null=True)
+    
+    # trade_account = models.ForeignKey('TradeAccount', verbose_name=_(
+    #     '交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.username

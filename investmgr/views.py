@@ -9,7 +9,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.functions import ExtractWeek
 
-from .models import (StockNameCodeMap, TradeRec, Positions, TradeProfitSnapshot)
+from .models import (StockNameCodeMap, TradeRec, Positions, TradeProfitSnapshot, TradeAccount)
 from users.models import User
 
 
@@ -482,7 +482,10 @@ def execute_stock_snapshot(request, applied_period):
         snapshot_date = date.today()
         users = User.objects.filter(is_active=True)
         if users is not None and len(users):
-            for user in users:     
+            for user in users:  
+                user_trade_accounts = TradeAccount.objects.filter(trader=user) 
+                for trade_account in user_trade_accounts:
+                    trade_account.update_account_balance()
                 user_positions = Positions.objects.filter(trader=user)
                 if user_positions is not None and len(user_positions)>=1:
                     for position in user_positions:
@@ -493,3 +496,22 @@ def execute_stock_snapshot(request, applied_period):
     return JsonResponse({'error': _('无法创建股票快照')}, safe=False)
 
 
+@login_required
+def execute_stock_snapshot_test(request, applied_period):
+    if request.method == 'GET':
+        for x in range(1, 40):
+            snapshot_date = date.today() - timedelta(days=x)
+            users = User.objects.filter(is_active=True)
+            if users is not None and len(users):
+                for user in users:
+                    user_trade_accounts = TradeAccount.objects.filter(trader=user)
+                    for trade_account in user_trade_accounts:
+                        trade_account.update_account_balance()
+                    user_positions = Positions.objects.filter(trader=user)
+                    if user_positions is not None and len(user_positions) >= 1:
+                        for position in user_positions:
+                            snapshot = TradeProfitSnapshot(trader=user)
+                            snapshot.take_snapshot(
+                                position, snapshot_date, applied_period)
+        return JsonResponse({'info': _('股票快照成功')}, safe=False)
+    return JsonResponse({'error': _('无法创建股票快照')}, safe=False)

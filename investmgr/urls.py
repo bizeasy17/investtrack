@@ -24,4 +24,6 @@ urlpatterns = [
          views.sync_company_list),
     path('stocks/exec-snapshot/<applied_period>',
          views.execute_stock_snapshot),
+    path('stocks/exec-snapshot-test/<applied_period>',
+         views.execute_stock_snapshot_test),
 ]
