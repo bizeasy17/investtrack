@@ -96,6 +96,10 @@ class TradeRec(BaseModel):
         'TradeAccount', verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
     sell_stock_refer = models.ForeignKey(
         'TradeRec', verbose_name=_('对应买入交易'), on_delete=models.SET_NULL, blank=True, null=True)
+    is_sold = models.BooleanField(
+        _('是否已卖出'), blank=False, null=False, default=False)
+    sold_time = models.DateTimeField(
+        '卖出时间', default=now, blank=False, null=False)
 
     def __str__(self):
         return self.stock_name
@@ -160,6 +164,23 @@ class TradeRec(BaseModel):
                 self.board_lots, self.price, self.cash, self.trader)
         super().save(*args, **kwargs)
 
+    def allocate_stock_for_sell(self):
+        if settings.STOCK_OUT_STRATEGY == 'FIFO':
+            quantity_to_sell = self.board_lots
+            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, is_sold=False, is_liquadated=False).order_by('trade_time')
+            for rec in recs:
+                if quantity_to_sell >= rec.board_lots:
+                    # 以前买入的股数不够卖，先卖出该持仓
+                    rec.is_sold = True
+                    rec.sold_time = now
+                else:
+                    # 以前买入的股数大于卖出股数，因此需要拷贝当前持仓，
+                    # 原有持仓数量更新为卖出量
+                    rec.is_sold = True
+                    rec.sold_time = now
+
+
+                
 # First, define the Manager subclass.
 
 
