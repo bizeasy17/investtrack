@@ -100,7 +100,8 @@ class TradeRec(BaseModel):
         _('是否已卖出'), blank=False, null=False, default=False)
     sold_time = models.DateTimeField(
         '卖出时间', default=now, blank=False, null=False)
-    
+    created_or_mod_by = models.CharField(
+        _('创建人'), max_length=50, blank=False, null=False, editable=False, default='human')
 
     def __str__(self):
         return self.stock_name
@@ -144,26 +145,33 @@ class TradeRec(BaseModel):
         # else:
         #     # self.stock_code = self.stock_code + '.SZ'
         #     self.market = 'SZ'
+        # if self.direction == 'b'if: #and not self.created_or_mod_by == 'system':
+        if self.direction == 's':
+            self.allocate_stock_for_sell()
 
-        if not self.pk:  # 非更新持仓
-            p = Positions.objects.filter(
-                trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
-            if p.count() == 0:
-                if self.direction == 's':
-                    return
-                # 新建仓
-                p = Positions(market=self.market,
-                              stock_name=self.stock_name, stock_code=self.stock_code)
-                self.in_stock_positions = p
+        if not self.created_or_mod_by == 'system':
+            if not self.pk:  # 新建持仓
+                p = Positions.objects.filter(
+                    trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
+                if p is not None and p.count() == 0:
+                    if self.direction == 's':
+                        return
+                    # 新建仓
+                    p = Positions(market=self.market,
+                                stock_name=self.stock_name, stock_code=self.stock_code)
+                    self.in_stock_positions = p
+                else:
+                    # 增仓或者减仓
+                    p = p[0]
+                    self.in_stock_positions = p
+                # 更新持仓信息后返回是否清仓
+                self.is_liquadated = p.update_stock_position(
+                    self.direction, self.target_position,
+                    self.board_lots, self.price, self.cash, self.trader)
+                super().save(*args, **kwargs)
             else:
-                # 增仓或者减仓
-                p = p[0]
-                self.in_stock_positions = p
-            # 更新持仓信息后返回是否清仓
-            self.is_liquadated = p.update_stock_position(
-                self.direction, self.target_position,
-                self.board_lots, self.price, self.cash, self.trader)
-        super().save(*args, **kwargs)
+                super().save(*args, **kwargs)
+
 
     def allocate_stock_for_sell(self):
         if settings.STOCK_OUT_STRATEGY == 'FIFO':
@@ -171,17 +179,29 @@ class TradeRec(BaseModel):
             recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, is_sold=False, is_liquadated=False).order_by('trade_time')
             for rec in recs:
                 if quantity_to_sell >= rec.board_lots:
-                    # 以前买入的股数不够卖，先卖出该持仓
+                    # 以前买入的股数不够卖，先卖出该持仓，--更新
+                    quantity_to_sell -= rec.board_lots
                     rec.is_sold = True
                     rec.sold_time = now
+                    rec.save()
                 else:
                     # 以前买入的股数大于卖出股数，因此需要拷贝当前持仓，
                     # 原有持仓数量更新为卖出量
+                    # 由系统创建一条新的记录 --新建
+                    new_sys_rec = rec
+                    new_sys_rec.pk = None
+                    new_sys_rec.id = None
+                    new_sys_rec.board_lots = rec.board_lots - quantity_to_sell
+                    new_sys_rec.created_or_mod_by = 'system'
+                    new_sys_rec.save()
+                    # 老的买入记录更新为卖出状态，--更新
                     rec.is_sold = True
                     rec.sold_time = now
+                    rec.board_lots = quantity_to_sell
+                    rec.created_or_mod_by = 'system'
+                    rec.save()
+                    break
 
-
-                
 # First, define the Manager subclass.
 
 
