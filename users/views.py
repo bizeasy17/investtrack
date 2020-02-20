@@ -155,8 +155,12 @@ def create_trade(request):
         trade_time = data.get('tradeTime')
 
         new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
-                             board_lots=quantity, cash=cash, strategy=strategy[0], target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M'))
+                             board_lots=quantity, cash=cash, strategy=strategy[0], target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M'), created_or_mod_by='human')
+        # if direction == 'b':
         new_trade.save()
+        # else:
+        #     # 卖出操作需要split买入的先前持仓
+        #     new_trade.allocate_stock_for_sell()
         # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
         return JsonResponse({'success': _('成功创建交易记录')}, safe=False)
 
