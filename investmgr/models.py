@@ -100,6 +100,7 @@ class TradeRec(BaseModel):
         _('是否已卖出'), blank=False, null=False, default=False)
     sold_time = models.DateTimeField(
         '卖出时间', default=now, blank=False, null=False)
+    
 
     def __str__(self):
         return self.stock_name
