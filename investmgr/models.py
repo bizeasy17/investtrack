@@ -99,7 +99,7 @@ class TradeRec(BaseModel):
     is_sold = models.BooleanField(
         _('是否已卖出'), blank=False, null=False, default=False)
     sold_time = models.DateTimeField(
-        '卖出时间', default=now, blank=False, null=False)
+        '卖出时间', blank=True, null=True)
     created_or_mod_by = models.CharField(
         _('创建人'), max_length=50, blank=False, null=False, editable=False, default='human')
 
@@ -146,7 +146,7 @@ class TradeRec(BaseModel):
         #     # self.stock_code = self.stock_code + '.SZ'
         #     self.market = 'SZ'
         # if self.direction == 'b'if: #and not self.created_or_mod_by == 'system':
-        if self.direction == 's':
+        if self.direction == 's': # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
             self.allocate_stock_for_sell()
 
         if not self.created_or_mod_by == 'system':
@@ -170,7 +170,7 @@ class TradeRec(BaseModel):
                     self.board_lots, self.price, self.cash, self.trader)
                 super().save(*args, **kwargs)
             else:
-                super().save(*args, **kwargs)
+                super().save()
 
 
     def allocate_stock_for_sell(self):
@@ -178,12 +178,19 @@ class TradeRec(BaseModel):
             quantity_to_sell = self.board_lots
             recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, is_sold=False, is_liquadated=False).order_by('trade_time')
             for rec in recs:
-                if quantity_to_sell >= rec.board_lots:
+                if quantity_to_sell > rec.board_lots:
                     # 以前买入的股数不够卖，先卖出该持仓，--更新
                     quantity_to_sell -= rec.board_lots
                     rec.is_sold = True
-                    rec.sold_time = now
+                    rec.sold_time = datetime.now()
+                    self.sell_stock_refer = rec
                     rec.save()
+                elif quantity_to_sell == rec.board_lots:
+                    rec.is_sold = True
+                    rec.sold_time = datetime.now()
+                    self.sell_stock_refer = rec
+                    rec.save()
+                    break
                 else:
                     # 以前买入的股数大于卖出股数，因此需要拷贝当前持仓，
                     # 原有持仓数量更新为卖出量
@@ -196,9 +203,10 @@ class TradeRec(BaseModel):
                     new_sys_rec.save()
                     # 老的买入记录更新为卖出状态，--更新
                     rec.is_sold = True
-                    rec.sold_time = now
+                    rec.sold_time = datetime.now()
                     rec.board_lots = quantity_to_sell
-                    rec.created_or_mod_by = 'system'
+                    rec.created_or_mod_by = 'system'                                        
+                    self.sell_stock_refer = rec
                     rec.save()
                     break
 
