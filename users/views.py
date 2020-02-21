@@ -155,7 +155,7 @@ def create_trade(request):
         trade_time = data.get('tradeTime')
 
         new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
-                             board_lots=quantity, cash=cash, strategy=strategy[0], target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M'), created_or_mod_by='human')
+                             board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[0], target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M'), created_or_mod_by='human')
         # if direction == 'b':
         new_trade.save()
         # else:

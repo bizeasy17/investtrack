@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import date, datetime, timedelta
 from decimal import *
@@ -30,6 +32,8 @@ class BaseModel(models.Model):
     def get_absolute_url(self):
         pass
 
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 class TradeRec(BaseModel):
     """交易记录"""
@@ -69,11 +73,14 @@ class TradeRec(BaseModel):
         '交易时间', default=now, blank=False, null=False)
     price = models.DecimalField(
         _('交易价格'), max_digits=5, decimal_places=2, blank=False, null=False)
+    sell_price = models.DecimalField(
+        _('卖出价'), max_digits=5, decimal_places=2, blank=True, null=True)
     current_price = models.DecimalField(
         _('股票现价'), max_digits=5, decimal_places=2, blank=False, null=False, default=0)
     target_position = models.PositiveIntegerField(
         _('目标仓位（股）'), blank=True, null=True, default=100)
     board_lots = models.PositiveIntegerField(_('本次交易量(股)'), default=100)
+    lots_remain = models.PositiveIntegerField(_('剩余持仓'), default=0)
     cash = models.DecimalField(
         _('交易现金额'), max_digits=10, decimal_places=2, blank=True, null=True)
     visible = models.CharField(_('可见性'), max_length=1,
@@ -94,8 +101,10 @@ class TradeRec(BaseModel):
         _('是否已清仓'), blank=False, null=False, default=False, editable=False)
     trade_account = models.ForeignKey(
         'TradeAccount', verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
+    rec_ref_number = models.CharField(
+        _('买入记录编号'), max_length=10, blank=True, null=True)
     sell_stock_refer = models.ForeignKey(
-        'TradeRec', verbose_name=_('对应买入交易'), on_delete=models.SET_NULL, blank=True, null=True)
+        'TradeRec', verbose_name=_('卖对应之买入'), on_delete=models.SET_NULL, blank=True, null=True)
     is_sold = models.BooleanField(
         _('是否已卖出'), blank=False, null=False, default=False)
     sold_time = models.DateTimeField(
@@ -146,9 +155,6 @@ class TradeRec(BaseModel):
         #     # self.stock_code = self.stock_code + '.SZ'
         #     self.market = 'SZ'
         # if self.direction == 'b'if: #and not self.created_or_mod_by == 'system':
-        if self.direction == 's': # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
-            self.allocate_stock_for_sell()
-
         if not self.created_or_mod_by == 'system':
             if not self.pk:  # 新建持仓
                 p = Positions.objects.filter(
@@ -168,46 +174,59 @@ class TradeRec(BaseModel):
                 self.is_liquadated = p.update_stock_position(
                     self.direction, self.target_position,
                     self.board_lots, self.price, self.cash, self.trader)
+                self.rec_ref_number = id_generator()
                 super().save(*args, **kwargs)
             else:
                 super().save()
+        else:
+            super().save()
+
+        if self.direction == 's': # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
+            self.allocate_stock_for_sell()
+
 
 
     def allocate_stock_for_sell(self):
+        # self 当前的卖出记录
         if settings.STOCK_OUT_STRATEGY == 'FIFO':
             quantity_to_sell = self.board_lots
             recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, is_sold=False, is_liquadated=False).order_by('trade_time')
             for rec in recs:
-                if quantity_to_sell > rec.board_lots:
-                    # 以前买入的股数不够卖，先卖出该持仓，--更新
-                    quantity_to_sell -= rec.board_lots
-                    rec.is_sold = True
+                # 卖出时需要拷贝当前持仓，由系统system创建一条新的记录 -- 新建
+                new_sys_rec = rec
+                new_sys_rec.pk = None
+                new_sys_rec.id = None
+                new_sys_rec.is_sold = True
+                new_sys_rec.created_or_mod_by = 'system'
+                new_sys_rec.sell_stock_refer = self
+                new_sys_rec.sell_price = self.price
+                if quantity_to_sell > rec.lots_remain:
+                    # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
+                    rec.lots_remain = 0
+                    quantity_to_sell -= rec.lots_remain
                     rec.sold_time = datetime.now()
-                    self.sell_stock_refer = rec
-                    rec.save()
-                elif quantity_to_sell == rec.board_lots:
                     rec.is_sold = True
-                    rec.sold_time = datetime.now()
-                    self.sell_stock_refer = rec
                     rec.save()
+                    # 因此需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
+                    new_sys_rec.save()
+                elif quantity_to_sell == rec.lots_remain:
+                    # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
+                    rec.lots_remain = 0
+                    rec.sold_time = datetime.now()
+                    rec.is_sold = True
+                    rec.save()
+                    # 因此需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
+                    new_sys_rec.save()
                     break
                 else:
-                    # 以前买入的股数大于卖出股数，因此需要拷贝当前持仓，
+                    # 已有持仓大于卖出股数，因此需要拷贝当前持仓，
                     # 原有持仓数量更新为卖出量
-                    # 由系统创建一条新的记录 --新建
-                    new_sys_rec = rec
-                    new_sys_rec.pk = None
-                    new_sys_rec.id = None
-                    new_sys_rec.board_lots = rec.board_lots - quantity_to_sell
-                    new_sys_rec.created_or_mod_by = 'system'
-                    new_sys_rec.save()
                     # 老的买入记录更新为卖出状态，--更新
-                    rec.is_sold = True
-                    rec.sold_time = datetime.now()
-                    rec.board_lots = quantity_to_sell
-                    rec.created_or_mod_by = 'system'                                        
-                    self.sell_stock_refer = rec
+                    rec.lots_remain -= quantity_to_sell                                       
                     rec.save()
+                    # 由系统创建一条新的记录 --新建
+                    new_sys_rec.board_lots = quantity_to_sell
+                    new_sys_rec.save()
                     break
 
 # First, define the Manager subclass.
