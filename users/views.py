@@ -158,14 +158,17 @@ def create_trade(request):
         new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
                              board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[0], target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M'), created_or_mod_by='human')
         # if direction == 'b':
-        new_trade.save()
+        is_ok = new_trade.save()
         # else:
         #     # 卖出操作需要split买入的先前持仓
         #     new_trade.allocate_stock_for_sell()
         # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
-        return JsonResponse({'success': _('成功创建交易记录')}, safe=False)
+        if is_ok:
+            return JsonResponse({'success': _('交易成功')}, safe=False)
+        else:
+            return JsonResponse({'success': _('交易失败')}, safe=False)
 
-    return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
+    return JsonResponse({'error': _('交易失败')}, safe=False)
 
 
 @login_required
@@ -186,20 +189,6 @@ def get_position_by_code(request, code):
         return JsonResponse(my_position, safe=False)
 
     return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)
-
-class TradeRecCreateView(LoginRequiredMixin, FormView):
-    # model = TradeRec
-    """Basic CreateView implementation to create new articles."""
-    model = TradeRec
-    message = _('新的交易记录创建成功.')
-
-    def form_valid(self, form):
-        user = self.request.user
-        # form.instance.user = user
-        traderec = form.save(False)
-        traderec.trader = user
-        traderec.save(True)
-        return super().form_valid(form)
 
 # class UserDetailView(LoginRequiredMixin, DetailView):
 #     model = User

@@ -160,8 +160,8 @@ class TradeRec(BaseModel):
                 p = Positions.objects.filter(
                     trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
                 if p is not None and p.count() == 0:
-                    if self.direction == 's':
-                        return
+                    if self.direction == 's': # 卖出不能大于现有持仓（0）
+                        return False# 需要返回定义好的code
                     # 新建仓
                     p = Positions(market=self.market,
                                 stock_name=self.stock_name, stock_code=self.stock_code)
@@ -170,6 +170,8 @@ class TradeRec(BaseModel):
                     # 增仓或者减仓
                     p = p[0]
                     self.in_stock_positions = p
+                    if self.board_lots > p.lots: # 卖出不能大于现有持仓
+                        return False# 需要返回定义好的code
                 # 更新持仓信息后返回是否清仓
                 self.is_liquadated = p.update_stock_position(
                     self.direction, self.target_position,
@@ -183,14 +185,13 @@ class TradeRec(BaseModel):
 
         if self.direction == 's': # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
             self.allocate_stock_for_sell()
-
-
+        return True
 
     def allocate_stock_for_sell(self):
         # self 当前的卖出记录
         if settings.STOCK_OUT_STRATEGY == 'FIFO':
             quantity_to_sell = self.board_lots
-            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, lots_remain__gt=0, is_sold=False, is_liquadated=False).order_by('trade_time')
+            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, direction='b', lots_remain__gt=0, is_sold=False, is_liquadated=False).order_by('trade_time')
             for rec in recs:
                 # 卖出时需要拷贝当前持仓，由系统system创建一条新的记录 -- 新建
                 
@@ -282,7 +283,7 @@ class Positions(BaseModel):
         _('利润率'), max_length=100, blank=True, null=True)
     cash = models.DecimalField(
         _('投入现金额'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
-    lots = models.PositiveIntegerField(_('持仓量(股)'), default=0)
+    lots = models.PositiveIntegerField(_('持仓'), default=0)
     target_position = models.PositiveIntegerField(
         _('目标仓位（股）'), blank=False, null=False, default=0)
     is_liquadated = models.BooleanField(
