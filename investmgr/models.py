@@ -339,7 +339,7 @@ class Positions(BaseModel):
             self.profit = round(
                 (realtime_price - self.position_price) * self.lots, 2)
 
-        if trade_direction == 's':  # 如果已有仓位减仓
+        if trade_direction == 's':  # 已有仓位卖出
             trade_lots = 0 - trade_lots
             trade_cash = 0 - trade_cash
 
@@ -348,7 +348,9 @@ class Positions(BaseModel):
                 self.is_liquadated = True
                 self.lots = 0
                 self.cash = 0
-
+            else:
+                self.lots = trade_lots + self.lots
+                self.cash += trade_cash
         else:
             self.profit = round(self.profit +
                                 (realtime_price - trade_price) * abs(trade_lots), 2)
