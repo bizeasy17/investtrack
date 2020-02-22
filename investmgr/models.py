@@ -190,32 +190,41 @@ class TradeRec(BaseModel):
         # self 当前的卖出记录
         if settings.STOCK_OUT_STRATEGY == 'FIFO':
             quantity_to_sell = self.board_lots
-            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, is_sold=False, is_liquadated=False).order_by('trade_time')
+            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, lots_remain__gt=0, is_sold=False, is_liquadated=False).order_by('trade_time')
             for rec in recs:
                 # 卖出时需要拷贝当前持仓，由系统system创建一条新的记录 -- 新建
-                new_sys_rec = rec
-                new_sys_rec.pk = None
-                new_sys_rec.id = None
-                new_sys_rec.is_sold = True
-                new_sys_rec.created_or_mod_by = 'system'
-                new_sys_rec.sell_stock_refer = self
-                new_sys_rec.sell_price = self.price
+                
                 if quantity_to_sell > rec.lots_remain:
                     # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
-                    rec.lots_remain = 0
                     quantity_to_sell -= rec.lots_remain
-                    rec.sold_time = datetime.now()
+                    rec.lots_remain = 0
+                    rec.sold_time = self.trade_time
                     rec.is_sold = True
                     rec.save()
                     # 因此需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
+                    new_sys_rec = rec
+                    new_sys_rec.pk = None
+                    new_sys_rec.id = None
+                    # new_sys_rec.is_sold = True
+                    new_sys_rec.created_or_mod_by = 'system'
+                    new_sys_rec.sell_stock_refer = self
+                    new_sys_rec.sell_price = self.price
                     new_sys_rec.save()
                 elif quantity_to_sell == rec.lots_remain:
                     # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
                     rec.lots_remain = 0
-                    rec.sold_time = datetime.now()
+                    rec.sold_time = self.trade_time
                     rec.is_sold = True
                     rec.save()
                     # 因此需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
+                    new_sys_rec = rec
+                    new_sys_rec.pk = None
+                    new_sys_rec.id = None
+                    # new_sys_rec.is_sold = True
+                    new_sys_rec.board_lots = quantity_to_sell
+                    new_sys_rec.created_or_mod_by = 'system'
+                    new_sys_rec.sell_stock_refer = self
+                    new_sys_rec.sell_price = self.price
                     new_sys_rec.save()
                     break
                 else:
@@ -225,6 +234,14 @@ class TradeRec(BaseModel):
                     rec.lots_remain -= quantity_to_sell                                       
                     rec.save()
                     # 由系统创建一条新的记录 --新建
+                    new_sys_rec = rec
+                    new_sys_rec.pk = None
+                    new_sys_rec.id = None
+                    new_sys_rec.lots_remain = 0
+                    new_sys_rec.is_sold = True
+                    new_sys_rec.created_or_mod_by = 'system'
+                    new_sys_rec.sell_stock_refer = self
+                    new_sys_rec.sell_price = self.price
                     new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.save()
                     break
