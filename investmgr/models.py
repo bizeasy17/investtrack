@@ -32,8 +32,10 @@ class BaseModel(models.Model):
     def get_absolute_url(self):
         pass
 
+
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
 
 class TradeRec(BaseModel):
     """交易记录"""
@@ -160,22 +162,28 @@ class TradeRec(BaseModel):
                 p = Positions.objects.filter(
                     trader=self.trader.id, stock_code=self.stock_code, is_liquadated=False)
                 if p is not None and p.count() == 0:
-                    if self.direction == 's': # 卖出不能大于现有持仓（0）
-                        return False# 需要返回定义好的code
+                    if self.direction == 's':  # 卖出不能大于现有持仓（0）
+                        return False  # 需要返回定义好的code
                     # 新建仓
                     p = Positions(market=self.market,
-                                stock_name=self.stock_name, stock_code=self.stock_code)
+                                  stock_name=self.stock_name, stock_code=self.stock_code)
                     self.in_stock_positions = p
                 else:
                     # 增仓或者减仓
                     p = p[0]
                     self.in_stock_positions = p
-                    if self.board_lots > p.lots: # 卖出不能大于现有持仓
-                        return False# 需要返回定义好的code
+                    if self.direction == 's' and self.board_lots > p.lots:  # 卖出不能大于现有持仓
+                        return False  # 需要返回定义好的code
                 # 更新持仓信息后返回是否清仓
                 self.is_liquadated = p.update_stock_position(
                     self.direction, self.target_position,
                     self.board_lots, self.price, self.cash, self.trader)
+                if self.is_liquadated:
+                    entries = TradeRec.objects.select_for_update().filter(trader=self.trader,stock_code=self.stock_code,direction='b',is_liquadated=False,)
+                    with transaction.atomic():
+                        for entry in entries:
+                            entry.is_liquadated = True
+
                 self.rec_ref_number = id_generator()
                 super().save(*args, **kwargs)
             else:
@@ -183,7 +191,7 @@ class TradeRec(BaseModel):
         else:
             super().save()
 
-        if self.direction == 's': # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
+        if self.direction == 's':  # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
             self.allocate_stock_for_sell()
         return True
 
@@ -191,10 +199,11 @@ class TradeRec(BaseModel):
         # self 当前的卖出记录
         if settings.STOCK_OUT_STRATEGY == 'FIFO':
             quantity_to_sell = self.board_lots
-            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, direction='b', lots_remain__gt=0, is_sold=False, is_liquadated=False).order_by('trade_time')
+            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, direction='b',
+                                           lots_remain__gt=0, is_sold=False, is_liquadated=False,).exclude(created_or_mod_by='system').order_by('trade_time')
             for rec in recs:
                 # 卖出时需要拷贝当前持仓，由系统system创建一条新的记录 -- 新建
-                
+
                 if quantity_to_sell > rec.lots_remain:
                     # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
                     quantity_to_sell -= rec.lots_remain
@@ -232,7 +241,7 @@ class TradeRec(BaseModel):
                     # 已有持仓大于卖出股数，因此需要拷贝当前持仓，
                     # 原有持仓数量更新为卖出量
                     # 老的买入记录更新为卖出状态，--更新
-                    rec.lots_remain -= quantity_to_sell                                       
+                    rec.lots_remain -= quantity_to_sell
                     rec.save()
                     # 由系统创建一条新的记录 --新建
                     new_sys_rec = rec
@@ -295,30 +304,33 @@ class Positions(BaseModel):
     def __str__(self):
         return self.stock_name
 
-    def make_profit_updated(self):
+    def make_profit_updated(self, trade_price=None):
         # 获得实时报价
         # ts_code = str(self.stock_code).split('.')[0]
-        realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
-        realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
-                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
-        realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
-        realtime_bid = round(Decimal(realtime_df['bid'].mean()), 2)
-        realtime_pre_close = round(Decimal(realtime_df['pre_close'].mean()), 2)
+        if trade_price is None:
+            realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
+            realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+            realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
+            realtime_bid = round(Decimal(realtime_df['bid'].mean()), 2)
+            realtime_pre_close = round(Decimal(realtime_df['pre_close'].mean()), 2)
 
-        if realtime_price != Decimal(0.00):
-            realtime_price = realtime_price
-        elif realtime_bid != Decimal(0.00):
-            realtime_price = realtime_bid
+            if realtime_price != Decimal(0.00):
+                realtime_price = realtime_price
+            elif realtime_bid != Decimal(0.00):
+                realtime_price = realtime_bid
+            else:
+                realtime_price = realtime_pre_close
         else:
-            realtime_price = realtime_pre_close                             
-        
+            realtime_price = trade_price
+
         if self.lots != 0 and self.position_price != 0:
             self.profit = (realtime_price - self.position_price) * self.lots
             self.profit_ratio = str(
                 round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
             self.current_price = realtime_price
             self.save()
-            
+
         return realtime_price
         '''
         # 获得实时报价
@@ -337,22 +349,28 @@ class Positions(BaseModel):
 
     # 持仓算法
     def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
-        realtime_price = self.make_profit_updated()
-
+        if trade_direction == 's':
+            realtime_price = self.make_profit_updated(trade_price=trade_price)
+        else:
+            realtime_price = self.make_profit_updated()
         self.trader = trader
         self.target_position = target_position
+        self.current_price = realtime_price
 
         # 什么时候计算？
         # 持仓利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 目前持仓价格) * 持仓数量(手) * 100 (1手=100股)
         if trade_direction == 's':  # 已有仓位卖出
-            self.lots = self.lots - trade_lots 
+            self.lots = self.lots - trade_lots
             self.cash = self.cash - trade_cash
             if self.lots == 0:
                 # 清仓，设置is_liquadated = True
                 self.is_liquadated = True
+                self.cash = 0
         elif trade_direction == 'b':
-            self.lots = self.lots + trade_lots 
+            self.lots = self.lots + trade_lots
             self.cash = self.cash + trade_cash
+            self.profit = round(self.profit +
+                                (realtime_price - trade_price) * trade_lots, 2)
         elif trade_direction == 'a':
             return
         '''
@@ -365,12 +383,15 @@ class Positions(BaseModel):
             每手利润 = 利润 / (已有持仓-卖出量(手)）
             持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
         '''
-        self.profit = round(self.profit +
-                                (realtime_price - trade_price) * trade_lots, 2)
-        self.position_price = round(realtime_price - self.profit /
+        if not self.is_liquadated:
+            self.position_price = round(realtime_price - self.profit /
                                         self.lots, 2)
-        self.profit_ratio = str(
-            round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
+            self.profit_ratio = str(
+                round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
+            
+            if trade_direction == 's': 
+                self.make_profit_updated()
+
         self.save()
         return self.is_liquadated
 
@@ -696,7 +717,7 @@ class StockPositionTransaction(BaseModel):
     stock_code = models.CharField(
         _('股票代码'), max_length=50, blank=False, null=False)
     transaction_type = models.CharField(_('交易类型'), max_length=1,
-                                       choices=TRANS_TYPE, default='b')
+                                        choices=TRANS_TYPE, default='b')
     # 交易日期
     trade_time = models.DateTimeField(
         '交易时间', default=now, blank=False, null=False)

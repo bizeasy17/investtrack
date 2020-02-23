@@ -25,9 +25,9 @@ class TradeRecListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         id = self.value()
         if id:
-            return queryset.filter(trader__id__exact=id)
+            return queryset.filter(trader__id__exact=id).exclude(created_or_mod_by='system')
         else:
-            return queryset
+            return queryset.filter().exclude(created_or_mod_by='system')
 
 
 class TradeRecAdmin(admin.ModelAdmin):
