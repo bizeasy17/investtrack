@@ -300,7 +300,7 @@ class Positions(BaseModel):
         # ts_code = str(self.stock_code).split('.')[0]
         realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
         realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
-                                   'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
         realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
         realtime_bid = round(Decimal(realtime_df['bid'].mean()), 2)
         realtime_pre_close = round(Decimal(realtime_df['pre_close'].mean()), 2)
@@ -310,20 +310,17 @@ class Positions(BaseModel):
         elif realtime_bid != Decimal(0.00):
             realtime_price = realtime_bid
         else:
-            realtime_price = realtime_pre_close
-
-        self.profit = (realtime_price - self.position_price) * self.lots
-        self.profit_ratio = str(
-            round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
-        self.current_price = realtime_price
-        self.save()
-
-    # 持仓算法
-    def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
-        self.trader = trader
-        if self.target_position == 0:
-            self.target_position = target_position
-
+            realtime_price = realtime_pre_close                             
+        
+        if self.lots != 0 and self.position_price != 0:
+            self.profit = (realtime_price - self.position_price) * self.lots
+            self.profit_ratio = str(
+                round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
+            self.current_price = realtime_price
+            self.save()
+            
+        return realtime_price
+        '''
         # 获得实时报价
         # ts_code = str(self.stock_code).split('.')[0]
         realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
@@ -332,47 +329,34 @@ class Positions(BaseModel):
         realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
         self.current_price = realtime_price
 
-        # 计算现有持仓股利润
-        # 什么时候计算？
-        # 持仓利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 目前持仓价格) * 持仓数量(手) * 100 (1手=100股)
-        if self.lots != 0 or self.position_price != 0:
+        # 如果有现有仓位，计算实时持仓利润
+        if self.lots != 0 and self.position_price != 0:
             self.profit = round(
                 (realtime_price - self.position_price) * self.lots, 2)
+        '''
 
+    # 持仓算法
+    def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
+        realtime_price = self.make_profit_updated()
+
+        self.trader = trader
+        self.target_position = target_position
+
+        # 什么时候计算？
+        # 持仓利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 目前持仓价格) * 持仓数量(手) * 100 (1手=100股)
         if trade_direction == 's':  # 已有仓位卖出
-            trade_lots = 0 - trade_lots
-            trade_cash = 0 - trade_cash
-
-            if self.lots == abs(trade_lots):
+            self.lots = self.lots - trade_lots 
+            self.cash = self.cash - trade_cash
+            if self.lots == 0:
                 # 清仓，设置is_liquadated = True
                 self.is_liquadated = True
-                self.lots = 0
-                self.cash = 0
-            else:
-                self.lots = trade_lots + self.lots
-                self.cash += trade_cash
-        else:
-            self.profit = round(self.profit +
-                                (realtime_price - trade_price) * abs(trade_lots), 2)
-
-            # 已有仓位加仓
-            '''
-            1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-            2. 持仓价格 =
-            2.1 如果利润是(负-)的
-                每手亏损 = 利润 / (已有持仓+新增持仓量(手)）
-                持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
-            2.2 如果利润是(正+)的
-                每手利润 = 利润 / (已有持仓+新增持仓量(手)）
-                持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
-            '''
-            self.position_price = round(realtime_price - self.profit /
-                                        (trade_lots + self.lots), 2)
-            self.lots = trade_lots + self.lots
-            self.cash += trade_cash
-
+        elif trade_direction == 'b':
+            self.lots = self.lots + trade_lots 
+            self.cash = self.cash + trade_cash
+        elif trade_direction == 'a':
+            return
         '''
-        1. 利润 = 原持仓利润 + (当前股票价格：如果未收盘/收盘价 - 交易价格) * 本次交易量(手) * 100 (1手=100股)
+        1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
         2. 持仓价格 =
         2.1 如果利润是(负-)的
             每手亏损 = 利润 / (已有持仓-卖出量(手)）
@@ -381,16 +365,18 @@ class Positions(BaseModel):
             每手利润 = 利润 / (已有持仓-卖出量(手)）
             持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
         '''
+        self.profit = round(self.profit +
+                                (realtime_price - trade_price) * trade_lots, 2)
+        self.position_price = round(realtime_price - self.profit /
+                                        self.lots, 2)
         self.profit_ratio = str(
             round((realtime_price - self.position_price) / self.position_price * 100, 2)) + '%'
-
         self.save()
-
         return self.is_liquadated
 
     class Meta:
         ordering = ['stock_code']
-        verbose_name = _('持仓')
+        verbose_name = _('我的持仓')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
