@@ -26,13 +26,79 @@
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card shadow mb-4">
                         <div class="card-body">
+                            <p class="card-title"><i class="fa fa-chart-line" ></i> {% trans '我的持仓' %}</p>
+                            <div class="text-muted"> {% trans '今日收益（元）' %}</div>
+                            <span class="text-danger">+485.5</span>
+                            <div class="d-flex align-items-center justify-content-between flex-wrap mt-2">
+                                <div class="text-muted"> 
+                                    <div>{% trans '总市值' %}</div>
+                                    <div>{{ dashboard.capital }}</div>
+                                </div>
+                                <div class="text-muted"> 
+                                    <div>{% trans '总盈亏' %}</div>
+                                    <div>{{ dashboard.profit_loss }}</div>
+                                </div>
+                                <div class="text-muted"> 
+                                    <div>{% trans '持仓股票数' %}</div>
+                                    <div>{{ dashboard.total_shares }}</div>
+                                </div>
+                                <div class="text-muted"> 
+                                    <div>{% trans '管理账户数' %}</div>
+                                    <div>{{ dashboard.total_accounts }}</div>
+                                </div>
+
+                            </div>
+                            {% if dashboard %}
+                            {% for p in dashboard.positions %}
+                            <div class="card shadow mb-2 mt-2">
+                                <div class="card-body">
+                                    <div class='row'>
+                                        <div class="col-lg-10">
+                                            <h5 class="card-title"><a href="#" class="text-muted">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_provider }})</h5>
+                                            <h6 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h6>
+                                        </div>
+                                        
+                                        <div class="col-lg-2">
+                                            <div class="float-right">
+                                            {% if p.profit < 0 %}
+                                            <td><span class="badge badge-pill badge-success ml-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
+                                            {% else %}
+                                            <td><span class="badge badge-pill badge-danger ml-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
+                                            {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                        <div class="text-muted"> 
+                                            <div>{% trans '现价' %}</div>
+                                            <div>{{ p.current_price }}</div>
+                                        </div>
+                                        <div class="text-muted"> 
+                                            <div>{% trans '成本' %}</div>
+                                            <div>{{ p.position_price }}</div>
+                                        </div>
+                                        <div class="text-muted">  <div>{% trans '持仓' %}{% trans '(目标仓位)' %}</div><div>{{ p.lots }}({{ p.target_position }})</div></div>
+                                        <div class="text-muted">  <div>{% trans '市值' %}</div><div>{{ p.cash }}</div></div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% comment %} <div class="col-md-12 grid-margin stretch-card">
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
                             <p class="card-title"><i class="fa fa-chart-line" ></i> {% trans '投资收益曲线' %}</p>
                             <p class="text-muted">25% more traffic than previous
                                 week</p>
                             <canvas id="profitDevChart" height="150"></canvas>
                         </div>
                     </div>
-                </div>
+                </div> {% endcomment %}
                 <div class="col-md-6 stretch-card">
                     <div class="card shadow">
                         <div class="card-body">
@@ -155,13 +221,13 @@
                     <div class="card shadow mb-4">
                         <div class="card-body pb-0">
                             <div class="d-flex align-items-center mb-4">
-                                <p class="card-title mb-0 mr-1"><i class="fa fa-cog" ></i>  {% trans '我的交易策略' %}</p>
+                                <p class="card-title mb-0 mr-1"><i class="fa fa-cog" ></i>  {% trans '交易策略' %}</p>
                                 <span class="badge badge-info badge-pill">2</span>
                             </div>
                             <div class="d-flex flex-wrap pt-2 small">
                                 {% if dashboard %}
                                 {% for s in dashboard.strategies %}
-                                    <button type="button" class="btn btn-warning"><i class="fa fa-cog">{{ s.name }}</i></button>
+                                    <button type="button" class="btn btn-light mb-2 ml-2"><i class="fa"><small>{{ s.name }}</small></i></button>
                                 {% endfor %}
                                 {% endif %}
                             </div>

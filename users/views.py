@@ -41,6 +41,10 @@ class UserDashboardView(LoginRequiredMixin, View):
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
             queryset = {
+                'capital': 1000,
+                'profit_loss': 15000,
+                'total_shares': 8,
+                'total_accounts': 3,
                 'details': tradedetails,
                 'positions': trade_positions,
                 'strategies': strategies,
