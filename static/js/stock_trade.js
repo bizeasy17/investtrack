@@ -20,6 +20,65 @@ $(function () {
     var endDate = formatDate(dt, '-');
     var chartCanvas = document.getElementById('stockChart').getContext('2d');
 
+    // assign the selected strategy
+    var updateTradeStockInfoFor = function (code) {
+        var account = $('#hiddenAccount').val();
+        if (code != '') {
+            $.ajax({
+                url: userBaseEndpoint + 'get-stock-for-trade/' + account + '/' + code + '/',
+                // headers: { 'X-CSRFToken': csrftoken },
+                method: 'GET',
+                dataType: 'json',
+                // data: {
+                //     nameOrCode: nameOrCode
+                // },
+                success: function (data) {
+                    $('#currentPrice').text(data.current_price);
+                    $('#cashRemainToBuy').text(parseFloat(data.remain_to_buy).toLocaleString());
+                    $('#sharesRemainToSell').text(data.remain_to_sell.toLocaleString());
+                    $('#tradePrice').val(data.current_price);
+                    var quantity = $('#quantity').val();
+                    // $('#quantity').val($('#quantity').val().toLocaleString());
+                    $('#refCashAmount').text(parseFloat(data.current_price * quantity).toLocaleString());
+                    $('#targetPositionText').text(data.target_position);
+                    $('#targetPosition').val(data.target_position);
+                    $('#targetCashAmount').text(parseFloat(data.target_cash_amount).toLocaleString());
+                    if($('#hiddenTradeType').val()=='b'){
+                        if (parseInt($('#targetPositionText').text()) == 0) {
+                            $('#targetPosition').removeAttr('readonly');
+                        } else {
+                            $('#targetPosition').prop('readonly', true);
+                        }
+                        if (parseInt($('#cashRemainToBuy').text()) <= 0) {
+                            $('#btnSubmitTrade').prop('disabled', true);
+                        } else {
+                            $('#btnSubmitTrade').removeAttr('disabled');
+                        }
+                    }else{
+                        $('#targetPosition').prop('readonly', true);
+                        if (parseInt($('#sharesRemainToSell').text()) <= 0) {
+                            $('#btnSubmitTrade').prop('disabled', true);
+                        }else{
+                            $('#btnSubmitTrade').removeAttr('disabled');
+                        }
+                    }
+                    $('#direction').val($('#hiddenTradeType').val());
+                },
+                statusCode: {
+                    403: function () {
+                        alert("403 forbidden");
+                    },
+                    404: function () {
+                        alert("404 page not found");
+                    },
+                    500: function () {
+                        alert("500 internal server error");
+                    }
+                }
+            });
+        }
+    };
+
     // render the stock charts
     // 更新当前所选股票信息
     var getStartDate = function (period, format) {
@@ -54,6 +113,9 @@ $(function () {
             }
         })
     }
+
+    // 页面加载时，更新请求的股票交易信息
+    updateTradeStockInfoFor($('#hiddenCode').val())
 
     $('#searchNameOrCode').autoComplete({
         resolver: 'custom',
@@ -92,51 +154,18 @@ $(function () {
 
         updateChartFor(showName, showCode, code, period)
 
-        updateRealtimePriceFor(code);
+        updateTradeStockInfoFor(code);
     });
 
-    // assign the selected strategy
-    var updateRealtimePriceFor = function (code) {
-        if (code != '') {
-            $.ajax({
-                url: investBaseEndpoint + 'get-realtime-price/' + code,
-                // headers: { 'X-CSRFToken': csrftoken },
-                method: 'GET',
-                dataType: 'json',
-                // data: {
-                //     nameOrCode: nameOrCode
-                // },
-                success: function (data) {
-                    $('#currentPrice').val(data.price);
-                    $('#tradePrice').val(data.price);
-                    var quantity = $('#quantity').val();
-
-                    // $('#quantity').val($('#quantity').val().toLocaleString());
-                    $('#cash').val(parseFloat(data.price * quantity).toLocaleString());
-                    // $('input[type=number').digits();
-                },
-                statusCode: {
-                    403: function () {
-                        alert("403 forbidden");
-                    },
-                    404: function () {
-                        alert("404 page not found");
-                    },
-                    500: function () {
-                        alert("500 internal server error");
-                    }
-                }
-            });
-        }
-    };
+    
 
     // 页面默认加载上证指数日K（D)
-    var initStockChart = function () {
+    var initStockChart = function (code, showCode, showName) {
         var period = $('input:radio[name="period"]:checked').val();
         var startDate = getStartDate(period, '-');
-        var code = $('input:radio[name="index"]:checked').val(); // e.g. sh
-        var showCode = $('input:radio[name="index"]:checked').attr('id')// e.g. 1A0001 上证
-        var showName = $('input:radio[name="index"]:checked').parent().text().trim();
+        // var code = $('input:radio[name="index"]:checked').val(); // e.g. sh
+        // var showCode = $('input:radio[name="index"]:checked').attr('id')// e.g. 1A0001 上证
+        // var showName = $('input:radio[name="index"]:checked').parent().text().trim();
 
         $('#hiddenCode').val(code);
         $('#hiddenName').val(showName);
@@ -198,29 +227,47 @@ $(function () {
         $('#pickedStrategyID').val($(this).data('id'));
     });
 
-    $('#btnBuy').click(function () {
-        $('#direction').val('b');
-        $('#directionIndicate').text(' - 买入');
-        $('#directionIndicate').addClass('text-danger');
-        $('#directionIndicate').addClass('text-danger');
-        // $('#collapseCreate').removeClass('collapse')
-
-        // if ($('#collapseCreate').hasClass('collapse')){
-
-        // }
+    $('input:radio[name="trade-type"]').change(function () {
+        var trade_type = $(this).val();
+        $('#direction').val($(this).val());
+        if(trade_type=='b'){
+            $('#hiddenTradeType').val('b');
+            $('#cashRemainToBuy').removeClass('d-none');
+            $('#cashRemainToBuyLbl').removeClass('d-none');
+            $('#sharesRemainToSell').addClass('d-none');
+            $('#sharesRemainToSellLbl').addClass('d-none');
+            if ($('#targetPositionText') == '0') {
+                $('#targetPosition').prop('readonly', false);
+            } else {
+                $('#targetPosition').prop('readonly', true);
+            }
+        }else{
+            $('#hiddenTradeType').val('s');
+            $('#sharesRemainToSell').removeClass('d-none');
+            $('#sharesRemainToSellLbl').removeClass('d-none');
+            $('#cashRemainToBuy').addClass('d-none');
+            $('#cashRemainToBuyLbl').addClass('d-none');
+            $('#targetPosition').prop('readonly', true);
+            // $('#btnSubmitTrade').prop('disabled', true);
+        }
+        
     });
 
-    $('#btnSell').click(function () {
-        $('#direction').val('s');
-        $('#directionIndicate').text(' - 卖出');
-        $('#directionIndicate').removeClass('text-danger');
-        $('#directionIndicate').addClass('text-success');
+    $('#optBuy').click(function () {
+        
+    });
+
+    $('#optSell').click(function () {
+        // $('#directionIndicate').text(' - 卖出');
+        // $('#directionIndicate').removeClass('text-danger');
+        // $('#directionIndicate').addClass('text-success');
         // if ($('#collapseCreate').hasClass('collapse')) {
 
         // }
 
         // $('#collapseCreate').removeClass('collapse')
-
+        
+        
     });
 
     $('#refreshPosition').click(function () {
@@ -285,7 +332,7 @@ $(function () {
         $('#hiddenMarket').val(market);
 
         updateChartFor(showName, showCode, code, period);
-        updateRealtimePriceFor(code);
+        updateTradeStockInfoFor(code);
     });
 
     $('input:radio[name="period"]').change(function () {
@@ -328,13 +375,24 @@ $(function () {
     });
 
     // document.getElementById('stockNameOrCode').addEventListener('blur', getRealtimePrice, $(this).val());
+    $('#tradePrice').blur(function () {
+        var price = $(this).val();
+        var quantity = $('#quantity').val();
+        // $('#quantity').val($('#quantity').val().toLocaleString());
+        $('#refCashAmount').text(parseFloat(price * quantity).toLocaleString());
+    });
 
     // assign the selected strategy
     $('#quantity').blur(function () {
         var price = $('#tradePrice').val();
-        var quantity = $('#quantity').val();
+        var quantity = $(this).val();
         // $('#quantity').val($('#quantity').val().toLocaleString());
-        $('#cash').val(parseFloat(price * quantity).toLocaleString());
+        $('#refCashAmount').text(parseFloat(price * quantity).toLocaleString());
+        if(quantity=='0'){
+            $('#btnSubmitTrade').prop('disabled', true);
+        }else{
+            $('#btnSubmitTrade').removeAttr('disabled');
+        }
     });
 
     $('#traderecForm').submit(function (e) {
@@ -342,7 +400,7 @@ $(function () {
         var currentPrice = $('#currentPrice').val();
         var tradePrice = $('#tradePrice').val();
         var quantity = $('#quantity').val();
-        var cash = $('#cash').val();
+        var cash = $('#refCashAmount').text();
 
         $(".error").remove();
 
@@ -396,14 +454,15 @@ $(function () {
         var code = $('#hiddenCode').val();
         var tsCode = $('#hiddenTscode').val();
         var market = $('#hiddenMarket').val();
-        var currentPrice = $('#currentPrice').val();
+        var currentPrice = $('#currentPrice').text();
         var price = $('#tradePrice').val();
         var quantity = $('#quantity').val();
-        var cash = $('#cash').val();
+        var cash = $('#refCashAmount').text();
         var strategy = $('#pickedStrategyID').val();
         var targetPosition = $('#targetPosition').val();
         var direction = $('#direction').val();
         var tradeTime = $('#tradeDatetime').val();
+        var tradeAcc = $('#hiddenAccount').val();
 
         $.ajax({
             url: userBaseEndpoint + 'create-trade',
@@ -423,6 +482,7 @@ $(function () {
                 targetPosition: targetPosition,
                 direction: direction,
                 tradeTime: tradeTime,
+                tradeAcc: tradeAcc
                 // csrfmiddlewaretoken: '{{ csrf_token }}'
             },
             success: function (data) {
@@ -512,7 +572,7 @@ $(function () {
         chart.update();
     };
 
-    initStockChart();
+    initStockChart($('#hiddenCode').val(), $('#hiddenTscode').val(),$('#hiddenName').val());
 
     // document.getElementById('update').addEventListener('click', update);
 

@@ -23,9 +23,49 @@
         <div class="row">
             <div class="col-lg-6">
                 <!-- Title -->
-                <h5 class="mt-2">{% trans '实时行情数据' %}</h5>
+                <!-- <h5 class="mt-2">{% trans '实时行情数据' %}</h5> -->
                 <!-- Date/Time -->
-                <p>{% trans '数据获取于' %}{% now "Y-m-d H:i" %}</p>
+                <div class="small">
+                    {% if trade_info.position %}
+                    
+                    <div class="">
+                        <div class='d-flex align-items-center justify-content-between flex-wrap'>
+                            <div>
+                                <h6 class="card-title"><a href="#" class="text-muted">{{ trade_info.position.stock_name }}({% trans '账户:' %}{{ trade_info.position.trade_account.account_provider }})</h6>
+                                <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ trade_info.position.stock_code }}</a></h7>
+                            </div>
+                            
+                            <div>
+                                
+                                {% if trade_info.position.profit < 0 %}
+                                <div><span class="badge badge-pill badge-success ml-1">{{ trade_info.position.profit_ratio }}</span></div><div><span class="badge badge-pill badge-success">{{ trade_info.position.profit }}</span></div>
+                                {% else %}
+                                <div><span class="badge badge-pill badge-danger ml-1">+{{ trade_info.position.profit_ratio }}</span></div><div><span class="badge badge-pill badge-danger">+{{ trade_info.position.profit }}</span></div>
+                                {% endif %}
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div class="text-muted"> 
+                                <div>{% trans '现价' %}</div>
+                                <div>{{ trade_info.position.current_price }}</div>
+                            </div>
+                            <div class="text-muted"> 
+                                <div>{% trans '成本' %}</div>
+                                <div>{{ trade_info.position.position_price }}</div>
+                            </div>
+                            <div class="text-muted">  <div>{% trans '持仓' %}{% trans '(目标仓位)' %}</div><div>{{ trade_info.position.lots }}({{ trade_info.position.target_position }})</div></div>
+                            <div class="text-muted">  <div>{% trans '市值' %}</div><div>{{ trade_info.position.cash }}</div></div>
+
+                        </div>
+                    
+
+                    </div>
+                    {% endif %}  
+                    <span>{% trans '数据获取于' %}{% now "Y-m-d H:i" %}</span>
+
+                </div>
             </div>
             <div class="col-lg-6">
                 <div class="btn-group btn-group-toggle mt-5 float-right" data-toggle="buttons">
@@ -42,13 +82,13 @@
                         <input type="radio" name="period" id="opt60" autocomplete="off" value="60">{% trans '60' %} 
                     </label>
                     <label class="btn btn-light active">
-                        <input type="radio" name="period" id="optDay" autocomplete="off" value="D" checked>{% trans '日线' %} 
+                        <input type="radio" name="period" id="optDay" autocomplete="off" value="D" checked>{% trans '日' %} 
                     </label>
                     <label class="btn btn-light">
-                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="W">{% trans '周线' %} 
+                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="W">{% trans '周' %} 
                     </label>
                     <label class="btn btn-light">
-                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="M">{% trans '月线' %} 
+                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="M">{% trans '月' %} 
                     </label>
                 </div>
             </div>
@@ -107,97 +147,51 @@
         <div class="p-1 my-4">
             <h6>{% trans '搜索' %}</h6>
             <div class="">
-                <div class="input-group mb-2 mt-1">
-                    <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
-                    <input type="hidden" id="hiddenCode">
-                    <input type="hidden" id="hiddenName">
-                    <input type="hidden" id="hiddenTscode">
-                    <input type="hidden" id="hiddenMarket">
+                <div class="input-group mt-1">
+                    <input type="text" class="form-control form-control-sm advancedAutoComplete"  {% if trade_info %} value="{{ trade_info.stock_symbol }}" {% endif %} id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
+                    <input type="hidden" id="hiddenCode" value="{{trade_info.stock_symbol}}"><!--real code e.g. 000001 -->
+                    <input type="hidden" id="hiddenName" value="{{trade_info.stock_name}}"><!--e.g.平安保险-->
+                    <input type="hidden" id="hiddenTscode" value="{{trade_info.show_code}}"><!--show code, 000001.SZ-->
+                    <input type="hidden" id="hiddenMarket" value="{{trade_info.market}}">
+                    <input type="hidden" id="hiddenAccount" value="{{trade_info.account}}">
+                    <input type="hidden" id="hiddenTradeType" value="{{trade_info.type}}">
+
                 </div>
                 <div class="input-group">
-                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <!-- <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <button type="button" class="btn btn-danger" id="btnBuy" data-toggle="collapse" data-target="#collapseCreate"
                             aria-expanded="false" aria-controls="collapseCreate">{% trans '买 +' %}</button>
                         <button type="button" class="btn btn-success" id="btnSell" data-toggle="collapse" data-target="#collapseCreate"
                             aria-expanded="false" aria-controls="collapseCreate">{% trans '卖 -' %}</button>
+                    </div> -->
+                    <div class="btn-group btn-group-toggle mt-1" data-toggle="buttons">
+                        <label class="btn btn-sm btn-light {% ifequal trade_info.type 'b' %} active {%endifequal%}" >
+                            <input type="radio" name="trade-type" id="optBuy" autocomplete="off" value="b" {% ifequal trade_info.type 'b' %} checked {%endifequal%}><span class="text-danger">{% trans '买+' %}</span>
+                        </label>
+                        <label class="btn btn-sm btn-light {% ifequal trade_info.type 's' %} active {%endifequal%}" >
+                            <input type="radio" name="trade-type" id="optSell" autocomplete="off" value="s" {% ifequal trade_info.type 's' %} checked {%endifequal%}><span class="text-success">{% trans '卖-' %}</span>
+                        </label>
                     </div>
+                    
                 </div>
             </div>
         </div>
-        <div class="p-1 mt-1 my-4 collapse small" id="collapseCreate">
-            <h6 class="">{% trans '添加交易记录' %}<span id="directionIndicate"></span></h6>
-            <hr/>
+        <div class="p-1 small" id="collapseCreate"> 
             <div class="">
-                <div class="row">
+                <div class="row pl-3 pr-3">
                     <form action="{% url 'user:create_trade' %}" enctype="multipart/form-data" id="traderecForm" method="post"
                         role="form">
                         <!-- {% csrf_token %} -->
                         <input type="hidden" id="direction">
-                        <div class="form-row pl-3 pr-3">
-                            <!-- <div class="form-group col-md-6 mb-2"> -->
-                                <!-- <label for="validationDefaultUsername">{% trans '股票名或代码' %}</label>
-                                <input class="form-control" type="text" id="stockNameOrCode" placeholder="{% trans '股票名或代码' %}"
-                                    required> -->
-                                
-                            <!-- </div> --> 
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '当前价格' %}</label>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">{% trans '￥' %}</span>
-                                    </div>
-                                    <input class="form-control" type="number" id="currentPrice" step="0.01"
-                                        placeholder="{% trans '当前价格' %}" required>
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易价格' %}</label>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">{% trans '￥' %}</span>
-                                    </div>
-                                    <input type="number" id="tradePrice"" class=" form-control" placeholder="{% trans '交易价格' %}" step="0.01"
-                                        aria-label="Amount (to the nearest RMB)" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-row pl-3 pr-3">
+                        <div class="form-row">
                             
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易数量' %}</label>
-                                <input class="form-control" type="number" id="quantity" placeholder="{% trans '交易数量' %}" step="100"
-                                    data-bind="value:replyNumber" value="100" required>
-                            </div>
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易金额' %}</label>
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">{% trans '￥' %}</span>
-                                    </div>
-                                    <input class="form-control" type="text" id="cash" placeholder="{% trans '交易金额' %}" readonly="" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-row pl-3 pr-3">
-                    
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '目标仓位(股)' %}</label>
-                                <input class="form-control" type="number" id="targetPosition" placeholder="{% trans '目标仓位(股)' %}" step="100"
-                                    value="1000" data-bind="value:replyNumber">
-                            </div>
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易时间' %}</label>
-                                <input class="form-control" type="text"" id="tradeDatetime" placeholder="{% trans '交易时间' %}" value="{% now 'Y-m-d G:i' %}">
-                            </div>
-                        </div>
-                        <div class="form-row pl-3 pr-3">
                             <div class="form-group col-md-12 mb-2">
-                                <label for="validationDefaultUsername">{% trans '应用策略' %}</label>
-                                <div class="input-group mb-3">
+                                <label for="validationDefaultUsername">{% trans '交易策略' %}</label>
+                                <div class="input-group input-group-sm">
                                     <div class="input-group-prepend">
                                         <button class="btn btn-outline-secondary dropdown-toggle" id="selStrategy" type="button"
                                             data-toggle="dropdown" aria-haspopup="true"
-                                            aria-expanded="false">{% trans '应用策略' %}</button>
+                                            aria-expanded="false">{% trans '交易策略' %}</button>
                                         <div class="dropdown-menu">
                                             {% if trade_info %}
                                             {% for strategy in trade_info.strategies %}
@@ -207,145 +201,90 @@
                                             {% endif %}
                                         </div>
                                     </div>
-                                    <input class="form-control" type="text" id="pickedStrategy" placeholder="{% trans '请选择策略' %}"
-                                        readonly="">
+                                    <input class="form-control form-control-sm" type="text" id="pickedStrategy" placeholder="{% trans '请选择策略' %}"
+                                        readonly>
                                     <input type="hidden" id="pickedStrategyID">
                                 </div>
                             </div>
                         </div>
+                        <div class="form-row">
+                            <!-- <div class="form-group col-md-6 mb-2"> -->
+                                <!-- <label for="validationDefaultUsername">{% trans '股票名或代码' %}</label>
+                                <input class="form-control" type="text" id="stockNameOrCode" placeholder="{% trans '股票名或代码' %}"
+                                    required> -->
+                                
+                            <!-- </div> --> 
+                            <div class="form-group col-md-6 mb-2">
+                                <label for="validationDefaultUsername">{% trans '交易时间' %}</label>
+                                <input class="form-control form-control-sm" type="text" id="tradeDatetime" placeholder="{% trans '交易时间' %}" value="{% now 'Y-m-d G:i' %}">
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label for="validationDefaultUsername">{% trans '交易价格' %}</label>
+                                <div class="input-group input-group-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text small">{% trans '￥' %}</span>
+                                    </div>
+                                    <input type="number" id="tradePrice" class="form-control" placeholder="{% trans '交易价格' %}" step="0.01"
+                                        aria-label="Amount (to the nearest RMB)" required>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-12 mb-2">
+                                <label for="validationDefaultUsername">{% trans '当前价格' %}</label>
+                                <span>{% trans '￥' %}</span><span id="currentPrice"></span>
+                                
+                                <label for="validationDefaultUsername" id="cashRemainToBuyLbl">{% trans ', 可买（约）' %}</label>
+                                <span id="cashRemainToBuy"></span>
+                                
+                                <label for="validationDefaultUsername" id="sharesRemainToSellLbl">{% trans ', 可卖' %}</label>
+                                <span id="sharesRemainToSell"></span>
+                                <span>{% trans '股' %}</span>
+                                <!-- <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{% trans '￥' %}</span>
+                                    </div>
+                                    <input class="form-control" type="number" id="currentPrice" step="0.01"
+                                        placeholder="{% trans '当前价格' %}" required>
+                                </div> -->
+                            </div>
+                            
+                        </div>
+                        <div class="form-row">
+                            
+                            <div class="form-group col-md-6 mb-2">
+                                <label for="validationDefaultUsername">{% trans '交易数量' %}</label>
+                                <input class="form-control form-control-sm" type="number" id="quantity" placeholder="{% trans '交易数量' %}" step="100"
+                                    data-bind="value:replyNumber" value="100" min="1" required>
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label for="validationDefaultUsername">{% trans '目标仓位' %}</label>
+                                <input class="form-control form-control-sm" type="number" id="targetPosition" placeholder="{% trans '目标仓位(股)' %}" step="100"
+                                    value="1000" min="100" data-bind="value:replyNumber">
+                            </div>
+                            <div class="form-group col-md-12 mb-2">
+                                <label for="validationDefaultUsername">{% trans '参考金额' %}</label>
+                                <span>{% trans '￥' %}</span><span id="refCashAmount"></span>
+                                <label for="validationDefaultUsername">{% trans ', 目标仓位' %}</label>
+                                <span id="targetPositionText"></span><span>{% trans '股' %}</span>
+                                <label for="validationDefaultUsername">{% trans ', 目标金额' %}</label>
+                                <span>{% trans '￥' %}</span><span id="targetCashAmount"></span>
+                                <!-- <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                    </div>
+                                    <input class="form-control" type="text" id="cash" placeholder="{% trans '交易金额' %}" readonly="" required>
+                                </div> -->
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            
+                            
+                        </div>
                         
-                        <button type="submit" id="btnSubmitTrade" class="btn btn-outline-success float-right mr-3">{% trans '递交' %}</button>
+                        
+                        <button type="submit" id="btnSubmitTrade" class="btn btn-primary float-right">{% trans '递交' %}</button>
                     </form>
                 </div>
             </div>
         </div>
-
-        <!-- Position Widget -->
-        <div class="my-4">
-            <div class="card shadow">
-                <!-- Card Header - Dropdown -->
-                <div class="card-header d-flex flex-row align-items-center justify-content-between">
-                    <h6>{% trans '我的持仓' %}</h6>
-                    <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false">
-                            <!-- <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i> -->
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                            aria-labelledby="dropdownMenuLink">
-                            <!-- <div class="dropdown-header">Dropdown Header:</div> -->
-                            <a class="dropdown-item" href="#" id="refreshPosition">{% trans '刷新' %}</a>
-                            <!--  -->
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-2">
-                    <!-- <div class="container small">
-                        <div class="row">
-                            <div class="col-3">
-                            {% trans '股票' %}
-                            </div>
-                            <div class="col-3">
-                            {% trans '持仓' %}
-                            </div>
-                            <div class="col-3">
-                            {% trans '现价(成本)' %}
-                            </div>
-                            <div class="col-3">
-                            {% trans '获利%' %}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-3">
-                            {% trans '股票' %}
-                            </div>
-                            <div class="col-3">
-                            {% trans '持仓' %}
-                            </div>
-                            <div class="col-3">
-                            {% trans '现价(成本)' %}
-                            </div>
-                            <div class="col-3">
-                            {% trans '获利%' %}
-                            </div>
-                        </div>
-                    </div> -->
-                    <table class="table table-hover small" id="tblMyPosition">
-                        <thead>
-                            <tr>
-                                <th scope="col">{% trans '股票' %}</th>
-                                <th scope="col">{% trans '持仓' %}</th>
-                                <!-- <th scope="col">{% trans '成本' %}</th> -->
-                                <th scope="col">{% trans '成本(现价)' %}</th>
-                                <th scope="col">{% trans '获利%' %}</th>
-                            </tr>
-                        </thead>
-                        <tbody> 
-                            {% if trade_info %} 
-                                {% for position in trade_info.positions %}
-                                <tr>
-                                <th scope="row">{{position.stock_code}} {{position.stock_name}}</th>
-                                <td>{{position.lots}}</td>
-                                <td>{{position.position_price}}({{position.current_price}})</td>
-                                {% if position.profit > 0 %} 
-                                    <td class="text-danger">
-                                {% else %} 
-                                    <td class="text-success">                     
-                                {% endif %}
-                                    {{position.profit}}({{position.profit_ratio}})
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Side Widget Following -->
-        <div class="my-4">
-            <div class="card shadow">
-                <div class="card-header d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="pl-2">{% trans '我的自选股' %}</h6>
-                    <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false">
-                            <!-- <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i> -->
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                            aria-labelledby="dropdownMenuLink">
-                            <!-- <div class="dropdown-header">Dropdown Header:</div> -->
-                            <a class="dropdown-item" href="#" id="refreshPosition">{% trans '刷新' %}</a>
-                            <!--  -->
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-2">
-                    <table class="table table-hover small">
-                        <thead>
-                            <tr>
-                                <th scope="col">{% trans '名称' %}</th>
-                                <th scope="col">{% trans '代码' %}</th>
-                                <!-- <th scope="col">{% trans '价格' %}</th> -->
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if trade_info %}
-                            {% for following in trade_info.stocks_following %}
-                            <tr>
-                                <th scope="row"> {{ following.stock_code.stock_name }} </th>
-                                <th scope="col">{{ following.stock_code.stock_code }}</th>
-                        
-                            </tr>
-                            {% endfor %}
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- Trasactions Widget top 10 -->
     </div>
 

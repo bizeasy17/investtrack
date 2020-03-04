@@ -177,7 +177,8 @@ class TradeRec(BaseModel):
                 # 更新持仓信息后返回是否清仓
                 self.is_liquadated = p.update_stock_position(
                     self.direction, self.target_position,
-                    self.board_lots, self.price, self.cash, self.trader)
+                    self.board_lots, self.price, self.cash, self.trader, self.trade_account)
+                
                 if self.is_liquadated:
                     entries = TradeRec.objects.select_for_update().filter(trader=self.trader,stock_code=self.stock_code,direction='b',is_liquadated=False,)
                     with transaction.atomic():
@@ -348,7 +349,7 @@ class Positions(BaseModel):
         '''
 
     # 持仓算法
-    def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader):
+    def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
         if trade_direction == 's':
             realtime_price = self.make_profit_updated(trade_price=trade_price)
         else:
@@ -391,8 +392,19 @@ class Positions(BaseModel):
             
             if trade_direction == 's': 
                 self.make_profit_updated()
-
+        
         self.save()
+        # 有持仓变化时更新当日持仓快照
+        snapshot = TradeProfitSnapshot.objects.filter(trader=trader, account_name=trade_account, snap_date=date.today())
+        if snapshot is None or len(snapshot) == 0:
+            new_snapshot = TradeProfitSnapshot(
+                trader=trader, account_name=trade_account, profit=self.profit, snap_date=date.today())
+            new_snapshot.save()
+        else:
+            # 更新快照持仓数量，利润，
+            snapshot.lots = self.lots
+            snapshot.profit = self.profit
+            snapshot[0].save()
         return self.is_liquadated
 
     class Meta:
@@ -662,8 +674,12 @@ class TradeProfitSnapshot(BaseModel):
     def __str__(self):
         return str(self.account_name)
 
-    def take_snapshot(self, position, snap_date, applied_period):
-        position.make_profit_updated()  # 更新持仓利润
+    def update_snapshot(self):
+        return
+
+    def take_snapshot(self, position, snap_date, applied_period, profit=None):
+        if profit is None: 
+            position.make_profit_updated()  # 更新持仓利润
         last_snap_date = snap_date - timedelta(days=1)
         last_snapshot = TradeProfitSnapshot.objects.filter(
             trader=self.trader, account_name=position.trade_account, snap_date=last_snap_date).order_by('-snap_date')
