@@ -40,20 +40,28 @@ $(function () {
                     var quantity = $('#quantity').val();
                     // $('#quantity').val($('#quantity').val().toLocaleString());
                     $('#refCashAmount').text(parseFloat(data.current_price * quantity).toLocaleString());
-                    $('#targetPositionText').text(data.target_position);
+                    $('#targetPositionText').text(data.target_position.toLocaleString());
                     $('#targetPosition').val(data.target_position);
                     $('#targetCashAmount').text(parseFloat(data.target_cash_amount).toLocaleString());
                     if($('#hiddenTradeType').val()=='b'){
                         if (parseInt($('#targetPositionText').text()) == 0) {
                             $('#targetPosition').removeAttr('readonly');
+                            $('#targetPosition').val(100);
+                            $('#targetPositionText').text(100);
+                            $('#targetCashAmount').text(100 * data.current_price.toLocaleString());
                         } else {
                             $('#targetPosition').prop('readonly', true);
+                            // $('#targetPosition').val(100);
+
                         }
                         if (parseInt($('#cashRemainToBuy').text()) <= 0) {
                             $('#btnSubmitTrade').prop('disabled', true);
                         } else {
                             $('#btnSubmitTrade').removeAttr('disabled');
                         }
+                        $('#sharesRemainToSell').addClass('d-none');
+                        $('#sharesRemainToSellLbl').addClass('d-none');
+
                     }else{
                         $('#targetPosition').prop('readonly', true);
                         if (parseInt($('#sharesRemainToSell').text()) <= 0) {
@@ -114,6 +122,80 @@ $(function () {
         })
     }
 
+    var refreshPositionBySymbol = function(symbol){
+        // var symbol = $("#hiddenCode");
+        var accountId = $("#hiddenAccount").val();
+        $.ajax({
+            url: userBaseEndpoint + 'position/account/' + accountId + '/' + symbol,
+            success: function (data) {
+                if(data.code=='OK'){
+                    $("#noPosition").addClass("d-none");
+                    $("#stockPosition").removeClass("d-none");
+                    var content = data.content;
+                    $("#pStockName").text(content.stock_name); //股票名
+                    $("#pStockCode").text(content.stock_symbol);//股票名
+                    $("#pAccount").text(content.trade_account);//股票账户
+
+                    if (content.profit > 0) {
+                        if (!$("#pProfit").hasClass("badge-danger")) {
+                            $("#pProfit").addClass("badge-danger");//利润
+                            $("#pProfit").removeClass("badge-success");//利润
+                            $("#pProfitRatio").addClass("badge-danger");//利润率
+                            $("#pProfitRatio").removeClass("badge-success");//利润率
+                        }
+                        $("#pProfit").text("+" + content.profit);//利润
+                        $("#pProfitRatio").text("+" + content.profit_ratio);//利润率
+                    } else {
+                        if (!$("#pProfit").hasClass("badge-success")) {
+                            $("#pProfit").addClass("badge-success");//利润
+                            $("#pProfit").removeClass("badge-danger");//利润
+                            $("#pProfitRatio").addClass("badge-success");//利润率
+                            $("#pProfitRatio").removeClass("badge-danger");//利润率
+                        }
+                        $("#pProfit").text(content.profit);//利润
+                        $("#pProfitRatio").text(content.profit_ratio);//利润率
+                    }
+                    $("#pCurrentPrice").text(content.current_price);//现价
+                    $("#pPositionPrice").text(content.cost);//持仓成本
+                    $("#pLots").text(content.lots);//目标仓位
+                    $("#pTargetPosition").text(content.target_position);//目标仓位
+                    $("#pCash").text(content.capital); //市值
+                } else{
+                    $("#stockPosition").addClass("d-none");
+                    $("#noPosition").removeClass("d-none");
+                }
+            }
+        })
+    }
+
+    var refreshStockInfo2Realtime = function () {
+        var showName = $("#hiddenName").val();
+        var symbol = $("#hiddenCode").val();
+        var showCode = $("#hiddenTscode").val();
+        var period = $('input:radio[name="period"]:checked').val();
+        updateChartFor(showName, showCode, symbol, period);
+        updateTradeStockInfoFor(symbol);
+        refreshPositionBySymbol(symbol);
+    };
+
+    var refreshInterval = setInterval(function() {
+        var d = new Date();
+        var h = d.getHours();
+        var m = d.getMinutes();
+        var t = h + ":" + m;
+        if (t <= "15:30" && t >= "9:00") {
+            refreshStockInfo2Realtime();
+        }
+    },  5 * 60 * 1000);
+
+    function stopRefresh() {
+        clearInterval(refreshInterval);
+    }
+
+    $('input:radio[name="refresh"]').change(function () {
+
+    });
+
     // 页面加载时，更新请求的股票交易信息
     updateTradeStockInfoFor($('#hiddenCode').val())
 
@@ -151,13 +233,11 @@ $(function () {
         $('#hiddenName').val(showName);
         $('#hiddenTscode').val(showCode);
         $('#hiddenMarket').val(market);
-
+        // location.replace("https://www.w3schools.com");
         updateChartFor(showName, showCode, code, period)
-
         updateTradeStockInfoFor(code);
+        refreshPositionBySymbol(code);
     });
-
-    
 
     // 页面默认加载上证指数日K（D)
     var initStockChart = function (code, showCode, showName) {
@@ -379,7 +459,7 @@ $(function () {
         var price = $(this).val();
         var quantity = $('#quantity').val();
         // $('#quantity').val($('#quantity').val().toLocaleString());
-        $('#refCashAmount').text(parseFloat(price * quantity).toLocaleString());
+        $('#refCashAmount').text(Math.round(price * quantity).toLocaleString());
     });
 
     // assign the selected strategy
@@ -387,12 +467,19 @@ $(function () {
         var price = $('#tradePrice').val();
         var quantity = $(this).val();
         // $('#quantity').val($('#quantity').val().toLocaleString());
-        $('#refCashAmount').text(parseFloat(price * quantity).toLocaleString());
+        $('#refCashAmount').text(Math.round(price * quantity).toLocaleString());
         if(quantity=='0'){
             $('#btnSubmitTrade').prop('disabled', true);
         }else{
             $('#btnSubmitTrade').removeAttr('disabled');
         }
+    });
+
+    $('#targetPosition').blur(function () {
+        var price = $('#tradePrice').val();
+        var quantity = $(this).val();
+        $('#targetPositionText').text(quantity.toLocaleString());
+        $('#targetCashAmount').text(Math.round(price * quantity).toLocaleString());
     });
 
     $('#traderecForm').submit(function (e) {
@@ -464,6 +551,42 @@ $(function () {
         var tradeTime = $('#tradeDatetime').val();
         var tradeAcc = $('#hiddenAccount').val();
 
+        if(strategy.length<1){
+            $('#pickedStrategy').addClass("is-invalid");
+            return;
+        }else{
+            $('#pickedStrategy').removeClass("is-invalid");
+        }
+
+        if (tradeTime.length < 1) {
+            $('#tradeDatetime').addClass("is-invalid");
+            return;
+        } else {
+            $('#tradeDatetime').removeClass("is-invalid");
+        }
+
+        if (price.length < 1) {
+            $('#tradePrice').addClass("is-invalid");
+            return;
+        } else {
+            $('#tradePrice').removeClass("is-invalid");
+        }
+
+        if (quantity.length < 1) {
+            $('#quantity').addClass("is-invalid");
+            return;
+        } else {
+            $('#quantity').removeClass("is-invalid");
+        }
+
+        if (targetPosition.length < 1) {
+            $('#targetPosition').addClass("is-invalid");
+            return;
+        } else {
+            $('#targetPosition').removeClass("is-invalid");
+        }
+        
+
         $.ajax({
             url: userBaseEndpoint + 'create-trade',
             headers: { 'X-CSRFToken': csrftoken },
@@ -490,6 +613,8 @@ $(function () {
                 // $("#messages").addClass('d-block');
                 $("#messageText").html('<strong>' + data.success + '</strong>.');
                 // $("#messages").fadeOut(2000);
+                refreshPositionBySymbol(code);
+                updateTradeStockInfoFor(code)
             },
             statusCode: {
                 403: function () {

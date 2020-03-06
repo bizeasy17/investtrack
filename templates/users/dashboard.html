@@ -54,16 +54,16 @@
                                 <div class="card-body">
                                     <div class='row'>
                                         <div class="col-lg-10">
-                                            <h5 class="card-title"><a href="#" class="text-muted">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_provider }})</h5>
+                                            <h5 class="card-title"><a href="#" class="text-muted">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h5>
                                             <h6 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h6>
                                         </div>
                                         
                                         <div class="col-lg-2">
                                             <div class="float-right">
                                             {% if p.profit < 0 %}
-                                            <td><span class="badge badge-pill badge-success ml-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-success">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
                                             {% else %}
-                                            <td><span class="badge badge-pill badge-danger ml-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-danger">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
                                             {% endif %}
                                             </div>
                                         </div>
@@ -84,8 +84,8 @@
                                     </div>
                                     <hr>
                                     <div class="row col-lg-3 d-flex align-items-center justify-content-between">
-                                        <a href="{% url 'user:stock_trade' account=p.trade_account.id type='b' ts_code=p.stock_code %}">{% trans '买入+' %}</a>
-                                        <a href="{% url 'user:stock_trade' account=p.trade_account.id type='s' ts_code=p.stock_code %}">{% trans '卖出-' %}</a>
+                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='b' ts_code=p.stock_code %}">{% trans '买入+' %}</a>
+                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='s' ts_code=p.stock_code %}">{% trans '卖出-' %}</a>
                                         
                                     </div>
                                 </div>
@@ -146,7 +146,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row w-100 flex-grow mt-4 mb-4">
+            <div class="row w-100 flex-grow mt-4 mb-4 d-none">
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card shadow">
                         <div class="card-body pb-0">

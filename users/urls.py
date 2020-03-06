@@ -18,6 +18,6 @@ urlpatterns = [
          views.get_stock_for_trade),
     path('position/refresh',
          views.refresh_position, name='refresh_position'),
-    path('position/<code>',
-         views.get_position_by_code, name='get_position_by_code'),
+    path('position/account/<account_id>/<symbol>',
+         views.get_position_by_symbol, name='get_position_by_symbol'),
 ]

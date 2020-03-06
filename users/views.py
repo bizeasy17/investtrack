@@ -31,9 +31,18 @@ class UserDashboardView(LoginRequiredMixin, View):
         req_user = request.user
         if req_user is not None:
             tradedetails = TradeRec.objects.filter(
-                trader=req_user.id, )[:5]  # 前台需要添加view more...
+                trader=req_user.id, )[:3]  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
-                trader=req_user.id).exclude(lots=0)[:8]
+                trader=req_user.id).exclude(lots=0)
+            accounts = TradeAccount.objects.filter(trader=req_user.id)
+            capital = 0
+            profit_loss = 0
+            total_accounts = 0
+            total_shares = len(trade_positions)
+            for acc in accounts:
+                capital += acc.account_capital
+                profit_loss += acc.account_balance 
+            total_accounts = len(accounts)
             # update the profit based on the realtime price
             for p in trade_positions:
                 p.make_profit_updated()
@@ -41,10 +50,10 @@ class UserDashboardView(LoginRequiredMixin, View):
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
             queryset = {
-                'capital': 1000,
-                'profit_loss': 15000,
-                'total_shares': 8,
-                'total_accounts': 3,
+                'capital': capital,
+                'profit_loss': profit_loss,
+                'total_shares': total_shares,
+                'total_accounts': total_accounts,
                 'details': tradedetails,
                 'positions': trade_positions,
                 'strategies': strategies,
@@ -249,13 +258,32 @@ def refresh_position(request):
 
 
 @login_required
-def get_position_by_code(request, code):
+def get_position_by_symbol(request, account_id, symbol):
     if request.method == 'GET':
         trader = request.user
-        my_position = Positions.objects.find(trader=trader, stock_code=code)
-        return JsonResponse(my_position, safe=False)
+        # account = TradeAccount(account_id)
+        pos_qs = Positions.objects.filter(trader=trader, trade_account=account_id, stock_code=symbol)
+        my_pos = {}
+        if len(pos_qs) > 0:
+            my_pos = {
+                'stock_name': pos_qs[0].stock_name,
+                'stock_symbol': pos_qs[0].stock_code,
+                'trade_account': pos_qs[0].trade_account.account_name,
+                'profit': pos_qs[0].profit,
+                'profit_ratio': pos_qs[0].profit_ratio,
+                'current_price': pos_qs[0].current_price,
+                'cost': pos_qs[0].position_price,
+                'lots': pos_qs[0].lots,
+                'target_position': pos_qs[0].target_position,
+                'capital': pos_qs[0].cash,
+            }
+        if len(my_pos) > 0:
+            return JsonResponse({'code': 'OK', 'content': my_pos}, safe=False)
+        else:
+            return JsonResponse({'code': 'NULL'}, safe=False)
 
-    return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)
+
+    return JsonResponse({'code': 'ERR', 'content': _('系统错误，请稍后再试')}, safe=False)
 
 # class UserDetailView(LoginRequiredMixin, DetailView):
 #     model = User
