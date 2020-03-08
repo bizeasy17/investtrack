@@ -98,8 +98,6 @@ $(function () {
                     color: "rgba(0, 0, 0, 0)",
                     display: false
                   },
-                  barPercentage: 0.9,
-                  categoryPercentage: 0.7
                 }
               ]
             },
@@ -120,83 +118,96 @@ $(function () {
       var profitWeekChartCanvas = $("#profitDevChartWeek")
         .get(0)
         .getContext("2d");
-      var profitWeekChart = new Chart(profitWeekChartCanvas, {
-        type: "bar",
-        data: {
-          labels: ["Mon", "Tue", "Wed", "Thur", "Fri"],
-          datasets: [
-            {
-              type: "line",
-              fill: false,
-              label: "Total WTD Sales",
-              data: [33, -6, 37, 140, 170],
-              borderColor: "#00ff00"
-            },
-            {
-              label: "Other Sales",
-              data: [10, -23, 34, 34, 26],
-              backgroundColor: "#6640b2"
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          layout: {
-            padding: {
-              left: 0,
-              right: 0,
-              top: 20,
-              bottom: 0
-            }
-          },
-          scales: {
-            yAxes: [
-              {
-                display: true,
-                gridLines: {
-                  display: true,
-                  drawBorder: false,
-                  color: "#f8f8f8",
-                  zeroLineColor: "#f8f8f8"
+      var period = 'd'; //all stock shares
+      $.ajax({
+        url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
+        // headers: { 'X-CSRFToken': csrftoken },
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+          $("#prfAvgProfit").text(data.avg_profit);
+          $("#prfProfitRatio").text(data.profit_ratio);
+          var profitWeekChart = new Chart(profitWeekChartCanvas, {
+            type: "bar",
+            data: {
+              labels: data.label,
+              datasets: [
+                {
+                  type: "line",
+                  fill: false,
+                  label: "本周收益",
+                  data: data.profit_trend,
+                  borderColor: "#1cbccd",
+                  barPercentage: 0.9,
+                  categoryPercentage: 0.7
                 },
-                ticks: {
-                  display: true,
-                  min: -50,
-                  max: 200,
-                  stepSize: 10,
-                  fontColor: "#b1b0b0",
-                  fontSize: 10,
-                  padding: 10
+                {
+                  label: "上周收益",
+                  data: data.previous_profit_trend,
+                  backgroundColor: "#ffbf36",
+                  barPercentage: 0.9,
+                  categoryPercentage: 0.7
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              layout: {
+                padding: {
+                  left: 0,
+                  right: 0,
+                  top: 20,
+                  bottom: 0
+                }
+              },
+              scales: {
+                yAxes: [
+                  {
+                    display: true,
+                    gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color: "#f8f8f8",
+                      zeroLineColor: "#f8f8f8"
+                    },
+                    ticks: {
+                      display: true,
+                      min: -50,
+                      max: data.max_profit,
+                      stepSize: data.max_profit / 10,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10,
+                      padding: 10
+                    }
+                  }
+                ],
+                xAxes: [
+                  {
+                    stacked: false,
+                    ticks: {
+                      beginAtZero: true,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10
+                    },
+                    gridLines: {
+                      color: "rgba(0, 0, 0, 0)",
+                      display: false
+                    },
+                  }
+                ]
+              },
+              legend: {
+                display: false
+              },
+              elements: {
+                point: {
+                  radius: 3,
+                  backgroundColor: "#ff4c5b"
                 }
               }
-            ],
-            xAxes: [
-              {
-                stacked: false,
-                ticks: {
-                  beginAtZero: true,
-                  fontColor: "#b1b0b0",
-                  fontSize: 10
-                },
-                gridLines: {
-                  color: "rgba(0, 0, 0, 0)",
-                  display: false
-                },
-                barPercentage: 0.9,
-                categoryPercentage: 0.7
-              }
-            ]
-          },
-          legend: {
-            display: false
-          },
-          elements: {
-            point: {
-              radius: 3,
-              backgroundColor: "#ff4c5b"
             }
-          }
+          });
         }
       });
     }
@@ -205,185 +216,208 @@ $(function () {
       var tradeSuccessRatioChartCanvas = $("#tradeSuccessRatio")
         .get(0)
         .getContext("2d");
-      var tradeSuccessRatiohChart = new Chart(tradeSuccessRatioChartCanvas, {
-        type: "bar",
-        data: {
-          labels: ["Mon", "Tue", "Wed", "Thur", "Fri"],
-          datasets: [
-            {
-              type: "line",
-              fill: false,
-              label: "Total WTD Sales",
-              data: [33, -6, 37, 140, 170],
-              borderColor: "#00ff00"
-            },
-            {
-              label: "Other Sales",
-              data: [10, -23, 34, 34, 26],
-              backgroundColor: "#6640b2"
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          layout: {
-            padding: {
-              left: 0,
-              right: 0,
-              top: 20,
-              bottom: 0
-            }
-          },
-          scales: {
-            yAxes: [
-              {
-                display: true,
-                gridLines: {
-                  display: true,
-                  drawBorder: false,
-                  color: "#f8f8f8",
-                  zeroLineColor: "#f8f8f8"
+      var period = 'd'; //all stock shares
+      $.ajax({
+        url: userBaseEndpoint + 'invest-attempt-trend/period/' + period + '/',
+        // headers: { 'X-CSRFToken': csrftoken },
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+          $("#invAvgAttempt").text(data.avg_attempt);
+          $("#invRelAttemptRatio").text(data.relative_ratio);
+          var tradeSuccessRatiohChart = new Chart(tradeSuccessRatioChartCanvas, {
+            type: "bar",
+            data: {
+              labels: data.label,
+              datasets: [
+                {
+                  type: "line",
+                  fill: false,
+                  label: "本周",
+                  data: data.attempt_trend,
+                  borderColor: "#1cbccd"
                 },
-                ticks: {
-                  display: true,
-                  min: -50,
-                  max: 200,
-                  stepSize: 10,
-                  fontColor: "#b1b0b0",
-                  fontSize: 10,
-                  padding: 10
+                {
+                  label: "上周",
+                  data: data.prev_attempt_trend,
+                  backgroundColor: "#ffbf36"
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              layout: {
+                padding: {
+                  left: 0,
+                  right: 0,
+                  top: 20,
+                  bottom: 0
+                }
+              },
+              scales: {
+                yAxes: [
+                  {
+                    display: true,
+                    gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color: "#f8f8f8",
+                      zeroLineColor: "#f8f8f8"
+                    },
+                    ticks: {
+                      display: true,
+                      // min: -10,
+                      max: data.max_attempt,
+                      stepSize: 1,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10,
+                      padding: 10
+                    }
+                  }
+                ],
+                xAxes: [
+                  {
+                    stacked: false,
+                    ticks: {
+                      beginAtZero: true,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10
+                    },
+                    gridLines: {
+                      color: "rgba(0, 0, 0, 0)",
+                      display: false
+                    },
+                    
+                    categoryPercentage: 0.7
+                  }
+                ]
+              },
+              legend: {
+                display: false
+              },
+              elements: {
+                point: {
+                  radius: 3,
+                  backgroundColor: "#ff4c5b"
                 }
               }
-            ],
-            xAxes: [
-              {
-                stacked: false,
-                ticks: {
-                  beginAtZero: true,
-                  fontColor: "#b1b0b0",
-                  fontSize: 10
-                },
-                gridLines: {
-                  color: "rgba(0, 0, 0, 0)",
-                  display: false
-                },
-                barPercentage: 0.9,
-                categoryPercentage: 0.7
-              }
-            ]
-          },
-          legend: {
-            display: false
-          },
-          elements: {
-            point: {
-              radius: 3,
-              backgroundColor: "#ff4c5b"
             }
-          }
+          });
         }
-      });
+      });   
     }
 
     if ($("#positionChart").length) {
         var positionChartCanvas = $("#positionChart").get(0).getContext("2d");
-        var positionChart = new Chart(positionChartCanvas, {
-            type: 'horizontalBar',
-            data: {
-                labels: ["12", "8", "4", "0"],
+        var account = 'a'; //all account
+        var stock_symbol = 'a'; //all stock shares
+        $.ajax({
+          url: userBaseEndpoint + 'position-vs-status/' + account + '/' + stock_symbol + '/',
+          // headers: { 'X-CSRFToken': csrftoken },
+          method: 'GET',
+          dataType: 'json',
+          success: function (data) {
+            $("#pTotalAvailPerTarget").text(data.total_percentage);
+            var positionChart = new Chart(positionChartCanvas, {
+              type: 'horizontalBar',
+              data: {
+                labels: data.label,
                 datasets: [
-                    {
-                        label: '目标仓位',
-                        data: [400, 360, 360, 360],
-                        backgroundColor: '#1cbccd',
-                    },
-                    {
-                        label: '已有仓位',
-                        data: [320, 190, 180, 140],
-                        backgroundColor: '#ffbf36',
-                    }
+                  {
+                    label: '目标仓位',
+                    data: data.target_position,
+                    backgroundColor: '#1cbccd',
+                  },
+                  {
+                    label: '已有仓位',
+                    data: data.available_position,
+                    backgroundColor: '#ffbf36',
+                  }
                 ]
-            },
-            options: {
+              },
+              options: {
                 responsive: true,
                 maintainAspectRatio: true,
                 layout: {
-                    padding: {
-                        left: -7,
-                        right: 0,
-                        top: 0,
-                        bottom: 0
-                    }
+                  padding: {
+                    left: -7,
+                    right: 0,
+                    top: 0,
+                    bottom: 0
+                  }
                 },
                 scales: {
-                    yAxes: [{
-                        display: true,
-                        gridLines: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            display: true,
-                            min: 0,
-                            max: 400,
-                            stepSize: 100,
-                            fontColor: "#b1b0b0",
-                            fontSize: 10,
-                            padding: 10
-                        },
-                    }],
-                    xAxes: [{
-                        display: true,
-                        stacked: false,
-                        ticks: {
-                            display: false,
-                            beginAtZero: true,
-                            fontColor: "#b1b0b0",
-                            fontSize: 10
-                        },
-                        gridLines: {
-                            display: true,
-                            drawBorder: false,
-                            lineWidth: 1,
-                            color: "#f5f5f5",
-                            zeroLineColor: "#f5f5f5"
-                        }
-                    }]
+                  yAxes: [{
+                    display: true,
+                    gridLines: {
+                      display: false,
+                      drawBorder: false
+                    },
+                    ticks: {
+                      display: true,
+                      min: 0,
+                      max: 400,
+                      stepSize: 100,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10,
+                      padding: 10
+                    },
+                  }],
+                  xAxes: [{
+                    display: true,
+                    stacked: false,
+                    ticks: {
+                      display: false,
+                      beginAtZero: true,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10
+                    },
+                    gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      lineWidth: 1,
+                      color: "#f5f5f5",
+                      zeroLineColor: "#f5f5f5"
+                    }
+                  }]
                 },
                 legend: {
-                    display: true
+                  display: true
                 },
                 elements: {
-                    point: {
-                        radius: 3,
-                        backgroundColor: '#ff4c5b'
-                    }
+                  point: {
+                    radius: 3,
+                    backgroundColor: '#ff4c5b'
+                  }
                 },
                 legendCallback: function (chart) {
-                    var text = [];
-                    text.push('<div class="item mr-4 d-flex align-items-center small">');
-                    text.push(
-                      '<div class="item-box mr-2" data-color="' +
-                        chart.data.datasets[0].backgroundColor +
-                        ' "></div><p class="text-black mb-0"> ' +
-                        chart.data.datasets[0].label +
-                        "</p>"
-                    );
-                    text.push('</div>');
-                    text.push('<div class="item d-flex align-items-center small">');
-                    text.push(
-                      '<div class="item-box mr-2" data-color="' +
-                        chart.data.datasets[1].backgroundColor +
-                        '"></div><p class="text-black mb-0"> ' +
-                        chart.data.datasets[1].label +
-                        " </p>"
-                    );
-                    text.push('</div>');
-                    return text.join('');
+                  var text = [];
+                  text.push('<div class="item mr-4 d-flex align-items-center small">');
+                  text.push(
+                    '<div class="item-box mr-2" data-color="' +
+                    chart.data.datasets[0].backgroundColor +
+                    ' "></div><p class="text-black mb-0"> ' +
+                    chart.data.datasets[0].label +
+                    "</p>"
+                  );
+                  text.push('</div>');
+                  text.push('<div class="item d-flex align-items-center small">');
+                  text.push(
+                    '<div class="item-box mr-2" data-color="' +
+                    chart.data.datasets[1].backgroundColor +
+                    '"></div><p class="text-black mb-0"> ' +
+                    chart.data.datasets[1].label +
+                    " </p>"
+                  );
+                  text.push('</div>');
+                  return text.join('');
                 }
-            },
+              },
+            });
+          }
         });
+        
         // document.getElementById('positionLegend').innerHTML = positionChart.generateLegend();
     }
 });

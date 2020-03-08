@@ -17,14 +17,53 @@
             <input type="text"  id="searchDashboard" class="form-control" placeholder="{% trans '在此输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
                 
         </div>
-        
     </div>
-    
+    {% if dashboard %}
+    {% ifequal dashboard.total_accounts 0 %}
+    <div class="row">
+        <span>{% trans '您还未创建证券账户信息，请单击' %}<a href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank"></i>{% trans '此处' %}</a>{% trans '创建' %}</span>
+    </div>
+    {% else %}
     <div class="row">
         <div class="col-lg-8 grid-margin stretch-card">
             <div class="row w-100 flex-grow">
+                <div class="col-md-6 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '本周收益' %}</p>
+                                <p class="font-weight-medium">
+                                    <span class="text-danger" id="prfProfitRatio"></span>
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrapper mb-3">
+                                <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3" id="prfAvgProfit"></h5>
+                                <p class="text-muted mb-0">{% trans '平均收益' %}</p>
+                            </div>
+                            <canvas id="profitDevChartWeek" height="130"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center
+                                justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '本周交易成功率' %}</p>
+                                <p class="text-danger font-weight-medium" id="invRelAttemptRatio"></p>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap
+                                mb-3">
+                                <h5 class="font-weight-normal mb-0 mb-md-1
+                                    mb-lg-0 mr-3" id="invAvgAttempt"></h5>
+                                <p class="text-muted mb-0">{% trans '平均成功次数' %}</p>
+                            </div>
+                            <canvas id="tradeSuccessRatio" height="130"></canvas>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-md-12 grid-margin stretch-card">
-                    <div class="card shadow mb-4">
+                    <div class="card shadow mt-4 mb-4">
                         <div class="card-body">
                             <p class="card-title"><i class="fa fa-chart-line" ></i> {% trans '我的持仓' %}</p>
                             <div class="text-muted"> {% trans '今日收益（元）' %}</div>
@@ -54,8 +93,8 @@
                                 <div class="card-body">
                                     <div class='row'>
                                         <div class="col-lg-10">
-                                            <h5 class="card-title"><a href="#" class="text-muted">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h5>
-                                            <h6 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h6>
+                                            <h6 class="card-title"><a href="#" class="text-muted">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
+                                            <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
                                         <div class="col-lg-2">
@@ -105,47 +144,8 @@
                         </div>
                     </div>
                 </div> {% endcomment %}
-                <div class="col-md-6 stretch-card">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '本周收益' %}</p>
-                                <p class="font-weight-medium">
-                                {%comment%} {% if dashboard %}
-                                {% if dashboard.positions[0].profit>0 %}
-                                <span class="text-danger">{{dashboard.positions[0].profit}}</span>
-                                {% else %}
-                                <span class="text-danger">{{dashboard.positions[0].profit}}</span>
-                                {% endif %} {%endcomment%}
-                                </p>
-                            </div>
-                            <div class="d-flex align-items-center flex-wrapper mb-3">
-                                <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3">$22.736</h5>
-                                <p class="text-muted mb-0">Avg Sessions</p>
-                            </div>
-                            <canvas id="profitDevChartWeek" height="130"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 stretch-card">
-                    <div class="card shadow">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center
-                                justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '本周交易成功率' %}</p>
-                                <p class="text-success font-weight-medium">45.39%</p>
-                            </div>
-                            <div class="d-flex align-items-center flex-wrap
-                                mb-3">
-                                <h5 class="font-weight-normal mb-0 mb-md-1
-                                    mb-lg-0 mr-3">17.247</h5>
-                                <p class="text-muted mb-0">Avg Sessions</p>
-                            </div>
-                            <canvas id="tradeSuccessRatio" height="130"></canvas>
-                        </div>
-                    </div>
-                </div>
             </div>
+            {% comment %}
             <div class="row w-100 flex-grow mt-4 mb-4 d-none">
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card shadow">
@@ -199,22 +199,27 @@
                     </div>
                 </div>
             </div>
+            {% endcomment %}
         </div>
         <div class="col-lg-4 grid-margin stretch-card">
             <div class="col-md-12 grid-margin stretch-card">
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card shadow mb-4">
                         <div class="card-body pb-0">
-                            <div class="d-flex  justify-content-start mb-4">
+                            <div class="d-flex justify-content-between flex-wrap">
                                 <div>
-                                    <p class="card-title mb-0 mr-1">
+                                    <p class="card-title mr-1">
                                         <i class="fa fa-chart-bar" ></i> {% trans '我的仓位' %}
+                                        <span class="badge badge-info badge-pill" id="pTotalShares">{{ dashboard.total_shares }}</span>
+
                                     </p>
                                 </div>
-                                <div><span class="badge badge-info badge-pill">2</span></div>
+                                <div>
+                                    <span class="text-sm text-danger font-weight-medium" id="pTotalAvailPerTarget"></span>
+                                </div>
                                 
                             </div>
-                            <div class="d-flex flex-wrap pt-2 mb-4">
+                            <div class="d-flex flex-wrap mb-2">
                                 <div class="regional-chart-legend d-flex align-items-center flex-wrap mb-1" id="positionLegend"></div>
                                 <canvas height="280" id="positionChart"></canvas>
                             </div>
@@ -226,12 +231,12 @@
                         <div class="card-body pb-0">
                             <div class="d-flex align-items-center mb-4">
                                 <p class="card-title mb-0 mr-1"><i class="fa fa-cog" ></i>  {% trans '交易策略' %}</p>
-                                <span class="badge badge-info badge-pill">2</span>
+                                <span class="badge badge-info badge-pill" id="sTotalStrategies">{{ dashboard.total_strategies }}</span>
                             </div>
                             <div class="d-flex flex-wrap pt-2 small">
                                 {% if dashboard %}
                                 {% for s in dashboard.strategies %}
-                                    <button type="button" class="btn btn-light mb-2 ml-2"><i class="fa"><small>{{ s.name }}</small></i></button>
+                                    <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa">{{ s.name }}</i></button>
                                 {% endfor %}
                                 {% endif %}
                             </div>
@@ -244,13 +249,12 @@
                         <div class="card-body pb-0">
                             <div class="d-flex align-items-center mb-4">
                                 <p class="card-title mb-0 mr-1">{% trans '我的自选股' %}</p>
-                                <div class="badge badge-info badge-pill">2</div>
+                                <div class="badge badge-info badge-pill" id="fTotalFollowing">{{ dashboard.total_following }}</div>
                             </div>
                             <div class="d-flex flex-wrap pt-2 small">
                                 {% if dashboard %}
                                 {% for f in dashboard.followings %}
-                                <button type="button" class="btn btn-sm
-                                    btn-secondary mb-2"><i class="fa fa-bar">{{f.stock_code.stock_name }}({{f.stock_code.stock_code }})</i></button>
+                                <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa fa-bar">{{f.stock_code.stock_name }}({{f.stock_code.stock_code }})</i></button>
                                 {% endfor %}
                                 {% endif %}
                             </div>
@@ -262,6 +266,8 @@
             </div>
         </div>
     </div>
+    {% endifequal %}
+    {% endif %}
 </div>
 <!-- content-wrapper ends -->
 {% endblock content %}
