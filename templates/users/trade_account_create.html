@@ -1,126 +1,116 @@
-{% extends 'base.html' %}
-{% load static i18n %}
-{% load thumbnail humanize %}
-
-{% block title %}{% endblock %}
-
-{% block head %}
-{% endblock %}
-
+{% extends 'base.html' %} {% load static i18n %} {% load thumbnail humanize %}
+{% block title %}{% endblock %} {% block head %} {% endblock %} 
 {% block content %}
 <!-- Page Content -->
-<div class="row">
-    <!-- <div class="col-lg-8">
-        <div class="row">
-            <input type="text" id="testContent"/>
-            <button type="button" id="test">Click Me</button>
-            <div id="testInfo"></div>
-        </div>
-    </div>
-    </div> -->
-    <!-- Post Content Column -->
-    <div class="col-lg-8">
-        {% if trade_log %}
-        {% for trade in trade_log.det %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class='row'>
-                    <div class="col-lg-10">
-                        <h4 class="card-title"><a href="#"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h4>
-                        <h6 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#">{{ trade.stock_code }}</a></h6>
-                        <hr/>
-                    </div>
-                    
-                    <div class="col-lg-2">
-                        <div class="float-right">
-                        {% if trade.direction == 's' %}
-                        <td><span class="badge badge-pill badge-success">{% trans '买出' %}</span></td>
-                        {% else %}
-                        <td><span class="badge badge-pill badge-danger">{% trans '买入' %}</span></td>
-                        {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class='row'>
-                    <div class="col-lg-10">
-                        <p class="card-text">{{ trade.trade_time }}  <a href="/user/{{trade.trader.id}}/profile">{{trade.trader.username}}</a> {% trans '以' %} {% trans '￥' %} {{ trade.price }} {% trans '交易' %} {{ trade.board_lots }}{% trans '股' %} {% trans '，本次交易投入' %}{% trans '￥' %} {{ trade.cash }}</p>
-                        <p class="card-text">{% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} </p>
-                        <hr/>
-                    </div>
-                </div>
-                <div class='row'>
-                    <div class="col-lg-12">
-                        <a href="#" class="card-link"><i class='fa fa-heart' aria-hidden="true"></i></a>
-                        <a href="#" class="card-link"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
-                        <a href="#" class="card-link">{% trans '查看全部操作' %}</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Content -->
+<div id="content" class="colM">
+    <div class="row">
+    <div class="col-md-4 order-md-2 mb-4">
+      <h5 class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted">{% trans '已有交易账户' %}</span>
+        <span class="badge badge-secondary badge-pill">{{trade_account.total_accounts}}</span>
+      </h5>
+      <div class="list-group mb-3" id="accountList">
+        {% if trade_account %}
+        {% for trade_account in trade_account.trade_accounts %}
+        <a href="#" id="{{trade_account.id}}" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">
+          <div>
+            <h6 class="my-0">{{trade_account.account_name}}</h6>
+            <small class="text-muted">{{trade_account.account_type}}</small>
+          </div>
+          <span class="text-muted">{{trade_account.account_balance}}</span>
+          <!-- <a href="{% url 'user:record_trade' account=trade_account.id %}">{% trans '记录交易' %}</a> -->
+          <input type="hidden" id="accProvider{{trade_account.id}}" value="{{trade_account.account_provider}}"/>
+          <input type="hidden" id="accValidSince{{trade_account.id}}" value="{{trade_account.activate_date|date:'Y-m-d'}}"/>
+          <input type="hidden" id="accTradeFee{{trade_account.id}}" value="{{trade_account.trade_fee}}"/>
+          <input type="hidden" id="accCapital{{trade_account.id}}" value="{{trade_account.account_capital}}"/>
+          <input type="hidden" id="hiddenAccId"/>
+        </a>
         {% endfor %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{% trans '账户总额（￥）' %}</span>
+          <strong id="totalAccBalance">{{ trade_account.total_balance }}</strong>
+        </li>
         {% endif %}
+      </div>
     </div>
+    <div class="col-md-8 order-md-1">
+      <h4 class="mb-3">{% trans '创建股票交易账户' %}</h4>
+      <form class="needs-validation" action="{% url 'user:account_create' %}">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="firstName">{% trans '开户证券公司' %}</label>
+            <input type="text" class="form-control" id="accountProvider" placeholder="{% trans '开户证券公司' %}" value="" required>
+            <!-- <div class="invalid-feedback">
+              Valid first name is required.
+            </div> -->
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="lastName">{% trans '证券账户类型' %}</label>
+            <input type="text" class="form-control" id="accountType" placeholder="{% trans '证券账户类型' %}" value="" required>
+            <!-- <div class="invalid-feedback">
+              Valid last name is required.
+            </div> -->
+          </div>
+        </div>
 
-    <!-- Sidebar Widgets Column -->
-    <div class="col-lg-4">
-        <!-- Search Widget -->
-        <div class="p-1 my-4">
-            <h6>{% trans '搜索' %}</h6>
-            <div class="">
-                <div class="input-group mb-2 mt-1">
-                    <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
-                    <input type="hidden" id="hiddenCode">
-                    <input type="hidden" id="hiddenName">
-                    <input type="hidden" id="hiddenTscode">
-                    <input type="hidden" id="hiddenMarket">
-                </div>
+        <div class="mb-3">
+          <label for="username">{% trans '本金' %}</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">{% trans '￥' %}</span>
             </div>
+            <input type="text" class="form-control" id="accountCapital" placeholder="{% trans '本金' %}" required>
+            <!-- <div class="invalid-feedback" style="width: 100%;">
+              Your username is required.
+            </div> -->
+          </div>
         </div>
 
-        <!-- Position Widget -->
-        <div class="p-1 my-4">
-            <h6>{% trans '常用策略' %}</h6>
-            <hr/>
-            {% if trade_log %}
-            {% for s in trade_log.str %}
-                <button type="button" class="btn btn-warning"><i class="fa fa-cog">{{ s.name }}</i></button>
-            {% endfor %}
-            {% endif %}
+        <div class="mb-3">
+          <label for="username">{% trans '账户余额' %}</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">{% trans '￥' %}</span>
+            </div>
+            <input type="text" class="form-control" id="accountBalance" placeholder="{% trans '账户余额' %}" readonly>
+            <!-- <div class="invalid-feedback" style="width: 100%;">
+              Your username is required.
+            </div> -->
+          </div>
         </div>
 
-        <!-- Side Widget Following -->
-        <div class="p-1 my-4">
-            <h6>{% trans '我的自选股' %}</h6>
-            <hr/>
-            {% if trade_log %}
-            {% for f in trade_log.fol %}
-                <button type="button" class="btn btn-primary mb-2"><i class="fa fa-bar">{{ f.stock_code.stock_name }}({{ f.stock_code.stock_code }})</i></button>
-            {% endfor %}
-            {% endif %}
+        <div class="mb-3">
+          <label for="tradeFee"><span class="text-muted">{% trans '交易手续费' %}</span></label>
+          <input type="text" class="form-control" id="tradeFee" placeholder="{% trans '交易手续费' %}" required>
+          <!-- <div class="invalid-feedback">
+            Please enter a valid email address for shipping updates.
+          </div> -->
         </div>
 
-       
+        <div class="mb-3">
+          <label for="address">{% trans '开户时间' %}</label>
+          <input type="text" class="form-control" id="accountValidSince" placeholder="{% trans '开户时间' %}" required>
+          <!-- <div class="invalid-feedback">
+            Please enter your shipping address.
+          </div> -->
+        </div>
+        <hr class="mb-4">
+        <input type="submit" value="{% trans '保存' %}" class="btn btn-lg btn-primary" id="btnSaveTradeAccount"/>
+        <!-- <input type="submit" value="保存并增加另一个" class="btn btn-lg btn-primary" id="btnSaveAndCreateAnotherAcc"/> -->
+        <input type="submit" value="{% trans '保存并继续编辑' %}" class="btn btn-lg btn-primary" id="btnSaveAndEdit"/>
+        <input class="btn btn-danger btn-lg" type="submit" value="{% trans '删除' %}" id="btnRemoveTradeAccount"/>
+      </form>
     </div>
-
+  </div>
+  <br class="clear" />
 </div>
+<!-- END Content -->
 <!-- /.row -->
-
-</div>
 <!-- /.container -->
-{% endblock content %}
+{% endblock content %} 
 
-{% block javascript %}
-{{ block.super }}
-<script
-    src="https://cdn.polyfill.io/v2/polyfill.js?features=default,String.prototype.repeat,Array.prototype.find,Array.prototype.findIndex,Math.trunc,Math.sign"></script>
-<script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
-<script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}" type="text/javascript"></script>
-<script src="{% static 'js/prettydate.min.js' %}" type="text/javascript"></script>
-
-
+{% block javascript %} {{ block.super }}
 <!-- place project specific Javascript in this file -->
 <!-- <script src="{% static 'js/charts-utils.js' %}" type="text/javascript"></script> -->
-<script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script>
 {% endblock javascript %}

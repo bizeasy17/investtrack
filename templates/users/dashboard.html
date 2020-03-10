@@ -18,6 +18,8 @@
                 
         </div>
     </div>
+    <span>{% trans '您还未创建证券账户信息，请单击' %}<a href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank"></i>{% trans '此处' %}</a>{% trans '创建' %}</span>
+
     {% if dashboard %}
     {% ifequal dashboard.total_accounts 0 %}
     <div class="row">
@@ -261,8 +263,7 @@
                         </div>
                         <canvas height="150" id="activity-chart"></canvas>
                     </div>
-                </div>
-                
+                </div> 
             </div>
         </div>
     </div>

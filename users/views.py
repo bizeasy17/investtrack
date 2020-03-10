@@ -121,6 +121,55 @@ class UserStockTradeView(LoginRequiredMixin, View):
             return HttpResponseRedirect(reverse('404'))
 
 
+class UserRecordTradeView(LoginRequiredMixin, View):
+    # form_class = UserTradeForm
+    # model = TradeRec
+
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'users/stock_trade.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'rec_trade'
+
+    def get(self, request, *args, **kwargs):
+        # username = self.kwargs['username']
+        req_user = request.user
+        trade_type = self.kwargs['type']
+        ts_code = self.kwargs['ts_code']
+        account = self.kwargs['account']
+        if req_user is not None:
+            stock_position = Positions.objects.get(
+                trader=req_user.id, stock_code=ts_code, trade_account=account)
+            # update the profit based on the realtime price
+            # stock_position.make_profit_updated()
+            strategies = TradeStrategy.objects.filter(creator=req_user.id)
+            stock_name = StockNameCodeMap.objects.get(stock_code=ts_code)
+            if ts_code[0] == '3':
+                market = 'CYB'
+                show_code = ts_code + '.SZ'
+            elif ts_code[0] == '0':
+                market = 'ZXB'
+                show_code = ts_code + '.SZ'
+            else:
+                if ts_code[:3] == '688':
+                    market = 'KCB'
+                else:
+                    market = 'ZB'
+                show_code = ts_code + '.SH'
+
+            queryset = {
+                'type': trade_type,
+                'stock_symbol': ts_code,
+                'stock_name': stock_name,
+                'show_code': show_code,
+                'market': market,
+                'account': account,
+                'strategies': strategies,
+                'position': stock_position,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+        else:
+            return HttpResponseRedirect(reverse('404'))
+
 class UserProfileView(LoginRequiredMixin, DetailView):
     # form_class = UserTradeForm
     # model = TradeRec
@@ -153,14 +202,20 @@ class UserTradeAccountCreateView(LoginRequiredMixin, View):
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'trade_account'
 
-    def get_queryset(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         # username = self.kwargs['username']
         req_user = request.user
+        total_balance = 0
         if req_user is not None:
-            user = User.objects.filter(
-                id=req_user.id,)  # 前台需要添加view more...
+            trade_accounts = TradeAccount.objects.filter(
+                trader=req_user)  # 前台需要添加view more...
+            for trade_account in trade_accounts:
+                total_balance += trade_account.account_balance
+
             queryset = {
-                'user': user,
+                'trade_accounts': trade_accounts,
+                'total_balance' : total_balance,
+                'total_accounts': len(trade_accounts),
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
@@ -441,6 +496,42 @@ def create_trade(request):
             return JsonResponse({'success': _('交易失败')}, safe=False)
 
     return JsonResponse({'error': _('交易失败')}, safe=False)
+
+
+@login_required
+def create_account(request):
+    if request.method == 'POST':
+        data = request.POST.copy()
+        trader = request.user
+        trade_account_id = data.get("accountId")
+        trade_account_provider = data.get('accountProvider')
+        trade_account_type = data.get('accountType')
+        trade_account_capital = data.get('accountCapital')
+        trade_account_balance = data.get('accountBalance')
+        trade_fee = data.get('tradeFee')
+        trade_account_valid_since = data.get('accountValidSince')
+        if trade_account_id is None or trade_account_id is '':
+            trade_account = TradeAccount(trader=trader, account_provider=trade_account_provider, 
+                                        account_type=trade_account_type, account_capital=trade_account_capital, 
+                                        trade_fee=trade_fee, account_balance=trade_account_balance,
+                                        activate_date=datetime.strptime(trade_account_valid_since, '%Y-%m-%d'))
+        else:
+            trade_account = TradeAccount.objects.get(id=trade_account_id)
+            trade_account.account_capital = trade_account_capital
+            trade_account.account_balance = trade_account_balance
+            trade_account.trade_fee = trade_fee
+        # if direction == 'b':
+        acc_id = trade_account.save()
+        # else:
+        #     # 卖出操作需要split买入的先前持仓
+        #     new_trade.allocate_stock_for_sell()
+        # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
+        if acc_id is not None:
+            return JsonResponse({'code':'success','id': acc_id, 'message': _('创建成功')}, safe=False)
+        else:
+            return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe = False)
+
+    return JsonResponse({'code':'error','message': _('创建失败')}, safe=False)
 
 
 @login_required

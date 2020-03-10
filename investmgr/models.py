@@ -600,14 +600,17 @@ class TradeAccount(BaseModel):
 
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
                                on_delete=models.CASCADE)
+    account_provider = models.CharField(
+        _('开户证券公司'), choices=TRADE_PROVIDER_CHOICES, max_length=50, blank=True, null=True)
+    account_type = models.CharField(
+        _('账户类型'), max_length=50, blank=True, null=True)
     account_name = models.CharField(
-        _('账户名称'), max_length=50, blank=False, null=False)
+        _('账户名称'), max_length=50, blank=False, null=False, unique=True)
     account_capital = models.DecimalField(
         _('本金'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     account_balance = models.DecimalField(
         _('账户余额'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
-    account_provider = models.CharField(
-        _('开户证券公司'), choices=TRADE_PROVIDER_CHOICES, max_length=50, blank=True, null=True)
+    
     trade_fee = models.FloatField(
         _('交易手续费'), blank=False, null=False, default=0.0005)
     activate_date = models.DateField(
@@ -624,6 +627,11 @@ class TradeAccount(BaseModel):
         if account_profit_sum is not None:
             self.account_balance += account_profit_sum['sum_profit']
             self.save()
+
+    def save(self, *args, **kwargs):
+        self.account_name = self.account_provider + self.account_type
+        super().save()
+        return self.id
 
     class Meta:
         ordering = ['-last_mod_time']
