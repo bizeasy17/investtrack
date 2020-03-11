@@ -4,8 +4,12 @@ from . import views
 
 app_name = 'user'
 urlpatterns = [
-    path('profile/<user_name>',
-         views.UserProfileView.as_view(), name='profile'),
+#     path('profile/<username>',
+#          views.UserProfileView.as_view(), name='profile'),
+    path('profile/',
+         views.UserProfileView.as_view(), name='get_profile'),
+    path('profile/update',
+         views.update_user_profile, name='update_profile'),
     path('trade/<account>/<type>/<ts_code>/',
          views.UserStockTradeView.as_view(), name='stock_trade'),
     path('trade/account/<account>/',

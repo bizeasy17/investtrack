@@ -200,6 +200,7 @@ STATICFILES = os.path.join(BASE_DIR, 'static')
 
 STATICFILES_DIRS = [
     str(os.path.abspath(os.path.join(BASE_DIR, './static'))),
+    str(os.path.abspath(os.path.join(BASE_DIR, './uploads'))),
 ]
 
 STATICFILES_FINDERS = [

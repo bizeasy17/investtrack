@@ -1,10 +1,13 @@
 import locale
+import os
 from datetime import date, datetime, timedelta
 from decimal import *
 
 import tushare as ts
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.files.storage import default_storage
 from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
@@ -170,17 +173,16 @@ class UserRecordTradeView(LoginRequiredMixin, View):
         else:
             return HttpResponseRedirect(reverse('404'))
 
-class UserProfileView(LoginRequiredMixin, DetailView):
+class UserProfileView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
     # model = TradeRec
 
     # template_name属性用于指定使用哪个模板进行渲染
-    model = User
     template_name = 'users/user_profile.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'user_profile'
 
-    def get_queryset(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         # username = self.kwargs['username']
         req_user = request.user
         if req_user is not None:
@@ -248,7 +250,52 @@ class UserTradelogView(LoginRequiredMixin, View):
         else:
             return HttpResponseRedirect(reverse('404'))
 
-# Create your views here.
+
+# Create your function views here.
+def file_upload(request):
+    img_id = request.user.id
+    file = request.FILES['filePortrait']
+    ext = file.name.split('.')[1] if file is not None else ''
+    save_path = os.path.join(
+        settings.MEDIA_ROOT, 'portraits', str(img_id) + '.' + ext)
+    default_storage.save(save_path, file)
+    return 'portraits/' + str(img_id) + '.' + ext
+
+@login_required
+def update_user_profile(request):
+    if request.method == 'POST':
+        picture_url = file_upload(request)
+        data = request.POST.copy()
+        trader = request.user
+        username = data.get("username")
+        email = data.get('email')
+        # firstname = data.get('firstName')
+        # lastname = data.get('lastName')
+        name = data.get('name')
+        location = data.get('location')
+        job_title = data.get('jobTitle')
+        # bio = data.get('bio')
+        short_bio = data.get('shortBio')
+        # 更新相关用户字段
+        # trader.email = email
+        # trader.firstname = firstname
+        # trader.lastname = lastname
+        trader.email = email
+        trader.name = name
+        trader.location = location
+        trader.job_title = job_title
+        # trader.bio = bio
+        trader.short_bio = short_bio
+        trader.picture = picture_url
+        # if direction == 'b':
+        is_ok = trader.save()
+        return JsonResponse({'code': 'success', 'message': _('更新成功')}, safe=False)
+        
+        # else:
+        #     return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
+
+    return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
+
 @login_required
 def get_profit_trend_by_period(request, period):
     if request.method == 'GET':
@@ -409,7 +456,6 @@ def get_position_status(request, account, symbol):
         else:
             return JsonResponse({'code': 'NULL'}, safe=False)
 
-
 @login_required
 def get_stock_for_trade(request, account, stock_code):
     if request.method == 'GET':
@@ -458,7 +504,6 @@ def get_stock_for_trade(request, account, stock_code):
         }
     return JsonResponse(data, safe=False)
 
-
 @login_required
 def create_trade(request):
     if request.method == 'POST':
@@ -496,7 +541,6 @@ def create_trade(request):
             return JsonResponse({'success': _('交易失败')}, safe=False)
 
     return JsonResponse({'error': _('交易失败')}, safe=False)
-
 
 @login_required
 def create_account(request):

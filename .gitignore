@@ -129,3 +129,4 @@ dmypy.json
 
 # vscode configuration
 .vscode/settings.json
+uploads/
