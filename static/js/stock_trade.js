@@ -247,15 +247,16 @@ $(function () {
         // var showCode = $('input:radio[name="index"]:checked').attr('id')// e.g. 1A0001 上证
         // var showName = $('input:radio[name="index"]:checked').parent().text().trim();
 
-        $('#hiddenCode').val(code);
-        $('#hiddenName').val(showName);
-        $('#hiddenTscode').val(showCode);
+        // $('#hiddenCode').val(code);
+        // $('#hiddenName').val(showName);
+        // $('#hiddenTscode').val(showCode);
 
         $.ajax({
             url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 // ctx1.canvas.width = 1000;
                 // ctx1.canvas.height = 250;
+                $("#spBsChart").addClass("d-none");//隐藏spinner
                 chart = new Chart(chartCanvas, {
                     type: 'candlestick',
                     data: {
@@ -330,23 +331,6 @@ $(function () {
             $('#targetPosition').prop('readonly', true);
             // $('#btnSubmitTrade').prop('disabled', true);
         }
-        
-    });
-
-    $('#optBuy').click(function () {
-        
-    });
-
-    $('#optSell').click(function () {
-        // $('#directionIndicate').text(' - 卖出');
-        // $('#directionIndicate').removeClass('text-danger');
-        // $('#directionIndicate').addClass('text-success');
-        // if ($('#collapseCreate').hasClass('collapse')) {
-
-        // }
-
-        // $('#collapseCreate').removeClass('collapse')
-        
         
     });
 
@@ -534,6 +518,17 @@ $(function () {
         $('#messages').addClass('d-none');
     });
 
+    var isOpenForTrade = function(inputDatetime){
+        // var dateAndTime = inputDatetime.split(" ");
+        var day = inputDatetime.getDay();
+        var hour = inputDatetime.getHours();
+        var min = inputDatetime.getMinutes();
+        if(day==0 || day==6) return false;
+        var time = hour + ":" + min + ":00";
+        if(time<'09:30:00' || time>'15:00:00') return false;
+        return true;
+    }
+
     $('#btnSubmitTrade').click(function () {
         event.preventDefault();
 
@@ -586,6 +581,10 @@ $(function () {
             $('#targetPosition').removeClass("is-invalid");
         }
         
+        if (!isOpenForTrade(new Date(tradeTime))){
+            $('#tradeDatetime').addClass("is-invalid");
+            return;
+        }
 
         $.ajax({
             url: userBaseEndpoint + 'create-trade',
@@ -597,7 +596,7 @@ $(function () {
                 code: code,
                 tsCode: tsCode,
                 market: market,
-                currentPrice: currentPrice,
+                currentPrice: price,//currentPrice,
                 price: price,
                 quantity: quantity,
                 cash: cash,
@@ -636,31 +635,7 @@ $(function () {
         });
     });
 
-    function formatDate(date, conn) {
-        var dayNames = [
-            "01", "02", "03",
-            "04", "05", "06", "07",
-            "08", "09", "10",
-            "11", "12", "13", "14",
-            "15", "16", "17", "18",
-            "19", "20", "21", "22",
-            "23", "24", "25", "26",
-            "27", "28", "29", "30", "31"
-        ];
-
-        var monthNames = [
-            "01", "02", "03",
-            "04", "05", "06", "07",
-            "08", "09", "10",
-            "11", "12"
-        ];
-
-        var dayIndex = date.getDate();
-        var monthIndex = date.getMonth();
-        var year = date.getFullYear();
-
-        return year + conn + monthNames[monthIndex] + conn + dayNames[dayIndex - 1];
-    }
+    
 
     var update = function () {
         var dataset = chart.config.data.datasets[0];

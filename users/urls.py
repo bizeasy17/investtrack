@@ -1,4 +1,4 @@
-from django.urls import re_path, path
+from django.urls import path, re_path
 
 from . import views
 
@@ -16,7 +16,7 @@ urlpatterns = [
          views.UserRecordTradeView.as_view(), name='record_trade'),
     path('dashboard/',
          views.UserDashboardView.as_view(), name='dashboard'),
-    path('tradelog/',
+    path('tradelog/<symbol>',
          views.UserTradelogView.as_view(), name='trade_log'),
     path('create-trade',
          views.create_trade, name='create_trade'),

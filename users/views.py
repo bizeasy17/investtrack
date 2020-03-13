@@ -232,15 +232,21 @@ class UserTradelogView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         # username = self.kwargs['username']
         req_user = request.user
+        stock_symbol = self.kwargs['symbol']
         if req_user is not None:
             tradedetails = TradeRec.objects.filter(
-                trader=req_user.id, )[:10]  # 前台需要添加view more...
+                trader=req_user.id, stock_code=stock_symbol, created_or_mod_by='human')  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
-                trader=req_user.id).exclude(lots=0)[:5]
+                trader=req_user.id, is_liquadated=False).exclude(lots=0)
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)
+            stock_info = StockNameCodeMap.objects.get(stock_code=stock_symbol)
             queryset = {
+                'symbol': stock_info.stock_code,
+                'stock_name': stock_info.stock_name,
+                'show_symbol': stock_info.ts_code,
+                'market': stock_info.market,
                 'det': tradedetails,
                 'pos': trade_positions,
                 'str': strategies,

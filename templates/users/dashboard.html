@@ -18,7 +18,7 @@
                 
         </div>
     </div>
-    <span>{% trans '您还未创建证券账户信息，请单击' %}<a href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank"></i>{% trans '此处' %}</a>{% trans '创建' %}</span>
+    <!-- <span>{% trans '您还未创建证券账户信息，请单击' %}<a href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank"></i>{% trans '此处' %}</a>{% trans '创建' %}</span> -->
 
     {% if dashboard %}
     {% ifequal dashboard.total_accounts 0 %}
@@ -124,10 +124,13 @@
 
                                     </div>
                                     <hr>
-                                    <div class="row col-lg-3 d-flex align-items-center justify-content-between">
-                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='b' ts_code=p.stock_code %}">{% trans '买入+' %}</a>
-                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='s' ts_code=p.stock_code %}">{% trans '卖出-' %}</a>
-                                        
+                                    <div class="row col-lg-12 d-flex align-items-center justify-content-between">
+                                        <div class="col-lg-3 d-flex align-items-center justify-content-between">
+                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='b' ts_code=p.stock_code %}">{% trans '买入+' %}</a>
+                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='s' ts_code=p.stock_code %}">{% trans '卖出-' %}</a>
+                                        </div>
+                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}">{% trans '查看详细交易' %}</a>
+                                    
                                     </div>
                                 </div>
                             </div>

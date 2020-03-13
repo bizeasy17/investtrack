@@ -65,7 +65,7 @@
                                 <div>{% trans '成本' %}</div>
                                 <div><span id="pPositionPrice">{{ trade_info.position.position_price }}</span></div>
                             </div>
-                            <div class="text-muted"> <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div><div><span class="mr-1" id="pLots">{{ trade_info.position.lots }}</span><span id="pTargetPosition">({{ trade_info.position.target_position }}</span>)</div></div>
+                            <div class="text-muted"> <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div><div><span class="mr-1" id="pLots">{{ trade_info.position.lots }}</span>(<span id="pTargetPosition">{{ trade_info.position.target_position }}</span>)</div></div>
                             <div class="text-muted"> <div>{% trans '市值' %}</div><div><span id="pCash">{{ trade_info.position.cash }}</span></div></div>
 
                         </div>
@@ -139,10 +139,11 @@
         </div>
         
         <hr>
-        <div class="card mb-4">
+        <div class="mb-4">
                 <div class="card-body">
                     <div class="chart-bar">
-                    <canvas id="stockChart"></canvas>
+                        <i class="fas fa-spinner fa-pulse fa-spin fa-4x" id="spBsChart"></i>
+                        <canvas id="stockChart"></canvas>
                     </div>
                     <hr>
                 </div>

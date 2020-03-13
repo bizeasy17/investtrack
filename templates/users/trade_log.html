@@ -20,44 +20,166 @@
     </div> -->
     <!-- Post Content Column -->
     <div class="col-lg-8">
+        <div class="row">
+            <div class="col-md-12 mb-2">
+                <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="opt15" autocomplete="off" value="15">{% trans '15' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="opt30" autocomplete="off" value="30">{% trans '30' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="opt60" autocomplete="off" value="60">{% trans '60' %} 
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="period" id="optDay" autocomplete="off" value="D" checked>{% trans '日' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="W">{% trans '周' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="M">{% trans '月' %} 
+                    </label>
+                </div>
+                <a href="#" class=""><i class='fa fa-sort-alpha-up' aria-hidden="true"></i></a>
+                <a href="#" class="ml-2"><i class='fa fa-sort-alpha-down' aria-hidden="true"></i></a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 mb-2">
+                <input type="button" class="btn btn-sm btn-primary float-right" value="{% trans '收起k线' %}" id="collapseChart"/>
+            </div>
+        </div>
+        <div class="row" id="chartContainer">
+            <div class="col-md-12 chart-bar">
+                <i class="fas fa-spinner fa-pulse fa-spin fa-4x" id="spBsChart"></i>
+                <p><canvas id="bsChart"></canvas></p>
+                <hr>
+            </div>
+        </div>
         {% if trade_log %}
-        {% for trade in trade_log.det %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class='row'>
-                    <div class="col-lg-10">
-                        <h4 class="card-title"><a href="#"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h4>
-                        <h6 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#">{{ trade.stock_code }}</a></h6>
-                        <hr/>
-                    </div>
-                    
-                    <div class="col-lg-2">
-                        <div class="float-right">
-                        {% if trade.direction == 's' %}
-                        <td><span class="badge badge-pill badge-success">{% trans '买出' %}</span></td>
-                        {% else %}
-                        <td><span class="badge badge-pill badge-danger">{% trans '买入' %}</span></td>
-                        {% endif %}
+        <div class="row">
+            <div class="col">
+            {% for trade in trade_log.det %}
+                {% ifequal trade.direction 'b' %}
+                <div class="card mb-4 shadow">
+                    <div class="card-body">
+                        <div class='row'>
+                            <div class="col-lg-10">
+                                <input type="hidden" value="{{trade.id}}" id="{{trade.id}}"/>
+                                <input type="hidden" value="{{trade.rec_ref_number}}" id="{{trade.rec_ref_number}}"/>
+                                <h6 class="card-title "><a href="#" class="text-primary"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h6>
+                                <h7 class="card-subtitle mb-2"><a href="#" class="text-muted">{{ trade.stock_code }}</a></h7>
+                                <hr/>
+                            </div>
+                            
+                            <div class="col-lg-2">
+                                <div class="float-right">
+                                    <span class="badge badge-pill badge-danger">{% trans '买入' %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='row'>
+                            <div class="col small">
+                                <p class="card-text">
+                                    <i class="fa fa-calendar-times mr-1"></i>{{ trade.trade_time }} 
+                                </p>
+                                <p> 
+                                    <a href="/user/profile">{{trade.trader.name}}</a> 
+                                    {% trans '以' %} {% trans '￥' %} 
+                                    <span>{{ trade.price }}</span>
+                                    {% trans '买入' %} 
+                                    <span>{{ trade.board_lots }}</span>
+                                    {% trans '股，金额为￥' %}
+                                    <span>{{ trade.cash }}</span>
+                                </p>
+                                {% ifequal trade.lots_remain 0 %}
+                                <p> 
+                                    {{trade.board_lots}}{% trans '股已全部卖出' %} 
+                                </p>
+                                {% endifequal %}
+                                {% if trade.lots_remain > 0 and trade.lots_remain < trade.lots %}
+                                <p> 
+                                    <span >{% trans '该仓位已部分卖出，剩余' %} </span><span>{{ trade.lots_remain }}</span>
+                                </p>
+                                {% endif %}
+                                <p class="card-text">
+                                    {% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} 
+                                </p>
+                                <hr/>
+                            </div>
+                        </div>
+                        <div class='row d-flex align-items-center justify-content-between'>
+                            <div class="col">
+                                <a href="#" class="card-link text-danger"><i class='fa fa-heart' aria-hidden="true"></i></a>
+                                <a href="#" class="card-link text-primary"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
+                                <!-- <a href="#" class="card-link">{% trans '查看全部操作' %}</a> -->
+                            </div>
+                            <div class="col">
+                                <input type="button" class="btn btn-sm btn-primary" value="{% trans '相关操作' %}" name="bRelatedTrade" id="{{trade.id}}"/>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class='row'>
-                    <div class="col-lg-10">
-                        <p class="card-text">{{ trade.trade_time }}  <a href="/user/{{trade.trader.id}}/profile">{{trade.trader.username}}</a> {% trans '以' %} {% trans '￥' %} {{ trade.price }} {% trans '交易' %} {{ trade.board_lots }}{% trans '股' %} {% trans '，本次交易投入' %}{% trans '￥' %} {{ trade.cash }}</p>
-                        <p class="card-text">{% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} </p>
-                        <hr/>
+                {% endifequal %}
+            {% endfor %}
+            </div>
+            <div class="col">
+            {% for trade in trade_log.det %}
+                {% ifequal trade.direction 's' %}
+                <div class="card mb-4 shadow">
+                    <div class="card-body">
+                        <div class='row'>
+                            <div class="col-lg-10">
+                                <input type="hidden" value="{{trade.id}}" id="{{trade.id}}"/>
+                                <input type="hidden" value="{{trade.rec_ref_number}}" id="{{trade.rec_ref_number}}"/>
+                                <h6 class="card-title"><a href="#" class="text-primary"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h6>
+                                <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-muted">{{ trade.stock_code }}</a></h7>
+                                <hr/>
+                            </div>                    
+                            <div class="col-lg-2">
+                                <div class="float-right">
+                                    <span class="badge badge-pill badge-success">{% trans '买出' %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class=“row”>
+                            <div class="col">
+                                <p>
+                                    <i class="fa fa-calendar-times mr-1"></i>{{ trade.trade_time }} 
+                                </p>
+                                <p>
+                                    <a href="/user/profile">{{trade.trader.name}}</a> 
+                                    {% trans '以' %} {% trans '￥' %} 
+                                    <span>{{ trade.price }}</span> {% trans '卖出' %} 
+                                    <span>{{ trade.board_lots }}</span>
+                                    {% trans '股' %} {% trans '，金额为' %}{% trans '￥' %} 
+                                    
+                                    <span>{{ trade.cash }}</span>
+                                </p>
+                                <p class="card-text">
+                                    {% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} 
+                                </p>
+                                <hr/>
+                            </div>
+                        </div>
+                        <div class='row d-flex align-items-center justify-content-between'>
+                            <div class="col">
+                                <a href="#" class="card-link text-danger"><i class='fa fa-heart' aria-hidden="true"></i></a>
+                                <a href="#" class="card-link text-primary"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
+                                <!-- <a href="#" class="card-link">{% trans '查看全部操作' %}</a> -->
+                            </div>
+                             <div class="col">
+                                <input type="button" class="btn btn-sm btn-primary" value="{% trans '相关操作' %}" name="sRelatedTrade" id="{{trade.id}}"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class='row'>
-                    <div class="col-lg-12">
-                        <a href="#" class="card-link"><i class='fa fa-heart' aria-hidden="true"></i></a>
-                        <a href="#" class="card-link"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
-                        <a href="#" class="card-link">{% trans '查看全部操作' %}</a>
-                    </div>
-                </div>
+                {% endifequal %}
+            {% endfor %}
             </div>
         </div>
-        {% endfor %}
         {% endif %}
     </div>
 
@@ -69,21 +191,21 @@
             <div class="">
                 <div class="input-group mb-2 mt-1">
                     <input type="text" class="form-control advancedAutoComplete" id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
-                    <input type="hidden" id="hiddenCode">
-                    <input type="hidden" id="hiddenName">
-                    <input type="hidden" id="hiddenTscode">
-                    <input type="hidden" id="hiddenMarket">
+                    <input type="hidden" id="hiddenCode" value="{{trade_log.symbol}}">
+                    <input type="hidden" id="hiddenName" value="{{trade_log.stock_name}}">
+                    <input type="hidden" id="hiddenTscode" value="{{trade_log.show_symbol}}">
+                    <input type="hidden" id="hiddenMarket" value="{{trade_log.market}}">
                 </div>
             </div>
         </div>
 
         <!-- Position Widget -->
         <div class="p-1 my-4">
-            <h6>{% trans '常用策略' %}</h6>
+            <h6>{% trans '我的持仓' %}</h6>
             <hr/>
             {% if trade_log %}
-            {% for s in trade_log.str %}
-                <button type="button" class="btn btn-warning"><i class="fa fa-cog">{{ s.name }}</i></button>
+            {% for p in trade_log.pos %}
+                <button type="button" class="btn btn-sm btn-light mb-2 text-primary"><i class="fa fa-chart-line mr-1"></i><span class="mr-1">{{ p.stock_name }}</span><span>({{p.stock_code}})</span></button>
             {% endfor %}
             {% endif %}
         </div>
@@ -94,7 +216,7 @@
             <hr/>
             {% if trade_log %}
             {% for f in trade_log.fol %}
-                <button type="button" class="btn btn-primary mb-2"><i class="fa fa-bar">{{ f.stock_code.stock_name }}({{ f.stock_code.stock_code }})</i></button>
+                <button type="button" class="btn btn-sm btn-light mb-2"><i class="fa fa-chart-line mr-1"></i>{{ f.stock_code.stock_name }}({{ f.stock_code.stock_code }})</button>
             {% endfor %}
             {% endif %}
         </div>
