@@ -73,7 +73,11 @@
 
                     </div>
                     {% else %}
-                    <div class="d-none" id="noPosition"><span>{% trans '该账户下未持仓该股票' %}</span></div>
+                    {% if trade_info.trade_account %}
+                        <div id="noPosition"><h6 class="text-muted">{% trans '该账户查询无持仓信息' %}</h6></div>
+                    {% else %}
+                        <div id="noAccount"><h6 class="text-danger">{% trans '无此交易账户，查看可用' %}<a href="{% url 'user:create_account' %}" class="text-info">{% trans '交易账户' %}</a></h6></div>
+                    {% endif %}
                     {% endif %}  
                     <span>{% trans '数据获取于' %}<span id="pRefreshDT">{% now "Y-m-d H:i" %}</span></span>
 
@@ -111,8 +115,8 @@
                     <div class="col-lg-12">
                         <!-- （sh=上证指数 sz=深圳成指 hs300=沪深300指数 sz50=上证50 zxb=中小板 cyb=创业板） -->
                         <div class="btn-group btn-group-sm btn-group-toggle float-right mt-1" data-toggle="buttons">
-                            <label class="btn btn-light">
-                                <input type="radio" name="index" id="1A0001" autocomplete="off" value="sh">{% trans '上证指数' %}
+                            <label class="btn btn-light {% ifequal trade_info.stock_symbol 'sh' %} active {%endifequal%}">
+                                <input type="radio" name="index" id="1A0001" autocomplete="off" value="sh" {% ifequal trade_info.stock_symbol 'sh' %} checked {%endifequal%}>{% trans '上证指数' %}
                             </label>
                             <label class="btn btn-light">
                                 <input type="radio" name="index" id="399001" autocomplete="off" value="sz">{% trans '深圳成指' %}
@@ -178,12 +182,12 @@
             <h6>{% trans '搜索' %}</h6>
             <div class="">
                 <div class="input-group mt-1">
-                    <input type="text" class="form-control form-control-sm advancedAutoComplete"  {% if trade_info %} value="{{ trade_info.stock_symbol }}" {% endif %} id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
+                    <input type="text" class="form-control form-control-sm advancedAutoComplete"  {% if trade_info %} {% ifnotequal trade_info.stock_symbol 'sh' %} value="{{ trade_info.stock_symbol }}" {% endifnotequal %} {% endif %} id="searchNameOrCode" autocomplete="off" placeholder="{% trans '请输入股票名称或代码' %}">                    
                     <input type="hidden" id="hiddenCode" value="{{trade_info.stock_symbol}}"><!--real code e.g. 000001 -->
                     <input type="hidden" id="hiddenName" value="{{trade_info.stock_name}}"><!--e.g.平安保险-->
                     <input type="hidden" id="hiddenTscode" value="{{trade_info.show_code}}"><!--show code, 000001.SZ-->
                     <input type="hidden" id="hiddenMarket" value="{{trade_info.market}}">
-                    <input type="hidden" id="hiddenAccount" value="{{trade_info.account}}">
+                    <input type="hidden" id="hiddenAccount" value="{{trade_info.account_id}}">
                     <input type="hidden" id="hiddenTradeType" value="{{trade_info.type}}">
 
                 </div>
@@ -209,7 +213,7 @@
         <div class="p-1 small" id="collapseCreate"> 
             <div class="">
                 <div class="row pl-3 pr-3">
-                    <form action="{% url 'user:create_trade' %}" enctype="multipart/form-data" id="traderecForm" method="post"
+                    <form action="{% url 'user:post_trade_creation' %}" enctype="multipart/form-data" id="traderecForm" method="post"
                         role="form">
                         <!-- {% csrf_token %} -->
                         <input type="hidden" id="direction">
@@ -310,7 +314,7 @@
                         </div>
                         
                         
-                        <button type="submit" id="btnSubmitTrade" class="btn btn-primary float-right">{% trans '递交' %}</button>
+                        <button type="submit" id="btnSubmitTrade" class="btn btn-primary float-right">{% trans '创建新记录' %}</button>
                     </form>
                 </div>
             </div>

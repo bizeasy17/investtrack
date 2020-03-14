@@ -41,7 +41,7 @@ class UserDashboardView(LoginRequiredMixin, View):
             tradedetails = TradeRec.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
-                trader=req_user.id).exclude(lots=0)
+                trader=req_user.id).exclude(is_liquadated=True).order_by('-last_mod_time')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
             capital = 0
             profit_loss = 0
@@ -68,13 +68,14 @@ class UserDashboardView(LoginRequiredMixin, View):
                 'positions': trade_positions,
                 'strategies': strategies,
                 'followings': stocks_following,
+                'trade_accounts': accounts,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
         else:
             return HttpResponseRedirect(reverse('404'))
 
 
-class UserStockTradeView(LoginRequiredMixin, View):
+class UserRecordStockTradeView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
     # model = TradeRec
 
@@ -86,92 +87,66 @@ class UserStockTradeView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         # username = self.kwargs['username']
         req_user = request.user
-        trade_type = self.kwargs['type']
-        ts_code = self.kwargs['ts_code']
-        account = self.kwargs['account']
+        trade_type = 'b' # default trade type is buy. self.kwargs['type']
+        stock_symbol = self.kwargs['symbol']
+        account_id = self.kwargs['account']
+        trade_account = TradeAccount.objects.filter(id=account_id)
         if req_user is not None:
-            stock_position = Positions.objects.get(
-                trader=req_user.id, stock_code=ts_code, trade_account=account)
-            # update the profit based on the realtime price
-            # stock_position.make_profit_updated()
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
-            stock_name = StockNameCodeMap.objects.get(stock_code=ts_code)
-            if ts_code[0] == '3':
-                market = 'CYB'
-                show_code = ts_code + '.SZ'
-            elif ts_code[0] == '0':
-                market = 'ZXB'
-                show_code = ts_code + '.SZ'
+            stock_position = []
+            stock_name = ''
+            if trade_account is None or len(trade_account) < 1:
+                show_code = '1A0001'
+                market = 'ZB'
+                stock_name = '上证指数'
             else:
-                if ts_code[:3] == '688':
-                    market = 'KCB'
-                else:
+                if stock_symbol == 'sh':
+                    # 默认上证指数，如果不指定股票编号
+                    show_code = '1A0001'
                     market = 'ZB'
-                show_code = ts_code + '.SH'
+                    stock_name = '上证指数'
+                else:
+                    symbol_map = StockNameCodeMap.objects.filter(stock_code=stock_symbol)
+                    if symbol_map is None or len(symbol_map) == 0:
+                        # 如果传入的股票代码不存在，默认上证指数，如果不指定股票编号
+                        stock_symbol = 'sh'
+                        show_code = '1A0001'
+                        market = 'ZB'
+                        stock_name = '上证指数'
+                    else:
+                        stock_position = Positions.objects.filter(
+                            trader=req_user.id, stock_code=stock_symbol, trade_account=account_id)
+                        # update the profit based on the realtime price
+                        # stock_position.make_profit_updated()
+                        stock_name = symbol_map[0].stock_name
+                        if stock_symbol[0] == '3':
+                            market = 'CYB'
+                            show_code = stock_symbol + '.SZ'
+                        elif stock_symbol[0] == '0':
+                            market = 'ZXB'
+                            show_code = stock_symbol + '.SZ'
+                        else:
+                            if stock_symbol[:3] == '688':
+                                market = 'KCB'
+                            else:
+                                market = 'ZB'
+                            show_code = stock_symbol + '.SH'
 
             queryset = {
                 'type': trade_type,
-                'stock_symbol': ts_code,
+                'stock_symbol': stock_symbol,
                 'stock_name': stock_name,
                 'show_code': show_code,
                 'market': market,
-                'account': account,
+                'account_id': account_id,
+                'trade_account': trade_account[0] if len(trade_account) >= 1 else None,
                 'strategies': strategies,
-                'position': stock_position,
+                'position': stock_position[0] if len(stock_position) >= 1 else None,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
         else:
             return HttpResponseRedirect(reverse('404'))
 
-
-class UserRecordTradeView(LoginRequiredMixin, View):
-    # form_class = UserTradeForm
-    # model = TradeRec
-
-    # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'users/stock_trade.html'
-    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'rec_trade'
-
-    def get(self, request, *args, **kwargs):
-        # username = self.kwargs['username']
-        req_user = request.user
-        trade_type = self.kwargs['type']
-        ts_code = self.kwargs['ts_code']
-        account = self.kwargs['account']
-        if req_user is not None:
-            stock_position = Positions.objects.get(
-                trader=req_user.id, stock_code=ts_code, trade_account=account)
-            # update the profit based on the realtime price
-            # stock_position.make_profit_updated()
-            strategies = TradeStrategy.objects.filter(creator=req_user.id)
-            stock_name = StockNameCodeMap.objects.get(stock_code=ts_code)
-            if ts_code[0] == '3':
-                market = 'CYB'
-                show_code = ts_code + '.SZ'
-            elif ts_code[0] == '0':
-                market = 'ZXB'
-                show_code = ts_code + '.SZ'
-            else:
-                if ts_code[:3] == '688':
-                    market = 'KCB'
-                else:
-                    market = 'ZB'
-                show_code = ts_code + '.SH'
-
-            queryset = {
-                'type': trade_type,
-                'stock_symbol': ts_code,
-                'stock_name': stock_name,
-                'show_code': show_code,
-                'market': market,
-                'account': account,
-                'strategies': strategies,
-                'position': stock_position,
-            }
-            return render(request, self.template_name, {self.context_object_name: queryset})
-        else:
-            return HttpResponseRedirect(reverse('404'))
 
 class UserProfileView(LoginRequiredMixin, View):
     # form_class = UserTradeForm

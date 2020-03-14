@@ -28,7 +28,7 @@
     {% else %}
     <div class="row">
         <div class="col-lg-8 grid-margin stretch-card">
-            <div class="row w-100 flex-grow">
+            <div class="row flex-grow">
                 <div class="col-md-6 stretch-card">
                     <div class="card shadow">
                         <div class="card-body">
@@ -95,7 +95,7 @@
                                 <div class="card-body">
                                     <div class='row'>
                                         <div class="col-lg-10">
-                                            <h6 class="card-title"><a href="#" class="text-muted">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
+                                            <h6 class="card-title"><h6 href="#" >{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
                                             <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
@@ -110,7 +110,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap small">
                                         <div class="text-muted"> 
                                             <div>{% trans '现价' %}</div>
                                             <div>{{ p.current_price }}</div>
@@ -124,12 +124,13 @@
 
                                     </div>
                                     <hr>
-                                    <div class="row col-lg-12 d-flex align-items-center justify-content-between">
-                                        <div class="col-lg-3 d-flex align-items-center justify-content-between">
-                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='b' ts_code=p.stock_code %}">{% trans '买入+' %}</a>
-                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:stock_trade' account=p.trade_account.id type='s' ts_code=p.stock_code %}">{% trans '卖出-' %}</a>
+                                    <div class="row">
+                                        <div class="col-lg-4">
+                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
+                                            <!-- <a class="btn btn-sm btn-outline-primary" href="#">{% trans '卖出-' %}</a> -->
+                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}"><i class="fa fa-eye"></i>{% trans '查看交易' %}</a>
+
                                         </div>
-                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}">{% trans '查看详细交易' %}</a>
                                     
                                     </div>
                                 </div>
@@ -150,124 +151,101 @@
                     </div>
                 </div> {% endcomment %}
             </div>
-            {% comment %}
-            <div class="row w-100 flex-grow mt-4 mb-4 d-none">
-                <div class="col-md-12 grid-margin stretch-card">
-                    <div class="card shadow">
-                        <div class="card-body pb-0">
-                            <div class="d-flex justify-content-between flex-wrap">
-                                <!-- <p class="text-muted">Last update: 2 Hours ago</p> -->
-                                <p class="card-title">{% trans '最近交易' %}</p>
-                                <div class="d-flex align-items-center flex-wrap mt-3 mb-3 mb-md-0">
-                                    {% if dashboard %}
-                                    {% for trade in dashboard.details %}
-                                    <div class="card mb-4">
-                                        <div class="card-body">
-                                            <div class='row'>
-                                                <div class="col-lg-10">
-                                                    <h4 class="card-title"><a href="#"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h4>
-                                                    <h6 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#">{{ trade.stock_code }}</a></h6>
-                                                    <hr/>
-                                                </div>
-                                                
-                                                <div class="col-lg-2">
-                                                    <div class="float-right">
-                                                    {% if trade.direction == 's' %}
-                                                    <td><span class="badge badge-pill badge-success">{% trans '买出' %}</span></td>
-                                                    {% else %}
-                                                    <td><span class="badge badge-pill badge-danger">{% trans '买入' %}</span></td>
-                                                    {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class='row'>
-                                                <div class="col-lg-12">
-                                                    <p class="card-text">{{ trade.trade_time }}  <a href="/user/{{trade.trader.id}}/profile">{{trade.trader.username}}</a> {% trans '以' %} {% trans '￥' %} {{ trade.price }} {% trans '交易' %} {{ trade.board_lots }}{% trans '股' %} {% trans '，本次交易投入' %}{% trans '￥' %} {{ trade.cash }}</p>
-                                                    <p class="card-text">{% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} </p>
-                                                    <hr/>
-                                                </div>
-                                            </div>
-                                            <div class='row'>
-                                                <div class="col-lg-12">
-                                                    <a href="#" class="card-link"><i class='fa fa-heart' aria-hidden="true"></i></a>
-                                                    <a href="#" class="card-link"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
-                                                    <a href="#" class="card-link">{% trans '查看全部操作' %}</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endcomment %}
         </div>
         <div class="col-lg-4 grid-margin stretch-card">
-            <div class="col-md-12 grid-margin stretch-card">
-                <div class="col-md-12 grid-margin stretch-card">
-                    <div class="card shadow mb-4">
-                        <div class="card-body pb-0">
-                            <div class="d-flex justify-content-between flex-wrap">
+            <div class="grid-margin stretch-card">
+                <div class="d-flex flex-wrap pt-2">
+                    <div class="col-md-12 order-md-2 mb-4">
+                        <h5 class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">{% trans '已有交易账户' %}</span>
+                            <span class="badge badge-info badge-pill">{{dashboard.total_accounts}}</span>
+                        </h5>
+                        <div class="list-group mb-3" id="accountList">
+                            {% if dashboard %}
+                            {% for a in dashboard.trade_accounts %}
+                            <div id="{{trade_account.id}}" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">
                                 <div>
-                                    <p class="card-title mr-1">
-                                        <i class="fa fa-chart-bar" ></i> {% trans '我的仓位' %}
-                                        <span class="badge badge-info badge-pill" id="pTotalShares">{{ dashboard.total_shares }}</span>
-
-                                    </p>
+                                    <h6 class="my-0">
+                                        {{a.account_name}}
+                                        <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '交易'%}</a>
+                                    </h6>
+                                    <small class="text-muted">{{a.account_type}}</small>
                                 </div>
                                 <div>
-                                    <span class="text-sm text-danger font-weight-medium" id="pTotalAvailPerTarget"></span>
+                                    <span class="text-muted">{{a.account_balance}}</span>
                                 </div>
-                                
                             </div>
-                            <div class="d-flex flex-wrap mb-2">
-                                <div class="regional-chart-legend d-flex align-items-center flex-wrap mb-1" id="positionLegend"></div>
-                                <canvas height="280" id="positionChart"></canvas>
-                            </div>
+                            {% endfor %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>{% trans '账户总额（￥）' %}</span>
+                                <strong id="totalAccBalance">{{ dashboard.profit_loss }}</strong>
+                            </li>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-                <div class="col-md-12 grid-margin stretch-card">
-                    <div class="card shadow mb-4">
-                        <div class="card-body pb-0">
-                            <div class="d-flex align-items-center mb-4">
-                                <p class="card-title mb-0 mr-1"><i class="fa fa-cog" ></i>  {% trans '交易策略' %}</p>
-                                <span class="badge badge-info badge-pill" id="sTotalStrategies">{{ dashboard.total_strategies }}</span>
-                            </div>
-                            <div class="d-flex flex-wrap pt-2 small">
-                                {% if dashboard %}
-                                {% for s in dashboard.strategies %}
-                                    <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa">{{ s.name }}</i></button>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                        <canvas height="150" id="activity-chart"></canvas>
-                    </div>
-                </div>
-                <div class="col-md-12 grid-margin stretch-card">
-                    <div class="card shadow mb-4">
-                        <div class="card-body pb-0">
-                            <div class="d-flex align-items-center mb-4">
-                                <p class="card-title mb-0 mr-1">{% trans '我的自选股' %}</p>
-                                <div class="badge badge-info badge-pill" id="fTotalFollowing">{{ dashboard.total_following }}</div>
-                            </div>
-                            <div class="d-flex flex-wrap pt-2 small">
-                                {% if dashboard %}
-                                {% for f in dashboard.followings %}
-                                <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa fa-bar">{{f.stock_code.stock_name }}({{f.stock_code.stock_code }})</i></button>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                        <canvas height="150" id="activity-chart"></canvas>
-                    </div>
-                </div> 
+                <!-- <canvas id="activity-chart"></canvas> -->
             </div>
+            <div class="col-md-12 grid-margin stretch-card">
+                <div class="card shadow mb-4">
+                    <div class="card-body pb-0">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div>
+                                <p class="card-title mr-1">
+                                    <i class="fa fa-chart-bar" ></i> {% trans '我的仓位' %}
+                                    <span class="badge badge-info badge-pill" id="pTotalShares">{{ dashboard.total_shares }}</span>
+
+                                </p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-danger font-weight-medium" id="pTotalAvailPerTarget"></span>
+                            </div>
+                            
+                        </div>
+                        <div class="d-flex flex-wrap mb-2">
+                            <div class="regional-chart-legend d-flex align-items-center flex-wrap mb-1" id="positionLegend"></div>
+                            <canvas height="280" id="positionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-12 grid-margin stretch-card">
+                <div class="card shadow mb-4">
+                    <div class="card-body pb-0">
+                        <div class="d-flex align-items-center mb-4">
+                            <p class="card-title mb-0 mr-1"><i class="fa fa-cog" ></i>  {% trans '交易策略' %}</p>
+                            <span class="badge badge-info badge-pill" id="sTotalStrategies">{{ dashboard.total_strategies }}</span>
+                        </div>
+                        <div class="d-flex flex-wrap pt-2 small">
+                            {% if dashboard %}
+                            {% for s in dashboard.strategies %}
+                                <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa">{{ s.name }}</i></button>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <canvas height="150" id="activity-chart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-12 grid-margin stretch-card">
+                <div class="card shadow mb-4">
+                    <div class="card-body pb-0">
+                        <div class="d-flex align-items-center mb-4">
+                            <p class="card-title mb-0 mr-1">{% trans '我的自选股' %}</p>
+                            <div class="badge badge-info badge-pill" id="fTotalFollowing">{{ dashboard.total_following }}</div>
+                        </div>
+                        <div class="d-flex flex-wrap pt-2 small">
+                            {% if dashboard %}
+                            {% for f in dashboard.followings %}
+                            <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa fa-bar">{{f.stock_code.stock_name }}({{f.stock_code.stock_code }})</i></button>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <canvas height="150" id="activity-chart"></canvas>
+                </div>
+            </div> 
         </div>
     </div>
     {% endifequal %}

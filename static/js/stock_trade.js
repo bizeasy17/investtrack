@@ -197,7 +197,13 @@ $(function () {
     });
 
     // 页面加载时，更新请求的股票交易信息
-    updateTradeStockInfoFor($('#hiddenCode').val())
+    if ($('#hiddenCode').val() != "sh"){
+        updateTradeStockInfoFor($('#hiddenCode').val())
+    }
+
+    if($("#noAccount").length){
+        $("#btnSubmitTrade").addClass("disabled");
+    }
 
     $('#searchNameOrCode').autoComplete({
         resolver: 'custom',
@@ -520,18 +526,30 @@ $(function () {
 
     var isOpenForTrade = function(inputDatetime){
         // var dateAndTime = inputDatetime.split(" ");
+        var date = formatDate(inputDatetime, "-");
+        var openTime = new Date(date + " 9:30:00");
+        var closeTime = new Date(date + " 15:00:00");
         var day = inputDatetime.getDay();
         var hour = inputDatetime.getHours();
         var min = inputDatetime.getMinutes();
-        if(day==0 || day==6) return false;
-        var time = hour + ":" + min + ":00";
-        if(time<'09:30:00' || time>'15:00:00') return false;
-        return true;
+        if (inputDatetime>=openTime && inputDatetime<=closeTime){
+            return true;
+        }
+        // if(day>0 && day<6) {
+        //     var time = hour.toString() + ":" + min.toString() + ":00";
+        //     if(time>="9:30:00" && time<="15:00:00") {
+        //         return true;
+        //     }
+        //     else{
+        //         return false;
+        //     }
+        // }
+        return false;
     }
 
     $('#btnSubmitTrade').click(function () {
         event.preventDefault();
-
+        if ($('#btnSubmitTrade').hasClass("disabled")) return;
         var name = $('#hiddenName').val();
         var code = $('#hiddenCode').val();
         var tsCode = $('#hiddenTscode').val();
@@ -613,7 +631,10 @@ $(function () {
                 $("#messageText").html('<strong>' + data.success + '</strong>.');
                 // $("#messages").fadeOut(2000);
                 refreshPositionBySymbol(code);
-                updateTradeStockInfoFor(code)
+                updateTradeStockInfoFor(code);
+                // 更新k线图表
+                var period = $('input:radio[name="period"]:checked').val();
+                updateChartFor(name, tsCode, code, period);
             },
             statusCode: {
                 403: function () {
