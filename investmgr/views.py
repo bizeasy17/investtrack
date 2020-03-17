@@ -486,7 +486,7 @@ def execute_stock_snapshot(request, applied_period):
                 user_trade_accounts = TradeAccount.objects.filter(trader=user) 
                 for trade_account in user_trade_accounts:
                     trade_account.update_account_balance()
-                user_positions = Positions.objects.filter(trader=user)
+                user_positions = Positions.objects.filter(trader=user, is_liquadated=False)
                 if user_positions is not None and len(user_positions)>=1:
                     for position in user_positions:
                         snapshot = TradeProfitSnapshot(trader=user)

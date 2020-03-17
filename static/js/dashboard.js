@@ -118,15 +118,26 @@ $(function () {
       var profitWeekChartCanvas = $("#profitDevChartWeek")
         .get(0)
         .getContext("2d");
-      var period = 'd'; //all stock shares
+      var period = 'm'; //all stock shares
       $.ajax({
         url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
         // headers: { 'X-CSRFToken': csrftoken },
         method: 'GET',
         dataType: 'json',
         success: function (data) {
+          // 亏损的字体颜色为绿
+          if(data.avg_profit<0){
+            $("#prfAvgProfit").removeClass("text-danger");
+            $("#prfAvgProfit").addClass("text-success");
+          }
           $("#prfAvgProfit").text(data.avg_profit);
-          $("#prfProfitRatio").text(data.profit_ratio);
+          // 亏损的字体颜色为绿
+          if (data.profit_ratio<0){
+            $("#prfProfitRatio").removeClass("text-danger");
+            $("#prfProfitRatio").addClass("text-success");
+          }
+          $("#prfProfitRatio").text(data.profit_ratio + "%");
+          
           var profitWeekChart = new Chart(profitWeekChartCanvas, {
             type: "bar",
             data: {

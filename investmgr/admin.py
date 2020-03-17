@@ -92,7 +92,7 @@ class PositionsAdmin(admin.ModelAdmin):
 class TradeSnapshotAdmin(admin.ModelAdmin):
     exclude = ('last_mod_time', 'created_time')
     list_display = (
-        'trader', 'account_name', 'profit', 'profit_ratio', 'snap_date')
+        'trader', 'trade_account', 'profit', 'profit_ratio', 'snap_date')
 
 
 # Register your models here.

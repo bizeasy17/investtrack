@@ -33,13 +33,14 @@
                     <div class="card shadow">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '本周收益' %}</p>
+                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '本周收益分布' %}</p>
                                 <p class="font-weight-medium">
+                                    <span class="text-muted small mr-1">{% trans '环比上周' %}</span>
                                     <span class="text-danger" id="prfProfitRatio"></span>
                                 </p>
                             </div>
                             <div class="d-flex align-items-center flex-wrapper mb-3">
-                                <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3" id="prfAvgProfit"></h5>
+                                <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-danger" id="prfAvgProfit"></h5>
                                 <p class="text-muted mb-0">{% trans '平均收益' %}</p>
                             </div>
                             <canvas id="profitDevChartWeek" height="130"></canvas>
@@ -52,7 +53,10 @@
                             <div class="d-flex align-items-center
                                 justify-content-between flex-wrap">
                                 <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '本周交易成功率' %}</p>
-                                <p class="text-danger font-weight-medium" id="invRelAttemptRatio"></p>
+                                <p class="text-danger font-weight-medium" id="">
+                                    <span class="text-muted small mr-1">{% trans '环比上周' %}</span>
+                                    <span class="text-danger" id="invRelAttemptRatio"></span>
+                                </p>
                             </div>
                             <div class="d-flex align-items-center flex-wrap
                                 mb-3">

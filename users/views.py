@@ -1,7 +1,11 @@
+import decimal
 import locale
 import os
-from datetime import date, datetime, timedelta
-from decimal import *
+# from calendar import monthrange
+import calendar
+import datedelta
+from datetime import timedelta
+import datetime
 
 import tushare as ts
 from django.conf import settings
@@ -22,9 +26,11 @@ from investmgr.models import (Positions, StockFollowing, StockNameCodeMap,
 from .forms import UserTradeForm
 from .models import User
 
-locale.setlocale( locale.LC_ALL, '' )
+locale.setlocale(locale.LC_ALL, '')
 
 # Create your views here.
+
+
 class UserDashboardView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
     # model = TradeRec
@@ -87,7 +93,7 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         # username = self.kwargs['username']
         req_user = request.user
-        trade_type = 'b' # default trade type is buy. self.kwargs['type']
+        trade_type = 'b'  # default trade type is buy. self.kwargs['type']
         stock_symbol = self.kwargs['symbol']
         account_id = self.kwargs['account']
         trade_account = TradeAccount.objects.filter(id=account_id)
@@ -106,7 +112,8 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
                     market = 'ZB'
                     stock_name = '上证指数'
                 else:
-                    symbol_map = StockNameCodeMap.objects.filter(stock_code=stock_symbol)
+                    symbol_map = StockNameCodeMap.objects.filter(
+                        stock_code=stock_symbol)
                     if symbol_map is None or len(symbol_map) == 0:
                         # 如果传入的股票代码不存在，默认上证指数，如果不指定股票编号
                         stock_symbol = 'sh'
@@ -191,7 +198,7 @@ class UserTradeAccountCreateView(LoginRequiredMixin, View):
 
             queryset = {
                 'trade_accounts': trade_accounts,
-                'total_balance' : total_balance,
+                'total_balance': total_balance,
                 'total_accounts': len(trade_accounts),
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
@@ -242,6 +249,7 @@ def file_upload(request):
     default_storage.save(save_path, file)
     return 'portraits/' + str(img_id) + '.' + ext
 
+
 @login_required
 def update_user_profile(request):
     if request.method == 'POST':
@@ -271,17 +279,50 @@ def update_user_profile(request):
         # if direction == 'b':
         is_ok = trader.save()
         return JsonResponse({'code': 'success', 'message': _('更新成功')}, safe=False)
-        
+
         # else:
         #     return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
 
     return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
 
+
+def get_week_of_month(year, month, day):
+    """
+    获取指定的某天是某个月中的第几周
+    周一作为一周的开始
+    """
+    end = int(datetime.datetime(year, month, day).strftime("%W"))
+    begin = int(datetime.datetime(year, month, 1).strftime("%W"))
+    return end - begin + 1
+
+
+def calc_realtime_snapshot(request):
+    trader = request.user
+    today = datetime.date.today()
+    trader_positions = Positions.objects.filters(trader=trader)
+    # realtime更新持仓
+    for trader_position in trader_positions:
+        trader_position.update_stock_position()
+    positions = Positions.objects.values('trade_account').annotate(sum_profit_account=Sum(
+        'profit')).values('trade_account', 'sum_profit').filter(trader=trader, is_liquadated=False)
+    # 是否今天的snapshot存在
+    for position in positions:
+        snapshots = TradeProfitSnapshot.objects.filter(
+            trader=trader, trade_account=position.trade_account, snap_date=today)
+        if snapshots is None or len(snapshots) == 0:
+            snapshot = TradeProfitSnapshot(trader=trader, trade_account=position.trade_account, snapshot=today)
+            snapshot.take_snapshot(position, 'd')
+        else:
+            snapshot[0].take_snapshot(position, 'd')
+    pass
+
+
 @login_required
 def get_profit_trend_by_period(request, period):
     if request.method == 'GET':
+        calc_realtime_snapshot(request)
         trader = request.user
-        today = date.today()
+        today = datetime.date.today()
         total_profit = 0
         total_profit_prev = 0
         avg_profit = 0
@@ -290,31 +331,95 @@ def get_profit_trend_by_period(request, period):
         profit_trend = []
         previous_profit_trend = []
         max_profit = 0
-        if period == 'd':  # 本周收益，按天统计收益
-            startDayOfWk = today - timedelta(days=today.weekday())
-            endDayOfWk = startDayOfWk + timedelta(days=6)
-            profit_qs = TradeProfitSnapshot.objects.filter(
-                trader=trader, profit__gt=0).aggregate(sum_profit=Sum('profit'))
+        if period == 'w':  # 本周收益，按天统计收益
+            start_day_wk = today - \
+                timedelta(days=today.weekday())  # 当前时间所在周的周一
+            end_day_wk = start_day_wk + timedelta(days=4)  # 当前时间所在周周五
+            relative_start_day_wk = start_day_wk - \
+                timedelta(days=7)  # 当前时间前一周的周一
+            relative_end_day_wk = relative_start_day_wk + \
+                timedelta(days=4)  # 当前时间前一周周五
+            # 统计所有账户profit
+            trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
+                'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date__range=[start_day_wk, end_day_wk]).order_by('snap_date')
+            relative_trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
+                'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date__range=[relative_start_day_wk, relative_end_day_wk]).order_by('snap_date')
+
             profit_label = [_('周一'), _('周二'), _('周三'), _('周四'), _('周五')]
-            profit_trend = [3000, 2000, 4000, 4000, 3000]
-            previous_profit_trend = [1000, 2390, 1389, 3500, 2800]
+            last_profit = 0
+            prev_last_profit = 0
+            for p in trade_account_snapshots:
+                profit_trend.append(int(p['sum_profit']))
+                last_profit = int(p['sum_profit'])
+            for p in relative_trade_account_snapshots:
+                previous_profit_trend.append(int(p['sum_profit']))
+                prev_last_profit = int(p['sum_profit'])
+            # 本周后几天在没有数据的情况下，数据缺失补全
+            if len(profit_trend) < 5:
+                for i in range(0, 5 - len(profit_trend)):
+                    profit_trend.append(last_profit)
+            if len(previous_profit_trend) < 5:
+                for i in range(0, 5 - len(previous_profit_trend)):
+                    previous_profit_trend.append(prev_last_profit)
             for p in profit_trend:
                 total_profit += p
             for p in previous_profit_trend:
                 total_profit_prev += p
-            profit_ratio = str(round((total_profit - total_profit_prev) / total_profit * 100,2)) + '%'
+            profit_ratio = round(
+                (total_profit - total_profit_prev) / total_profit * 100, 2)
             avg_profit = round(total_profit / len(profit_label), 2)
-            max_profit = max(profit_trend) if  max(profit_trend) > max(previous_profit_trend) else max(previous_profit_trend)
+            max_profit = max(profit_trend) if max(profit_trend) > max(
+                previous_profit_trend) else max(previous_profit_trend)
         elif period == 'm':  # 本月收益，按周统计收益
-            startDayOfMth = today - timedelta(days=today.weekday())
-            endDayOfMth = startDayOfMth + timedelta(days=6)
-            profit_label = [_('第一周'), _('第二周'), _('第三周'), _('第四周'), _('第五周')]
-        else: # 本年收益，按月统计收益
-            startDayOfYear = today - timedelta(days=today.weekday())
-            endDayOfYear = startDayOfYear + timedelta(days=6)
+            month = today.month
+            year = today.year
+            # import datedelta
+            last_month = today - datedelta.datedelta(months=1)
+            cal = calendar.Calendar()
+            for weekdays in cal.monthdays2calendar(year, last_month.month):
+                for weekday in weekdays:
+                    if weekday[0] != 0 and weekday[1] == 4:
+                        profit_label.append(
+                            str(year)+'-'+str(last_month.month)+'-'+str(weekday[0]))
+            for date in profit_label:
+                trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
+                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date=date).order_by('snap_date').first()
+                if trade_account_snapshots is not None:
+                    previous_profit_trend.append(
+                        trade_account_snapshots['sum_profit'])
+
+            for weekdays in cal.monthdays2calendar(year, month):
+                for weekday in weekdays:
+                    if weekday[0] != 0 and weekday[1] == 4:
+                        profit_label.append(
+                            str(year)+'-'+str(month)+'-'+str(weekday[0]))
+            for date in profit_label:
+                trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
+                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date=date).order_by('snap_date').first()
+                if trade_account_snapshots is not None:
+                    profit_trend.append(
+                        trade_account_snapshots['sum_profit'])
+
+            # if today.weekday == 6 or today.weekday == 7:
+            #     pass
+            # else:
+            #     start_day = today - \
+            #         timedelta(days=today.weekday())  # 当前时间所在周的周一
+            #     end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
+            #     days_in_week = 7
+            #     for i in range(1, monthcalendar(year, month)):
+
+        else:  # 本年收益，按月统计收益
+            month = today.month
+            year = today.year
+            # range = monthrange(year, month)
+            start_day = today - \
+                timedelta(days=today.weekday())  # 当前时间所在周的周一
+            end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
+
             profit_label = [_('一月'), _('二月'), _(
                 '三月'), _('四月'), _('五月'), _('六月')]
-        
+
         if True:
             return JsonResponse(
                 {
@@ -330,11 +435,12 @@ def get_profit_trend_by_period(request, period):
         else:
             return JsonResponse({'code': 'NULL'}, safe=False)
 
+
 @login_required
 def get_invest_success_attempt_by_period(request, period):
     if request.method == 'GET':
         trader = request.user
-        today = date.today()
+        today = datetime.date.today()
         total_attempt = 0
         total_attempt_prev = 0
         avg_attempt = 0
@@ -344,8 +450,8 @@ def get_invest_success_attempt_by_period(request, period):
         prev_attempt_trend = []
         max_attempt = 0
         if period == 'd':  # 本周收益，按天统计收益
-            startDayOfWk = today - timedelta(days=today.weekday())
-            endDayOfWk = startDayOfWk + timedelta(days=6)
+            start_day_wk = today - timedelta(days=today.weekday())
+            end_day_wk = start_day_wk + timedelta(days=6)
             # profit_qs = TradeProfitSnapshot.objects.filter(
             #     trader=trader, profit__gt=0).aggregate(sum_profit=Sum('profit'))
             label = [_('周一'), _('周二'), _('周三'), _('周四'), _('周五')]
@@ -364,12 +470,12 @@ def get_invest_success_attempt_by_period(request, period):
             startDayOfMth = today - timedelta(days=today.weekday())
             endDayOfMth = startDayOfMth + timedelta(days=6)
             profit_label = [_('第一周'), _('第二周'), _('第三周'), _('第四周'), _('第五周')]
-        else: # 本年收益，按月统计收益
+        else:  # 本年收益，按月统计收益
             startDayOfYear = today - timedelta(days=today.weekday())
             endDayOfYear = startDayOfYear + timedelta(days=6)
             profit_label = [_('一月'), _('二月'), _(
                 '三月'), _('四月'), _('五月'), _('六月')]
-        
+
         if True:
             return JsonResponse(
                 {
@@ -385,6 +491,7 @@ def get_invest_success_attempt_by_period(request, period):
         else:
             return JsonResponse({'code': 'NULL'}, safe=False)
 
+
 @login_required
 def get_position_status(request, account, symbol):
     if request.method == 'GET':
@@ -397,7 +504,7 @@ def get_position_status(request, account, symbol):
         total_target = 0
         total_percentage = ''
         if account == "a":
-            if symbol == 'a': # 取所有持仓信息
+            if symbol == 'a':  # 取所有持仓信息
                 pos_qs = Positions.objects.filter(
                     trader=trader, is_liquadated=False)
             else:
@@ -424,18 +531,20 @@ def get_position_status(request, account, symbol):
                 available_pos.append(pos.lots * pos.position_price)
                 total_target += pos.target_position
                 total_avail += pos.lots
-        total_percentage = str(round(total_avail / total_target, 2) * 100) + '%'
+        total_percentage = str(
+            round(total_avail / total_target, 2) * 100) + '%'
         if len(pos_qs) > 0:
             return JsonResponse(
                 {
-                    'code': 'OK', 
+                    'code': 'OK',
                     'total_percentage': total_percentage,
                     'label': pos_label,
-                    'target_position': target_pos, 
+                    'target_position': target_pos,
                     'available_position': available_pos,
                 }, safe=False)
         else:
             return JsonResponse({'code': 'NULL'}, safe=False)
+
 
 @login_required
 def get_stock_for_trade(request, account, stock_code):
@@ -485,6 +594,7 @@ def get_stock_for_trade(request, account, stock_code):
         }
     return JsonResponse(data, safe=False)
 
+
 @login_required
 def create_trade(request):
     if request.method == 'POST':
@@ -523,6 +633,7 @@ def create_trade(request):
 
     return JsonResponse({'error': _('交易失败')}, safe=False)
 
+
 @login_required
 def create_account(request):
     if request.method == 'POST':
@@ -536,10 +647,10 @@ def create_account(request):
         trade_fee = data.get('tradeFee')
         trade_account_valid_since = data.get('accountValidSince')
         if trade_account_id is None or trade_account_id is '':
-            trade_account = TradeAccount(trader=trader, account_provider=trade_account_provider, 
-                                        account_type=trade_account_type, account_capital=trade_account_capital, 
-                                        trade_fee=trade_fee, account_balance=trade_account_balance,
-                                        activate_date=datetime.strptime(trade_account_valid_since, '%Y-%m-%d'))
+            trade_account = TradeAccount(trader=trader, account_provider=trade_account_provider,
+                                         account_type=trade_account_type, account_capital=trade_account_capital,
+                                         trade_fee=trade_fee, account_balance=trade_account_balance,
+                                         activate_date=datetime.strptime(trade_account_valid_since, '%Y-%m-%d'))
         else:
             trade_account = TradeAccount.objects.get(id=trade_account_id)
             trade_account.account_capital = trade_account_capital
@@ -552,11 +663,11 @@ def create_account(request):
         #     new_trade.allocate_stock_for_sell()
         # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
         if acc_id is not None:
-            return JsonResponse({'code':'success','id': acc_id, 'message': _('创建成功')}, safe=False)
+            return JsonResponse({'code': 'success', 'id': acc_id, 'message': _('创建成功')}, safe=False)
         else:
-            return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe = False)
+            return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe=False)
 
-    return JsonResponse({'code':'error','message': _('创建失败')}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe=False)
 
 
 @login_required

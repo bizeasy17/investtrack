@@ -440,10 +440,10 @@ class Positions(BaseModel):
         self.save()
         # 有持仓变化时更新当日持仓快照
         snapshot = TradeProfitSnapshot.objects.filter(
-            trader=trader, account_name=trade_account, snap_date=date.today())
+            trader=trader, trade_account=trade_account, snap_date=date.today())
         if snapshot is None or len(snapshot) == 0:
             new_snapshot = TradeProfitSnapshot(
-                trader=trader, account_name=trade_account, profit=self.profit, snap_date=date.today())
+                trader=trader, trade_account=trade_account, profit=self.profit, snap_date=date.today())
             new_snapshot.save()
         else:
             # 更新快照持仓数量，利润，
@@ -696,6 +696,38 @@ class TradeAccount(BaseModel):
 #         ordering = ['name']
 #         verbose_name = _('持仓股卖出策略')
 #         verbose_name_plural = verbose_name
+class StockPositionSnapshot(BaseModel):
+    """
+    should run every day after 3:30pm, on trade date
+    """
+    PERIOD_CHOICE = {
+        ('m', _('月')),
+        ('w', _('周')),
+        ('d', _('日')),
+    }
+
+    trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
+                               on_delete=models.CASCADE)
+    trade_account = models.ForeignKey('TradeAccount', verbose_name=_('股票账户'), blank=False, null=False,
+                                      on_delete=models.CASCADE)
+    stock_name = models.CharField(
+        _('股票名称'), max_length=50, blank=False, null=False)
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False)
+    profit = models.DecimalField(
+        _('利润'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
+    profit_change = models.DecimalField(
+        _('利润变化'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
+    profit_ratio = models.DecimalField(
+        _('利润率'), max_digits=10, decimal_places=5, blank=False, null=False, default=0)
+    snap_date = models.DateField(
+        _('快照时间'), blank=False, null=False, default=now)
+    applied_period = models.CharField(
+        _('收益周期'), choices=PERIOD_CHOICE, max_length=1, blank=True, null=False, default='d')
+
+    def __str__(self):
+        return str(self.trade_account)
+
 
 class TradeProfitSnapshot(BaseModel):
     """
@@ -709,8 +741,8 @@ class TradeProfitSnapshot(BaseModel):
 
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
                                on_delete=models.CASCADE)
-    account_name = models.ForeignKey('TradeAccount', verbose_name=_('股票账户'), blank=False, null=False,
-                                     on_delete=models.CASCADE)
+    trade_account = models.ForeignKey('TradeAccount', verbose_name=_('股票账户'), blank=False, null=False,
+                                      on_delete=models.CASCADE)
     # account_balance = models.DecimalField(
     #     _('账户余额'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     profit = models.DecimalField(
@@ -725,44 +757,30 @@ class TradeProfitSnapshot(BaseModel):
         _('收益周期'), choices=PERIOD_CHOICE, max_length=1, blank=True, null=False, default='d')
 
     def __str__(self):
-        return str(self.account_name)
+        return str(self.trade_account)
 
     def update_snapshot(self):
-        return
+        pass
 
-    def take_snapshot(self, position, snap_date, applied_period, profit=None):
-        if profit is None:
-            position.make_profit_updated()  # 更新持仓利润
-        last_snap_date = snap_date - timedelta(days=1)
+    def take_snapshot(self, position, applied_period):
+        snap_date = datetime.date(self.snap_date)
+        if snap_date.weekday() == 5 or snap_date.weekday() == 6:
+            pass  # 周六或者周日 skip
+        elif snap_date.weekday() == 0:  # 周一
+            last_snap_date = snap_date - timedelta(days=3)
+        else:  # 其他的往前推一天
+            last_snap_date = snap_date - timedelta(days=1)
+        # 上一个交易日的snapshot
         last_snapshot = TradeProfitSnapshot.objects.filter(
-            trader=self.trader, account_name=position.trade_account, snap_date=last_snap_date).order_by('-snap_date')
+            trade_account=position.trade_account, snap_date=last_snap_date)
         if last_snapshot is not None and len(last_snapshot) >= 1:
-            self.profit_change = position.profit - last_snapshot[0].profit
-        # 是否已经运行过snapshot
-        snapshot_exists = False
-        today_snapshots = TradeProfitSnapshot.objects.select_for_update().filter(
-            trader=self.trader, account_name=position.trade_account, snap_date=snap_date).order_by('-snap_date')
-        with transaction.atomic():
-            for today_snapshot in today_snapshots:
-                snapshot_exists = True
-                # self.trader = trader
-                today_snapshot.account_name = position.trade_account
-                today_snapshot.profit = position.profit
-                today_snapshot.profit_ratio = round(
-                    position.profit / position.trade_account.account_capital, 5)
-                today_snapshot.snap_date = snap_date
-                today_snapshot.applied_period = applied_period
-                today_snapshot.save()
-
-        if not snapshot_exists:
-            # self.trader = trader
-            self.account_name = position.trade_account
-            self.profit = position.profit
-            self.profit_ratio = round(
-                position.profit / position.trade_account.account_capital, 5)
-            self.snap_date = snap_date
-            self.applied_period = applied_period
-            self.save()
+            self.profit_change = self.profit - last_snapshot[0].profit
+        # self.trader = trader
+        self.profit = position.profit
+        self.profit_ratio = round(
+            position.profit / position.trade_account.account_capital, 5)
+        self.applied_period = applied_period
+        self.save()
 
     class Meta:
         ordering = ['-last_mod_time']
