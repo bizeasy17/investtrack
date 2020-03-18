@@ -118,7 +118,7 @@ $(function () {
       var profitWeekChartCanvas = $("#profitDevChartWeek")
         .get(0)
         .getContext("2d");
-      var period = 'm'; //all stock shares
+      var period = 'w'; //all stock shares
       $.ajax({
         url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
         // headers: { 'X-CSRFToken': csrftoken },
@@ -184,7 +184,7 @@ $(function () {
                     },
                     ticks: {
                       display: true,
-                      min: -50,
+                      min: data.min_profit,
                       max: data.max_profit,
                       stepSize: data.max_profit / 10,
                       fontColor: "#b1b0b0",

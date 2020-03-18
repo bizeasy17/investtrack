@@ -774,11 +774,14 @@ class TradeProfitSnapshot(BaseModel):
         last_snapshot = TradeProfitSnapshot.objects.filter(
             trade_account=position['trade_account'], snap_date=last_snap_date)
         if last_snapshot is not None and len(last_snapshot) >= 1:
-            self.profit_change = self.profit - last_snapshot[0].profit
+            self.profit_change = position['sum_profit'] - last_snapshot[0].profit
+        else:
+            self.profit_change = position['sum_profit']
         # self.trader = trader
-        self.profit = position.profit
+        trade_account = TradeAccount.objects.get(id=position['trade_account'])
+        self.profit = position['sum_profit']
         self.profit_ratio = round(
-            position.profit / position.trade_account.account_capital, 5)
+            position['sum_profit'] / trade_account.account_capital, 5)
         self.applied_period = applied_period
         self.save()
 
