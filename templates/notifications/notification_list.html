@@ -25,7 +25,8 @@
           <div class="media-body">
             <a class="btn btn-success btn-sm pull-right" title="{% trans '标为已读' %}" href="{% url 'notifications:mark_as_read' notification.slug %}"><i class="fa fa-check-circle"></i></a>
             <strong class="notification-title">
-              <a href="{% url 'user:profile' notification.actor.username  %}">{{ notification.actor.get_profile_name|title }}</a>
+              <a href="{% url 'user:get_profile' %}">{{ notification.actor.get_profile_name|title }}</a>
+              <!-- notification.actor.username   -->
             </strong>
             <p class="notification-desc">
               {{ notification.get_verb_display }}

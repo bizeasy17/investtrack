@@ -763,7 +763,7 @@ class TradeProfitSnapshot(BaseModel):
         pass
 
     def take_snapshot(self, position, applied_period):
-        snap_date = datetime.date(self.snap_date)
+        snap_date = self.snap_date
         if snap_date.weekday() == 5 or snap_date.weekday() == 6:
             pass  # 周六或者周日 skip
         elif snap_date.weekday() == 0:  # 周一
@@ -772,7 +772,7 @@ class TradeProfitSnapshot(BaseModel):
             last_snap_date = snap_date - timedelta(days=1)
         # 上一个交易日的snapshot
         last_snapshot = TradeProfitSnapshot.objects.filter(
-            trade_account=position.trade_account, snap_date=last_snap_date)
+            trade_account=position['trade_account'], snap_date=last_snap_date)
         if last_snapshot is not None and len(last_snapshot) >= 1:
             self.profit_change = self.profit - last_snapshot[0].profit
         # self.trader = trader

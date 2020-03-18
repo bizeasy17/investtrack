@@ -299,18 +299,19 @@ def get_week_of_month(year, month, day):
 def calc_realtime_snapshot(request):
     trader = request.user
     today = datetime.date.today()
-    trader_positions = Positions.objects.filters(trader=trader)
+    trader_positions = Positions.objects.filter(trader=trader)
     # realtime更新持仓
     for trader_position in trader_positions:
-        trader_position.update_stock_position()
+        trader_position.make_profit_updated()
     positions = Positions.objects.values('trade_account').annotate(sum_profit_account=Sum(
-        'profit')).values('trade_account', 'sum_profit').filter(trader=trader, is_liquadated=False)
+        'profit')).values('trade_account', 'sum_profit_account').filter(trader=trader, is_liquadated=False)
     # 是否今天的snapshot存在
     for position in positions:
         snapshots = TradeProfitSnapshot.objects.filter(
-            trader=trader, trade_account=position.trade_account, snap_date=today)
+            trader=trader, trade_account=position['trade_account'], snap_date=today)
         if snapshots is None or len(snapshots) == 0:
-            snapshot = TradeProfitSnapshot(trader=trader, trade_account=position.trade_account, snapshot=today)
+            snapshot = TradeProfitSnapshot(trader=trader, trade_account=TradeAccount.objects.get(
+                id=position['trade_account']), snap_date=today)
             snapshot.take_snapshot(position, 'd')
         else:
             snapshot[0].take_snapshot(position, 'd')
