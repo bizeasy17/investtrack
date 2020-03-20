@@ -33,15 +33,28 @@
                     <div class="card shadow">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '本周收益分布' %}</p>
+                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '收益分布' %}</p>
                                 <p class="font-weight-medium">
-                                    <span class="text-muted small mr-1">{% trans '环比上周' %}</span>
+                                    <span class="text-muted small mr-1">{% trans '同比/环比' %}</span>
                                     <span class="text-danger" id="prfProfitRatio"></span>
                                 </p>
                             </div>
-                            <div class="d-flex align-items-center flex-wrapper mb-3">
-                                <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-danger" id="prfAvgProfit"></h5>
-                                <p class="text-muted mb-0">{% trans '平均收益' %}</p>
+                            <div class="d-flex align-items-center justify-content-between  flex-wrapper mb-3 small">
+                                <div >
+                                    <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-danger" id="prfAvgProfit"></h5>
+                                    <p class="text-muted mb-0">{% trans '平均收益' %}</p>
+                                </div>
+                                <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
+                                    <label class="btn btn-light active">
+                                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="w" checked>{% trans '周' %} 
+                                    </label>
+                                    <label class="btn btn-light">
+                                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="m">{% trans '月' %} 
+                                    </label>
+                                    <label class="btn btn-light">
+                                        <input type="radio" name="period" id="optYear" autocomplete="off" value="y">{% trans '年' %} 
+                                    </label>
+                                </div>
                             </div>
                             <canvas id="profitDevChartWeek" height="130"></canvas>
                         </div>
@@ -52,14 +65,13 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center
                                 justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '本周交易成功率' %}</p>
+                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '交易成功率' %}</p>
                                 <p class="text-danger font-weight-medium" id="">
-                                    <span class="text-muted small mr-1">{% trans '环比上周' %}</span>
+                                    <span class="text-muted small mr-1">{% trans '环比' %}</span>
                                     <span class="text-danger" id="invRelAttemptRatio"></span>
                                 </p>
                             </div>
-                            <div class="d-flex align-items-center flex-wrap
-                                mb-3">
+                            <div class="d-flex align-items-center flex-wrap mb-3 small">
                                 <h5 class="font-weight-normal mb-0 mb-md-1
                                     mb-lg-0 mr-3" id="invAvgAttempt"></h5>
                                 <p class="text-muted mb-0">{% trans '平均成功次数' %}</p>

@@ -35,5 +35,5 @@ urlpatterns = [
     path('profit-trend/period/<period>/',
          views.get_profit_trend_by_period),
     path('invest-attempt-trend/period/<period>/',
-         views.get_invest_success_attempt_by_period),
+         views.get_trans_success_rate_by_period),
 ]

@@ -113,12 +113,53 @@ $(function () {
           }
         });
     }
+    var profitWeekChart;
+    $('input:radio[name="period"]').change(function () {
+      // 设置当前选定利润分析周期
+      var period = $(this).val();
+      $.ajax({
+        url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
+        success: function (data) {
+          // 亏损的字体颜色为绿
+          if(data.avg_profit<0){
+            $("#prfAvgProfit").removeClass("text-danger");
+            $("#prfAvgProfit").addClass("text-success");
+          }
+          $("#prfAvgProfit").text(data.avg_profit);
+          // 亏损的字体颜色为绿
+          if (data.profit_ratio<0){
+            $("#prfProfitRatio").removeClass("text-danger");
+            $("#prfProfitRatio").addClass("text-success");
+          }
+          $("#prfProfitRatio").text(data.profit_ratio + "%");
+          // 更新利润趋势图
+          profitWeekChart.data.labels = data.label;
+          // profitWeekChart.data.datasets.forEach((dataset) => {
+          //   dataset.data.push(data);
+          // });
+          profitWeekChart.data.datasets[0].data = data.profit_trend;
+          profitWeekChart.data.datasets[1].data = data.previous_profit_trend;
+          // profitWeekChart.options = {
+          //   scales: {
+          //       yAxes: [{
+          //           ticks: {
+          //             min: data.min_profit,
+          //             max: data.max_profit,
+          //             stepSize: data.max_profit / 10,
+          //           }
+          //       }]
+          //   }
+          // };
+          profitWeekChart.update();
+        }
+      })
+    });
 
     if ($("#profitDevChartWeek").length) {
       var profitWeekChartCanvas = $("#profitDevChartWeek")
         .get(0)
         .getContext("2d");
-      var period = 'w'; //all stock shares
+      var period = $('input:radio[name="period"]:checked').val();
       $.ajax({
         url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
         // headers: { 'X-CSRFToken': csrftoken },
@@ -138,7 +179,7 @@ $(function () {
           }
           $("#prfProfitRatio").text(data.profit_ratio + "%");
           
-          var profitWeekChart = new Chart(profitWeekChartCanvas, {
+          profitWeekChart = new Chart(profitWeekChartCanvas, {
             type: "bar",
             data: {
               labels: data.label,
@@ -146,14 +187,14 @@ $(function () {
                 {
                   type: "line",
                   fill: false,
-                  label: "本周收益",
+                  label: "收益",
                   data: data.profit_trend,
                   borderColor: "#1cbccd",
                   barPercentage: 0.9,
                   categoryPercentage: 0.7
                 },
                 {
-                  label: "上周收益",
+                  label: "同/环比收益",
                   data: data.previous_profit_trend,
                   backgroundColor: "#ffbf36",
                   barPercentage: 0.9,
@@ -227,15 +268,15 @@ $(function () {
       var tradeSuccessRatioChartCanvas = $("#tradeSuccessRatio")
         .get(0)
         .getContext("2d");
-      var period = 'd'; //all stock shares
+      var defaultPeriod = 'y'; //all stock shares
       $.ajax({
-        url: userBaseEndpoint + 'invest-attempt-trend/period/' + period + '/',
+        url: userBaseEndpoint + 'invest-attempt-trend/period/' + defaultPeriod + '/',
         // headers: { 'X-CSRFToken': csrftoken },
         method: 'GET',
         dataType: 'json',
         success: function (data) {
           $("#invAvgAttempt").text(data.avg_attempt);
-          $("#invRelAttemptRatio").text(data.relative_ratio);
+          $("#invRelAttemptRatio").text(data.yoy_ratio);
           var tradeSuccessRatiohChart = new Chart(tradeSuccessRatioChartCanvas, {
             type: "bar",
             data: {
@@ -244,14 +285,26 @@ $(function () {
                 {
                   type: "line",
                   fill: false,
-                  label: "本周",
-                  data: data.attempt_trend,
+                  label: "同比（成功）",
+                  data: data.yoy_success_rate,
                   borderColor: "#1cbccd"
                 },
                 {
-                  label: "上周",
-                  data: data.prev_attempt_trend,
+                  type: "line",
+                  fill: false,
+                  label: "同比（失败）",
+                  data: data.yoy_fail_rate,
+                  borderColor: "#ffbf36"
+                },
+                {
+                  label: "今年（成功）",
+                  data: data.success_rate,
                   backgroundColor: "#ffbf36"
+                },
+                {
+                  label: "今年（失败）",
+                  data: data.fail_rate,
+                  backgroundColor: "#1cbccd"
                 }
               ]
             },
@@ -278,7 +331,7 @@ $(function () {
                     },
                     ticks: {
                       display: true,
-                      // min: -10,
+                      min: data.min_attempt,
                       max: data.max_attempt,
                       stepSize: 1,
                       fontColor: "#b1b0b0",
@@ -300,7 +353,7 @@ $(function () {
                       display: false
                     },
                     
-                    categoryPercentage: 0.7
+                    // categoryPercentage: 0.7
                   }
                 ]
               },

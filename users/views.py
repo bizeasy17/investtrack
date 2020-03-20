@@ -437,15 +437,28 @@ def get_profit_trend_by_period(request, period):
             #     for i in range(1, monthcalendar(year, month)):
 
         elif period == 'y':  # 本年收益，按月统计收益
-            month = today.month
             year = today.year
-            # range = monthrange(year, month)
-            start_day = today - \
-                timedelta(days=today.weekday())  # 当前时间所在周的周一
-            end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
-
-            profit_label = [_('一月'), _('二月'), _(
-                '三月'), _('四月'), _('五月'), _('六月')]
+            month = today.month
+            day_last_year = today - datedelta.YEAR
+            for i in range(1, 13):
+                # 日期标签
+                month_label = datetime.date(year, i, 1)
+                profit_label.append(month_label.strftime('%Y-%m'))
+                # 本年月利润快照
+                month_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
+                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date__year=year, snap_date__month=month_label.strftime('%m'), applied_period='m')
+                if month_snapshots is not None and len(month_snapshots) > 0:
+                    profit_trend.append(month_snapshots[0]['sum_profit'])
+                else:
+                    profit_trend.append(0)
+                # 上年月利润快照
+                month_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
+                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date__year=day_last_year.strftime('%Y'), snap_date__month=month_label.strftime('%m'), applied_period='m')
+                if month_snapshots is not None and len(month_snapshots) > 0:
+                    previous_profit_trend.append(
+                        month_snapshots[0]['sum_profit'])
+                else:
+                    previous_profit_trend.append(0)
         for p in profit_trend:
             total_profit += p
         for p in previous_profit_trend:
@@ -474,57 +487,144 @@ def get_profit_trend_by_period(request, period):
             return JsonResponse({'code': 'NULL'}, safe=False)
 
 
+def get_realtime_price(stock_symbol):
+    realtime_df = ts.get_realtime_quotes(
+        stock_symbol)  # 需要再判断一下ts_code
+    realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                               'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+    realtime_price = round(decimal.Decimal(realtime_df['price'].mean()), 2)
+    realtime_bid = round(decimal.Decimal(realtime_df['bid'].mean()), 2)
+    realtime_pre_close = round(
+        decimal.Decimal(realtime_df['pre_close'].mean()), 2)
+
+    if realtime_price != decimal.Decimal(0.00):
+        realtime_price = realtime_price
+    elif realtime_bid != decimal.Decimal(0.00):
+        realtime_price = realtime_bid
+    else:
+        realtime_price = realtime_pre_close
+    return realtime_price
+
+
 @login_required
-def get_invest_success_attempt_by_period(request, period):
+def get_trans_success_rate_by_period(request, period):
     if request.method == 'GET':
         trader = request.user
         today = datetime.date.today()
         total_attempt = 0
-        total_attempt_prev = 0
+        total_attempt_yoy = 0
         avg_attempt = 0
-        relative_ratio = 0
+        yoy_ratio = 0
         label = []
-        attempt_trend = []
-        prev_attempt_trend = []
+        success_rate = []
+        fail_rate = []
+        yoy_success_rate = []
+        yoy_fail_rate = []
         max_attempt = 0
-        if period == 'd':  # 本周收益，按天统计收益
-            start_day_wk = today - timedelta(days=today.weekday())
-            end_day_wk = start_day_wk + timedelta(days=6)
-            # profit_qs = TradeProfitSnapshot.objects.filter(
-            #     trader=trader, profit__gt=0).aggregate(sum_profit=Sum('profit'))
-            label = [_('周一'), _('周二'), _('周三'), _('周四'), _('周五')]
-            attempt_trend = [3, 1, 0, 3, 1]
-            prev_attempt_trend = [1, 0, 1, -1, 3]
-            for p in attempt_trend:
-                total_attempt += p
-            for p in prev_attempt_trend:
-                total_attempt_prev += p
-            relative_ratio = str(
-                round((total_attempt - total_attempt_prev) / total_attempt * 100, 2)) + '%'
-            avg_attempt = round(total_attempt / len(label), 2)
-            max_attempt = max(attempt_trend) if max(attempt_trend) > max(
-                prev_attempt_trend) else max(prev_attempt_trend)
+        cal = calendar.Calendar()
+        if period == 'w':  # 本周交易成功率
+            start_day = today - \
+                timedelta(days=today.weekday())  # 当前时间所在周的周一
+            end_day = start_day_wk + timedelta(days=4)  # 当前时间所在周周五
+            relative_start_day = start_day - \
+                timedelta(days=7)  # 当前时间前一周的周一
+            relative_end_day = relative_start_day + \
+                timedelta(days=4)  # 当前时间所在周周五
+            for i in range(0, 5):
+                date_label = start_day + timedelta(i)
+                label.append(date_label)
+            success_rate = [3, 1, 0, 3, 1]
+            yoy_success_rate = [1, 0, 1, -1, 3]
         elif period == 'm':  # 本月收益，按周统计收益
-            startDayOfMth = today - timedelta(days=today.weekday())
-            endDayOfMth = startDayOfMth + timedelta(days=6)
-            profit_label = [_('第一周'), _('第二周'), _('第三周'), _('第四周'), _('第五周')]
-        else:  # 本年收益，按月统计收益
-            startDayOfYear = today - timedelta(days=today.weekday())
-            endDayOfYear = startDayOfYear + timedelta(days=6)
-            profit_label = [_('一月'), _('二月'), _(
-                '三月'), _('四月'), _('五月'), _('六月')]
+            pass
+        elif period == 'y':  # 本年收益，按月统计收益
+            year = today.year
+            month = today.month
+            day_last_year = today - datedelta.YEAR
+            for i in range(1, 13):
+                success_count = 0
+                fail_count = 0
+                # 日期标签
+                month_label = datetime.date(year, i, 1)
+                label.append(month_label.strftime('%Y-%m'))
+                trade_recs = TradeRec.objects.filter(trader=trader, trade_time__year=year, trade_time__month=month_label.strftime(
+                    '%m'), created_or_mod_by='human').order_by('trade_time')
+                total_attempt += len(trade_recs)
+                for trade_rec in trade_recs:
+                    # 买入交易已经被卖出
+                    if trade_rec.direction == 'b' and trade_rec.is_sold is True:
+                        sys_recs = TradeRec.objects.filter(
+                            trader=trader, created_or_mod_by='system', rec_ref_number=trade_rec.rec_ref_number)
+                        for sys_rec in sys_recs:
+                            sell_rec = TradeRec.objects.get(
+                                id=sys_rec.sell_stock_refer_id)
+                            if trade_rec.price < sell_rec.price:
+                                success_count += 1
+                            else:
+                                fail_count += 1
+                    else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
+                        # 买入交易判断
+                        if trade_rec.direction == 'b':
+                            if trade_rec.price < get_realtime_price(trade_rec.stock_code):
+                                success_count += 1
+                            else:
+                                fail_count += 1
+                        # 卖出交易判断
+                        # else:
+                            
+                        #     if trade_rec.price < get_realtime_price(trade_rec.stock_code):
+                        #         success_count += 1
+                        #     else:
+                        #         fail_count += 1
+                success_rate.append(success_count)
+                fail_rate.append(fail_count)
+                # 同比去年交易成功率
+                success_count = 0
+                fail_count = 0
+                trade_recs = TradeRec.objects.filter(trader=trader, trade_time__year=day_last_year.year, trade_time__month=month_label.strftime(
+                    '%m'), created_or_mod_by='human').order_by('trade_time')
+                total_attempt_yoy += len(trade_recs)
+                for trade_rec in trade_recs:
+                    # 买入交易已经被卖出
+                    if trade_rec.direction == 'b' and (trade_rec.sold_time is not None or trade_rec.is_sold is True):
+                        sys_recs = TradeRec.objects.filter(
+                            trader=trader, created_or_mod_by='system', rec_ref_number=trade_rec.rec_ref_number)
+                        for sys_rec in sys_recs:
+                            sell_rec = TradeRec.objects.get(
+                                id=sys_rec.sell_stock_refer_id)
+                            if trade_rec.price < sell_rec.price:
+                                success_count += 1
+                            else:
+                                fail_count += 1
+                    else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
+                        if trade_rec.price < get_realtime_price(trade_rec.stock_code):
+                            success_count += 1
+                        else:
+                            fail_count += 1
+                yoy_success_rate.append(success_count)
+                yoy_fail_rate.append(fail_count)
 
+        yoy_ratio = str(
+            round((total_attempt - total_attempt_yoy) / total_attempt * 100, 2)) + '%'
+        avg_attempt = round(total_attempt / len(label), 2)
+        max_attempt = max(success_rate) if max(success_rate) > max(
+            yoy_success_rate) else max(yoy_success_rate)
+        min_attempt = min(success_rate) if min(success_rate) < min(
+            yoy_success_rate) else min(yoy_success_rate)
         if True:
             return JsonResponse(
                 {
                     'code': 'OK',
                     'label': label,
                     'max_attempt': max_attempt,
+                    'min_attempt': min_attempt,
                     'total_attempt': total_attempt,
                     'avg_attempt': avg_attempt,
-                    'relative_ratio': relative_ratio,
-                    'attempt_trend': attempt_trend,
-                    'prev_attempt_trend': prev_attempt_trend,
+                    'yoy_ratio': yoy_ratio,
+                    'success_rate': success_rate,
+                    'fail_rate': fail_rate,
+                    'yoy_success_rate': yoy_success_rate,
+                    'yoy_fail_rate': yoy_fail_rate,
                 }, safe=False)
         else:
             return JsonResponse({'code': 'NULL'}, safe=False)
@@ -595,7 +695,8 @@ def get_stock_for_trade(request, account, stock_code):
                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
         realtime_price = decimal.Decimal(round(realtime_df['price'].mean(), 2))
         realtime_bid = decimal.Decimal(round(realtime_df['bid'].mean(), 2))
-        realtime_pre_close = decimal.Decimal(round(realtime_df['pre_close'].mean(), 2))
+        realtime_pre_close = decimal.Decimal(
+            round(realtime_df['pre_close'].mean(), 2))
         if realtime_price != 0.00:
             realtime_price = round(realtime_price, 2)
         elif realtime_bid != 0.00:
