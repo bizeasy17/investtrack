@@ -28,9 +28,13 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),
     path('invest/', include('investmgr.urls')),
     
+    # home pages
+    re_path(r'^$',
+            TemplateView.as_view(template_name='pages/home.html'), name='home'),
     # simple pages
     re_path(r'^about/$',
         TemplateView.as_view(template_name='pages/about.html'), name='about'),
+    
     # test pages
     re_path(r'^404/$',
             TemplateView.as_view(template_name='pages/404.html'), name='404'),

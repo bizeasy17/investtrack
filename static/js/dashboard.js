@@ -125,13 +125,13 @@ $(function () {
             $("#prfAvgProfit").removeClass("text-danger");
             $("#prfAvgProfit").addClass("text-success");
           }
-          $("#prfAvgProfit").text(data.avg_profit);
+          $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
           // 亏损的字体颜色为绿
           if (data.profit_ratio<0){
             $("#prfProfitRatio").removeClass("text-danger");
             $("#prfProfitRatio").addClass("text-success");
           }
-          $("#prfProfitRatio").text(data.profit_ratio + "%");
+          $("#prfProfitRatio").text(data.profit_ratio + '%');
           // 更新利润趋势图
           profitWeekChart.data.labels = data.label;
           // profitWeekChart.data.datasets.forEach((dataset) => {
@@ -171,13 +171,13 @@ $(function () {
             $("#prfAvgProfit").removeClass("text-danger");
             $("#prfAvgProfit").addClass("text-success");
           }
-          $("#prfAvgProfit").text(data.avg_profit);
+          $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
           // 亏损的字体颜色为绿
           if (data.profit_ratio<0){
             $("#prfProfitRatio").removeClass("text-danger");
             $("#prfProfitRatio").addClass("text-success");
           }
-          $("#prfProfitRatio").text(data.profit_ratio + "%");
+          $("#prfProfitRatio").text(data.profit_ratio + '%');
           
           profitWeekChart = new Chart(profitWeekChartCanvas, {
             type: "bar",
@@ -225,9 +225,9 @@ $(function () {
                     },
                     ticks: {
                       display: true,
-                      min: data.min_profit,
-                      max: data.max_profit,
-                      stepSize: data.max_profit / 10,
+                      // min: data.min_profit,
+                      // max: data.max_profit,
+                      // stepSize: data.max_profit / 10,
                       fontColor: "#b1b0b0",
                       fontSize: 10,
                       padding: 10
@@ -276,7 +276,7 @@ $(function () {
         dataType: 'json',
         success: function (data) {
           $("#invAvgAttempt").text(data.avg_attempt);
-          $("#invRelAttemptRatio").text(data.yoy_ratio);
+          $("#invRelAttemptRatio").text(data.success_ratio);
           var tradeSuccessRatiohChart = new Chart(tradeSuccessRatioChartCanvas, {
             type: "bar",
             data: {

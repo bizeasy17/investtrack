@@ -35,13 +35,13 @@
                             <div class="d-flex align-items-center justify-content-between flex-wrap">
                                 <p class="card-title"><i class="fa fa-coins"></i> {% trans '收益分布' %}</p>
                                 <p class="font-weight-medium">
-                                    <span class="text-muted small mr-1">{% trans '同比/环比' %}</span>
+                                    <span class="text-muted small mr-1">{% trans '收益率' %}</span>
                                     <span class="text-danger" id="prfProfitRatio"></span>
                                 </p>
                             </div>
-                            <div class="d-flex align-items-center justify-content-between  flex-wrapper mb-3 small">
-                                <div>
-                                    <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-primary">{% trans '￥' %}<span id="prfAvgProfit"></span></h5>
+                            <div class="d-flex align-items-center justify-content-between  flex-wrapper mb-3">
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper small">
+                                    <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '￥' %}<span id="prfAvgProfit"></span></h5>
                                     <p class="text-muted mb-0">{% trans '平均收益' %}</p>
                                 </div>
                                 <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
@@ -65,9 +65,9 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center
                                 justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '交易成功率' %}</p>
+                                <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '交易频次' %}</p>
                                 <p class="text-danger font-weight-medium" id="">
-                                    <span class="text-muted small mr-1">{% trans '环比' %}</span>
+                                    <span class="text-muted small mr-1">{% trans '成功率' %}</span>
                                     <span class="text-danger" id="invRelAttemptRatio"></span>
                                 </p>
                             </div>
@@ -85,23 +85,23 @@
                         <div class="card-body">
                             <p class="card-title"><i class="fa fa-chart-line" ></i> {% trans '我的持仓' %}</p>
                             <div class="text-muted"> {% trans '今日收益（元）' %}</div>
-                            <span class="text-danger">+485.5</span>
+                            <span class="text-danger">{{ dashboard.today_pnl }}</span>
                             <div class="d-flex align-items-center justify-content-between flex-wrap mt-2">
                                 <div class="text-muted"> 
-                                    <div>{% trans '总市值' %}</div>
-                                    <div>{{ dashboard.capital }}</div>
+                                    <div>{% trans '总资产' %}</div>
+                                    <div><span id="capital">{{ dashboard.capital }}</span></div>
                                 </div>
                                 <div class="text-muted"> 
                                     <div>{% trans '总盈亏' %}</div>
-                                    <div>{{ dashboard.profit_loss }}</div>
+                                    <div><span id="pnl">{{ dashboard.profit_loss }}</span></div>
                                 </div>
                                 <div class="text-muted"> 
                                     <div>{% trans '持仓股票数' %}</div>
-                                    <div>{{ dashboard.total_shares }}</div>
+                                    <div><span id="shares">{{ dashboard.total_shares }}</span></div>
                                 </div>
                                 <div class="text-muted"> 
                                     <div>{% trans '管理账户数' %}</div>
-                                    <div>{{ dashboard.total_accounts }}</div>
+                                    <div><span id="accounts">{{ dashboard.total_accounts }}</span></div>
                                 </div>
 
                             </div>
@@ -111,7 +111,7 @@
                                 <div class="card-body">
                                     <div class='row'>
                                         <div class="col-lg-10">
-                                            <h6 class="card-title"><h6 href="#" >{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
+                                            <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
                                             <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
@@ -183,7 +183,7 @@
                                 <div>
                                     <h6 class="my-0">
                                         {{a.account_name}}
-                                        <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '交易'%}</a>
+                                        <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '记录交易'%}</a>
                                     </h6>
                                     <small class="text-muted">{{a.account_type}}</small>
                                 </div>

@@ -1,0 +1,181 @@
+{% extends 'base.html' %} 
+{% load static i18n %} 
+{% load crispy_forms_tags thumbnail humanize %} 
+
+{% block title %}{% endblock %} 
+{% block head %} 
+{% block css %}{{ block.super }}
+<!-- <link href="{% static 'css/home.css' %}" rel="stylesheet"> -->
+{% endblock %}
+{% endblock %} 
+
+{% block content %}
+<div class="content-wrapper mb-4">
+    <div class="row">
+        <div class="col-lg-12 grid-margin stretch-card">
+            <div class="row flex-grow">
+                <div class="col-md-4 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '上证指数' %}</p>
+                                <p class="font-weight-medium">
+                                    <span class="text-muted small mr-1">{% trans '收益率' %}</span>
+                                    <span class="text-danger" id="prfProfitRatio"></span>
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between  flex-wrapper mb-3">
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper small">
+                                    <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '￥' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-muted mb-0">{% trans '平均收益' %}</p>
+                                </div>
+                                <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
+                                    <label class="btn btn-light active">
+                                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="w" checked>{% trans '周' %} 
+                                    </label>
+                                    <label class="btn btn-light">
+                                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="m">{% trans '月' %} 
+                                    </label>
+                                    <label class="btn btn-light">
+                                        <input type="radio" name="period" id="optYear" autocomplete="off" value="y">{% trans '年' %} 
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center
+                                justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '深圳成指' %}</p>
+                                <p class="text-danger font-weight-medium" id="">
+                                    <span class="text-muted small mr-1">{% trans '成功率' %}</span>
+                                    <span class="text-danger" id="invRelAttemptRatio"></span>
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap mb-3 small">
+                                <h5 class="font-weight-normal mb-0 mb-md-1
+                                    mb-lg-0 mr-3" id="invAvgAttempt"></h5>
+                                <p class="text-muted mb-0">{% trans '平均成功次数' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center
+                                justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '创业板' %}</p>
+                                <p class="text-danger font-weight-medium" id="">
+                                    <span class="text-muted small mr-1">{% trans '成功率' %}</span>
+                                    <span class="text-danger" id="invRelAttemptRatio"></span>
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap mb-3 small">
+                                <h5 class="font-weight-normal mb-0 mb-md-1
+                                    mb-lg-0 mr-3" id="invAvgAttempt"></h5>
+                                <p class="text-muted mb-0">{% trans '平均成功次数' %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+<div class="masthead text-center text-primary mb-4">
+    <div class="masthead-content p-5">
+        <div class="container">
+        <h1 class="masthead-heading mb-0">{% trans '投资记录，只需三步，而且越早开始越好' %}</h1>
+        <h4 class="masthead-subheading mb-0">{% trans '简简单单，就能帮您把的雪球滚起来' %}</h4>
+            {% if not request.user.is_authenticated %}
+            <a href="{% url 'account_signup' %}" class="btn btn-primary btn-xl rounded-pill mt-5">{% trans '马上去注册' %}</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="bg-circle-1 bg-circle"></div>
+    <div class="bg-circle-2 bg-circle"></div>
+    <div class="bg-circle-3 bg-circle"></div>
+    <div class="bg-circle-4 bg-circle"></div>
+</div>
+<hr>
+<section>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 order-lg-2">
+        <div class="">
+          <img class="img-fluid" src="{% static 'img/step1.png' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6 order-lg-1">
+        <div class="p-5">
+          <h4 class="display-4 text-primary">{% trans '第一步：创建您的交易账户（虚拟）' %}</h4>
+          <h5>
+            {% trans '添加您在证券公司的开户信息，' %}
+            {% trans '这些信息包括证券公司名称，譬如“华泰证券”，账户类型，譬如普通账户/信用账户。' %}
+            {% trans '为了保证最终计算的准确性，您也可以维护交易手续费信息等等。' %}
+          </5>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div>
+          <img class="img-fluid" src="{% static 'img/step2.png' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="p-5">
+          <h4 class="display-4 text-primary">{% trans '第二步：记录您的交易记录' %}</h4>
+          <h5>
+            {% trans '记录您的实际交易记录，' %}
+            {% trans '这些信息包括买入/卖出价格，您所采用的交易策略，仓位管理信息。' %}
+            {% trans '作为交易辅助信息，在股票K线图上显示您的买入/卖出点和价格。' %}
+          </h5>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 order-lg-2">
+        <div>
+          <img class="img-fluid " src="{% static 'img/step3.png' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6 order-lg-1">
+        <div class="p-5">
+          <h4 class="display-4 text-primary">{% trans '第三步：分析您每次交易，提高您的交易成功率' %}</h4>
+          <h5>
+            {% trans '如果您能够养成每笔交易都好好记录的话，' %}
+            {% trans '那么我们的网站会通过一些图表📈，分析您的账户盈利情况，交易成功率，' %}
+            {% trans '通过这些参考数据，我们为您提高下一次成功交易打下基础。' %}
+          </h5>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock content %} 
+{% block javascript %} {{ block.super }}
+<script src="https://cdn.polyfill.io/v2/polyfill.js?features=default,String.prototype.repeat,Array.prototype.find,Array.prototype.findIndex,Math.trunc,Math.sign"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
+<script
+  src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}"
+  type="text/javascript"
+></script>
+{% endblock javascript %}

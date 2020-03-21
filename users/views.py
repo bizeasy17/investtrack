@@ -44,8 +44,20 @@ class UserDashboardView(LoginRequiredMixin, View):
         # username = self.kwargs['username']
         req_user = request.user
         if req_user is not None:
+            today_pnl = 0
             tradedetails = TradeRec.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
+            today = datetime.date.today()
+            if today.weekday() == calendar.SATURDAY:
+                snap_date = today - datetime.timedelta(days=1)
+            elif today.weekday() == calendar.SUNDAY:
+                snap_date = today - datetime.timedelta(days=2)
+            else:
+                snap_date = today
+            today_snapshots = TradeProfitSnapshot.objects.filter(
+                trader=req_user.id, snap_date=snap_date, applied_period='d').aggregate(profit_change=Sum('profit_change'))  # , sum_change=Sum('profit_change'))
+            if today_snapshots['profit_change'] is not None:
+                today_pnl = today_snapshots['profit_change']
             trade_positions = Positions.objects.filter(
                 trader=req_user.id).exclude(is_liquadated=True).order_by('-last_mod_time')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
@@ -64,6 +76,7 @@ class UserDashboardView(LoginRequiredMixin, View):
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
             queryset = {
+                'today_pnl': today_pnl,
                 'capital': capital,
                 'profit_loss': profit_loss,
                 'total_shares': total_shares,
@@ -308,14 +321,17 @@ def calc_realtime_snapshot(request):
     # 是否今天的snapshot存在
     for position in positions:
         # 当天是否有snapshot，如果没有就创建，有就更新
-        snapshots = TradeProfitSnapshot.objects.filter(
-            trader=trader, trade_account=position['trade_account'], snap_date=today, applied_period='d')
-        if snapshots is None or len(snapshots) == 0:
-            snapshot = TradeProfitSnapshot(trader=trader, trade_account=TradeAccount.objects.get(
-                id=position['trade_account']), snap_date=today)
-            snapshot.take_snapshot(position, 'd')
+        if today.weekday() == calendar.SATURDAY and today.weekday() == calendar.SUNDAY:
+            pass
         else:
-            snapshots[0].take_snapshot(position, 'd')
+            snapshots = TradeProfitSnapshot.objects.filter(
+                trader=trader, trade_account=position['trade_account'], snap_date=today, applied_period='d')
+            if snapshots is None or len(snapshots) == 0:
+                snapshot = TradeProfitSnapshot(trader=trader, trade_account=TradeAccount.objects.get(
+                    id=position['trade_account']), snap_date=today)
+                snapshot.take_snapshot(position, 'd')
+            else:
+                snapshots[0].take_snapshot(position, 'd')
         # 本周是否有snapshot，如果没有就创建，有就更新
         start_day = today - \
             timedelta(days=today.weekday())  # 当前时间所在周的周一
@@ -351,137 +367,155 @@ def calc_realtime_snapshot(request):
     pass
 
 
+def is_enough_trade_records():
+    return True
+    # pass
+
+
 @login_required
 def get_profit_trend_by_period(request, period):
     if request.method == 'GET':
-        calc_realtime_snapshot(request)
-        trader = request.user
-        today = datetime.date.today()
+        pnl_change_today = 0
         total_profit = 0
         total_profit_prev = 0
         avg_profit = 0
         profit_ratio = 0
-        profit_label = []
-        profit_trend = []
-        previous_profit_trend = []
-        max_profit = 0
-        cal = calendar.Calendar()
-        if period == 'w':  # 本周收益，按天统计收益
-            start_day = today - \
-                timedelta(days=today.weekday())  # 当前时间所在周的周一
-            # end_day_wk = start_day_wk + timedelta(days=4)  # 当前时间所在周周五
-            relative_start_day = start_day - \
-                timedelta(days=7)  # 当前时间前一周的周一
-            # relative_end_day_wk = relative_start_day_wk + \
-            #     timedelta(days=4)  # 当前时间前一周周五
-            for i in range(0, 5):
-                snap_date = start_day + timedelta(days=i)
-                relative_snap_date = relative_start_day + timedelta(days=i)
-                # 日期标签
-                profit_label.append(snap_date.strftime('%Y-%m-%d'))
-                # 统计本周所有账户profit
-                trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
-                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date=snap_date, applied_period='d')
-                if trade_account_snapshots is not None and len(trade_account_snapshots) >= 1:
-                    profit_trend.append(
-                        int(trade_account_snapshots[0]['sum_profit']))
-                else:
-                    profit_trend.append(0)
-                # 上一周环比数据
-                relative_trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
-                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date=relative_snap_date)
-                if relative_trade_account_snapshots is not None and len(relative_trade_account_snapshots) >= 1:
-                    previous_profit_trend.append(
-                        int(relative_trade_account_snapshots[0]['sum_profit']))
-                else:
-                    previous_profit_trend.append(0)
-        elif period == 'm':  # 本月收益，按周统计收益
-            month = today.month
-            year = today.year
-            # import datedelta
-            last_month = today - datedelta.datedelta(months=1)
-            for weekdays in cal.monthdays2calendar(year, last_month.month):
-                for weekday in weekdays:
-                    if weekday[0] != 0 and weekday[1] == 4:
-                        profit_label.append(
-                            str(year)+'-'+str(last_month.month)+'-'+str(weekday[0]))
-            for date in profit_label:
-                trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
-                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date=date, applied_period='w').first()
-                if trade_account_snapshots is not None:
-                    previous_profit_trend.append(
-                        trade_account_snapshots['sum_profit'])
-                else:
-                    previous_profit_trend.append(0)
-            profit_label = []
-            for weekdays in cal.monthdays2calendar(year, month):
-                for weekday in weekdays:
-                    if weekday[0] != 0 and weekday[1] == 4:
-                        profit_label.append(
-                            str(year)+'-'+str(month)+'-'+str(weekday[0]))
-            for date in profit_label:
-                trade_account_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
-                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date=date, applied_period='w').first()
-                if trade_account_snapshots is not None:
-                    profit_trend.append(
-                        trade_account_snapshots['sum_profit'])
-                else:
-                    profit_trend.append(0)
-            # if today.weekday == 6 or today.weekday == 7:
-            #     pass
-            # else:
-            #     start_day = today - \
-            #         timedelta(days=today.weekday())  # 当前时间所在周的周一
-            #     end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
-            #     days_in_week = 7
-            #     for i in range(1, monthcalendar(year, month)):
+        pnl_label = []
+        current_pnl = []
+        # current_pnl_change = []
+        relative_pnl_data = []
+        max_pnl = 0
+        code = 'OK'
+        if is_enough_trade_records():
+            trader = request.user
+            today = datetime.date.today()
+            cal = calendar.Calendar()
+            if not (today.weekday() == calendar.SATURDAY or today.weekday() == calendar.SUNDAY):
+                calc_realtime_snapshot(request)
+            sum_capital = TradeAccount.objects.filter(
+                trader=trader).aggregate(sum_capital=Sum('account_capital'))
+            if period == 'w':  # 本周收益，按天统计收益
+                start_day = today - \
+                    timedelta(days=today.weekday())  # 当前时间所在周的周一
+                # end_day_wk = start_day_wk + timedelta(days=4)  # 当前时间所在周周五
+                relative_start_day = start_day - \
+                    timedelta(days=7)  # 当前时间前一周的周一
+                # relative_end_day_wk = relative_start_day_wk + \
+                #     timedelta(days=4)  # 当前时间前一周周五
+                for i in range(0, 5):
+                    snap_date = start_day + timedelta(days=i)
+                    relative_snap_date = relative_start_day + timedelta(days=i)
+                    # 日期标签
+                    pnl_label.append(snap_date.strftime('%Y-%m-%d'))
+                    # 统计本周所有账户profit
+                    trade_snapshots = TradeProfitSnapshot.objects.filter(
+                        trader=trader, snap_date=snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))#, sum_change=Sum('profit_change'))
+                    if trade_snapshots['sum_profit'] is not None:
+                        current_pnl.append(
+                            int(trade_snapshots['sum_profit']))
+                        total_profit = trade_snapshots['sum_profit']
+                    else:
+                        current_pnl.append(0)
+                    # 上一周环比数据
+                    relative_snapshots = TradeProfitSnapshot.objects.filter(
+                        trader=trader, snap_date=relative_snap_date).aggregate(sum_profit=Sum('profit'))
+                    if relative_snapshots['sum_profit'] is not None:
+                        relative_pnl_data.append(
+                            int(relative_snapshots['sum_profit']))
+                        total_profit_prev = relative_snapshots['sum_profit']
+                    else:
+                        relative_pnl_data.append(0)
+            elif period == 'm':  # 本月收益，按周统计收益
+                month = today.month
+                year = today.year
+                # import datedelta
+                last_month = today - datedelta.datedelta(months=1)
+                for weekdays in cal.monthdays2calendar(year, last_month.month):
+                    for weekday in weekdays:
+                        if weekday[0] != 0 and weekday[1] == 4:
+                            pnl_label.append(
+                                str(year)+'-'+str(last_month.month)+'-'+str(weekday[0]))
+                for date in pnl_label:
+                    trade_snapshots = TradeProfitSnapshot.objects.filter(
+                        trader=trader, snap_date=date, applied_period='w').aggregate(sum_profit=Sum('profit'))
+                    if trade_snapshots['sum_profit'] is not None:
+                        relative_pnl_data.append(
+                            trade_snapshots['sum_profit'])
+                        total_profit_prev = trade_snapshots['sum_profit']
+                    else:
+                        relative_pnl_data.append(0)
+                pnl_label = []
+                for weekdays in cal.monthdays2calendar(year, month):
+                    for weekday in weekdays:
+                        if weekday[0] != 0 and weekday[1] == 4:
+                            pnl_label.append(
+                                str(year)+'-'+str(month)+'-'+str(weekday[0]))
+                for date in pnl_label:
+                    trade_snapshots = TradeProfitSnapshot.objects.filter(
+                        trader=trader, snap_date=date, applied_period='w').aggregate(sum_profit=Sum('profit'))
+                    if trade_snapshots['sum_profit'] is not None:
+                        current_pnl.append(
+                            trade_snapshots['sum_profit'])
+                        total_profit = trade_snapshots['sum_profit']
+                    else:
+                        current_pnl.append(0)
+                # if today.weekday == 6 or today.weekday == 7:
+                #     pass
+                # else:
+                #     start_day = today - \
+                #         timedelta(days=today.weekday())  # 当前时间所在周的周一
+                #     end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
+                #     days_in_week = 7
+                #     for i in range(1, monthcalendar(year, month)):
 
-        elif period == 'y':  # 本年收益，按月统计收益
-            year = today.year
-            month = today.month
-            day_last_year = today - datedelta.YEAR
-            for i in range(1, 13):
-                # 日期标签
-                month_label = datetime.date(year, i, 1)
-                profit_label.append(month_label.strftime('%Y-%m'))
-                # 本年月利润快照
-                month_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
-                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date__year=year, snap_date__month=month_label.strftime('%m'), applied_period='m')
-                if month_snapshots is not None and len(month_snapshots) > 0:
-                    profit_trend.append(month_snapshots[0]['sum_profit'])
-                else:
-                    profit_trend.append(0)
-                # 上年月利润快照
-                month_snapshots = TradeProfitSnapshot.objects.values('snap_date',).annotate(sum_profit=Sum(
-                    'profit')).values('snap_date', 'sum_profit').filter(trader=trader, snap_date__year=day_last_year.strftime('%Y'), snap_date__month=month_label.strftime('%m'), applied_period='m')
-                if month_snapshots is not None and len(month_snapshots) > 0:
-                    previous_profit_trend.append(
-                        month_snapshots[0]['sum_profit'])
-                else:
-                    previous_profit_trend.append(0)
-        for p in profit_trend:
-            total_profit += p
-        for p in previous_profit_trend:
-            total_profit_prev += p
-        profit_ratio = round(
-            (total_profit - total_profit_prev) / total_profit * 100, 2)
-        avg_profit = round(total_profit / len(profit_label), 2)
-        max_profit = max(profit_trend) if max(profit_trend) > max(
-            previous_profit_trend) else max(previous_profit_trend)
-        min_profit = min(profit_trend) if min(profit_trend) < min(
-            previous_profit_trend) else min(previous_profit_trend)
+            elif period == 'y':  # 本年收益，按月统计收益
+                year = today.year
+                month = today.month
+                day_last_year = today - datedelta.YEAR
+                for i in range(1, 13):
+                    # 日期标签
+                    month_label = datetime.date(year, i, 1)
+                    pnl_label.append(month_label.strftime('%Y-%m'))
+                    # 本年月利润快照
+                    month_snapshots = TradeProfitSnapshot.objects.filter(trader=trader, snap_date__year=year, snap_date__month=month_label.strftime(
+                        '%m'), applied_period='m').aggregate(sum_profit=Sum('profit'))
+                    if month_snapshots['sum_profit'] is not None:
+                        current_pnl.append(month_snapshots['sum_profit'])
+                        total_profit_prev = month_snapshots['sum_profit']
+                    else:
+                        current_pnl.append(0)
+                    # 上年月利润快照
+                    month_snapshots = TradeProfitSnapshot.objects.values('snap_date',).filter(trader=trader, snap_date__year=day_last_year.strftime(
+                        '%Y'), snap_date__month=month_label.strftime('%m'), applied_period='m').aggregate(sum_profit=Sum('profit'))
+                    if month_snapshots['sum_profit'] is not None:
+                        relative_pnl_data.append(
+                            month_snapshots['sum_profit'])
+                        total_profit = month_snapshots['sum_profit']
+                    else:
+                        relative_pnl_data.append(0)
+            ratio = total_profit / sum_capital['sum_capital']
+            ratio_compare = total_profit_prev / sum_capital['sum_capital']
+            # total_profit_prev = previous_profit_trend[::-1]
+            profit_ratio = round(ratio - ratio_compare, 2) * 100
+            avg_profit = round(total_profit / len(pnl_label), 2)
+            max_pnl = max(current_pnl) if max(current_pnl) > max(
+                relative_pnl_data) else max(relative_pnl_data)
+            min_profit = min(current_pnl) if min(current_pnl) < min(
+                relative_pnl_data) else min(relative_pnl_data)
+        else:
+            code = 'BLANK'
         if True:
             return JsonResponse(
                 {
-                    'code': 'OK',
-                    'max_profit': max_profit,
+                    'code': code,
+                    'max_profit': max_pnl,
                     'min_profit': min_profit,
                     'total_profit': total_profit,
                     'avg_profit': avg_profit,
                     'profit_ratio': profit_ratio,
-                    'label': profit_label,
-                    'profit_trend': profit_trend,
-                    'previous_profit_trend': previous_profit_trend,
+                    'label': pnl_label,
+                    'profit_trend': current_pnl,
+                    'previous_profit_trend': relative_pnl_data,
                 }, safe=False)
         else:
             return JsonResponse({'code': 'NULL'}, safe=False)
@@ -512,6 +546,7 @@ def get_trans_success_rate_by_period(request, period):
         trader = request.user
         today = datetime.date.today()
         total_attempt = 0
+        total_success = 0
         total_attempt_yoy = 0
         avg_attempt = 0
         yoy_ratio = 0
@@ -571,11 +606,12 @@ def get_trans_success_rate_by_period(request, period):
                                 fail_count += 1
                         # 卖出交易判断
                         # else:
-                            
+
                         #     if trade_rec.price < get_realtime_price(trade_rec.stock_code):
                         #         success_count += 1
                         #     else:
                         #         fail_count += 1
+                total_success += success_count
                 success_rate.append(success_count)
                 fail_rate.append(fail_count)
                 # 同比去年交易成功率
@@ -603,9 +639,10 @@ def get_trans_success_rate_by_period(request, period):
                             fail_count += 1
                 yoy_success_rate.append(success_count)
                 yoy_fail_rate.append(fail_count)
-
-        yoy_ratio = str(
-            round((total_attempt - total_attempt_yoy) / total_attempt * 100, 2)) + '%'
+        
+        success_ratio = str(round(total_success / total_attempt, 2) * 100) + '%'
+        if total_attempt != 0:
+            yoy_ratio = str(round((total_attempt - total_attempt_yoy) / total_attempt, 2) * 100) + '%'
         avg_attempt = round(total_attempt / len(label), 2)
         max_attempt = max(success_rate) if max(success_rate) > max(
             yoy_success_rate) else max(yoy_success_rate)
@@ -619,6 +656,7 @@ def get_trans_success_rate_by_period(request, period):
                     'max_attempt': max_attempt,
                     'min_attempt': min_attempt,
                     'total_attempt': total_attempt,
+                    'success_ratio': success_ratio,
                     'avg_attempt': avg_attempt,
                     'yoy_ratio': yoy_ratio,
                     'success_rate': success_rate,
