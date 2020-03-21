@@ -477,7 +477,7 @@ def get_profit_trend_by_period(request, period):
                     'max_profit': max_profit,
                     'min_profit': min_profit,
                     'total_profit': total_profit,
-                    'avg_profit': locale.currency(avg_profit, grouping=True),
+                    'avg_profit': avg_profit,
                     'profit_ratio': profit_ratio,
                     'label': profit_label,
                     'profit_trend': profit_trend,

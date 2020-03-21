@@ -764,11 +764,11 @@ class TradeProfitSnapshot(BaseModel):
 
     def take_snapshot(self, position, applied_period):
         snap_date = self.snap_date
-        if snap_date.weekday() == 5 or snap_date.weekday() == 6:
-            pass  # 周六或者周日 skip
+        if snap_date.weekday() == 6: # 周日推2天
+            last_snap_date = snap_date - timedelta(days=2)
         elif snap_date.weekday() == 0:  # 周一
             last_snap_date = snap_date - timedelta(days=3)
-        else:  # 其他的往前推一天
+        else:  # 周二到周六其他的往前推一天
             last_snap_date = snap_date - timedelta(days=1)
         # 上一个交易日的snapshot
         last_snapshot = TradeProfitSnapshot.objects.filter(
