@@ -9,7 +9,8 @@ from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.functions import ExtractWeek
 
-from .models import (StockNameCodeMap, TradeRec, Positions, TradeProfitSnapshot, TradeAccount)
+from .models import (StockNameCodeMap, TradeRec, Positions,
+                     TradeProfitSnapshot, TradeAccount)
 from users.models import User
 
 
@@ -35,25 +36,29 @@ def get_realtime_price(request, stock_name_or_code):
     return JsonResponse({'price': realtime_price}, safe=False)
 
 
-def get_realtime_price_for_kdata(request, code):
+def get_realtime_quotes(request, code):
     # 获得实时报价
-    realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
+    codes = code.split(',')
+    realtime_df = ts.get_realtime_quotes(codes)  # 需要再判断一下ts_code
     realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
-    realtime_price = {}
+    realtime_quotes = []
     if len(realtime_df) > 0:
-        if realtime_df['open'].mean() != 0:
-            t = datetime.strptime(str(
-                realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
-            realtime_price = {
-                't': t,
-                'o': realtime_df['open'].mean(),
-                'h': realtime_df['high'].mean(),
-                'l': realtime_df['low'].mean(),
-                'c': realtime_df['price'].mean(),
-            }
+        for quote in realtime_df.values:
+            realtime_quotes.append(
+                {
+                    'code': quote[0],
+                    'open': quote[1],
+                    'pre_close': quote[2],
+                    'price': quote[3],
+                    'high': quote[4],
+                    'volume': quote[8],
+                    'amount': quote[9],
+                    'datetime': datetime.strptime(quote[10] + ' ' + quote[11], "%Y-%m-%d %H:%M:%S"),
+                }
+            )
 
-    return realtime_price
+    return JsonResponse(realtime_quotes, safe=False)
     # if request.method == 'GET':
     #     return JsonResponse(realtime_price, safe=False)
     # else:
@@ -253,7 +258,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
                                                 stock_code=code, trade_time__year=input_year, trade_time__month=input_month).order_by('direction').distinct('direction')
     elif period == 'W':  # week
         traderec_list = TradeRec.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
-                                                stock_code=code, trade_time__year=input_year, week=input_week).order_by('direction').distinct('direction')
+                                                                                         stock_code=code, trade_time__year=input_year, week=input_week).order_by('direction').distinct('direction')
     elif period == 'D':  # day
         traderec_list = TradeRec.objects.filter(trader=request.user.id,
                                                 stock_code=code,
@@ -300,7 +305,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
         elif input_min == '45':
             startMin = '30'
             endMin = '44'
-            
+
         traderec_list = TradeRec.objects.filter(trader=request.user.id,
                                                 stock_code=code, trade_time__year=input_year,
                                                 trade_time__month=input_month, trade_time__day=input_day,
@@ -482,16 +487,18 @@ def execute_stock_snapshot(request, applied_period):
         snapshot_date = date.today()
         users = User.objects.filter(is_active=True)
         if users is not None and len(users):
-            for user in users:  
-                user_trade_accounts = TradeAccount.objects.filter(trader=user) 
+            for user in users:
+                user_trade_accounts = TradeAccount.objects.filter(trader=user)
                 for trade_account in user_trade_accounts:
                     trade_account.update_account_balance()
-                user_positions = Positions.objects.filter(trader=user, is_liquadated=False)
-                if user_positions is not None and len(user_positions)>=1:
+                user_positions = Positions.objects.filter(
+                    trader=user, is_liquadated=False)
+                if user_positions is not None and len(user_positions) >= 1:
                     for position in user_positions:
-                        snapshot = TradeProfitSnapshot(trader=user)
+                        snapshot = TradeProfitSnapshot(
+                            trader=user, snap_date=snapshot_date)
                         snapshot.take_snapshot(
-                            position, snapshot_date, applied_period)
+                            position, applied_period)
             return JsonResponse({'info': _('股票快照成功')}, safe=False)
     return JsonResponse({'error': _('无法创建股票快照')}, safe=False)
 
@@ -502,16 +509,17 @@ def execute_stock_snapshot_test(request, applied_period):
         for x in range(1, 40):
             snapshot_date = date.today() - timedelta(days=x)
             users = User.objects.filter(is_active=True)
-            if users is not None and len(users):
+            if users is not None and len(users) > 0:
                 for user in users:
-                    user_trade_accounts = TradeAccount.objects.filter(trader=user)
-                    for trade_account in user_trade_accounts:
+                    trade_accounts = TradeAccount.objects.filter(trader=user)
+                    for trade_account in trade_accounts:
                         trade_account.update_account_balance()
-                    user_positions = Positions.objects.filter(trader=user)
-                    if user_positions is not None and len(user_positions) >= 1:
-                        for position in user_positions:
-                            snapshot = TradeProfitSnapshot(trader=user)
-                            snapshot.take_snapshot(
-                                position, snapshot_date, applied_period)
+                    positions = Positions.objects.filter(
+                        trader=user, is_liquadated=False)
+                    if positions is not None and len(positions) >= 1:
+                        for position in positions:
+                            snapshot = StockPositionSnapshot(
+                                trader=user, snap_date=snapshot_date)
+                            snapshot.take_snapshot(position, applied_period)
         return JsonResponse({'info': _('股票快照成功')}, safe=False)
     return JsonResponse({'error': _('无法创建股票快照')}, safe=False)

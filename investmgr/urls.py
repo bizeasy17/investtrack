@@ -5,8 +5,8 @@ app_name = 'investment_manager'
 urlpatterns = [
     path('stocks/get-realtime-price/<stock_name_or_code>/',
          views.get_realtime_price),
-    path('stocks/get-realtime-price-for-kline/<code>/',
-         views.get_realtime_price_for_kdata),
+    path('stocks/get-realtime-quotes/<code>/',
+         views.get_realtime_quotes),
     path('stocks/get-realtime-price-for-line/<code>/',
          views.get_realtime_price_for_linechart),
     path('stocks/get-tscode/<stock_name_or_code>/',
