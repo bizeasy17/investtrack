@@ -518,7 +518,7 @@ def execute_stock_snapshot_test(request, applied_period):
                         trader=user, is_liquadated=False)
                     if positions is not None and len(positions) >= 1:
                         for position in positions:
-                            snapshot = StockPositionSnapshot(
+                            snapshot = TradeProfitSnapshot(
                                 trader=user, snap_date=snapshot_date)
                             snapshot.take_snapshot(position, applied_period)
         return JsonResponse({'info': _('股票快照成功')}, safe=False)
