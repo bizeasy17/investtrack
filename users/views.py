@@ -1,17 +1,17 @@
+# from calendar import monthrange
+import calendar
 import decimal
 import locale
 import os
-# from calendar import monthrange
-import calendar
-import datedelta
-from datetime import timedelta
-import datetime
+from datetime import date, datetime, timedelta
 
+import datedelta
 import tushare as ts
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
@@ -19,12 +19,18 @@ from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 
+from investmgr import utils
 from investmgr.models import (Positions, StockFollowing, StockNameCodeMap,
                               TradeAccount, TradeProfitSnapshot, TradeRec,
                               TradeStrategy)
 
 from .forms import UserTradeForm
 from .models import User
+
+# import datetime
+
+
+
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -47,7 +53,7 @@ class UserDashboardView(LoginRequiredMixin, View):
             today_pnl = 0
             tradedetails = TradeRec.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
-            today = datetime.date.today()
+            today = date.today()
             if today.weekday() == calendar.SATURDAY:
                 snap_date = today - datetime.timedelta(days=1)
             elif today.weekday() == calendar.SUNDAY:
@@ -311,7 +317,7 @@ def get_week_of_month(year, month, day):
 
 def calc_realtime_snapshot(request):
     trader = request.user
-    today = datetime.date.today()
+    today = date.today()
     trader_positions = Positions.objects.filter(trader=trader)
     # realtime更新持仓
     for trader_position in trader_positions:
@@ -350,7 +356,7 @@ def calc_realtime_snapshot(request):
         for weekdays in cal.monthdays2calendar(today.year, today.month):
             for weekday in weekdays:
                 if weekday[0] != 0 and weekday[1] == calendar.FRIDAY:
-                    last_friday = datetime.date(
+                    last_friday = date(
                         today.year, today.month, weekday[0])
                     break
         start_day = today - \
@@ -374,6 +380,8 @@ def is_enough_trade_records():
 
 @login_required
 def get_profit_trend_by_period(request, period):
+    from datetime import date # workaround for UnboundLocalError: local variable 'date' referenced before assignment; don know waht
+    today = date.today()
     if request.method == 'GET':
         pnl_change_today = 0
         total_profit = 0
@@ -388,7 +396,7 @@ def get_profit_trend_by_period(request, period):
         code = 'OK'
         if is_enough_trade_records():
             trader = request.user
-            today = datetime.date.today()
+
             cal = calendar.Calendar()
             if not (today.weekday() == calendar.SATURDAY or today.weekday() == calendar.SUNDAY):
                 calc_realtime_snapshot(request)
@@ -474,7 +482,7 @@ def get_profit_trend_by_period(request, period):
                 day_last_year = today - datedelta.YEAR
                 for i in range(1, 13):
                     # 日期标签
-                    month_label = datetime.date(year, i, 1)
+                    month_label = date(year, i, 1)
                     pnl_label.append(month_label.strftime('%Y-%m'))
                     # 本年月利润快照
                     month_snapshots = TradeProfitSnapshot.objects.filter(trader=trader, snap_date__year=year, snap_date__month=month_label.strftime(
@@ -544,7 +552,7 @@ def get_realtime_price(stock_symbol):
 def get_trans_success_rate_by_period(request, period):
     if request.method == 'GET':
         trader = request.user
-        today = datetime.date.today()
+        today = date.today()
         total_attempt = 0
         total_success = 0
         total_attempt_yoy = 0
@@ -580,7 +588,7 @@ def get_trans_success_rate_by_period(request, period):
                 success_count = 0
                 fail_count = 0
                 # 日期标签
-                month_label = datetime.date(year, i, 1)
+                month_label = date(year, i, 1)
                 label.append(month_label.strftime('%Y-%m'))
                 trade_recs = TradeRec.objects.filter(trader=trader, trade_time__year=year, trade_time__month=month_label.strftime(
                     '%m'), created_or_mod_by='human').order_by('trade_time')
@@ -600,7 +608,7 @@ def get_trans_success_rate_by_period(request, period):
                     else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
                         # 买入交易判断
                         if trade_rec.direction == 'b':
-                            if trade_rec.price < get_realtime_price(trade_rec.stock_code):
+                            if trade_rec.price < trade_rec.current_price:
                                 success_count += 1
                             else:
                                 fail_count += 1
@@ -633,14 +641,14 @@ def get_trans_success_rate_by_period(request, period):
                             else:
                                 fail_count += 1
                     else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
-                        if trade_rec.price < get_realtime_price(trade_rec.stock_code):
+                        if trade_rec.price < trade_rec.current_price:
                             success_count += 1
                         else:
                             fail_count += 1
                 yoy_success_rate.append(success_count)
                 yoy_fail_rate.append(fail_count)
         
-        success_ratio = str(round(total_success / total_attempt, 2) * 100) + '%'
+        success_ratio = str(round(total_success / total_attempt * 100, 2) ) + '%'
         if total_attempt != 0:
             yoy_ratio = str(round((total_attempt - total_attempt_yoy) / total_attempt, 2) * 100) + '%'
         avg_attempt = round(total_attempt / len(label), 2)
@@ -846,13 +854,61 @@ def create_account(request):
 
     return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe=False)
 
+def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
+    '''
+    将持仓股的价格更新到最新报价
+    '''
+    if len(realtime_quotes) > 0:
+        linked_traderecs = TradeRec.objects.select_for_update().filter(in_stock_positions=position_pk)
+        with transaction.atomic():
+            for entry in linked_traderecs:
+                entry.current_price = realtime_quotes[entry.stock_code]
+                entry.save()
+
+def sync_stock_position_for_investor(investor):
+    '''
+    根据stock_symbol更新最新的价格
+    '''
+    stock_symbols = []
+    updated_positions = []
+    realtime_quotes = []
+    # in_stock_symbols = Positions.objects.filter(trader=investor).exclude(is_liquadated=True,).distinct().values('stock_code')
+    # if in_stock_symbols is not None and len(in_stock_symbols) > 0:
+    #     for stock_symbol in in_stock_symbols:
+    #         stock_symbols.append(stock_symbol['stock_code'])
+    
+    in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquadated=True,)
+    with transaction.atomic():
+        if in_stock_positions is not None and len(in_stock_positions) > 0:
+            for position in in_stock_positions:
+                stock_symbols.append(position.stock_code)
+            realtime_quotes = utils.get_realtime_price(list(set(stock_symbols)))
+        for entry in in_stock_positions:
+            entry.make_profit_updated(realtime_quotes[entry.stock_code])
+            sync_stock_price_for_investor(entry.pk, realtime_quotes)
+            updated_positions.append(
+                {
+                    'id': entry.pk,
+                    'symbol': entry.stock_code,
+                    'name': entry.stock_name,
+                    'position_price': entry.position_price,
+                    'realtime_price': entry.current_price,
+                    'profit': entry.profit,
+                    'profit_ratio': entry.profit_ratio,
+                    'lots': entry.lots,
+                    'target_position': entry.target_position,
+                    'amount': entry.cash,
+                }
+            )
+    return updated_positions
 
 @login_required
-def refresh_position(request):
+def refresh_my_position(request):
     if request.method == 'GET':
-        trader = request.user
-        my_position = Positions.objects.find(trader=trader).update()
-        return JsonResponse(my_position, safe=False)
+        investor = request.user
+        updated_positions = sync_stock_position_for_investor(investor)
+
+        return JsonResponse(updated_positions, safe=False)
 
     return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)
 

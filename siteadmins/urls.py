@@ -6,4 +6,6 @@ app_name = 'siteadmin'
 urlpatterns = [
     path('<module_name>/',
          views.SiteAdminGenericView.as_view(), name='generic'),
+    path('snapshot/manual/',
+         views.take_snapshot_manual),
 ]

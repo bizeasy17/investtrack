@@ -168,6 +168,15 @@ $(function () {
         })
     }
 
+    var refreshRealtimeQuote = function() {
+        $.ajax({
+            url: userBaseEndpoint + 'positions/refresh/',
+            success: function (data) {
+                
+            }
+        })
+    }
+
     var refreshStockInfo2Realtime = function () {
         var showName = $("#hiddenName").val();
         var symbol = $("#hiddenCode").val();
@@ -586,6 +595,13 @@ $(function () {
         }
 
         if (quantity.length < 1) {
+            $('#quantity').addClass("is-invalid");
+            return;
+        } else {
+            $('#quantity').removeClass("is-invalid");
+        }
+
+        if (direction == "s" && quantity > parseInt($("#pLots").text())) {
             $('#quantity').addClass("is-invalid");
             return;
         } else {

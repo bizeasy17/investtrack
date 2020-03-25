@@ -143,6 +143,29 @@ def get_company_info_autocomplete(request, name_or_code):
     empty = {'results': []}
     return JsonResponse(empty, safe=False)
 
+def get_realtime_price_for_kdata(request, code):
+    # 获得实时报价
+    realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
+    realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                               'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
+    realtime_price = {}
+    if len(realtime_df) > 0:
+        if realtime_df['open'].mean() != 0:
+            t = datetime.strptime(str(
+                realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
+            realtime_price = {
+                't': t,
+                'o': realtime_df['open'].mean(),
+                'h': realtime_df['high'].mean(),
+                'l': realtime_df['low'].mean(),
+                'c': realtime_df['price'].mean(),
+            }
+
+    return realtime_price
+    # if request.method == 'GET':
+    #     return JsonResponse(realtime_price, safe=False)
+    # else:
+    #     return realtime_price
 
 def get_stock_price_by(request, code, start_date, end_date, period):
     df = []

@@ -7,6 +7,8 @@ from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 
+import investmgr.utils
+
 
 # Create your views here.
 class SiteAdminGenericView(LoginRequiredMixin, View):
@@ -33,3 +35,14 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
                     return render(request, self.default_template_name)
         else:
             return HttpResponseRedirect(reverse('404'))   
+   
+@login_required
+def take_snapshot_manual(request):
+    if request.method == 'GET':
+        site_admin = request.user
+        if site_admin is not None and site_admin.is_superuser:
+            
+
+        return JsonResponse(updated_positions, safe=False)
+
+    return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)

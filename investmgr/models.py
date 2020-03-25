@@ -13,6 +13,7 @@ from django.db.models import Sum
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
+from . import utils
 
 # token settings (not sure should put it here)
 # ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
@@ -136,6 +137,21 @@ class TradeRec(BaseModel):
         names = list(map(lambda s: (s.name, s.get_absolute_url()), tree))
         return names
 
+    def sync_stock_price_for_investor(self, investor):
+        '''
+        根据stock_symbol更新最新的价格
+        '''
+        stock_symbols = []
+        stock_symbols_dict = Positions.objects.filter(trader=investor).exclude(is_liquadated=True,).distinct().values('stock_code')
+        if stock_symbols_dict is not None and len(stock_symbols_dict) > 0:
+            for stock_symbol in stock_symbols_dict.values():
+                stock_symbols.append(stock_symbol)
+        realtime_stock_quotes = utils.get_realtime_price(stock_symbols)
+        in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquadated=True,)
+        with transaction.atomic():
+            for entry in in_stock_positions:
+                entry.make_profit_updated(realtime_stock_quotes[entry.stock_code])   
+
     def save(self, *args, **kwargs):
         # 自动给股票代码加上.SH或者.SZ
         # if self.stock_name.isnumeric():  # 用户的输入为股票代码
@@ -185,6 +201,7 @@ class TradeRec(BaseModel):
                     with transaction.atomic():
                         for entry in entries:
                             entry.is_liquadated = True
+                            entry.save()
 
                 self.rec_ref_number = id_generator()
                 super().save(*args, **kwargs)
@@ -322,7 +339,7 @@ class Positions(BaseModel):
     def __str__(self):
         return self.stock_name
 
-    def make_profit_updated(self, trade_price=None):
+    def make_profit_updated(self, realtime_quote=''):
         '''
         # 获得实时报价
         # ts_code = str(self.stock_code).split('.')[0]
@@ -340,7 +357,7 @@ class Positions(BaseModel):
 
         # 获得实时报价
         # ts_code = str(self.stock_code).split('.')[0]
-        if trade_price is None:
+        if not realtime_quote:
             realtime_df = ts.get_realtime_quotes(
                 self.stock_code)  # 需要再判断一下ts_code
             realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
@@ -357,7 +374,7 @@ class Positions(BaseModel):
             else:
                 realtime_price = realtime_pre_close
         else:
-            realtime_price = trade_price
+            realtime_price = realtime_quote
 
         if self.lots != 0 and self.position_price != 0:
             self.profit = (realtime_price - self.position_price) * self.lots
@@ -390,7 +407,7 @@ class Positions(BaseModel):
     # 持仓算法
     def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
         if trade_direction == 's':
-            realtime_price = self.make_profit_updated(trade_price=trade_price)
+            realtime_price = self.make_profit_updated(realtime_quote=trade_price)
         else:
             realtime_price = self.make_profit_updated()
         self.trader = trader
@@ -761,6 +778,16 @@ class TradeProfitSnapshot(BaseModel):
 
     def update_snapshot(self):
         pass
+
+    def take_snapshot_job(self, snapshot_date):
+        from users.models import User
+        users = User.objects.filter(is_active=True)
+        if users is not None and len(users) > 0:
+            for user in users:
+                positions = Positions.objects.filter(trader=user, is_liquadated=False)
+                if positions is not None and len(positions) >= 1:
+                    for position in positions:
+                        self.take_snapshot(position, self.applied_period)
 
     def take_snapshot(self, position, applied_period):
         snap_date = self.snap_date
