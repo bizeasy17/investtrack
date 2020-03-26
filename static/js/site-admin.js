@@ -1,38 +1,83 @@
 $(function () {
-    var investBaseEndpoint = '/invest/stocks/';
+    var saBaseEndpoint = '/siteadmin/';
+
+    function formatDate(date, conn) {
+        var dayNames = [
+            "01", "02", "03",
+            "04", "05", "06", "07",
+            "08", "09", "10",
+            "11", "12", "13", "14",
+            "15", "16", "17", "18",
+            "19", "20", "21", "22",
+            "23", "24", "25", "26",
+            "27", "28", "29", "30", "31"
+        ];
+
+        var monthNames = [
+            "01", "02", "03",
+            "04", "05", "06", "07",
+            "08", "09", "10",
+            "11", "12"
+        ];
+
+        var dayIndex = date.getDate();
+        var monthIndex = date.getMonth();
+        var year = date.getFullYear();
+
+        return year + conn + monthNames[monthIndex] + conn + dayNames[dayIndex - 1];
+    }
+
+    var isTradeOfftime = function (inputDatetime) {
+        // var dateAndTime = inputDatetime.split(" ");
+        var date = formatDate(inputDatetime, "-");
+        var openTime = new Date(date + " 9:30:00");
+        var closeTime = new Date(date + " 15:05:00");
+        if (inputDatetime >= closeTime) {
+            return true;
+        }
+        return false;
+    }
 
     $("#executeStockSnapshot").click(function () {
+        if (!isTradeOfftime(new Date()))
+            return;
         var appliedPeriod = "d";
-        $('#execSpinner').removeClass('d-none');
+        $('#snapshotSpinner').removeClass('d-none');
         $(this).prop("disabled", true);
         $.ajax({
-            url: investBaseEndpoint + "exec-snapshot-test/" + appliedPeriod,
+            url: saBaseEndpoint + "snapshot/manual/",
             method: "GET",
             dataType: "json",
             success: function (data) {
-                $("#execStatus").html(data.info);
-                $("#syncSpinner").addClass("d-none");
-                $("#executeStockSnapshot").removeAttr("disabled");
+                if (data.code == 'ok') {
+                    $("#snapshotStatus").html(data.message);
+                    $("#snapshotSpinner").addClass("d-none");
+                    $("#executeStockSnapshot").removeAttr("disabled");
+                } else {
+                    $("#snapshotStatus").html("<p>" + data.message + "</p>");
+                    $("#snapshotSpinner").addClass("d-none");
+                    $("#executeStockSnapshot").removeAttr("disabled");
+                }
             },
             error: function () {
-                $("#execStatus").html("<p>An error has occurred</p>");
-                $("#execSpinner").addClass("d-none");
+                $("#snapshotStatus").html("<p>An error has occurred</p>");
+                $("#snapshotSpinner").addClass("d-none");
                 $("#executeStockSnapshot").removeAttr("disabled");
             },
             statusCode: {
                 403: function () {
-                    $("#execStatus").append("<span>403 forbidden</span>");
-                    $("#execSpinner").addClass("d-none");
+                    $("#snapshotStatus").append("<span>403 forbidden</span>");
+                    $("#snapshotSpinner").addClass("d-none");
                     $("#executeStockSnapshot").removeAttr("disabled");
                 },
                 404: function () {
-                    $("#testInfo").append("<span>404 page not found</span>");
-                    $("#execSpinner").addClass("d-none");
+                    $("#snapshotStatus").append("<span>404 page not found</span>");
+                    $("#snapshotSpinner").addClass("d-none");
                     $("#executeStockSnapshot").removeAttr("disabled");
                 },
                 500: function () {
-                    $("#execStatus").append("<span>500 internal server error</span>");
-                    $("#execSpinner").addClass("d-none");
+                    $("#snapshotStatus").append("<span>500 internal server error</span>");
+                    $("#snapshotSpinner").addClass("d-none");
                     $("#executeStockSnapshot").removeAttr("disabled");
                 }
             }

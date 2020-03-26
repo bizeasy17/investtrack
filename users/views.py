@@ -399,7 +399,8 @@ def get_profit_trend_by_period(request, period):
 
             cal = calendar.Calendar()
             if not (today.weekday() == calendar.SATURDAY or today.weekday() == calendar.SUNDAY):
-                calc_realtime_snapshot(request)
+                # calc_realtime_snapshot(request)
+                pass
             sum_capital = TradeAccount.objects.filter(
                 trader=trader).aggregate(sum_capital=Sum('account_capital'))
             if period == 'w':  # 本周收益，按天统计收益
@@ -440,7 +441,7 @@ def get_profit_trend_by_period(request, period):
                 last_month = today - datedelta.datedelta(months=1)
                 for weekdays in cal.monthdays2calendar(year, last_month.month):
                     for weekday in weekdays:
-                        if weekday[0] != 0 and weekday[1] == 4:
+                        if weekday[0] != 0 and weekday[1] == calendar.FRIDAY:
                             pnl_label.append(
                                 str(year)+'-'+str(last_month.month)+'-'+str(weekday[0]))
                 for date in pnl_label:
@@ -455,7 +456,7 @@ def get_profit_trend_by_period(request, period):
                 pnl_label = []
                 for weekdays in cal.monthdays2calendar(year, month):
                     for weekday in weekdays:
-                        if weekday[0] != 0 and weekday[1] == 4:
+                        if weekday[0] != 0 and weekday[1] == calendar.FRIDAY:
                             pnl_label.append(
                                 str(year)+'-'+str(month)+'-'+str(weekday[0]))
                 for date in pnl_label:
@@ -484,7 +485,7 @@ def get_profit_trend_by_period(request, period):
                     # 日期标签
                     month_label = date(year, i, 1)
                     pnl_label.append(month_label.strftime('%Y-%m'))
-                    # 本年月利润快照
+                    # 按月计算账户合计利润
                     month_snapshots = TradeProfitSnapshot.objects.filter(trader=trader, snap_date__year=year, snap_date__month=month_label.strftime(
                         '%m'), applied_period='m').aggregate(sum_profit=Sum('profit'))
                     if month_snapshots['sum_profit'] is not None:

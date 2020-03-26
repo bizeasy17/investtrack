@@ -142,15 +142,18 @@ class TradeRec(BaseModel):
         根据stock_symbol更新最新的价格
         '''
         stock_symbols = []
-        stock_symbols_dict = Positions.objects.filter(trader=investor).exclude(is_liquadated=True,).distinct().values('stock_code')
+        stock_symbols_dict = Positions.objects.filter(trader=investor).exclude(
+            is_liquadated=True,).distinct().values('stock_code')
         if stock_symbols_dict is not None and len(stock_symbols_dict) > 0:
             for stock_symbol in stock_symbols_dict.values():
                 stock_symbols.append(stock_symbol)
         realtime_stock_quotes = utils.get_realtime_price(stock_symbols)
-        in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquadated=True,)
+        in_stock_positions = Positions.objects.select_for_update().filter(
+            trader=investor).exclude(is_liquadated=True,)
         with transaction.atomic():
             for entry in in_stock_positions:
-                entry.make_profit_updated(realtime_stock_quotes[entry.stock_code])   
+                entry.make_profit_updated(
+                    realtime_stock_quotes[entry.stock_code])
 
     def save(self, *args, **kwargs):
         # 自动给股票代码加上.SH或者.SZ
@@ -407,7 +410,8 @@ class Positions(BaseModel):
     # 持仓算法
     def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
         if trade_direction == 's':
-            realtime_price = self.make_profit_updated(realtime_quote=trade_price)
+            realtime_price = self.make_profit_updated(
+                realtime_quote=trade_price)
         else:
             realtime_price = self.make_profit_updated()
         self.trader = trader
@@ -685,9 +689,10 @@ class TradeAccount(BaseModel):
 
     def update_account_balance(self):
         account_profit_sum = Positions.objects.filter(
-            trader=self.trader, trade_account=self, profit__gt=0).aggregate(sum_profit=Sum('profit'))
+            trader=self.trader, trade_account=self).aggregate(sum_profit=Sum('profit'))
         if account_profit_sum is not None:
-            self.account_balance += account_profit_sum['sum_profit']
+            self.account_balance = self.account_capital + \
+                account_profit_sum['sum_profit']
             self.save()
 
     def save(self, *args, **kwargs):
@@ -760,8 +765,8 @@ class TradeProfitSnapshot(BaseModel):
                                on_delete=models.CASCADE)
     trade_account = models.ForeignKey('TradeAccount', verbose_name=_('股票账户'), blank=False, null=False,
                                       on_delete=models.CASCADE)
-    # account_balance = models.DecimalField(
-    #     _('账户余额'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
+    account_capital = models.DecimalField(
+        _('本金'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     profit = models.DecimalField(
         _('利润'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     profit_change = models.DecimalField(
@@ -776,6 +781,76 @@ class TradeProfitSnapshot(BaseModel):
     def __str__(self):
         return str(self.trade_account)
 
+    def take_account_snapshot(self):
+        '''
+        周一到周五，每天收盘后半小时，定时任务会call这个方法生成账户快照
+        '''
+        import calendar
+        if self.snap_date.weekday() == calendar.SUNDAY:  # 当前是周日，前一snapshot day是上周五，往前推2天
+            last_snap_date = self.snap_date - timedelta(days=2)
+        elif self.snap_date.weekday() == calendar.MONDAY:  # 当前是周一，前一snapshot day是上周五，往前推三天
+            last_snap_date = self.snap_date - timedelta(days=3)
+        else:  # 周二到周六，前一snapshot day往前推一天
+            last_snap_date = self.snap_date - timedelta(days=1)
+        # 更新
+        self.trader = self.trade_account.trader
+        self.profit = self.trade_account.account_balance - \
+            self.trade_account.account_capital
+        self.profit_ratio = round(
+            (self.trade_account.account_balance - self.trade_account.account_capital) / self.trade_account.account_capital, 2)
+        self.account_capital = self.trade_account.account_capital
+        # 与上一snapshot day环比的变化
+        last_snapshot = TradeProfitSnapshot.objects.filter(
+            trade_account=self.trade_account, snap_date=last_snap_date, applied_period='d')
+        if last_snapshot is not None and len(last_snapshot) >= 1:
+            self.profit_change = self.profit - last_snapshot[0].profit
+        else:
+            self.profit_change = self.profit
+        self.applied_period = 'd'
+        self.save()
+        # 如果是周五，需要多生成一条周'w'快照
+        if self.snap_date.weekday() == calendar.FRIDAY:
+            last_friday = self.snap_date - timedelta(days=7)  # 前一周周五
+            relative_snapshot = TradeProfitSnapshot.objects.filter(
+                trader=self.trader, trade_account=self.trade_account, snap_date=last_friday, applied_period='w')
+            if relative_snapshot is not None and len(relative_snapshot) >= 1:
+                profit_change = self.profit - relative_snapshot.profit
+            else:
+                profit_change = self.profit
+            week_snapshot = TradeProfitSnapshot(
+                trader=self.trader, trade_account=self.trade_account,
+                profit=self.profit, profit_change=profit_change, profit_ratio=self.profit_ratio,
+                account_capital=self.account_capital, applied_period='w')
+            week_snapshot.save()
+        # 如果每月最后一天，需要多生成一条月'm'快照
+
+        mon_range = calendar.monthrange(
+            self.snap_date.year, self.snap_date.month)
+        last_day = date(self.snap_date.year,
+                        self.snap_date.month, mon_range[1])
+        if self.snap_date == last_day:
+            year = self.snap_date.year
+            month = self.snap_date.month
+            if month == 1:
+                last_year = year - 1
+                last_mon = 12
+            else:
+                last_year = year
+                last_mon = month - 1
+            relative_snapshot = TradeProfitSnapshot.objects.filter(
+                trader=self.trader, trade_account=self.trade_account, 
+                snap_date__year=last_year, snap_date__month=last_mon, applied_period='m')
+            if relative_snapshot is not None and len(relative_snapshot) >= 1:
+                profit_change = self.profit - relative_snapshot.profit
+            else:
+                profit_change = self.profit
+            last_day = self.snap_date - timedelta(days=7)  # 前一周周五
+            mon_snapshot = TradeProfitSnapshot(
+                trader=self.trader, trade_account=self.trade_account,
+                profit=self.profit, profit_change=profit_change, profit_ratio=self.profit_ratio,
+                account_capital=self.account_capital, applied_period='m')
+            mon_snapshot.save()
+
     def update_snapshot(self):
         pass
 
@@ -784,14 +859,15 @@ class TradeProfitSnapshot(BaseModel):
         users = User.objects.filter(is_active=True)
         if users is not None and len(users) > 0:
             for user in users:
-                positions = Positions.objects.filter(trader=user, is_liquadated=False)
+                positions = Positions.objects.filter(
+                    trader=user, is_liquadated=False)
                 if positions is not None and len(positions) >= 1:
                     for position in positions:
                         self.take_snapshot(position, self.applied_period)
 
     def take_snapshot(self, position, applied_period):
         snap_date = self.snap_date
-        if snap_date.weekday() == 6: # 周日推2天
+        if snap_date.weekday() == 6:  # 周日推2天
             last_snap_date = snap_date - timedelta(days=2)
         elif snap_date.weekday() == 0:  # 周一
             last_snap_date = snap_date - timedelta(days=3)
@@ -801,7 +877,8 @@ class TradeProfitSnapshot(BaseModel):
         last_snapshot = TradeProfitSnapshot.objects.filter(
             trade_account=position['trade_account'], snap_date=last_snap_date)
         if last_snapshot is not None and len(last_snapshot) >= 1:
-            self.profit_change = position['sum_profit'] - last_snapshot[0].profit
+            self.profit_change = position['sum_profit'] - \
+                last_snapshot[0].profit
         else:
             self.profit_change = position['sum_profit']
         # self.trader = trader

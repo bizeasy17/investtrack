@@ -1,13 +1,18 @@
+from datetime import date, datetime
+
 import tushare as ts
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 
-import investmgr.utils
+from investmgr import utils
+from investmgr.models import TradeRec, Positions, TradeProfitSnapshot, TradeAccount
+from users.models import User
 
 
 # Create your views here.
@@ -34,15 +39,102 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
                 else:
                     return render(request, self.default_template_name)
         else:
-            return HttpResponseRedirect(reverse('404'))   
-   
+            return HttpResponseRedirect(reverse('404'))
+
+
+def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
+    '''
+    将持仓股的价格更新到最新报价
+    '''
+    if len(realtime_quotes) > 0:
+        linked_traderecs = TradeRec.objects.select_for_update().filter(
+            in_stock_positions=position_pk)
+        with transaction.atomic():
+            for entry in linked_traderecs:
+                entry.current_price = realtime_quotes[entry.stock_code]
+                entry.save()
+
+
+def sync_stock_position_for_investor(investor):
+    '''
+    根据stock_symbol更新最新的价格
+    '''
+    stock_symbols = []
+    latest_positions = []
+    realtime_quotes = []
+    # in_stock_symbols = Positions.objects.filter(trader=investor).exclude(is_liquadated=True,).distinct().values('stock_code')
+    # if in_stock_symbols is not None and len(in_stock_symbols) > 0:
+    #     for stock_symbol in in_stock_symbols:
+    #         stock_symbols.append(stock_symbol['stock_code'])
+
+    in_stock_positions = Positions.objects.select_for_update().filter(
+        trader=investor).exclude(is_liquadated=True,)
+    with transaction.atomic():
+        if in_stock_positions is not None and len(in_stock_positions) > 0:
+            for position in in_stock_positions:
+                stock_symbols.append(position.stock_code)
+            realtime_quotes = utils.get_realtime_price(
+                list(set(stock_symbols)))
+        for entry in in_stock_positions:
+            entry.make_profit_updated(realtime_quotes[entry.stock_code])
+            sync_stock_price_for_investor(entry.pk, realtime_quotes)
+            latest_positions.append(
+                {
+                    'id': entry.pk,
+                    'symbol': entry.stock_code,
+                    'name': entry.stock_name,
+                    'position_price': entry.position_price,
+                    'realtime_price': entry.current_price,
+                    'profit': entry.profit,
+                    'profit_ratio': entry.profit_ratio,
+                    'lots': entry.lots,
+                    'target_position': entry.target_position,
+                    'amount': entry.cash,
+                }
+            )
+    return latest_positions
+
+
+def take_account_snapshot(invest_account):
+    today = date.today()
+    snapshot = TradeProfitSnapshot(trade_account=invest_account, snap_date=today)
+    snapshot.take_account_snapshot()
+
+
 @login_required
 def take_snapshot_manual(request):
+    '''
+    生成snapshot的流程
+    1. 获得有效的用户，
+    2. 根据用户获得所有持仓（未清仓）
+    3. 获得最新报价，更新持仓和交易记录
+    4. 根据最新持仓信息更新交易账户余额
+    5. 生成账户快照
+    - 本金
+    - 余额
+    - 变化？
+    - 比率？
+    - 日期
+    - 周期 d - 每日，w - 每周周五?，y - 每月最后一个周五?
+    '''
     if request.method == 'GET':
         site_admin = request.user
         if site_admin is not None and site_admin.is_superuser:
-            
-
-        return JsonResponse(updated_positions, safe=False)
-
+            latest_positions = {}
+            # 1. 获得有效的用户，
+            investors = User.objects.filter(
+                is_active=True).exclude(is_superuser=True)
+            if investors is not None and len(investors):
+                for investor in investors:
+                    # 2. 根据用户获得所有持仓（未清仓）
+                    # 3. 获得最新报价，更新持仓和交易记录
+                    sync_stock_position_for_investor(
+                        investor)
+                    # 4. 根据最新持仓信息更新交易账户余额
+                    accounts = TradeAccount.objects.filter(trader=investor)
+                    for account in accounts:
+                        account.update_account_balance()
+                        # 5. 生成账户快照
+                        take_account_snapshot(account)
+        return JsonResponse({'code': 'ok', 'message': _('账户快照生成成功')}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)
