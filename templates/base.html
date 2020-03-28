@@ -51,7 +51,7 @@
                 <ul class="navbar-nav mr-auto">
                 {% if request.user.is_authenticated %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'user:dashboard' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'user:create_account' %}">{% trans '交易账户设置' %}</a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'user:create_account' %}">{% trans '交易账户管理' %}</a></li>
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                 {% endif %}
                   <!-- <li class="nav-item"><a class="nav-link" href="/about/">{% trans '关于' %}</a></li> -->

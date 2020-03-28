@@ -55,9 +55,9 @@ class UserDashboardView(LoginRequiredMixin, View):
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
             today = date.today()
             if today.weekday() == calendar.SATURDAY:
-                snap_date = today - datetime.timedelta(days=1)
+                snap_date = today - timedelta(days=1)
             elif today.weekday() == calendar.SUNDAY:
-                snap_date = today - datetime.timedelta(days=2)
+                snap_date = today - timedelta(days=2)
             else:
                 snap_date = today
             today_snapshots = TradeProfitSnapshot.objects.filter(
@@ -117,7 +117,7 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
         account_id = self.kwargs['account']
         trade_account = TradeAccount.objects.filter(id=account_id)
         if req_user is not None:
-            strategies = TradeStrategy.objects.filter(creator=req_user.id)
+            strategies = TradeStrategy.objects.all()
             stock_position = []
             stock_name = ''
             if trade_account is None or len(trade_account) < 1:
@@ -830,18 +830,18 @@ def create_account(request):
         trade_account_type = data.get('accountType')
         trade_account_capital = data.get('accountCapital')
         trade_account_balance = data.get('accountBalance')
-        trade_fee = data.get('tradeFee')
+        service_charge = data.get('tradeFee')
         trade_account_valid_since = data.get('accountValidSince')
         if trade_account_id is None or trade_account_id == '':
             trade_account = TradeAccount(trader=trader, account_provider=trade_account_provider,
                                          account_type=trade_account_type, account_capital=trade_account_capital,
-                                         trade_fee=trade_fee, account_balance=trade_account_balance,
+                                         service_charge=service_charge, account_balance=trade_account_balance,
                                          activate_date=datetime.strptime(trade_account_valid_since, '%Y-%m-%d'))
         else:
             trade_account = TradeAccount.objects.get(id=trade_account_id)
             trade_account.account_capital = trade_account_capital
             trade_account.account_balance = trade_account_balance
-            trade_account.trade_fee = trade_fee
+            trade_account.service_charge = service_charge
         # if direction == 'b':
         acc_id = trade_account.save()
         # else:

@@ -8,7 +8,7 @@ $(function(){
             $("#accountList").prepend(
                 '<a href="#" id="' + id + '" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">'
                 + '<div>'
-                + '<h6 class="my-0">' + accountProvider + accountName + '</h6>'
+                + '<h6 class="my-0">' + accountProvider + accountType + '</h6>'
                 + '<small class="text-muted">' + accountType + '</small>'
                 + '</div>'
                 + '<span class="text-muted">' + accountBalance + '</span>'
@@ -163,7 +163,6 @@ $(function(){
 
         if (accountBalance.length < 1) {
             accountBalance = $('#accountCapital').val();
-            return;
         } else {
             var capitalOld = parseInt($('#accCapital' + $("#hiddenAccId").val()).val());
             var capitalNew = parseInt($('#accountCapital').val());

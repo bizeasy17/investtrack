@@ -26,59 +26,39 @@
                 <!-- <h5 class="mt-2">{% trans '实时行情数据' %}</h5> -->
                 <!-- Date/Time -->
                 <div class="small">
-                    {% if trade_info.position %}
-                    
                     <div class="" id="stockPosition">
                         <div class='d-flex align-items-center justify-content-between flex-wrap'>
                             <div>
-                                <h6 class="card-title"><a href="#" class="text-muted"><span id="pStockName">{{ trade_info.position.stock_name }}</span>({% trans '账户:' %}<span id="pAccount">{{ trade_info.position.trade_account.account_name }}</span>)</h6>
-                                <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark"><span id="pStockSymbol">{{ trade_info.position.stock_code }}</span></a></h7>
+                                <h6 class="card-title"><a href="#" class="text-muted"><span id="pStockName">-</span>({% trans '账户:' %}<span id="pAccount">{{trade_info.trade_account.account_name}}</span>)</h6>
+                                <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark"><span id="pStockSymbol">-</span></a></h7>
                             </div>
                             
                             <div>
-                                
-                                {% if trade_info.position.profit < 0 %}
                                 <div>
-                                    <span class="badge badge-pill badge-success" id="pProfitRatio">{{ trade_info.position.profit_ratio }}</span>
+                                    <span class="badge badge-pill badge-danger" id="pProfitRatio">+</span>
                                 </div>
                                 <div>
-                                    <span class="badge badge-pill badge-success" id="pProfit">{{ trade_info.position.profit }}</span>
-                                </div>
-                                {% else %}
-                                <div>
-                                    <span class="badge badge-pill badge-danger" id="pProfitRatio">+{{ trade_info.position.profit_ratio }}</span>
-                                </div>
-                                <div>
-                                    <span class="badge badge-pill badge-danger" id="pProfit">+{{ trade_info.position.profit }}</span>
-                                </div>
-                                {% endif %}
-                                
+                                    <span class="badge badge-pill badge-danger" id="pProfit">+</span>
+                                </div> 
                             </div>
                         </div>
                         
                         <div class="d-flex align-items-center justify-content-between flex-wrap">
                             <div class="text-muted"> 
                                 <div>{% trans '现价' %}</div>
-                                <div><span id="pCurrentPrice">{{ trade_info.position.current_price }}</span></div>
+                                <div><span id="pCurrentPrice">-</span></div>
                             </div>
                             <div class="text-muted"> 
                                 <div>{% trans '成本' %}</div>
-                                <div><span id="pPositionPrice">{{ trade_info.position.position_price }}</span></div>
+                                <div><span id="pPositionPrice">-</span></div>
                             </div>
-                            <div class="text-muted"> <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div><div><span class="mr-1" id="pLots">{{ trade_info.position.lots }}</span>(<span id="pTargetPosition">{{ trade_info.position.target_position }}</span>)</div></div>
-                            <div class="text-muted"> <div>{% trans '市值' %}</div><div><span id="pCash">{{ trade_info.position.cash }}</span></div></div>
+                            <div class="text-muted"> <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div><div><span class="mr-1" id="pLots">-</span>(<span id="pTargetPosition">-</span>)</div></div>
+                            <div class="text-muted"> <div>{% trans '市值' %}</div><div><span id="pCash">-</span></div></div>
 
                         </div>
-                    
-
                     </div>
-                    {% else %}
-                    {% if trade_info.trade_account %}
-                        <div id="noPosition"><h6 class="text-muted">{% trans '该账户查询无持仓信息' %}</h6></div>
-                    {% else %}
-                        <div id="noAccount"><h6 class="text-danger">{% trans '无此交易账户，查看可用' %}<a href="{% url 'user:create_account' %}" class="text-info">{% trans '交易账户' %}</a></h6></div>
-                    {% endif %}
-                    {% endif %}  
+                    {% comment %} <div id="noPosition"><h6 class="text-muted">{% trans '请创建交易记录' %}</h6></div>
+                    <div id="noAccount"><h6 class="text-danger">{% trans '无此交易账户，查看可用' %}<a href="{% url 'user:create_account' %}" class="text-info">{% trans '交易账户' %}</a></h6></div>  {% endcomment %}
                     <span>{% trans '数据获取于' %}<span id="pRefreshDT">{% now "Y-m-d H:i" %}</span></span>
 
                 </div>
@@ -188,8 +168,8 @@
                     <input type="hidden" id="hiddenTscode" value="{{trade_info.show_code}}"><!--show code, 000001.SZ-->
                     <input type="hidden" id="hiddenMarket" value="{{trade_info.market}}">
                     <input type="hidden" id="hiddenAccount" value="{{trade_info.account_id}}">
+                    <input type="hidden" id="hiddenAccountName" value="{{trade_info.account_name}}">
                     <input type="hidden" id="hiddenTradeType" value="{{trade_info.type}}">
-
                 </div>
                 <div class="input-group">
                     <!-- <div class="btn-group btn-group-toggle" data-toggle="buttons">

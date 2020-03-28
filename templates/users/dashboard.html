@@ -19,13 +19,6 @@
         </div>
     </div>
     <!-- <span>{% trans '您还未创建证券账户信息，请单击' %}<a href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank"></i>{% trans '此处' %}</a>{% trans '创建' %}</span> -->
-
-    {% if dashboard %}
-    {% ifequal dashboard.total_accounts 0 %}
-    <div class="row">
-        <span>{% trans '您还未创建证券账户信息，请单击' %}<a href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank"></i>{% trans '此处' %}</a>{% trans '创建' %}</span>
-    </div>
-    {% else %}
     <div class="row">
         <div class="col-lg-8 grid-margin stretch-card">
             <div class="row flex-grow">
@@ -176,8 +169,13 @@
                             <span class="text-muted">{% trans '已有交易账户' %}</span>
                             <span class="badge badge-info badge-pill">{{dashboard.total_accounts}}</span>
                         </h5>
+                        {% if dashboard %}
+                        {% if dashboard.trade_accounts|length == 0 %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>{% trans '无虚拟交易账户，请单击 ' %}<a href="{% url 'user:create_account' %}" class="btn btn-primary"><i class="fa fa-piggy-bank mr-1"></i>{% trans '创建' %}</a></span>
+                        </div>
+                        {% else %}
                         <div class="list-group mb-3" id="accountList">
-                            {% if dashboard %}
                             {% for a in dashboard.trade_accounts %}
                             <div id="{{trade_account.id}}" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">
                                 <div>
@@ -196,8 +194,9 @@
                                 <span>{% trans '账户总额（￥）' %}</span>
                                 <strong id="totalAccBalance">{{ dashboard.profit_loss }}</strong>
                             </li>
-                            {% endif %}
                         </div>
+                        {% endif %}
+                        {% endif %}
                     </div>
                 </div>
                 <!-- <canvas id="activity-chart"></canvas> -->
@@ -264,8 +263,6 @@
             </div> 
         </div>
     </div>
-    {% endifequal %}
-    {% endif %}
 </div>
 <!-- content-wrapper ends -->
 {% endblock content %}

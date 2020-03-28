@@ -690,7 +690,7 @@ class TradeAccount(BaseModel):
     def update_account_balance(self):
         account_profit_sum = Positions.objects.filter(
             trader=self.trader, trade_account=self).aggregate(sum_profit=Sum('profit'))
-        if account_profit_sum is not None:
+        if account_profit_sum['sum_profit'] is not None:
             self.account_balance = self.account_capital + \
                 account_profit_sum['sum_profit']
             self.save()
