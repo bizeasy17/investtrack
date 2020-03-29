@@ -117,6 +117,9 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
         account_id = self.kwargs['account']
         trade_account = TradeAccount.objects.filter(id=account_id)
         if req_user is not None:
+            trade_accounts = TradeAccount.objects.filter(trader=req_user)
+            tradedetails = TradeRec.objects.filter(
+                trader=req_user.id, stock_code=stock_symbol, created_or_mod_by='human')
             strategies = TradeStrategy.objects.all()
             stock_position = []
             stock_name = ''
@@ -164,9 +167,11 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
                 'stock_name': stock_name,
                 'show_code': show_code,
                 'market': market,
+                'accounts': trade_accounts,
                 'account_id': account_id,
                 'trade_account': trade_account[0] if len(trade_account) >= 1 else None,
                 'strategies': strategies,
+                'trade_log': tradedetails,
                 'position': stock_position[0] if len(stock_position) >= 1 else None,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
@@ -304,6 +309,16 @@ def update_user_profile(request):
 
     return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
 
+@login_required
+def follow_stock(request, symbol):
+    if request.method == 'POST':
+        data = request.POST.copy()
+        name = data.get('name')
+        investor = request.user
+        new_follow = StockFollowing(trader=investor, stock_code=symbol, stock_name=name)
+        new_follow.save()
+        return JsonResponse({'code': 'ok', 'message': _('添加成功')}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('添加失败')}, safe=False)
 
 def get_week_of_month(year, month, day):
     """
@@ -717,7 +732,7 @@ def get_position_status(request, account, symbol):
                 total_target += pos.target_position
                 total_avail += pos.lots
         total_percentage = str(
-            round(total_avail / total_target, 2) * 100) + '%'
+            round(total_avail / total_target * 100, 2)) + '%'
         if len(pos_qs) > 0:
             return JsonResponse(
                 {
@@ -797,14 +812,12 @@ def create_trade(request):
         quantity = int(data.get('quantity'))
         target_position = data.get('targetPosition')
         direction = data.get('direction')
-        trade_time = data.get('tradeTime')
+        trade_time = data.get('tradeTime').split('T')
         trade_account_id = data.get('tradeAcc')
-
+        trade_time = trade_time[0] + ' ' + trade_time[1]
         new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
-                             board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[
-                                 0],
-                             target_position=target_position, trade_time=datetime.strptime(
-                                 trade_time, '%Y-%m-%d %H:%M'),
+                             board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[0],
+                             target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M:%S'),
                              created_or_mod_by='human', trade_account=TradeAccount(id=trade_account_id))
         # if direction == 'b':
         is_ok = new_trade.save()
@@ -948,7 +961,7 @@ def get_position_by_symbol(request, account_id, symbol):
 # custom 404, 403, 500 pages
 
 
-def my_custom_page_not_found_view(request, exception):
+def page_not_found_view(request, exception):
      # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'pages/404.html'
     return render(request, template_name)

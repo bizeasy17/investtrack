@@ -14,7 +14,8 @@
     <div class="row flex-grow mb-4">
         <div class="col-lg-3 grid-margin stretch-card">
             <!-- <h5>{% trans '欢迎回来，'%}{{request.user.username}}</h5> -->
-            <input type="text"  id="searchDashboard" class="form-control" placeholder="{% trans '在此输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
+            <input type="text"  id="searchForTrade" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
+            <input type="hidden"  id="defaultAccount" value="{{ dashboard.trade_accounts.0.id }}"/>
                 
         </div>
     </div>
@@ -102,18 +103,18 @@
                             {% for p in dashboard.positions %}
                             <div class="card shadow mb-2 mt-2">
                                 <div class="card-body">
-                                    <div class='row'>
-                                        <div class="col-lg-10">
+                                    <div class='d-flex align-items-center justify-content-between flex-wrap small'>
+                                        <div class="">
                                             <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
                                             <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
-                                        <div class="col-lg-2">
-                                            <div class="float-right">
+                                        <div class="">
+                                            <div class="">
                                             {% if p.profit < 0 %}
-                                            <td><span class="badge badge-pill badge-success">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-success mr-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
                                             {% else %}
-                                            <td><span class="badge badge-pill badge-danger">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-danger mr-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
                                             {% endif %}
                                             </div>
                                         </div>
@@ -128,16 +129,22 @@
                                             <div>{% trans '成本' %}</div>
                                             <div>{{ p.position_price }}</div>
                                         </div>
-                                        <div class="text-muted">  <div>{% trans '持仓' %}{% trans '(目标仓位)' %}</div><div>{{ p.lots }}({{ p.target_position }})</div></div>
-                                        <div class="text-muted">  <div>{% trans '市值' %}</div><div>{{ p.cash }}</div></div>
+                                        <div class="text-muted">  
+                                            <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div>
+                                            <div><span class="mr-1">{{ p.lots }}</span><span>({{ p.target_position }})</span></div>
+                                        </div>
+                                        <div class="text-muted">  
+                                            <div>{% trans '市值' %}</div>
+                                            <div>{{ p.cash }}</div>
+                                        </div>
 
                                     </div>
                                     <hr>
                                     <div class="row">
                                         <div class="col-lg-4">
-                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
+                                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
                                             <!-- <a class="btn btn-sm btn-outline-primary" href="#">{% trans '卖出-' %}</a> -->
-                                            <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}"><i class="fa fa-eye"></i>{% trans '查看交易' %}</a>
+                                            <!-- <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}"><i class="fa fa-eye"></i>{% trans '查看交易' %}</a> -->
 
                                         </div>
                                     
@@ -177,16 +184,17 @@
                         {% else %}
                         <div class="list-group mb-3" id="accountList">
                             {% for a in dashboard.trade_accounts %}
-                            <div id="{{trade_account.id}}" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">
+                            <div id="{{a.id}}" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">
                                 <div>
                                     <h6 class="my-0">
                                         {{a.account_name}}
-                                        <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '记录交易'%}</a>
                                     </h6>
                                     <small class="text-muted">{{a.account_type}}</small>
+
                                 </div>
                                 <div>
-                                    <span class="text-muted">{{a.account_balance}}</span>
+                                    <h6 class="text-muted">{{a.account_balance}}</h6>
+                                    <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-plus"></i>{%trans '记录交易'%}</a>
                                 </div>
                             </div>
                             {% endfor %}
@@ -225,7 +233,7 @@
                 </div>
             </div>
             
-            <div class="col-md-12 grid-margin stretch-card">
+            <div class="col-md-12 grid-margin stretch-card d-none">
                 <div class="card shadow mb-4">
                     <div class="card-body pb-0">
                         <div class="d-flex align-items-center mb-4">
@@ -253,7 +261,7 @@
                         <div class="d-flex flex-wrap pt-2 small">
                             {% if dashboard %}
                             {% for f in dashboard.followings %}
-                            <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa fa-bar">{{f.stock_code.stock_name }}({{f.stock_code.stock_code }})</i></button>
+                            <button type="button" class="btn btn-sm btn-light mb-2 ml-2"><i class="fa fa-bar">{{f.stock_name }} [{{f.stock_code }}]</i></button>
                             {% endfor %}
                             {% endif %}
                         </div>

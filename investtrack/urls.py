@@ -27,6 +27,7 @@ urlpatterns = [
     path('user/', include('users.urls')),
     path('notifications/', include('notifications.urls')),
     path('invest/', include('investmgr.urls')),
+    path('account/', include('accounts.urls')),
     
     # home pages
     re_path(r'^$',
@@ -40,10 +41,10 @@ urlpatterns = [
             TemplateView.as_view(template_name='pages/404.html'), name='404'),
 
     # 3rd Party Apps
-    re_path(r'^accounts/', include('allauth.urls')),
+    
 ]
 
-handler404 = 'users.views.my_custom_page_not_found_view'
+handler404 = 'users.views.page_not_found_view'
 
 if settings.DEBUG:
     # static files (images, css, javascript, etc.)

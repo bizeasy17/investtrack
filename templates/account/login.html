@@ -45,21 +45,20 @@
                   <div class="text-center">
                     <h1 class="h4 text-gray-900 mb-4">{% trans '欢迎回来！' %}</h1>
                   </div>
-                  <form class="login" method="POST" action="{% url 'account_login' %}">
-                    {% csrf_token %}
-
+                  <form class="login" id="loginForm" method="POST" action="{% url 'account:login' %}">
+                    <input type="hidden" id="nextUrl" value="{{ request.GET.urlencode }}"/>
                     <div id="div_id_login" class="form-group"> <label for="id_login" class=" requiredField">
                         {% trans '用户名' %}<span class="asteriskField">*</span> </label>
                       <div class=""> 
-                        <input type="text" name="login" placeholder="{% trans '用户名' %}" autofocus="autofocus" maxlength="150"
-                          class="textinput textInput form-control form-control-user" required id="id_login"> 
+                        <input type="text" name="username" placeholder="{% trans '用户名' %}" autofocus="autofocus" maxlength="150"
+                          class="textinput textInput form-control form-control-user" required id="username"> 
                         </div>
                     </div>
                     <div id="div_id_password" class="form-group"> <label for="id_password" class=" requiredField">
                         {% trans '密码' %}<span class="asteriskField">*</span> </label>
                       <div class=""> 
                         <input type="password" name="password" placeholder="{% trans '密码' %}" class="textinput textInput form-control form-control-user"
-                          required id="id_password"> 
+                          required id="password"> 
                       </div>
                     </div>
                     <div class="form-group">
@@ -71,7 +70,7 @@
                     
                     
                     <div class="form-group container-login100-form-btn">
-                      <button type="submit" class="login100-form-btn btn btn-primary btn-user btn-block ">{% trans '登录' %}</button>
+                      <button type="submit" class="btn btn-primary btn-user btn-block" id="login">{% trans '登录' %}</button>
                     </div>
 
                     
@@ -85,10 +84,10 @@
                   </form>
                   <hr>
                   <div class="text-center">
-                    <a class="small" href="{% url 'account_reset_password' %}">{% trans '忘记密码？' %}</a>
+                    <a class="small" href="{% url 'account:reset_password' %}">{% trans '忘记密码？' %}</a>
                   </div>
                   <div class="text-center">
-                    <a class="small" href="{% url 'account_signup' %}">{% trans '还没有账号？马上去注册！' %}</a>
+                    <a class="small" href="{% url 'account:signup' %}">{% trans '还没有账号？马上去注册！' %}</a>
                   </div>
                 </div>
               </div>
@@ -101,6 +100,56 @@
     </div>
 
   </div>
+  <script src="{% static 'vendor/jquery/jquery.min.js' %} "></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
+  <script type="text/javascript">
+    var currentUser = "{{ request.user.username }}";
+    var csrftoken = Cookies.get('csrftoken');
+    var authBaseEndpoint = '/account/'; 
+    $(function () {
+      var searchParams = new URLSearchParams($("#nextUrl").val())
+      // alert(searchParams.get("next"));
+
+      var authenticate = function(event){
+        event.preventDefault();
+        var form = $("#loginForm");
+        var formData = new FormData(form[0]);
+        $.ajax({
+            url: authBaseEndpoint + 'authenticate/',
+            enctype: 'multipart/form-data',
+            headers: { 'X-CSRFToken': csrftoken },
+            method: 'POST',
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            data: formData,
+            success: function (data) {
+                if(data.code=="ok"){
+                  if(searchParams.has("next")){
+                    window.location.href = searchParams.get("next");
+                  }else{
+                    window.location.href = "/user/dashboard/";
+                  }
+                }else{
+                  alert("login failed");
+                }
+            },
+            statusCode: {
+                403: function () {
+                    $("#messageText").html('<strong>403 forbidden</strong>.');
+                },
+                404: function () {
+                    $("#messageText").html('<strong>404 page not found</strong>.');
+                },
+                500: function () {
+                    $("#messageText").html('<strong>500 internal server error</strong>.');
+                }
+            }
+        });
+      }
+      document.getElementById("login").addEventListener("click", authenticate, event);
+    });
+  </script>
 </body>
 
 </html>

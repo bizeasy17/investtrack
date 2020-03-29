@@ -29,8 +29,8 @@ ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False  # True
 DEBUG = True
-
-# ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1']
+# 卖出股票的策略是先进先出FIFO，可选的其他策略有FILO
 STOCK_OUT_STRATEGY = 'FIFO'
 
 # Application definition
@@ -49,12 +49,13 @@ INSTALLED_APPS = [
 
     # 3rd Party Apps
     # 'mdeditor',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
     'easy_thumbnails',
     'crispy_forms',
     'tushare',
+    # 'django_extensions',
 
     # local application
     'siteadmins.apps.SiteadminsConfig',
@@ -93,22 +94,23 @@ SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = 'users.User'
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
+LOGIN_URL = 'account:login'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
 LOGIN_REDIRECT_URL = 'user:dashboard'
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = 'account_login'
+LOGOUT_REDIRECT_URL = '/'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+# ACCOUNT_EMAIL_VERIFICATION = 'none'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_AUTHENTICATION_METHOD = 'username'
+# ACCOUNT_AUTHENTICATION_METHOD = 'username'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_ADAPTER = 'users.adapters.AccountAdapter'
+# ACCOUNT_ADAPTER = 'users.adapters.AccountAdapter'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-SOCIALACCOUNT_ADAPTER = 'users.adapters.SocialAccountAdapter'
+# SOCIALACCOUNT_ADAPTER = 'users.adapters.SocialAccountAdapter'
 
 TEMPLATES = [
     {

@@ -16,6 +16,36 @@ $(function () {
   var chartShowDaysW = 180
   var chartShowDaysM = 720
 
+  $('#searchForTrade').autoComplete({
+    resolver: 'custom',
+    formatResult: function (item) {
+      return {
+        value: item.id,
+        text: item.id + " - " + item.text,
+        html: [
+          item.id + ' - ' + item.text,// +  '[' + item.market + ']',
+        ]
+      };
+    },
+    events: {
+      search: function (qry, callback) {
+        // let's do a custom ajax call
+        $.ajax(
+          investBaseEndpoint + 'search-autocomplete/' + $('#searchForTrade').val(),
+        ).done(function (res) {
+          callback(res.results)
+        });
+      }
+    }
+  });
+
+  $('#searchForTrade').on('autocomplete.select', function (evt, item) {
+    var code = item.id;
+    var showCode = item.ts_code;
+    var showName = item.text;
+    var market = item.market;
+    window.location.href = userBaseEndpoint + "account/" +  $("#defaultAccount").val() + "/trade/" +  code + "/";
+  });
 
   if ($("#profitDevChart").length) {
     var profitDevChartCanvas = $("#profitDevChart").get(0).getContext("2d");
@@ -494,6 +524,7 @@ $(function () {
     var day = inputDatetime.getDay();
     var hour = inputDatetime.getHours();
     var min = inputDatetime.getMinutes();
+    if(day==0 || day==6) return false; //周六周日不需要刷新
     if (inputDatetime >= openTime && inputDatetime <= closeTime) {
       return true;
     }

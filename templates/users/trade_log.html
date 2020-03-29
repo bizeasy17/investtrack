@@ -211,15 +211,6 @@
         </div>
 
         <!-- Side Widget Following -->
-        <div class="p-1 my-4">
-            <h6>{% trans '我的自选股' %}</h6>
-            <hr/>
-            {% if trade_log %}
-            {% for f in trade_log.fol %}
-                <button type="button" class="btn btn-sm btn-light mb-2"><i class="fa fa-chart-line mr-1"></i>{{ f.stock_code.stock_name }}({{ f.stock_code.stock_code }})</button>
-            {% endfor %}
-            {% endif %}
-        </div>
 
        
     </div>

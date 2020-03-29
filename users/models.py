@@ -19,12 +19,6 @@ class User(AbstractUser):
         _('头衔'), max_length=50, null=True, blank=True)
     personal_url = models.URLField(
         _('个人网址'), max_length=555, blank=True, null=True)
-    facebook_account = models.URLField(
-        _('Facebook账号'), max_length=255, blank=True, null=True)
-    twitter_account = models.URLField(
-        _('Twitter账号'), max_length=255, blank=True, null=True)
-    github_account = models.URLField(
-        _('GitHub账号'), max_length=255, blank=True, null=True)
     linkedin_account = models.URLField(
         _('LinkedIn账号'), max_length=255, blank=True, null=True)
     weibo_account = models.URLField(
@@ -37,7 +31,7 @@ class User(AbstractUser):
         _('描述下你自己'), max_length=60, blank=True, null=True)
     bio = models.CharField(
         _('个人简介'), max_length=280, blank=True, null=True)
-    
+
     # trade_account = models.ForeignKey('TradeAccount', verbose_name=_(
     #     '交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
 

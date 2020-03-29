@@ -22,6 +22,7 @@ django-redis>=4.9.0  # https://github.com/niwinz/django-redis
 django-taggit>=0.22.2  # https://github.com/alex/django-taggit
 # sorl-thumbnail>=12.4.1  not support Django 3.0 # https://github.com/jazzband/sorl-thumbnail
 easy-thumbnails>=2.7 # http://github.com/SmileyChris/easy-thumbnails
+django-extensions # https://github.com/django-extensions/django-extensions
 
 # Channels
 # ------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 
-from . import views
+from users import views
 
 app_name = 'user'
 urlpatterns = [
@@ -32,6 +32,8 @@ urlpatterns = [
          views.get_position_by_symbol),
     path('position-vs-status/<account>/<symbol>/',
          views.get_position_status),
+    path('stock/<symbol>/follow/',
+         views.follow_stock),
     path('profit-trend/period/<period>/',
          views.get_profit_trend_by_period),
     path('invest-attempt-trend/period/<period>/',

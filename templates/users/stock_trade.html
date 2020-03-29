@@ -59,7 +59,7 @@
                     </div>
                     {% comment %} <div id="noPosition"><h6 class="text-muted">{% trans '请创建交易记录' %}</h6></div>
                     <div id="noAccount"><h6 class="text-danger">{% trans '无此交易账户，查看可用' %}<a href="{% url 'user:create_account' %}" class="text-info">{% trans '交易账户' %}</a></h6></div>  {% endcomment %}
-                    <span>{% trans '数据获取于' %}<span id="pRefreshDT">{% now "Y-m-d H:i" %}</span></span>
+                    <span>{% trans '更新于 ' %}<span id="pRefreshDT">{% now "Y-m-d H:i" %}</span></span>
 
                 </div>
             </div>
@@ -107,52 +107,165 @@
                         </div>
                     </div>
                 </div>
-                <div class="row d-none">
+                <div class="row">
                     <div class="col-lg-12">
-                        <div class="btn-group btn-group-sm btn-group-toggle mt-1 float-right" data-toggle="buttons">
-                            <label class="btn btn-light active">
-                                <input type="radio" name="refresh" value="a" autocomplete="off"> {% trans '刷新' %}
-                            </label>
-                            <label class="btn btn-light">
-                                <input type="radio" name="refresh" value="m" autocomplete="off"> {% trans '不刷新' %}
-                            </label>
-                        </div>
+                        <button class="btn btn-sm btn-secondary float-right mt-1" href="#follow" id="followStock"><i class="fa fa-plus">{% trans '加自选' %}</i></button>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <hr>
         <div class="mb-4">
-                <div class="card-body">
-                    <div class="chart-bar">
-                        <i class="fas fa-spinner fa-pulse fa-spin fa-4x" id="spBsChart"></i>
-                        <canvas id="stockChart"></canvas>
-                    </div>
-                    <hr>
+            <div class="card-body">
+                <div class="chart-bar">
+                    <i class="fas fa-spinner fa-pulse fa-spin fa-4x" id="spBsChart"></i>
+                    <canvas id="stockChart"></canvas>
                 </div>
-                <div class="collapse">
-                    Bar Type:
-                    <select id="type">
-                        <option value="candlestick" selected>Candlestick</option>
-                        <option value="ohlc">OHLC</option>
-                    </select>
-                    Color Scheme:
-                    <select id="color-scheme">
-                        <option value="muted" selected>Muted</option>
-                        <option value="neon">Neon</option>
-                    </select>
-                    Border:
-                    <select id="border">
-                        <option value="true" selected>Yes</option>
-                        <option value="false">No</option>
-                    </select>
-                    <button id="update">Update</button>
-                    <button id="randomizeData">Randomize Data</button>
-                </div>
+                <hr>
             </div>
+            <div class="collapse">
+                Bar Type:
+                <select id="type">
+                    <option value="candlestick" selected>Candlestick</option>
+                    <option value="ohlc">OHLC</option>
+                </select>
+                Color Scheme:
+                <select id="color-scheme">
+                    <option value="muted" selected>Muted</option>
+                    <option value="neon">Neon</option>
+                </select>
+                Border:
+                <select id="border">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                </select>
+                <button id="update">Update</button>
+                <button id="randomizeData">Randomize Data</button>
+            </div>
+        </div>
         <hr>
-        
+        {% if trade_info.trade_log %}
+        <div class="row">
+            <div class="col">
+            {% for trade in trade_info.trade_log %}
+                {% ifequal trade.direction 'b' %}
+                <div class="card mb-4 shadow">
+                    <div class="card-body">
+                        <div class='row'>
+                            <div class="col-lg-10">
+                                <input type="hidden" value="{{trade.id}}" id="{{trade.id}}"/>
+                                <input type="hidden" value="{{trade.rec_ref_number}}" id="{{trade.rec_ref_number}}"/>
+                                <h6 class="card-title "><a href="#" class="text-primary"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h6>
+                                <h7 class="card-subtitle mb-2"><a href="#" class="text-muted">{{ trade.stock_code }}</a></h7>
+                                <hr/>
+                            </div>
+                            
+                            <div class="col-lg-2">
+                                <div class="float-right">
+                                    <span class="badge badge-pill badge-danger">{% trans '买入' %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='row'>
+                            <div class="col small">
+                                <p class="card-text">
+                                    <i class="fa fa-calendar-times mr-1"></i>{{ trade.trade_time }} 
+                                </p>
+                                <p> 
+                                    <a href="/user/profile">{{trade.trader.name}}</a> 
+                                    {% trans '以' %} {% trans '￥' %} 
+                                    <span>{{ trade.price }}</span>
+                                    {% trans '买入' %} 
+                                    <span>{{ trade.board_lots }}</span>
+                                    {% trans '股，金额为￥' %}
+                                    <span>{{ trade.cash }}</span>
+                                </p>
+                                {% ifequal trade.lots_remain 0 %}
+                                <p> 
+                                    {{trade.board_lots}}{% trans '股已全部卖出' %} 
+                                </p>
+                                {% endifequal %}
+                                {% if trade.lots_remain > 0 and trade.lots_remain < trade.lots %}
+                                <p> 
+                                    <span >{% trans '该仓位已部分卖出，剩余' %} </span><span>{{ trade.lots_remain }}</span>
+                                </p>
+                                {% endif %}
+                                <p class="card-text">
+                                    {% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} 
+                                </p>
+                                <hr/>
+                            </div>
+                        </div>
+                        <div class='row '>
+                            <div class="col-lg-8">
+                                <a href="#" class="card-link text-danger"><i class='fa fa-heart' aria-hidden="true"></i></a>
+                                <a href="#" class="card-link text-primary"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
+                                <!-- <a href="#" class="card-link">{% trans '查看全部操作' %}</a> -->
+                            </div>
+                            <div class="col-lg-4">
+                                <input type="button" class="btn btn-sm btn-primary" value="{% trans '相关操作' %}" name="bRelatedTrade" id="{{trade.id}}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endifequal %}
+            {% endfor %}
+            </div>
+            <div class="col">
+            {% for trade in trade_info.trade_log %}
+                {% ifequal trade.direction 's' %}
+                <div class="card mb-4 shadow">
+                    <div class="card-body">
+                        <div class='row'>
+                            <div class="col-lg-10">
+                                <input type="hidden" value="{{trade.id}}" id="{{trade.id}}"/>
+                                <input type="hidden" value="{{trade.rec_ref_number}}" id="{{trade.rec_ref_number}}"/>
+                                <h6 class="card-title"><a href="#" class="text-primary"><i class="fa fa-chart-line"></i>{{ trade.stock_name }}</a></h6>
+                                <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-muted">{{ trade.stock_code }}</a></h7>
+                                <hr/>
+                            </div>                    
+                            <div class="col-lg-2">
+                                <div class="float-right">
+                                    <span class="badge badge-pill badge-success">{% trans '买出' %}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col small">
+                                <p>
+                                    <i class="fa fa-calendar-times mr-1"></i>{{ trade.trade_time }} 
+                                </p>
+                                <p>
+                                    <a href="/user/profile">{{trade.trader.name}}</a> 
+                                    {% trans '以' %} {% trans '￥' %} 
+                                    <span>{{ trade.price }}</span> {% trans '卖出' %} 
+                                    <span>{{ trade.board_lots }}</span>
+                                    {% trans '股' %} {% trans '，金额为' %}{% trans '￥' %} 
+                                    
+                                    <span>{{ trade.cash }}</span>
+                                </p>
+                                <p class="card-text">
+                                    {% trans '该股的目标仓位为' %} {{ trade.target_position }} {% trans '股' %} 
+                                </p>
+                                <hr/>
+                            </div>
+                        </div>
+                        <div class='row'>
+                            <div class="col-lg-8">
+                                <a href="#" class="card-link text-danger"><i class='fa fa-heart' aria-hidden="true"></i></a>
+                                <a href="#" class="card-link text-primary"><i class='fa fa-share-alt' aria-hidden="true"></i></a>
+                                <!-- <a href="#" class="card-link">{% trans '查看全部操作' %}</a> -->
+                            </div>
+                            <div class="col-lg-4">
+                                <input type="button" class="btn btn-sm btn-primary" value="{% trans '相关操作' %}" name="sRelatedTrade" id="{{trade.id}}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endifequal %}
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Sidebar Widgets Column -->
@@ -171,6 +284,7 @@
                     <input type="hidden" id="hiddenAccountName" value="{{trade_info.account_name}}">
                     <input type="hidden" id="hiddenTradeType" value="{{trade_info.type}}">
                 </div>
+
                 <div class="input-group">
                     <!-- <div class="btn-group btn-group-toggle" data-toggle="buttons">
                         <button type="button" class="btn btn-danger" id="btnBuy" data-toggle="collapse" data-target="#collapseCreate"
@@ -190,7 +304,7 @@
                 </div>
             </div>
         </div>
-        <div class="p-1 small" id="collapseCreate"> 
+        <div class="p-1 small"> 
             <div class="">
                 <div class="row pl-3 pr-3">
                     <form action="{% url 'user:post_trade_creation' %}" enctype="multipart/form-data" id="traderecForm" method="post"
@@ -198,28 +312,34 @@
                         <!-- {% csrf_token %} -->
                         <input type="hidden" id="direction">
                         <div class="form-row">
-                            
                             <div class="form-group col-md-12 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易策略 *' %}</label>
                                 <div class="input-group input-group-sm">
                                     <div class="input-group-prepend">
-                                        <button class="btn btn-outline-secondary dropdown-toggle" id="selStrategy" type="button"
+                                        <button class="btn btn-outline-secondary dropdown-toggle" id="selAccount" type="button"
                                             data-toggle="dropdown" aria-haspopup="true"
-                                            aria-expanded="false">{% trans '交易策略' %}</button>
+                                            aria-expanded="false">{% trans '交易账户' %}</button>
                                         <div class="dropdown-menu">
                                             {% if trade_info %}
-                                            {% for strategy in trade_info.strategies %}
-                                            <span class="dropdown-item strategy-item" data-id="{{ strategy.pk }}">{{ strategy.name }}</span>
+                                            {% for account in trade_info.accounts %}
+                                            <span class="dropdown-item account-item" data-id="{{ account.pk }}">{{ account.account_name }}</span>
                                             <!-- <div role="separator" class="dropdown-divider"></div> -->
                                             {% endfor %}
                                             {% endif %}
                                         </div>
                                     </div>
-                                    <input class="form-control form-control-sm" type="text" id="pickedStrategy" placeholder="{% trans '请选择策略' %}"
-                                        readonly>
-                                    <input type="hidden" id="pickedStrategyID">
+                                    <input class="form-control form-control-sm" type="text" id="pickedAccount" placeholder="{% trans '请选择账户' %}"
+                                        value="{{ trade_info.trade_account.account_name }}" readonly>
+                                    <input type="hidden" id="pickedAccountID" value="{{ trade_info.account_id }}">
                                 </div>
                             </div>
+                            
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-2">
+                                <label for="validationDefaultUsername">{% trans '交易时间 *' %}</label>
+                                <input class="form-control form-control-sm" type="datetime-local" id="tradeDatetime" placeholder="{% trans '交易时间' %}">
+                            </div>
+                            
                         </div>
                         <div class="form-row">
                             <!-- <div class="form-group col-md-6 mb-2"> -->
@@ -228,19 +348,26 @@
                                     required> -->
                                 
                             <!-- </div> --> 
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易时间 *' %}</label>
-                                <input class="form-control form-control-sm" type="text" id="tradeDatetime" placeholder="{% trans '交易时间' %}" value="{% now 'Y-m-d G:i' %}">
-                            </div>
-                            <div class="form-group col-md-6 mb-2">
+                            
+                            <div class="form-group col-md-4 mb-2">
                                 <label for="validationDefaultUsername">{% trans '交易价格 *' %}</label>
                                 <div class="input-group input-group-sm">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text small">{% trans '￥' %}</span>
                                     </div>
-                                    <input type="number" id="tradePrice" class="form-control" placeholder="{% trans '交易价格' %}" step="0.01"
+                                    <input type="number" id="tradePrice" class="form-control" placeholder="{% trans '价格' %}" step="0.01"
                                         aria-label="Amount (to the nearest RMB)" required>
                                 </div>
+                            </div>
+                            <div class="form-group col-md-4 mb-2">
+                                <label for="validationDefaultUsername">{% trans '交易数量 *' %}</label>
+                                <input class="form-control form-control-sm" type="number" id="quantity" placeholder="{% trans '交易数量' %}" step="100"
+                                    data-bind="value:replyNumber" value="100" min="100" required>
+                            </div>
+                            <div class="form-group col-md-4 mb-2">
+                                <label for="validationDefaultUsername">{% trans '目标仓位 *' %}</label>
+                                <input class="form-control form-control-sm" type="number" id="targetPosition" placeholder="{% trans '目标仓位(股)' %}" step="100"
+                                    value="1000" min="100" data-bind="value:replyNumber">
                             </div>
                             <div class="form-group col-md-12 mb-2">
                                 <label for="validationDefaultUsername">{% trans '当前价格' %}</label>
@@ -263,17 +390,6 @@
                             
                         </div>
                         <div class="form-row">
-                            
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '交易数量 *' %}</label>
-                                <input class="form-control form-control-sm" type="number" id="quantity" placeholder="{% trans '交易数量' %}" step="100"
-                                    data-bind="value:replyNumber" value="100" min="100" required>
-                            </div>
-                            <div class="form-group col-md-6 mb-2">
-                                <label for="validationDefaultUsername">{% trans '目标仓位 *' %}</label>
-                                <input class="form-control form-control-sm" type="number" id="targetPosition" placeholder="{% trans '目标仓位(股)' %}" step="100"
-                                    value="1000" min="100" data-bind="value:replyNumber">
-                            </div>
                             <div class="form-group col-md-12 mb-2">
                                 <label for="validationDefaultUsername">{% trans '参考金额' %}</label>
                                 <span>{% trans '￥' %}</span><span id="refCashAmount"></span>
@@ -287,12 +403,28 @@
                                     <input class="form-control" type="text" id="cash" placeholder="{% trans '交易金额' %}" readonly="" required>
                                 </div> -->
                             </div>
-                        </div>
-                        <div class="form-row">
-                            
-                            
-                        </div>
+                            <div class="form-group col-md-12 mb-2">
                         
+                                <div class="input-group input-group-sm">
+                                    <div class="input-group-prepend">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" id="selStrategy" type="button"
+                                            data-toggle="dropdown" aria-haspopup="true"
+                                            aria-expanded="false">{% trans '交易策略' %}</button>
+                                        <div class="dropdown-menu">
+                                            {% if trade_info %}
+                                            {% for strategy in trade_info.strategies %}
+                                            <span class="dropdown-item strategy-item" data-id="{{ strategy.pk }}">{{ strategy.name }}</span>
+                                            <!-- <div role="separator" class="dropdown-divider"></div> -->
+                                            {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <input class="form-control form-control-sm" type="text" id="pickedStrategy" placeholder="{% trans '请选择策略' %}"
+                                        readonly>
+                                    <input type="hidden" id="pickedStrategyID">
+                                </div>
+                            </div>
+                        </div>
                         
                         <button type="submit" id="btnSubmitTrade" class="btn btn-primary float-right">{% trans '创建新记录' %}</button>
                     </form>

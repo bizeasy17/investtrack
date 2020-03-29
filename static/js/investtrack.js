@@ -78,7 +78,7 @@ $(function () {
         });
     };
 
-    checkNotifications();
+    // checkNotifications();
 
     $('#notifications').popover({
         html: true,
@@ -118,7 +118,7 @@ $(function () {
     let ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
     let ws_path = ws_scheme + '://' + window.location.host + "/notifications/";
     let webSocket = new channels.WebSocketBridge();
-    webSocket.connect(ws_path);
+    // webSocket.connect(ws_path);
 
     // Helpful debugging
     webSocket.socket.onopen = function () {

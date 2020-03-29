@@ -1,27 +1,28 @@
-{% extends 'base.html' %}
 {% load static i18n %}
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-{% block content %}
-  <div class="container-scroller mb-4">
-    <div class="container-fluid page-body-wrapper full-page-wrapper">
-      <div class="content-wrapper d-flex align-items-center text-center error-page bg-primary">
-        <div class="row flex-grow">
-          <div class="col-lg-12 mx-auto text-white">
-            <div class="row align-items-center d-flex flex-row">
-              <div class="col-lg-12 pr-lg-4">
-                <h1 class="display-1 mb-0">404</h1>
-              </div>
-              <div class="col-lg-12 error-page-divider pl-lg-4">
-                <h2>{% trans '对不起' %}!</h2>
-                <h3 class="font-weight-light">{% trans '您访问的页面不存在' %}</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- content-wrapper ends -->
+<title>404 - {% trans '我爱滚雪球' %}</title>
+
+<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,900" rel="stylesheet">
+<link type="text/css" rel="stylesheet" href="{% static 'css/page.css' %}" />
+
+</head>
+<body>
+<div id="notfound">
+  <div class="notfound">
+    <div class="notfound-404">
+      <h1>Oops!</h1>
     </div>
-    <!-- page-body-wrapper ends -->
+    <h2>404 - {% trans '页面不存在' %}</h2>
+    <p>{% trans '您访问的页面不存在，或暂时无法访问。' %}</p>
+    <a href="/">{% trans '返回首页' %}</a>
   </div>
-  <!-- container-scroller -->
-{% endblock content %}
+</div>
+</body>
+
+</html>

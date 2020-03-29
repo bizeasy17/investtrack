@@ -500,7 +500,6 @@ class TradeSettings(BaseModel):
 
 
 class TradeStrategy(BaseModel):
-    """"""
     PERIOD_CHOICE = {
         ('mm', _('月线')),
         ('wk', _('周线')),
@@ -638,17 +637,20 @@ class StockNameCodeMap(BaseModel):
 
 
 class StockFollowing(BaseModel):
-    stock_code = models.ForeignKey('StockNameCodeMap',
-                                   verbose_name=_('股票代码'), blank=False, null=False, on_delete=models.CASCADE)
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False)
+    stock_name = models.CharField(
+        _('股票名称'), max_length=50, blank=True, null=True)  # name e.g. 平安银行
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
                                on_delete=models.CASCADE)
     is_following = models.BooleanField(
         _('是否关注'), blank=False, null=False, default=True)
 
     def __str__(self):
-        return str(self.stock_code.stock_name)
+        return str(self.stock_code)
 
     class Meta:
+        unique_together = ('stock_code', 'trader',)
         ordering = ['-last_mod_time']
         verbose_name = _('自选股票')
         verbose_name_plural = verbose_name
@@ -683,7 +685,9 @@ class TradeAccount(BaseModel):
         _('开户时间'), blank=False, null=False, default=now)
     is_valid = models.BooleanField(
         _('是否有效'), blank=False, null=False, default=True)
-
+    is_default = models.BooleanField(
+        _('默认账户'), blank=False, null=False, default=False)
+    
     def __str__(self):
         return str(self.account_provider)
 
@@ -702,6 +706,7 @@ class TradeAccount(BaseModel):
 
     class Meta:
         ordering = ['-last_mod_time']
+        # unique_together = ('is_default', 'trader',)
         verbose_name = _('股票账户')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
