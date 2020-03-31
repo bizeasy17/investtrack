@@ -1,6 +1,12 @@
 $(function(){
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
+    var dt = new Date();
+    
+    if ($("#accountValidSince").length > 0) {
+        var date = formatDate(dt, "-");
+        $("#accountValidSince").val(date);
+    }
     
     var refreshAccountList = function (id, accountProvider, accountType, accountBalance, accountCapital, accountTradeFee, accountValidSince, prepend, capitalChange) {
         // var accId = $("#hiddenAccId").val();

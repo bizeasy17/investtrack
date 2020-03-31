@@ -3,6 +3,7 @@ import calendar
 import decimal
 import locale
 import os
+import logging
 from datetime import date, datetime, timedelta
 
 import datedelta
@@ -27,12 +28,9 @@ from investmgr.models import (Positions, StockFollowing, StockNameCodeMap,
 from .forms import UserTradeForm
 from .models import User
 
-# import datetime
-
-
-
-
 locale.setlocale(locale.LC_ALL, '')
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 

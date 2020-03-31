@@ -19,7 +19,7 @@ from . import utils
 # ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 
 # Create your models here.
-
+logger = logging.getLogger(__name__)
 
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)

@@ -1,5 +1,6 @@
 # import datetime
 import json
+import logging
 from datetime import date, datetime, timedelta
 
 import tushare as ts
@@ -13,6 +14,7 @@ from .models import (StockNameCodeMap, TradeRec, Positions,
                      TradeProfitSnapshot, TradeAccount)
 from users.models import User
 
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 def get_realtime_price(request, stock_name_or_code):
@@ -178,8 +180,8 @@ def get_stock_price_by(request, code, start_date, end_date, period):
         stock_his_data_dic = json.loads(df.to_json(orient='index'))
 
         data = []
-        if not stock_his_data_dic:
-            return JsonResponse(df, safe=False)
+        if stock_his_data_dic is None or len(stock_his_data_dic) == 0:
+            return JsonResponse([], safe=False)
 
         # 按照从end date（从大到小）的顺序获取历史交易数据
         isClosed = False
@@ -214,16 +216,17 @@ def get_stock_price_by(request, code, start_date, end_date, period):
                 }
             )
         # 是否需要加入当天的k线数据
-        realtime_price = get_realtime_price_for_kdata(request, code)
-        # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
-        if len(realtime_price) > 0 and realtime_price['t'].date() == data[0]['t'].date():
-            # if realtime_price['t'].date() < date.today():
-            isClosed = True
+        if start_date != end_date:
+            realtime_price = get_realtime_price_for_kdata(request, code)
+            # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
+            if len(realtime_price) > 0 and realtime_price['t'].date() == data[0]['t'].date():
+                # if realtime_price['t'].date() < date.today():
+                isClosed = True
 
-        # 未收盘，需要从实时行情append
-        data = data[::-1]
-        if not isClosed and period == 'D':
-            data.append(realtime_price)
+            # 未收盘，需要从实时行情append
+            data = data[::-1]
+            if not isClosed and period == 'D':
+                data.append(realtime_price)
 
             # if df is not None and len(df) > 0:
             #     for d in df.values:

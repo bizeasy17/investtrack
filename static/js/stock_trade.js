@@ -9,9 +9,9 @@ $(function () {
     var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
 
-    var chartShowDays15 = 5
-    var chartShowDays30 = 10
-    var chartShowDays60 = 15
+    var chartShowDays15 = 15
+    var chartShowDays30 = 15
+    var chartShowDays60 = 30
     var chartShowDays = 60
     var chartShowDaysW = 180
     var chartShowDaysM = 720
@@ -128,6 +128,20 @@ $(function () {
         return formatDate(priorDate, format);
     }
 
+    var getHistoricPrice = function (symbol, date, period) {
+        var dateObj = date.toString().split("T");
+        var startDate = dateObj[0];
+        var endDate = dateObj[0];
+        $.ajax({
+            url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+            success: function (data) {
+                if(data.length>0){
+                    $("#tradePrice").val(data[0].c)
+                }
+            }
+        })
+    }
+
     var updateChartFor = function (showName, showCode, tsCode, period) {
         var startDate = getStartDate(period, '-');
 
@@ -201,8 +215,8 @@ $(function () {
     if ($("#tradeDatetime").length > 0){
         var date = formatDate(dt, "-");
         var hour = dt.getHours().toString().length == 2 ? dt.getHours() : "0" + dt.getHours();
-        var min = dt.getMinutes().toString().length == 2 ? dt.getMinutes() : "0" + dt.getMinutes();;
-        var sec = dt.getSeconds().toString().length == 2 ? dt.getSeconds() : "0" + dt.getSeconds();;
+        var min = dt.getMinutes().toString().length == 2 ? dt.getMinutes() : "0" + dt.getMinutes();
+        var sec = dt.getSeconds().toString().length == 2 ? dt.getSeconds() : "0" + dt.getSeconds();
         $("#tradeDatetime").val(date+"T"+hour+":"+min+":"+sec);
     }
     refreshPositionBySymbol($("#hiddenCode").val(), null);
@@ -252,8 +266,9 @@ $(function () {
         clearInterval(refreshInterval);
     }
 
-    $('input:radio[name="refresh"]').change(function () {
-
+    $("#tradeDatetime").change(function () {
+        var symbol = $("#hiddenCode").val();
+        getHistoricPrice(symbol, $(this).val(), "D");
     });
 
     $("#followStock").click(function(){
