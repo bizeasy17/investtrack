@@ -24,22 +24,18 @@ $(function () {
         // var dateAndTime = inputDatetime.split(" ");
         var date = formatDate(inputDatetime, "-");
         var openTime = new Date(date + " 9:30:00");
+        var morningCloseTime = new Date(date + " 11:30:00");
+        var afternoonOpenTime = new Date(date + " 13:00:00");
         var closeTime = new Date(date + " 15:00:00");
         var day = inputDatetime.getDay();
         var hour = inputDatetime.getHours();
         var min = inputDatetime.getMinutes();
-        if (inputDatetime >= openTime && inputDatetime <= closeTime) {
+        if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
             return true;
         }
-        // if(day>0 && day<6) {
-        //     var time = hour.toString() + ":" + min.toString() + ":00";
-        //     if(time>="9:30:00" && time<="15:00:00") {
-        //         return true;
-        //     }
-        //     else{
-        //         return false;
-        //     }
-        // }
+        if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
+            return true;
+        }
         return false;
     }
 
@@ -59,6 +55,7 @@ $(function () {
                     $('#currentPrice').text(data.current_price);
                     $('#cashRemainToBuy').text(parseFloat(data.remain_to_buy).toLocaleString());
                     $('#sharesRemainToSell').text(data.remain_to_sell.toLocaleString());
+                    $('#hiddenSharesRemainToSell').text(data.remain_to_sell);
                     $('#tradePrice').val(data.current_price);
                     var quantity = $('#quantity').val();
                     // $('#quantity').val($('#quantity').val().toLocaleString());
@@ -87,7 +84,7 @@ $(function () {
 
                     } else {
                         $('#targetPosition').prop('readonly', true);
-                        if (parseInt($('#sharesRemainToSell').text()) <= 0) {
+                        if (parseInt($('#hiddenSharesRemainToSell').text()) <= 0) {
                             $('#btnSubmitTrade').prop('disabled', true);
                         } else {
                             $('#btnSubmitTrade').removeAttr('disabled');
@@ -246,7 +243,7 @@ $(function () {
 
     var refreshInterval = setInterval(function () {
         var d = new Date();
-        if (isOpenForTrade()) {
+        if (isOpenForTrade(d)) {
             refreshStockInfo2Realtime();
         }
     }, 5 * 60 * 1000);
@@ -660,7 +657,7 @@ $(function () {
             $('#quantity').removeClass("is-invalid");
         }
 
-        if (direction == "s" && quantity > parseInt($("#pLots").text())) {
+        if (direction == "s" && quantity > parseInt($("#hiddenSharesRemainToSell").text())) {
             $('#quantity').addClass("is-invalid");
             return;
         } else {

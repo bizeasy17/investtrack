@@ -161,7 +161,9 @@
                 }
               });
             }
-            document.getElementById("logout").addEventListener("click", logout, event);
+            if(document.getElementById("logout")) {
+              document.getElementById("logout").addEventListener("click", logout, event);
+            }
           });
         </script>
       {% endblock javascript %}

@@ -520,12 +520,17 @@ $(function () {
     // var dateAndTime = inputDatetime.split(" ");
     var date = formatDate(inputDatetime, "-");
     var openTime = new Date(date + " 9:30:00");
+    var morningCloseTime = new Date(date + " 11:30:00");
+    var afternoonOpenTime = new Date(date + " 13:00:00");
     var closeTime = new Date(date + " 15:00:00");
     var day = inputDatetime.getDay();
     var hour = inputDatetime.getHours();
     var min = inputDatetime.getMinutes();
     if(day==0 || day==6) return false; //周六周日不需要刷新
-    if (inputDatetime >= openTime && inputDatetime <= closeTime) {
+    if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
+      return true;
+    }
+    if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime){
       return true;
     }
     return false;

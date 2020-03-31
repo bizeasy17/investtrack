@@ -2,32 +2,49 @@ $(function(){
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
     
-    var refreshAccountList = function (id, accountProvider, accountType, accountBalance, accountCapital, accountTradeFee, accountValidSince, prepend) {
-        var accId = $("#hiddenAccId").val();
+    var refreshAccountList = function (id, accountProvider, accountType, accountBalance, accountCapital, accountTradeFee, accountValidSince, prepend, capitalChange) {
+        // var accId = $("#hiddenAccId").val();
         if (prepend) {
             $("#accountList").prepend(
-                '<a href="#" id="' + id + '" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">'
-                + '<div>'
-                + '<h6 class="my-0">' + accountProvider + accountType + '</h6>'
-                + '<small class="text-muted">' + accountType + '</small>'
+                '<div id="' + id + '" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">'
+                    + '<div>'
+                        + '<h6 class="my-0">' + accountProvider + accountType + '</h6>'
+                        + '<small class="text-muted">' + accountType + '</small>'
+                        + '<a href="/user/account/'+ id + '/trade/sh/" class="small badge-info badge-pill">记录交易</a>'
+                    + '</div>'
+                    + '<span class="text-muted">' + accountBalance + '</span>'
+                    + '<input type="hidden" id="accProvider' + id + '" value="' + accountProvider + '"/>'
+                    + '<input type="hidden" id="accValidSince' + id + '"value="' + accountValidSince + '"/>'
+                    + '<input type="hidden" id="accTradeFee' + id + '" value="' + accountTradeFee + '"/>'
+                    + '<input type="hidden" id="accCapital' + id + '" value="' + accountCapital + '"/>'
+                    + '<input type="hidden" id="accId' + id + '" value="' + id + '"/>'
                 + '</div>'
-                + '<span class="text-muted">' + accountBalance + '</span>'
-                + '<input type="hidden" id="accProvider' + id + '" value="' + accountProvider + '"/>'
-                + '<input type="hidden" id="accValidSince' + id + '"value="' + accountValidSince + '"/>'
-                + '<input type="hidden" id="accTradeFee' + id + '" value="' + accountTradeFee + '"/>'
-                + '<input type="hidden" id="accCapital' + id + '" value="' + accountCapital + '"/>'
-                + '</a>'
             )
-        } else {
-            $("#" + accId).find('h6').text(accountProvider + accountType);
-            $("#" + accId).find('small').text(accountType);
-            $("#" + accId).find('span').text(accountBalance);
-            $("#accCapital" + accId).val(accountCapital);
-            $("#accTradeFee" + accId).val(accountTradeFee);
-            $("#accValidSince" + accId).val(accountValidSince);
-            $("#accProvider" + accId).val(accountProvider);
+            $("#"+id).click(function () {
+                // alert($(this).attr('id') + 'clicked');
+                $('#accountProvider').val($("#accProvider" + $(this).attr('id')).val());
+                $('#accountType').val($(this).find('small').text());
+                $('#accountCapital').val($("#accCapital" + $(this).attr('id')).val());
+                $('#accountBalance').val($(this).find('span').text());
+                $('#tradeFee').val($("#accTradeFee" + $(this).attr('id')).val());
+                $('#accountValidSince').val($("#accValidSince" + $(this).attr('id')).val());
+                $("#hiddenAccId").val($(this).attr('id'));
+            });
+        } else { 
+            // 更新已经在列表指定ID的trade account
+            $("#" + id).find('h6').text(accountProvider + accountType);
+            $("#" + id).find('small').text(accountType);
+            $("#" + id).find('span').text(accountBalance);
+            $("#accCapital" + id).val(accountCapital);
+            $("#accTradeFee" + id).val(accountTradeFee);
+            $("#accValidSince" + id).val(accountValidSince);
+            $("#accProvider" + id).val(accountProvider);
         }
-        $("#totalAccBalance").text((parseInt($("#totalAccBalance").text()) + parseInt(accountBalance)).toLocaleString());
+        if (parseFloat($("#totalAccBalance").text())==0){
+            $("#totalAccBalance").text(accountCapital)
+        }else{
+            $("#totalAccBalance").text(parseFloat($("#totalAccBalance").text()) + parseFloat(capitalChange));
+        }
     }
     // y用户管理
     $('input[type = file]').change(function () {
@@ -131,6 +148,33 @@ $(function(){
     //     capitalNew = $(this).val();
     // });
 
+    var bindTradeAccountList = function(){
+        $.ajax({
+            url: userBaseEndpoint + 'trade-accounts/',
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $(data).each(function(idx, obj){
+
+                });
+            }
+        });
+    }
+
+    var removeTradeAccount = function (event) {
+        event.preventDefault();
+        $.ajax({
+            url: userBaseEndpoint + 'account/remove',
+            method: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                $(data).each(function (idx, obj) {
+
+                });
+            }
+        });
+    }
+
     var createOrUpdateTradeAccount = function (event, continueEdit) {
         event.preventDefault();
         var accountBalance = $('#accountBalance').val();
@@ -139,6 +183,7 @@ $(function(){
         var accountCapital = $('#accountCapital').val();
         var tradeFee = $('#tradeFee').val();
         var accountValidSince = $('#accountValidSince').val();
+        var capitalChange = 0;
 
         if (accountProvider.length < 1) {
             $('#accountProvider').addClass("is-invalid");
@@ -164,10 +209,11 @@ $(function(){
         if (accountBalance.length < 1) {
             accountBalance = $('#accountCapital').val();
         } else {
-            var capitalOld = parseInt($('#accCapital' + $("#hiddenAccId").val()).val());
-            var capitalNew = parseInt($('#accountCapital').val());
+            var capitalOld = parseFloat($('#accCapital' + $("#hiddenAccId").val()).val());
+            var capitalNew = parseFloat($('#accountCapital').val());
+            capitalChange = capitalNew - capitalOld;
             // $('#accountBalance').val("is-invalid");
-            accountBalance = parseInt(accountBalance) + (capitalNew - capitalOld);
+            accountBalance = parseFloat(accountBalance) + capitalChange;
         }
 
         if (tradeFee.length < 1) {
@@ -208,8 +254,8 @@ $(function(){
                 if ($("#hiddenAccId").val() == '') {
                     var prepend = true;
                 }
-                $("#hiddenAccId").val(data.id);
-                refreshAccountList(data.id, accountProvider, accountType, accountBalance, accountCapital, tradeFee, accountValidSince, prepend);
+                // $("#accId").val(data.id);
+                refreshAccountList(data.id, accountProvider, accountType, accountBalance, accountCapital, tradeFee, accountValidSince, prepend, capitalChange);
                 if (continueEdit) {
                     // 保持，并继续编辑
                 } else {
@@ -250,6 +296,7 @@ $(function(){
     // 创建完后，清空。可以创建下一个
     document.getElementById('btnSaveTradeAccount').addEventListener('click', createOrUpdateTradeAccount, event, false);
     // 创建完后，不清空。可以继续编辑
-    document.getElementById('btnSaveAndEdit').addEventListener('click', createOrUpdateTradeAccount, event, false);
+    document.getElementById('btnSaveAndEdit').addEventListener('click', createOrUpdateTradeAccount, event, true);
+    document.getElementById('btnRemove').addEventListener('click', removeTradeAccount, event);
 
 });
