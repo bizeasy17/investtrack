@@ -208,6 +208,7 @@ $(function(){
 
         if (accountBalance.length < 1) {
             accountBalance = $('#accountCapital').val();
+            capitalChange = $('#accountCapital').val();
         } else {
             var capitalOld = parseFloat($('#accCapital' + $("#hiddenAccId").val()).val());
             var capitalNew = parseFloat($('#accountCapital').val());
