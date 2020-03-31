@@ -362,8 +362,8 @@ $(function () {
                   },
                   ticks: {
                     display: true,
-                    min: data.min_attempt,
-                    max: data.max_attempt,
+                    // min: data.min_attempt,
+                    // max: data.max_attempt,
                     stepSize: 1,
                     fontColor: "#b1b0b0",
                     fontSize: 10,

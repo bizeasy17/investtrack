@@ -144,16 +144,19 @@ class TradeRec(BaseModel):
         stock_symbols = []
         stock_symbols_dict = Positions.objects.filter(trader=investor).exclude(
             is_liquadated=True,).distinct().values('stock_code')
-        if stock_symbols_dict is not None and len(stock_symbols_dict) > 0:
-            for stock_symbol in stock_symbols_dict.values():
-                stock_symbols.append(stock_symbol)
-        realtime_stock_quotes = utils.get_realtime_price(stock_symbols)
-        in_stock_positions = Positions.objects.select_for_update().filter(
-            trader=investor).exclude(is_liquadated=True,)
-        with transaction.atomic():
-            for entry in in_stock_positions:
-                entry.make_profit_updated(
-                    realtime_stock_quotes[entry.stock_code])
+        try:
+            if stock_symbols_dict is not None and len(stock_symbols_dict) > 0:
+                for stock_symbol in stock_symbols_dict.values():
+                    stock_symbols.append(stock_symbol)
+            realtime_stock_quotes = utils.get_realtime_price(stock_symbols)
+            in_stock_positions = Positions.objects.select_for_update().filter(
+                trader=investor).exclude(is_liquadated=True,)
+            with transaction.atomic():
+                for entry in in_stock_positions:
+                    entry.make_profit_updated(
+                        realtime_stock_quotes[entry.stock_code])
+        except Exception as e:
+            logger.error(e)
 
     def save(self, *args, **kwargs):
         # 自动给股票代码加上.SH或者.SZ
@@ -177,44 +180,50 @@ class TradeRec(BaseModel):
         #     self.market = 'SZ'
         # if self.direction == 'b'if: #and not self.created_or_mod_by == 'system':
         if not self.created_or_mod_by == 'system':
-            if not self.pk:  # 新建持仓
-                p = Positions.objects.filter(
-                    trader=self.trader.id, stock_code=self.stock_code, trade_account=self.trade_account, is_liquadated=False)
-                if p is not None and p.count() == 0:
-                    if self.direction == 's':  # 卖出不能大于现有持仓（0）
-                        return False  # 需要返回定义好的code
-                    # 新建仓
-                    p = Positions(market=self.market,
-                                  stock_name=self.stock_name, stock_code=self.stock_code)
-                    self.in_stock_positions = p
+            try:
+                if not self.pk:  # 新建持仓
+                    p = Positions.objects.filter(
+                        trader=self.trader.id, stock_code=self.stock_code, trade_account=self.trade_account, is_liquadated=False)
+                    if p is not None and p.count() == 0:
+                        if self.direction == 's':  # 卖出不能大于现有持仓（0）
+                            return False  # 需要返回定义好的code
+                        # 新建仓
+                        p = Positions(market=self.market,
+                                    stock_name=self.stock_name, stock_code=self.stock_code)
+                        self.in_stock_positions = p
+                    else:
+                        # 增仓或者减仓
+                        p = p[0]
+                        self.in_stock_positions = p
+                        if self.direction == 's' and self.board_lots > p.lots:  # 卖出不能大于现有持仓
+                            return False  # 需要返回定义好的code
+                    # 更新持仓信息后返回是否清仓
+                    self.is_liquadated = p.update_stock_position(
+                        self.direction, self.target_position,
+                        self.board_lots, self.price, self.cash, self.trader, self.trade_account)
+
+                    if self.is_liquadated:
+                        entries = TradeRec.objects.select_for_update().filter(
+                            trader=self.trader, stock_code=self.stock_code, direction='b', is_liquadated=False,)
+                        with transaction.atomic():
+                            for entry in entries:
+                                entry.is_liquadated = True
+                                entry.save()
+
+                    self.rec_ref_number = id_generator()
+                    super().save(*args, **kwargs)
                 else:
-                    # 增仓或者减仓
-                    p = p[0]
-                    self.in_stock_positions = p
-                    if self.direction == 's' and self.board_lots > p.lots:  # 卖出不能大于现有持仓
-                        return False  # 需要返回定义好的code
-                # 更新持仓信息后返回是否清仓
-                self.is_liquadated = p.update_stock_position(
-                    self.direction, self.target_position,
-                    self.board_lots, self.price, self.cash, self.trader, self.trade_account)
-
-                if self.is_liquadated:
-                    entries = TradeRec.objects.select_for_update().filter(
-                        trader=self.trader, stock_code=self.stock_code, direction='b', is_liquadated=False,)
-                    with transaction.atomic():
-                        for entry in entries:
-                            entry.is_liquadated = True
-                            entry.save()
-
-                self.rec_ref_number = id_generator()
-                super().save(*args, **kwargs)
-            else:
-                super().save()
+                    super().save()
+            except Exception as e:
+                logger.error(e)
         else:
             super().save()
 
         if self.direction == 's':  # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
-            self.allocate_stock_for_sell()
+            try:
+                self.allocate_stock_for_sell()
+            except Exception as e:
+                logger.error(e)
         return True
 
     def allocate_stock_for_sell(self):
@@ -459,18 +468,18 @@ class Positions(BaseModel):
                 self.make_profit_updated()
 
         self.save()
-        # 有持仓变化时更新当日持仓快照
-        snapshot = TradeProfitSnapshot.objects.filter(
-            trader=trader, trade_account=trade_account, snap_date=date.today())
-        if snapshot is None or len(snapshot) == 0:
-            new_snapshot = TradeProfitSnapshot(
-                trader=trader, trade_account=trade_account, profit=self.profit, snap_date=date.today())
-            new_snapshot.save()
-        else:
-            # 更新快照持仓数量，利润，
-            snapshot.lots = self.lots
-            snapshot.profit = self.profit
-            snapshot[0].save()
+        # 有持仓变化时更新当日持仓快照？？不确定是否需要在此时更新snapshot
+        # snapshot = TradeProfitSnapshot.objects.filter(
+        #     trader=trader, trade_account=trade_account, snap_date=date.today())
+        # if snapshot is None or len(snapshot) == 0:
+        #     new_snapshot = TradeProfitSnapshot(
+        #         trader=trader, trade_account=trade_account, profit=self.profit, snap_date=date.today())
+        #     new_snapshot.save()
+        # else:
+        #     # 更新快照持仓数量，利润，
+        #     snapshot.lots = self.lots
+        #     snapshot.profit = self.profit
+        #     snapshot[0].save()
         return self.is_liquadated
 
     class Meta:
@@ -828,7 +837,6 @@ class TradeProfitSnapshot(BaseModel):
                 account_capital=self.account_capital, applied_period='w')
             week_snapshot.save()
         # 如果每月最后一天，需要多生成一条月'm'快照
-
         mon_range = calendar.monthrange(
             self.snap_date.year, self.snap_date.month)
         last_day = date(self.snap_date.year,

@@ -619,14 +619,7 @@ $(function () {
     // $(".close").click(function(){
     //     $("#messages").addClass('d-none');
     // });
-
-    $('.close').click(function () {
-        // e.preventDefault();
-        $('#messages').addClass('d-none');
-    });
-
     
-
     $('#btnSubmitTrade').click(function () {
         event.preventDefault();
         if ($('#btnSubmitTrade').hasClass("disabled")) return;

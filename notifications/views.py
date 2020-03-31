@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,6 +9,8 @@ from django.views.generic import ListView
 
 from .models import Notification
 
+logger = logging.getLogger(__name__)
+
 class NotificationUnreadListView(LoginRequiredMixin, ListView):
     """Basic ListView implementation to show the unread notifications for
     the actual user"""
@@ -15,7 +19,11 @@ class NotificationUnreadListView(LoginRequiredMixin, ListView):
     template_name = 'notifications/notification_list.html'
 
     def get_queryset(self, **kwargs):
-        return self.request.user.notifications.unread()
+        try:
+            unread = self.request.user.notifications.unread()
+        except Exception as e:
+            logger.error(e)
+        return unread
 
 
 @login_required

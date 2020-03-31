@@ -1,5 +1,5 @@
 import uuid
-
+import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -14,12 +14,18 @@ from channels.layers import get_channel_layer
 
 from uuslug import slugify
 
+logger = logging.getLogger(__name__)
+
 class NotificationQuerySet(models.query.QuerySet):
     """Personalized queryset created to improve model usability"""
 
     def unread(self):
         """Return only unread items in the current queryset"""
-        return self.filter(unread=True)
+        try:
+            unread = self.filter(unread=True)
+        except Exception as e:
+            logger.error(e)
+        return unread
 
     def read(self):
         """Return only read items in the current queryset"""

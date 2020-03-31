@@ -121,13 +121,13 @@ $(function () {
     // webSocket.connect(ws_path);
 
     // Helpful debugging
-    webSocket.socket.onopen = function () {
-        console.log("Connected to " + ws_path);
-    };
+    // webSocket.socket.onopen = function () {
+    //     console.log("Connected to " + ws_path);
+    // };
 
-    webSocket.socket.onclose = function () {
-        console.error("Disconnected from " + ws_path);
-    };
+    // webSocket.socket.onclose = function () {
+    //     console.error("Disconnected from " + ws_path);
+    // };
 
     // Listen the WebSocket bridge created throug django-channels library.
     webSocket.listen(function(event) {
@@ -152,6 +152,4 @@ $(function () {
                 break;
         };
     });
-
-    
 });

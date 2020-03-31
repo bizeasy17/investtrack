@@ -37,8 +37,8 @@
     </div>
 
     <!-- Nav Item - Pages Collapse Menu -->
-    <li class="nav-item active">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="/siteadmin/settings" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
             aria-controls="collapseTwo">
             <i class="fas fa-fw fa-cog"></i>
             <span>{% trans '网站设置' %}</span>
@@ -51,21 +51,19 @@
             </div>
         </div> -->
     </li>
-
     <!-- Heading -->
-    <div class="sidebar-heading">
+    <div class="sidebar-heading ">
         {% trans '查询分析' %}
     </div>
 
     <!-- Nav Item - Pages Collapse Menu -->
-    <li class="nav-item">
+    <li class="nav-item active">
         <a class="nav-link collapsed" href="/siteadmin/query-analyzer/" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
             aria-controls="collapseTwo">
             <i class="fas fa-fw fa-cog"></i>
             <span>{% trans '查询分析' %}</span>
         </a>
     </li>
-
 </ul>
 {% endblock sidebar %}
 
@@ -74,41 +72,28 @@
 
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">{% trans '网站设置' %}</h1>
+        <h1 class="h3 mb-0 text-gray-800">{% trans '查询分析器 - 交易记录' %}</h1>
         <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
                 class="fas fa-download fa-sm text-white-50"></i> {% trans '生成报表' %}</a>
     </div>
 
     <!-- Content Row -->
     <div class="my-3 p-3 bg-white rounded box-shadow">
-        <h6 class="border-bottom border-gray pb-2 mb-0">{% trans '设置' %}</h6>
+        <h6 class="border-bottom border-gray pb-2 mb-0">{% trans '查询' %}</h6>
         <div class="media text-muted pt-3">
-            <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <strong class="text-gray-dark">{% trans '上市公司信息' %}</strong>
-                    <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
-                        <button type="button" class="btn btn-success" id="syncCompanyInfo">{% trans '同步' %}</button>
+            <!-- Search -->
+            <form class="d-none d-sm-inline-block form-inline mr-auto my-2 my-md-0 mw-100 navbar-search">
+                <div class="input-group">
+                    <input type="text"  id="searchForTrade" class="form-control form-control-sm" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
+                    
+                    <div class="input-group-append">
+                        <button class="btn btn-sm btn-secondary" type="button">
+                            <i class="fas fa-search fa-sm"></i>
+                        </button>
                     </div>
                 </div>
-                <span class="d-block" id="syncStatus">{% trans '@tushare lib' %}</span>
-                <i class="fa fa-spinner fa-spin d-none" id="syncSpinner"></i>
-            </div>
+            </form>
         </div>
-        <div class="media text-muted pt-3">
-            <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <strong class="text-gray-dark">{% trans '手动生成账户快照' %}</strong>
-                    <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
-                        <button type="button" class="btn btn-success" id="executeStockSnapshot">{% trans '执行' %}</button>
-                    </div>
-                </div>
-                <span class="d-block" id="snapshotStatus">{% trans '@LoveRollingSnowball' %}</span>
-                <i class="fa fa-spinner fa-spin d-none" id="snapshotSpinner"></i>
-            </div>
-        </div>
-        <small class="d-block text-right mt-3">
-            <a href="#">{% trans '所有设置' %}</a>
-        </small>
     </div>
 
 </div>

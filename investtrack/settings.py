@@ -179,7 +179,7 @@ LOGGING = {
         'log_file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'djangoblog.log',
+            'filename': 'love_snowball.log',
             'maxBytes': 16777216,  # 16 MB
             'formatter': 'verbose'
         },

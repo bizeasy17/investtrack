@@ -23,6 +23,7 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
     # template_name属性用于指定使用哪个模板进行渲染
     default_template_name = 'siteadmin/dashboard.html'
     site_settings_template_name = 'siteadmin/settings.html'
+    site_query_analyzer_template_name = 'siteadmin/query_analyzer.html'
 
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'admin_dashboard'
@@ -36,6 +37,8 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
                     return render(request, self.default_template_name)
                 elif module_name == 'settings':
                     return render(request, self.site_settings_template_name)
+                elif module_name == 'query-analyzer':
+                    return render(request, self.site_query_analyzer_template_name)
                 else:
                     return render(request, self.default_template_name)
         else:
@@ -97,9 +100,13 @@ def sync_stock_position_for_investor(investor):
 
 def take_account_snapshot(invest_account):
     today = date.today()
-    snapshot = TradeProfitSnapshot(trade_account=invest_account, snap_date=today)
-    snapshot.take_account_snapshot()
-
+    # 判断是否存在snapshot
+    snapshots = TradeProfitSnapshot.objects.filter(
+        trade_account=invest_account, snap_date=today)
+    if snapshots is not None and not snapshots.exists():
+        snapshot = TradeProfitSnapshot(
+            trade_account=invest_account, snap_date=today)
+        snapshot.take_account_snapshot()
 
 @login_required
 def take_snapshot_manual(request):
