@@ -673,7 +673,7 @@ class TradeAccount(BaseModel):
     account_type = models.CharField(
         _('账户类型'), max_length=50, blank=True, null=True)
     account_name = models.CharField(
-        _('账户名称'), max_length=50, blank=False, null=False, unique=True)
+        _('账户名称'), max_length=50, blank=False, null=False)
     account_capital = models.DecimalField(
         _('本金'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     account_balance = models.DecimalField(
@@ -706,7 +706,7 @@ class TradeAccount(BaseModel):
 
     class Meta:
         ordering = ['-last_mod_time']
-        # unique_together = ('is_default', 'trader',)
+        unique_together = ('account_name', 'trader',)
         verbose_name = _('股票账户')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

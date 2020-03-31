@@ -142,7 +142,7 @@
                                     <hr>
                                     <div class="row">
                                         <div class="col-lg-4">
-                                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
+                                            <a class="btn btn-sm btn-outline-info" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
                                             <!-- <a class="btn btn-sm btn-outline-primary" href="#">{% trans '卖出-' %}</a> -->
                                             <!-- <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}"><i class="fa fa-eye"></i>{% trans '查看交易' %}</a> -->
 
@@ -179,7 +179,7 @@
                         {% if dashboard %}
                         {% if dashboard.trade_accounts|length == 0 %}
                         <div class="d-flex justify-content-between align-items-center">
-                            <span>{% trans '无虚拟交易账户，请单击 ' %}<a href="{% url 'user:create_account' %}" class="btn btn-primary"><i class="fa fa-piggy-bank mr-1"></i>{% trans '创建' %}</a></span>
+                            <span>{% trans '无虚拟交易账户，请单击 ' %}<a href="{% url 'user:create_account' %}" class="btn btn-danger"><i class="fa fa-piggy-bank mr-1"></i>{% trans '创建' %}</a></span>
                         </div>
                         {% else %}
                         <div class="list-group mb-3" id="accountList">
@@ -194,7 +194,7 @@
                                 </div>
                                 <div>
                                     <h6 class="text-muted">{{a.account_balance}}</h6>
-                                    <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="btn btn-sm btn-outline-secondary"><i class="fa fa-plus"></i>{%trans '记录交易'%}</a>
+                                    <a href="{% url 'user:get_record_trade_view' account=a.id symbol='sh' %}" class="btn btn-sm btn-outline-info"><i class="fa fa-plus"></i>{%trans '记录交易'%}</a>
                                 </div>
                             </div>
                             {% endfor %}

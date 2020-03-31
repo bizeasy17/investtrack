@@ -862,11 +862,11 @@ def create_account(request):
         #     new_trade.allocate_stock_for_sell()
         # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
         if acc_id is not None:
-            return JsonResponse({'code': 'success', 'id': acc_id, 'message': _('创建成功')}, safe=False)
+            return JsonResponse({'code': 'success', 'id': acc_id, 'message': _('保存成功')}, safe=False)
         else:
-            return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe=False)
+            return JsonResponse({'code': 'error', 'message': _('保存失败')}, safe=False)
 
-    return JsonResponse({'code': 'error', 'message': _('创建失败')}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('保存失败')}, safe=False)
 
 def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
     '''

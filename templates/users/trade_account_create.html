@@ -12,24 +12,26 @@
       </h5>
       <div class="list-group mb-3" id="accountList">
         {% if trade_account %}
+        
         {% for trade_account in trade_account.trade_accounts %}
         <div id="{{trade_account.id}}" class="list-group-item d-flex justify-content-between list-group-item-action lh-condensed">
           <div>
             <h6 class="my-0">{{trade_account.account_name}}
-              <a href="{% url 'user:get_record_trade_view' account=trade_account.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '记录交易'%}</a>
             </h6>
             <small class="text-muted">{{trade_account.account_type}}</small>
+            <a href="{% url 'user:get_record_trade_view' account=trade_account.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '记录交易'%}</a>
           </div>
           <span class="text-muted">{{trade_account.account_balance}}</span>
           
           <input type="hidden" id="accProvider{{trade_account.id}}" value="{{trade_account.account_provider}}"/>
           <input type="hidden" id="accValidSince{{trade_account.id}}" value="{{trade_account.activate_date|date:'Y-m-d'}}"/>
-          <input type="hidden" id="accTradeFee{{trade_account.id}}" value="{{trade_account.trade_fee}}"/>
+          <input type="hidden" id="accTradeFee{{trade_account.id}}" value="{{trade_account.service_charge}}"/>
           <input type="hidden" id="accCapital{{trade_account.id}}" value="{{trade_account.account_capital}}"/>
-          <input type="hidden" id="hiddenAccId"/>
+          <input type="hidden" id="accId{{trade_account.id}}" value="{{trade_account.id}}"/>
         </div>
         {% endfor %}
         <li class="list-group-item d-flex justify-content-between">
+          <input type="hidden" id="hiddenAccId"/>
           <span>{% trans '账户总额（￥）' %}</span>
           <strong id="totalAccBalance">{{ trade_account.total_balance }}</strong>
         </li>
@@ -101,7 +103,7 @@
         <input type="submit" value="{% trans '保存' %}" class="btn btn-lg btn-primary" id="btnSaveTradeAccount"/>
         <!-- <input type="submit" value="保存并增加另一个" class="btn btn-lg btn-primary" id="btnSaveAndCreateAnotherAcc"/> -->
         <input type="submit" value="{% trans '保存并继续编辑' %}" class="btn btn-lg btn-primary" id="btnSaveAndEdit"/>
-        <input class="btn btn-danger btn-lg" type="submit" value="{% trans '删除' %}" id="btnRemoveTradeAccount"/>
+        <input class="btn btn-danger btn-lg" type="submit" value="{% trans '删除' %}" id="btnRemove"/>
       </form>
     </div>
   </div>
