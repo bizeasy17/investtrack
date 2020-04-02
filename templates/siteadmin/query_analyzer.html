@@ -95,6 +95,72 @@
             </form>
         </div>
     </div>
+    <div class="my-3 p-3 bg-white rounded box-shadow">
+        <h6 class="border-bottom border-gray pb-2 mb-0">{% trans '所有交易记录' %}</h6>
+        <div class="media text-muted pt-3">
+            <!-- Trade Records -->
+            <div class="col-md-12 grid-margin stretch-card">
+                <div>
+                    <div class="">
+                        <p class=""><i class="fa fa-chart-line" ></i> {% trans '持仓' %}</p>
+                        {% if sa_dashboard %}
+                        {% for p in sa_dashboard.positions %}
+                        <div class="card-title mb-2 mt-2">
+                            <div class="">
+                                <div class='d-flex align-items-center justify-content-between flex-wrap'>
+                                    <div class="">
+                                        <h7 class="card-title">{{ p.stock_name }}</h7>
+                                        <h7 class="card-subtitle mb-2 text-muted">{{ p.stock_code }}</h7>
+                                    </div>
+                                    
+                                    <div class="">
+                                        <div class="">
+                                        {% if p.profit < 0 %}
+                                        <td><span class="badge badge-pill badge-success mr-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
+                                        {% else %}
+                                        <td><span class="badge badge-pill badge-danger mr-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
+                                        {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <div class="text-muted"> 
+                                        <div>{% trans '现价' %}</div>
+                                        <div>{{ p.current_price }}</div>
+                                    </div>
+                                    <div class="text-muted"> 
+                                        <div>{% trans '成本' %}</div>
+                                        <div>{{ p.position_price }}</div>
+                                    </div>
+                                    <div class="text-muted">  
+                                        <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div>
+                                        <div><span class="mr-1">{{ p.lots }}</span><span>({{ p.target_position }})</span></div>
+                                    </div>
+                                    <div class="text-muted">  
+                                        <div>{% trans '市值' %}</div>
+                                        <div>{{ p.cash }}</div>
+                                    </div>
+
+                                </div>
+                                <hr>
+                                <div class="mb-2 mt-2 d-none" id="pId{{p.id}}">
+                                </div>
+                                
+                                <div class="d-flex align-items-center justify-content-between flex-wrap small">
+                                    <button class="btn btn-sm btn-secondary" name="show-trade-record" type="button" id="{{p.id}}">
+                                        {% trans '查看明细' %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 {% endblock content %}

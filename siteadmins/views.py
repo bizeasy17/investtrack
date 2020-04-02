@@ -26,7 +26,7 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
     site_query_analyzer_template_name = 'siteadmin/query_analyzer.html'
 
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'admin_dashboard'
+    context_object_name = 'sa_dashboard'
 
     def get(self, request, *args, **kwargs):
         module_name = self.kwargs['module_name']
@@ -38,11 +38,72 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
                 elif module_name == 'settings':
                     return render(request, self.site_settings_template_name)
                 elif module_name == 'query-analyzer':
-                    return render(request, self.site_query_analyzer_template_name)
+                    positions = Positions.objects.filter()[:10]
+                    queryset = {
+                        'positions': positions,
+                    }
+                    return render(request, self.site_query_analyzer_template_name, {self.context_object_name: queryset})
                 else:
                     return render(request, self.default_template_name)
         else:
             return HttpResponseRedirect(reverse('404'))
+
+
+@login_required
+def get_transaction_detail(request, id):
+    if request.method == 'GET':
+        recs_json = []
+        trade_recs = TradeRec.objects.filter(in_stock_positions_id=id).exclude(created_or_mod_by='system')
+        if trade_recs is not None and trade_recs.count() > 0:
+            for trade_rec in trade_recs:
+                recs_json.append(
+                    {
+                        'id': trade_rec.id,
+                        'symbol': trade_rec.stock_code,
+                        'name': trade_rec.stock_name,
+                        'direction': trade_rec.direction,
+                        'price': trade_rec.price,
+                        'current_price': trade_rec.current_price,
+                        'amount': trade_rec.cash,
+                        'account': trade_rec.trade_account.account_name,
+                        'is_sold': trade_rec.is_sold,
+                        'sold_price': trade_rec.sell_price,
+                        'refer_number': trade_rec.rec_ref_number,
+                        'lots_remain': trade_rec.lots_remain,
+                        'sold_time': trade_rec.sold_time,
+                        'trade_time': trade_rec.trade_time,
+                    }
+                )
+        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
+
+
+def get_transaction_detail_breakdown(request, ref_num):
+    if request.method == 'GET':
+        recs_json = []
+        trade_recs = TradeRec.objects.filter(rec_ref_number=ref_num).exclude(created_or_mod_by='system')
+        if trade_recs is not None and trade_recs.count() > 0:
+            for trade_rec in trade_recs:
+                recs_json.append(
+                    {
+                        'id': trade_rec.id,
+                        'symbol': trade_rec.stock_code,
+                        'name': trade_rec.stock_name,
+                        'direction': trade_rec.direction,
+                        'price': trade_rec.price,
+                        'current_price': trade_rec.current_price,
+                        'amount': trade_rec.cash,
+                        'account': trade_rec.trade_account.account_name,
+                        'is_sold': trade_rec.is_sold,
+                        'sold_price': trade_rec.sell_price,
+                        'refer_number': trade_rec.rec_ref_number,
+                        'lots_remain': trade_rec.lots_remain,
+                        'sold_time': trade_rec.sold_time,
+                        'trade_time': trade_rec.trade_time,
+                    }
+                )
+        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
 
 
 def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
@@ -107,6 +168,7 @@ def take_account_snapshot(invest_account):
         snapshot = TradeProfitSnapshot(
             trade_account=invest_account, snap_date=today)
         snapshot.take_account_snapshot()
+
 
 @login_required
 def take_snapshot_manual(request):
