@@ -26,7 +26,7 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
     site_query_analyzer_template_name = 'siteadmin/query_analyzer.html'
 
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'admin_dashboard'
+    context_object_name = 'site_admin'
 
     def get(self, request, *args, **kwargs):
         module_name = self.kwargs['module_name']
