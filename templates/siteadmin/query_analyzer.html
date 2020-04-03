@@ -103,8 +103,8 @@
                 <div>
                     <div class="">
                         <p class=""><i class="fa fa-chart-line" ></i> {% trans '持仓' %}</p>
-                        {% if sa_dashboard %}
-                        {% for p in sa_dashboard.positions %}
+                        {% if site_admin %}
+                        {% for p in site_admin.positions %}
                         <div class="card-title mb-4 mt-4 small">
                             <div class="">
                                 <div class='d-flex align-items-center justify-content-between flex-wrap'>
