@@ -38,11 +38,75 @@ class SiteAdminGenericView(LoginRequiredMixin, View):
                 elif module_name == 'settings':
                     return render(request, self.site_settings_template_name)
                 elif module_name == 'query-analyzer':
-                    return render(request, self.site_query_analyzer_template_name)
+                    positions = Positions.objects.filter()[:10]
+                    queryset = {
+                        'positions': positions,
+                    }
+                    return render(request, self.site_query_analyzer_template_name, {self.context_object_name: queryset})
                 else:
                     return render(request, self.default_template_name)
         else:
             return HttpResponseRedirect(reverse('404'))
+
+
+def traderec2json(trade_records):
+    recs_json = []
+    if trade_records is not None and trade_records.count() > 0:
+        for trade_rec in trade_records:
+            recs_json.append(
+                {
+                    'id': trade_rec.id,
+                    'symbol': trade_rec.stock_code,
+                    'name': trade_rec.stock_name,
+                    'direction': trade_rec.direction,
+                    'price': trade_rec.price,
+                    'shares': trade_rec.board_lots,
+                    'current_price': trade_rec.current_price,
+                    'amount': trade_rec.cash,
+                    'account': trade_rec.trade_account.account_name,
+                    'is_sold': trade_rec.is_sold,
+                    'sell_ref': trade_rec.sell_stock_refer_id,
+                    'sold_price': trade_rec.sell_price,
+                    'refer_number': trade_rec.rec_ref_number,
+                    'lots_remain': trade_rec.lots_remain,
+                    'sold_time': trade_rec.sold_time,
+                    'trade_time': trade_rec.trade_time,
+                }
+            )
+    return recs_json
+
+
+@login_required
+def get_transaction_detail(request, id):
+    if request.method == 'GET':
+        recs_json = []
+        trade_recs = TradeRec.objects.filter(
+            in_stock_positions_id=id).exclude(created_or_mod_by='system')
+        recs_json = traderec2json(trade_recs)
+        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
+
+
+@login_required
+def get_transaction_detail_breakdown(request, id, ref_num):
+    if request.method == 'GET':
+        recs_json = []
+        trade_recs = TradeRec.objects.filter(
+            rec_ref_number=ref_num).exclude(id=id).exclude(direction='s')
+        recs_json = traderec2json(trade_recs)
+        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
+
+
+@login_required
+def get_transaction_detail_pkd(request, ref_id):
+    if request.method == 'GET':
+        recs_json = []
+        trade_recs = TradeRec.objects.filter(
+            sell_stock_refer_id=ref_id).exclude(created_or_mod_by='human')
+        recs_json = traderec2json(trade_recs)
+        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
 
 
 def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
@@ -107,6 +171,7 @@ def take_account_snapshot(invest_account):
         snapshot = TradeProfitSnapshot(
             trade_account=invest_account, snap_date=today)
         snapshot.take_account_snapshot()
+
 
 @login_required
 def take_snapshot_manual(request):
