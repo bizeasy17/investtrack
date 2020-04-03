@@ -47,18 +47,186 @@ $(function () {
         }
     }
 
-    var showTradeBreakdown = function(refer_number) {
-        // alert(refer_number);
-         $.ajax({
-            url: saBaseEndpoint + "trans/detail/breakdown/" + refer_number,
-            method: "GET",
-            dataType: "json",
-            success: function (data) {
-                if (data.code == 'ok') {
-                    alert(refer_number + " Clicked");
+    var showOrHideTradeRecBreakdown = function(refer_number) {
+        // var pId = $(this).attr("id");
+        if($("#bd_" + refer_number).hasClass("d-none")){
+            $("#bd_" + refer_number).removeClass("d-none");
+        }else{
+            $("#bd_" + refer_number).addClass("d-none");
+        }
+    }
+
+    var showOrHideTradeRecBreakdown = function(refer_number) {
+        // var pId = $(this).attr("id");
+        if($("#bd_" + refer_number).hasClass("d-none")){
+            $("#bd_" + refer_number).removeClass("d-none");
+        }else{
+            $("#bd_" + refer_number).addClass("d-none");
+        }
+    }
+
+    var showOrHideTradeRecPicked = function(refer_number) {
+        // var pId = $(this).attr("id");
+        if($("#alloc_" + refer_number).hasClass("d-none")){
+            $("#alloc_" + refer_number).removeClass("d-none");
+        }else{
+            $("#alloc_" + refer_number).addClass("d-none");
+        }
+    }
+
+    var showPickedRecords4Sell = function(ref_id){
+        if( $("#alloc_"+ref_id).children().length==0){
+            $.ajax({
+                url: saBaseEndpoint + "trans/detail/pkd/" + ref_id,
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    if (data.code == 'ok') {
+                        // alert(refer_number + " Clicked");
+                        $(data.content).each(function(id, obj){
+                            var direction = obj.direction;
+                            var shares = 0;
+                            var badge = '<span class="badge badge-pill badge-danger">买入</span>'
+                            $("#alloc_"+ref_id).append(
+                                '<hr>'+
+                                '<div class="d-flex align-items-center justify-content-between flex-wrap small">'+
+                                '<div class="text-muted">'+
+                                    '<div><span class="font-weight-bold">ID</span></div>'+
+                                    '<div>'+obj.id+'</div>'+
+                                '</div>'+    
+                                '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">类型</span></div>'+
+                                        '<div>'+badge+'<i class="fa fa-robot"></i></div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">时间</span></div>'+
+                                        '<div>'+obj.trade_time+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">价格</span></div>'+
+                                        '<div>'+obj.price+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">数量</span></div>'+
+                                        '<div>'+obj.shares+'</div>'+
+                                    '</div>'+
+                                    // '<div class="text-muted">'+
+                                    //     '<div><span class="font-weight-bold">现价</span></div>'+
+                                    //     '<div>'+obj.curent_price+'</div>'+
+                                    // '</div>'+
+                                    // '<div class="text-muted"> '+
+                                    //     '<div><span class="font-weight-bold">账户</span></div>'+
+                                    //     '<div>'+obj.account+'</div>'+
+                                    // '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">已卖出？</span></div>'+
+                                        '<div>'+obj.is_sold+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">卖出ID</span></div>'+
+                                        '<div>'+obj.sell_ref+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">剩余持仓</span></div>'+
+                                        '<div>'+obj.lots_remain+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">交易金额</span></div>'+
+                                        '<div>'+obj.amount+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">引用编号</span></div>'+
+                                        '<div><input type="button" class="btn btn-sm btn-link" id="ref_'+obj.refer_number+'" value="'+obj.refer_number+'"/></div>'+
+                                    '</div>'+
+                                '</div>'+
+                                '<hr>'
+                            )
+                        });
+                        showOrHideTradeRecPicked(ref_id);
+                    }
                 }
-            }
-        });
+            });
+        }else{
+            showOrHideTradeRecPicked(ref_id)
+        }
+    }
+
+    var showTradeBreakdown = function(id, refer_number) {
+        // alert(refer_number);
+        if( $("#bd_"+refer_number).children().length==0){
+            $.ajax({
+                url: saBaseEndpoint + "trans/detail/breakdown/" + id + "/" + refer_number,
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    if (data.code == 'ok') {
+                        // alert(refer_number + " Clicked");
+                        $(data.content).each(function(id, obj){
+                            var direction = obj.direction;
+                            var shares = 0;
+                            var badge = '<span class="badge badge-pill badge-danger">买入</span>'
+                            $("#bd_"+refer_number).append(
+                                '<hr>'+
+                                '<div class="d-flex align-items-center justify-content-between flex-wrap small">'+
+                                '<div class="text-muted">'+
+                                    '<div><span class="font-weight-bold">ID</span></div>'+
+                                    '<div>'+obj.id+'</div>'+
+                                '</div>'+    
+                                '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">类型</span></div>'+
+                                        '<div>'+badge+'<i class="fa fa-robot"></i></div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">时间</span></div>'+
+                                        '<div>'+obj.trade_time+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">价格</span></div>'+
+                                        '<div>'+obj.price+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">数量</span></div>'+
+                                        '<div>'+obj.shares+'</div>'+
+                                    '</div>'+
+                                    // '<div class="text-muted">'+
+                                    //     '<div><span class="font-weight-bold">现价</span></div>'+
+                                    //     '<div>'+obj.curent_price+'</div>'+
+                                    // '</div>'+
+                                    // '<div class="text-muted"> '+
+                                    //     '<div><span class="font-weight-bold">账户</span></div>'+
+                                    //     '<div>'+obj.account+'</div>'+
+                                    // '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">已卖出？</span></div>'+
+                                        '<div>'+obj.is_sold+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">卖出ID</span></div>'+
+                                        '<div>'+obj.sell_ref+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">剩余持仓</span></div>'+
+                                        '<div>'+obj.lots_remain+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">交易金额</span></div>'+
+                                        '<div>'+obj.amount+'</div>'+
+                                    '</div>'+
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">引用编号</span></div>'+
+                                        '<div><input type="button" class="btn btn-sm btn-link" id="ref_'+obj.refer_number+'" value="'+obj.refer_number+'"/></div>'+
+                                    '</div>'+
+                                '</div>'+
+                                '<hr>'
+                            )
+                        });
+                        showOrHideTradeRecBreakdown(refer_number);
+                    }
+                }
+            });
+        }else{
+            showOrHideTradeRecBreakdown(refer_number);
+        }
     }
     
     var bindDetailOfPosition = function() {
@@ -73,35 +241,46 @@ $(function () {
                         $(data.content).each(function(id, obj){
                             var direction = obj.direction;
                             var badge = "";
+                            var shares = 0;
                             if(direction=='b'){
                                 badge = '<span class="badge badge-pill badge-danger">买入</span>'
+                                shares = parseInt(obj.shares);
                             }else{
                                 badge = '<span class="badge badge-pill badge-success">卖出</span>'
+                                shares = - parseInt(obj.shares);
                             }
                             $("#pId" + pId).append(
                                 '<div class="d-flex align-items-center justify-content-between flex-wrap small">'+
                                     '<div class="text-muted">'+
-                                        '<div><span class="font-weight-bold">交易类型</span></div>'+
+                                        '<div><span class="font-weight-bold">ID</span></div>'+
+                                        '<div><input type="button" class="btn btn-sm btn-link" id="pkd_'+obj.id+'" value="'+obj.id+'"/></div>'+
+                                    '</div>'+    
+                                    '<div class="text-muted">'+
+                                        '<div><span class="font-weight-bold">类型</span></div>'+
                                         '<div>'+badge+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
-                                        '<div><span class="font-weight-bold">交易时间</span></div>'+
+                                        '<div><span class="font-weight-bold">时间</span></div>'+
                                         '<div>'+obj.trade_time+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
-                                        '<div><span class="font-weight-bold">交易价格</span></div>'+
+                                        '<div><span class="font-weight-bold">价格</span></div>'+
                                         '<div>'+obj.price+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
-                                        '<div><span class="font-weight-bold">现价</span></div>'+
-                                        '<div>'+obj.curent_price+'</div>'+
+                                        '<div><span class="font-weight-bold">数量</span></div>'+
+                                        '<div>'+shares+'</div>'+
                                     '</div>'+
-                                    '<div class="text-muted"> '+
-                                        '<div><span class="font-weight-bold">账户</span></div>'+
-                                        '<div>'+obj.account+'</div>'+
-                                    '</div>'+
+                                    // '<div class="text-muted">'+
+                                    //     '<div><span class="font-weight-bold">现价</span></div>'+
+                                    //     '<div>'+obj.curent_price+'</div>'+
+                                    // '</div>'+
+                                    // '<div class="text-muted"> '+
+                                    //     '<div><span class="font-weight-bold">账户</span></div>'+
+                                    //     '<div>'+obj.account+'</div>'+
+                                    // '</div>'+
                                     '<div class="text-muted">'+
-                                        '<div><span class="font-weight-bold">是否已卖出</span></div>'+
+                                        '<div><span class="font-weight-bold">已卖出？</span></div>'+
                                         '<div>'+obj.is_sold+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
@@ -109,7 +288,7 @@ $(function () {
                                         '<div>'+obj.lots_remain+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
-                                        '<div><span class="font-weight-bold">发生金额</span></div>'+
+                                        '<div><span class="font-weight-bold">交易金额</span></div>'+
                                         '<div>'+obj.amount+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
@@ -118,11 +297,17 @@ $(function () {
                                     '</div>'+
                                 '</div>'+
                                 '<hr>'+
+                                '<div class="mb-2 mt-2 d-none" id="alloc_'+obj.id+'">'+
+                                '</div>'+
                                 '<div class="mb-2 mt-2 d-none" id="bd_'+obj.refer_number+'">'+
                                 '</div>'
                             );
                             document.getElementById("ref_"+obj.refer_number).addEventListener("click", function(a){
-                                showTradeBreakdown(obj.refer_number);
+                                showTradeBreakdown(obj.id, obj.refer_number);
+                            });// , event,);
+
+                            document.getElementById("pkd_"+obj.id).addEventListener("click", function(a){
+                                showPickedRecords4Sell(obj.id);
                             });// , event,);
                         });
                         showDetailOfPosition(pId);

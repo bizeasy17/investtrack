@@ -10,6 +10,8 @@ urlpatterns = [
          views.take_snapshot_manual),
     path('trans/detail/position/<int:id>',
          views.get_transaction_detail),
-    path('trans/detail/breakdown/<ref_num>',
+    path('trans/detail/breakdown/<int:id>/<ref_num>',
          views.get_transaction_detail_breakdown),
+    path('trans/detail/pkd/<int:ref_id>',
+         views.get_transaction_detail_pkd),
 ]
