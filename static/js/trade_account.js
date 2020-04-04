@@ -60,10 +60,7 @@ $(function(){
         $(this).next('.custom-file-label').html(fileName);
     });
 
-    $('.close').click(function () {
-        // e.preventDefault();
-        $('#messages').addClass('d-none');
-    });
+    
 
     // var capitalNew;
     $(".list-group-item").click(function () {

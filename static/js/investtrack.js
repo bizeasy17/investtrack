@@ -152,4 +152,9 @@ $(function () {
                 break;
         };
     });
+
+    $('.close').click(function () {
+        // e.preventDefault();
+        $('#messages').addClass('d-none');
+    });
 });

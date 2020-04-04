@@ -219,7 +219,7 @@ class TradeRec(BaseModel):
         else:
             super().save()
 
-        if self.direction == 's':  # 需要根据策略如FIFO/LIFO，卖出复合要求的仓位
+        if self.direction == 's':  # 根据策略：FIFO/LIFO，卖出符合要求的仓位
             try:
                 self.allocate_stock_for_sell()
             except Exception as e:
@@ -228,22 +228,21 @@ class TradeRec(BaseModel):
 
     def allocate_stock_for_sell(self):
         # self 当前的卖出记录
-        if settings.STOCK_OUT_STRATEGY == 'FIFO':
+        if settings.STOCK_OUT_STRATEGY == 'FIFO': #先进先出
             quantity_to_sell = self.board_lots
-            recs = TradeRec.objects.filter(trader=self.trader, stock_code=self.stock_code, direction='b',
+            recs = TradeRec.objects.filter(trader=self.trader, trade_account=self.trade_account, stock_code=self.stock_code, direction='b',
                                            lots_remain__gt=0, is_sold=False, is_liquadated=False,).exclude(created_or_mod_by='system').order_by('trade_time')
             for rec in recs:
                 # 卖出时需要拷贝当前持仓，由系统system创建一条新的记录 -- 新建
-
                 if quantity_to_sell > rec.lots_remain:
-                    # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
+                    # 以前买入的股数不够卖，那该持仓全部卖出，
                     quantity_to_sell -= rec.lots_remain
                     rec.lots_remain = 0
                     rec.sold_time = self.trade_time
                     rec.is_sold = True
                     rec.save()
-                    # 因此需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
-                    new_sys_rec = rec
+                    # 需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
+                    new_sys_rec = rec #?? 需要新创建对象？？
                     new_sys_rec.pk = None
                     new_sys_rec.id = None
                     # new_sys_rec.is_sold = True
@@ -252,7 +251,7 @@ class TradeRec(BaseModel):
                     new_sys_rec.sell_price = self.price
                     new_sys_rec.save()
                 elif quantity_to_sell == rec.lots_remain:
-                    # 以前买入的股数刚好等于卖出量或者不够卖，那该持仓全部卖出，
+                    # 以前买入的股数刚好等于卖出量，那该持仓全部卖出，
                     rec.lots_remain = 0
                     rec.sold_time = self.trade_time
                     rec.is_sold = True
@@ -267,6 +266,8 @@ class TradeRec(BaseModel):
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
                     new_sys_rec.save()
+                    # allocate已有持仓，当前持仓已经满足卖出条件，需要卖出股数设置为0，退出循环。
+                    quantity_to_sell = 0
                     break
                 else:
                     # 已有持仓大于卖出股数，因此需要拷贝当前持仓，
@@ -285,8 +286,13 @@ class TradeRec(BaseModel):
                     new_sys_rec.sell_price = self.price
                     new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.save()
+                    # allocate已有持仓，当前持仓已经满足卖出条件，需要卖出设置为0，退出循环。
+                    quantity_to_sell = 0
                     break
-
+        elif settings.STOCK_OUT_STRATEGY == 'LIFO': #后进先出
+            pass
+        else:
+            pass
 # First, define the Manager subclass.
 
 

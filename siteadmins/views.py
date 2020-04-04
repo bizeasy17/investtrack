@@ -81,7 +81,7 @@ def get_transaction_detail(request, id):
     if request.method == 'GET':
         recs_json = []
         trade_recs = TradeRec.objects.filter(
-            in_stock_positions_id=id).exclude(created_or_mod_by='system')
+            in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
         recs_json = traderec2json(trade_recs)
         return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
@@ -92,7 +92,7 @@ def get_transaction_detail_breakdown(request, id, ref_num):
     if request.method == 'GET':
         recs_json = []
         trade_recs = TradeRec.objects.filter(
-            rec_ref_number=ref_num).exclude(id=id).exclude(direction='s')
+            rec_ref_number=ref_num).exclude(id=id).exclude(direction='s').order_by('-trade_time')
         recs_json = traderec2json(trade_recs)
         return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
@@ -103,7 +103,7 @@ def get_transaction_detail_pkd(request, ref_id):
     if request.method == 'GET':
         recs_json = []
         trade_recs = TradeRec.objects.filter(
-            sell_stock_refer_id=ref_id).exclude(created_or_mod_by='human')
+            sell_stock_refer_id=ref_id).exclude(created_or_mod_by='human').order_by('-trade_time')
         recs_json = traderec2json(trade_recs)
         return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
