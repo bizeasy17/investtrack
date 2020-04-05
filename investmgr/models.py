@@ -21,6 +21,7 @@ from . import utils
 # Create your models here.
 logger = logging.getLogger(__name__)
 
+
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)
     created_time = models.DateTimeField(_('创建时间'), default=now)
@@ -198,9 +199,9 @@ class TradeRec(BaseModel):
                         if self.direction == 's' and self.board_lots > p.lots:  # 卖出不能大于现有持仓
                             return False  # 需要返回定义好的code
                     # 更新持仓信息后返回是否清仓
-                    self.is_liquadated = p.update_stock_position(
+                    self.is_liquadated = p.update_transaction_position(#update_stock_position(
                         self.direction, self.target_position,
-                        self.board_lots, self.price, self.cash, self.trader, self.trade_account)
+                        self.board_lots, self.price, self.cash, self.trader, self.trade_account, self.trade_time)
 
                     if self.is_liquadated:
                         entries = TradeRec.objects.select_for_update().filter(
@@ -228,7 +229,7 @@ class TradeRec(BaseModel):
 
     def allocate_stock_for_sell(self):
         # self 当前的卖出记录
-        if settings.STOCK_OUT_STRATEGY == 'FIFO': #先进先出
+        if settings.STOCK_OUT_STRATEGY == 'FIFO':  # 先进先出
             quantity_to_sell = self.board_lots
             recs = TradeRec.objects.filter(trader=self.trader, trade_account=self.trade_account, stock_code=self.stock_code, direction='b',
                                            lots_remain__gt=0, is_sold=False, is_liquadated=False,).exclude(created_or_mod_by='system').order_by('trade_time')
@@ -242,13 +243,14 @@ class TradeRec(BaseModel):
                     rec.is_sold = True
                     rec.save()
                     # 需要拷贝当前持仓，由系统创建一条新的记录 -- 新建
-                    new_sys_rec = rec #?? 需要新创建对象？？
+                    new_sys_rec = rec  # ?? 需要新创建对象？？
                     new_sys_rec.pk = None
                     new_sys_rec.id = None
                     # new_sys_rec.is_sold = True
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
+                    new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.save()
                 elif quantity_to_sell == rec.lots_remain:
                     # 以前买入的股数刚好等于卖出量，那该持仓全部卖出，
@@ -284,31 +286,20 @@ class TradeRec(BaseModel):
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
+                    new_sys_rec.sold_time = self.trade_time
                     new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.save()
                     # allocate已有持仓，当前持仓已经满足卖出条件，需要卖出设置为0，退出循环。
                     quantity_to_sell = 0
                     break
-        elif settings.STOCK_OUT_STRATEGY == 'LIFO': #后进先出
+        elif settings.STOCK_OUT_STRATEGY == 'LIFO':  # 后进先出
             pass
         else:
             pass
 # First, define the Manager subclass.
 
 
-class PositionManager(models.Manager):
-    def get_queryset(self):
-        # 获得实时报价
-        # ts_code = str(self.stock_code).split('.')[0]
-        realtime_df = ts.get_realtime_quotes(self.stock_code)  # 需要再判断一下ts_code
-        realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
-                                   'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
-        realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
-
-        return super().get_queryset().filter()
-
 # 目前持有仓位数据model
-
 
 class Positions(BaseModel):
     '''
@@ -422,8 +413,157 @@ class Positions(BaseModel):
         else:
             pass
 
+    def calculate_misc_trade_fee(self, direction, trade_account, trade_lots, trade_price):
+        misc_fee = 0
+        # 交易额
+        amount = trade_lots * trade_price
+        # 计算过户费
+        transfer_fee = amount * Positions.TRANSFER_FEE_RATE
+        if transfer_fee <= 1:
+            transfer_fee = Positions.MIN_TRANSFER_FEE
+        # 计算佣金
+        service_charge = amount * Decimal(trade_account.service_charge)
+        if service_charge <= 5:
+            service_charge = Positions.MIN_SERVICE_CHARGE
+        # 计算净利润
+        if direction == 'b':
+            misc_fee = transfer_fee + service_charge
+        elif direction == 's':
+            # 计算印花税
+            stamp_tax = amount * Positions.STAMP_TAX_RATE
+            misc_fee = transfer_fee + service_charge + stamp_tax
+        return misc_fee
+
+    def get_realtime_quote(self, symbol):
+        realtime_df = ts.get_realtime_quotes(symbol)  # 需要再判断一下ts_code
+        realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+        realtime_price = round(Decimal(realtime_df['price'].mean()), 2)
+        realtime_bid = round(Decimal(realtime_df['bid'].mean()), 2)
+        realtime_pre_close = round(
+            Decimal(realtime_df['pre_close'].mean()), 2)
+
+        if realtime_price != Decimal(0.00):
+            realtime_price = realtime_price
+        elif realtime_bid != Decimal(0.00):
+            realtime_price = realtime_bid
+        else:
+            realtime_price = realtime_pre_close
+        return realtime_price
+
+    def calculate_profit(self, transaction_price, trade_direction, trade_account, trade_lots):
+        '''
+        1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
+        2. 持仓价格 =
+        2.1 如果利润是(负-)的
+            每手亏损 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
+        2.2 如果利润是(正+)的
+            每手利润 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
+        '''
+        realtime_quote = self.get_realtime_quote(self.stock_code)
+        self.profit += (realtime_quote - transaction_price) * trade_lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
+        if self.position_price == 0:
+            self.position_price = transaction_price
+        else:
+            self.position_price = round(realtime_quote - self.profit / self.lots, 2)
+        self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
+        # else:
+        #     self.profit = (transaction_price - self.position_price) * self.lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
+        #     self.profit_ratio = str(
+        #         round(self.profit / self.position_price * 100, 2)) + '%'
+        #     self.position_price = round(transaction_price - self.profit /
+        #                                 self.lots, 2)
+        self.current_price = realtime_quote
+
+    def re_calculate_profit(self, transaction_price, trade_direction, trade_account, trade_lots, trade_time):
+        '''
+        1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
+        2. 持仓价格 =
+        2.1 如果利润是(负-)的
+            每手亏损 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
+        2.2 如果利润是(正+)的
+            每手利润 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
+        '''
+        # 卖出时实时价格应为用户输入的交易价
+        cali_profit = Decimal()
+        realtime_quote = transaction_price
+        prior_buy_recs = TradeRec.objects.filter(trader=self.trader, trade_account=trade_account, direction='b', stock_code=self.stock_code, trade_time__lt=trade_time).exclude(is_liquadated=True)
+        # 对所有之前买入的改股票交易，按照卖出价重新计算利润
+        if prior_buy_recs is not None and prior_buy_recs.count() > 0:
+            for buy_rec in prior_buy_recs:
+                cali_profit += (realtime_quote - buy_rec.price) * buy_rec.board_lots - self.calculate_misc_trade_fee('b', trade_account, buy_rec.board_lots, buy_rec.price)
+        self.profit = cali_profit
+        self.position_price = round(realtime_quote - self.profit / self.lots, 2)
+        self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
+        # else:
+        #     self.profit = (transaction_price - self.position_price) * self.lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
+        #     self.profit_ratio = str(
+        #         round(self.profit / self.position_price * 100, 2)) + '%'
+        #     self.position_price = round(transaction_price - self.profit /
+        #                                 self.lots, 2)
+        self.current_price = realtime_quote
+
+    def realtime_sync_position(self):
+        realtime_quote = self.get_realtime_quote(self.stock_code)
+        # 更新持仓利润、利润率和现价
+        if self.lots != 0 and self.position_price != 0:
+            self.profit = (realtime_quote - self.position_price) * self.lots
+            self.profit_ratio = str(
+                round(self.profit / self.position_price * 100, 2)) + '%'
+            self.current_price = realtime_quote
+            self.save()
+
+    def update_buy_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
+        '''
+        买入股票时计算持仓
+        '''
+        self.lots += trade_lots
+        self.cash += trade_cash
+        # 更新利润
+        self.calculate_profit(trade_price, trade_direction, trade_account, trade_lots)
+
+    def update_sell_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time):
+        '''
+        卖出股票时计算持仓
+        '''
+         # 更新利润
+        self.re_calculate_profit(trade_price, trade_direction, trade_account, trade_lots, trade_time)
+        self.lots = self.lots - trade_lots
+        self.cash = self.cash - trade_cash
+        if self.lots == 0:
+            # 清仓，设置is_liquadated = True
+            self.is_liquadated = True
+            self.cash = 0
+        pass
+
+    # 持仓算法
+    def update_transaction_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time):
+        '''
+        1. 永远只能按照卖出时的价格，计算持仓利润，而不是最新价
+        2. 持仓后，如果只是实时更新持仓利润，价格按照目前实时价格计算
+        '''
+        self.trader = trader
+        self.target_position = target_position
+        self.trade_account = trade_account
+        if trade_direction == 'b':
+            self.update_buy_position(trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account)
+        elif trade_direction == 's':
+            self.update_sell_position(trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time)
+        elif trade_direction == 'a': #仓位调整
+            pass
+        self.save()
+        return self.is_liquadated
+
     # 持仓算法
     def update_stock_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
+        '''
+        1. 永远只能按照卖出时的价格，计算持仓利润，而不是最新价
+        2. 持仓后，如果只是实时更新持仓利润，价格按照目前实时价格计算
+        '''
         if trade_direction == 's':
             realtime_price = self.make_profit_updated(
                 realtime_quote=trade_price)
@@ -445,12 +585,12 @@ class Positions(BaseModel):
                 self.is_liquadated = True
                 self.cash = 0
         elif trade_direction == 'b':
-            self.lots = self.lots + trade_lots
+            self.lots  = self.lots + trade_lots
             self.cash = self.cash + trade_cash
             self.profit = round(self.profit +
                                 (realtime_price - trade_price) * trade_lots, 2)
         elif trade_direction == 'a':
-            return
+            pass
         # 计算手续费，印花税和过户费
         self.calculate_misc_fee(
             trade_account, trade_direction, trade_lots, trade_price)

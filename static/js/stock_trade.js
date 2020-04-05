@@ -36,6 +36,9 @@ $(function () {
         if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
             return true;
         }
+        if(inputDatetime > date) {
+            return false;
+        }
         return false;
     }
 
@@ -616,9 +619,9 @@ $(function () {
     //     }
     // });
 
-    // $(".close").click(function(){
-    //     $("#messages").addClass('d-none');
-    // });
+    $(".close").click(function(){
+        $("#messages").addClass('d-none');
+    });
     
     $('#btnSubmitTrade').click(function () {
         event.preventDefault();

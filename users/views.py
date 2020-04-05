@@ -822,13 +822,14 @@ def create_trade(request):
             quantity = int(data.get('quantity'))
             target_position = data.get('targetPosition')
             direction = data.get('direction')
-            trade_time = data.get('tradeTime').split('T')
-            trade_account_id = data.get('tradeAcc')
-            trade_time = trade_time[0] + ' ' + trade_time[1]
+            trade_time = data.get('tradeTime')
+            # trade_time = data.get('tradeTime').split('T')
+            trade_account = TradeAccount.objects.get(id=data.get('tradeAcc'))
+            # trade_time = trade_time[0] + ' ' + trade_time[1]
             new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
                                 board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[0],
-                                target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%d %H:%M:%S'),
-                                created_or_mod_by='human', trade_account=TradeAccount(id=trade_account_id))
+                                target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%dT%H:%M:%S'),
+                                created_or_mod_by='human', trade_account=trade_account)
             # if direction == 'b':
             is_ok = new_trade.save()
             # else:

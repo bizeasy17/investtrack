@@ -241,6 +241,7 @@ $(function () {
                         $(data.content).each(function(id, obj){
                             var direction = obj.direction;
                             var badge = "";
+                            var sold = "";
                             var shares = 0;
                             if(direction=='b'){
                                 badge = '<span class="badge badge-pill badge-danger">买入</span>'
@@ -248,6 +249,15 @@ $(function () {
                             }else{
                                 badge = '<span class="badge badge-pill badge-success">卖出</span>'
                                 shares = - parseInt(obj.shares);
+                            }
+                            if(obj.is_sold){
+                                sold = '<i class="fa fa-battery-empty"></i>'
+                            }else{
+                                if(obj.lots_remain < obj.shares){
+                                    sold = '<i class="fa fa-battery-half"></i>'
+                                }else if(obj.lots_remain == obj.shares){
+                                    sold = '<i class="fa fa-battery-full"></i>'
+                                }
                             }
                             $("#pId" + pId).append(
                                 '<div class="d-flex align-items-center justify-content-between flex-wrap small">'+
@@ -281,7 +291,7 @@ $(function () {
                                     // '</div>'+
                                     '<div class="text-muted">'+
                                         '<div><span class="font-weight-bold">已卖出？</span></div>'+
-                                        '<div>'+obj.is_sold+'</div>'+
+                                        '<div>'+sold+'</div>'+
                                     '</div>'+
                                     '<div class="text-muted">'+
                                         '<div><span class="font-weight-bold">剩余持仓</span></div>'+
