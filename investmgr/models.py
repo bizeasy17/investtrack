@@ -250,7 +250,7 @@ class TradeRec(BaseModel):
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
-                    new_sys_rec.board_lots = quantity_to_sell
+                    # new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.save()
                 elif quantity_to_sell == rec.lots_remain:
                     # 以前买入的股数刚好等于卖出量，那该持仓全部卖出，
@@ -263,7 +263,7 @@ class TradeRec(BaseModel):
                     new_sys_rec.pk = None
                     new_sys_rec.id = None
                     # new_sys_rec.is_sold = True
-                    new_sys_rec.board_lots = quantity_to_sell
+                    # new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
@@ -507,15 +507,14 @@ class Positions(BaseModel):
         #                                 self.lots, 2)
         self.current_price = realtime_quote
 
-    def realtime_sync_position(self):
+    def sync_position_realtime(self):
         realtime_quote = self.get_realtime_quote(self.stock_code)
         # 更新持仓利润、利润率和现价
         if self.lots != 0 and self.position_price != 0:
             self.profit = (realtime_quote - self.position_price) * self.lots
             self.profit_ratio = str(
-                round(self.profit / self.position_price * 100, 2)) + '%'
+                round(self.profit / self.cash * 100, 2)) + '%'
             self.current_price = realtime_quote
-            self.save()
 
     def update_buy_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
         '''
@@ -553,6 +552,7 @@ class Positions(BaseModel):
             self.update_buy_position(trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account)
         elif trade_direction == 's':
             self.update_sell_position(trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time)
+            self.sync_position_realtime()
         elif trade_direction == 'a': #仓位调整
             pass
         self.save()
