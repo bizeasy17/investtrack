@@ -516,10 +516,10 @@ class Positions(BaseModel):
         #     self.position_price = round(transaction_price - self.profit /
         #                                 self.lots, 2)
         self.current_price = realtime_quote
-    
+
     def calibrate_realtime_position(self):
         '''
-        非清仓算法
+        非清仓股持仓成本和利润算法
         1. 获取当前实时报价
         2. 查询所有与该持仓相关的交易记录（除系统生成之外）
         3. 循环所有记录
@@ -531,42 +531,42 @@ class Positions(BaseModel):
         profit = Decimal()
         position_price = Decimal()
         # profit_margin = ''
+        trade_fee = Decimal()
         total_shares = 0
         count = 0
         realtime_quote = self.get_realtime_quote(self.stock_code)
-        transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id).exclude(created_or_mod_by='system').order_by('trade_time')
+        transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id).exclude(
+            created_or_mod_by='system').order_by('trade_time')
         # 对所有之前买入的改股票交易，按照卖出价重新计算利润
         if transaction_recs is not None and transaction_recs.count() > 0:
             for transaction_rec in transaction_recs:
-                if count == 0: 
+                if count == 0:
                     # 首次建仓
                     if transaction_rec.direction == 'b':
                         profit -= self.calculate_misc_trade_fee(
                             'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
-                        position_price = round(
-                            transaction_rec.price - profit / transaction_rec.board_lots, 2)
-                        total_shares += transaction_rec.board_lots
+                        total_shares = transaction_rec.board_lots
+                        position_price = transaction_rec.price - profit / total_shares
                 else:
                     if transaction_rec.direction == 'b':
-                        profit = (transaction_rec.price - position_price) * total_shares - \
-                            self.calculate_misc_trade_fee(
-                                'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
+                        profit = (transaction_rec.price - position_price) * total_shares - self.calculate_misc_trade_fee(
+                            'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
                         total_shares += transaction_rec.board_lots
-                        position_price = round(
-                            transaction_rec.price - profit / total_shares, 2)
+                        position_price = transaction_rec.price - profit / total_shares
                     elif transaction_rec.direction == 's':
                         profit = (transaction_rec.price - position_price) * total_shares - \
                             self.calculate_misc_trade_fee(
                                 's', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
-                        position_price = round(
-                            transaction_rec.price - profit / total_shares, 2)
                         total_shares -= transaction_rec.board_lots
+                        position_price = transaction_rec.price - profit / total_shares
                     else:
                         pass
                 count += 1
-        self.position_price = position_price
-        self.profit = (realtime_quote - position_price) * total_shares
-        self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%' 
+        self.position_price = round(position_price, 2)
+        self.profit = round(
+            (realtime_quote - position_price) * total_shares, 2)
+        self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
+        self.current_price = realtime_quote
         pass
 
     def sync_position_realtime(self):
@@ -614,11 +614,19 @@ class Positions(BaseModel):
         self.target_position = target_position
         self.trade_account = trade_account
         if trade_direction == 'b':
-            self.cash += trade_cash
+            self.cash += trade_cash + \
+                self.calculate_misc_trade_fee(
+                    trade_direction, self.trade_account, trade_lots, trade_price)
             self.lots += trade_lots
             # self.update_buy_position(trade_direction, target_position,
             #                          trade_lots, trade_price, trade_cash, trader, trade_account)
         elif trade_direction == 's':
+            self.lots -= trade_lots
+            self.cash -= trade_cash
+            if self.lots == 0:
+                # 清仓，设置is_liquadated = True
+                self.is_liquadated = True
+                self.cash = 0
             # self.update_sell_position(trade_direction, target_position, trade_lots,
             #                           trade_price, trade_cash, trader, trade_account, trade_time)
             # self.sync_position_realtime()
