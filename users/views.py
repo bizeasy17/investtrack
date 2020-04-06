@@ -75,7 +75,7 @@ class UserDashboardView(LoginRequiredMixin, View):
             total_accounts = len(accounts)
             # update the profit based on the realtime price
             for p in trade_positions:
-                p.make_profit_updated()
+                p.calibrate_realtime_position()
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
