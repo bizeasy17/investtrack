@@ -269,6 +269,7 @@ def get_traderec(request, stock_code, trade_date):
 
 def get_traderec_direction_by_period(request, code, trade_date, period):
     # original format is 000001.SZ, only 000001 needed
+    user = request.user
     buy_sell = ''
     buy = False
     sell = False

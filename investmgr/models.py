@@ -463,11 +463,12 @@ class Positions(BaseModel):
             持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
         '''
         realtime_quote = self.get_realtime_quote(self.stock_code)
-        self.profit += (realtime_quote - transaction_price) * trade_lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
         if self.position_price == 0:
+            self.profit -= self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
             self.position_price = transaction_price
         else:
-            self.position_price = round(realtime_quote - self.profit / self.lots, 2)
+            self.profit = (transaction_price - self.position_price) * trade_lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
+            self.position_price = round(transaction_price - self.profit / self.lots, 2)
         self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
         # else:
         #     self.profit = (transaction_price - self.position_price) * self.lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
@@ -552,7 +553,7 @@ class Positions(BaseModel):
             self.update_buy_position(trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account)
         elif trade_direction == 's':
             self.update_sell_position(trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time)
-            self.sync_position_realtime()
+            # self.sync_position_realtime()
         elif trade_direction == 'a': #仓位调整
             pass
         self.save()

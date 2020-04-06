@@ -135,7 +135,7 @@
                                         </div>
                                         <div class="text-muted">  
                                             <div>{% trans '市值' %}</div>
-                                            <div>{{ p.cash }}</div>
+                                            <div>{{ p.cash|add:p.profit }}</div>
                                         </div>
 
                                     </div>
