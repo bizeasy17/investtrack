@@ -343,6 +343,10 @@ class Positions(BaseModel):
         _('是否清仓'), blank=False, null=False, default=False, db_index=True)
     trade_account = models.ForeignKey('TradeAccount', verbose_name=_(
         '交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
+    is_sychronized = models.BooleanField(
+        _('是否清仓'), blank=False, null=False, default=False)
+    sychronized_datetime = models.DateTimeField(
+        '同步时间', blank=True, null=True)
     # realtime_objects = PositionManager() # The position-specific manager.
 
     def __str__(self):
@@ -451,72 +455,6 @@ class Positions(BaseModel):
             realtime_price = realtime_pre_close
         return realtime_price
 
-    def calculate_profit(self, transaction_price, trade_direction, trade_account, trade_lots):
-        '''
-        1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-        2. 持仓价格 =
-        2.1 如果利润是(负-)的
-            每手亏损 = 利润 / (已有持仓-卖出量(手)）
-            持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
-        2.2 如果利润是(正+)的
-            每手利润 = 利润 / (已有持仓-卖出量(手)）
-            持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
-        '''
-        realtime_quote = self.get_realtime_quote(self.stock_code)
-        if self.position_price == 0:
-            self.profit -= self.calculate_misc_trade_fee(
-                trade_direction, trade_account, trade_lots, transaction_price)
-            self.position_price = round(
-                transaction_price - self.profit / trade_lots, 2)
-        else:
-            self.profit = (transaction_price - self.position_price) * self.lots - \
-                self.calculate_misc_trade_fee(
-                    trade_direction, trade_account, trade_lots, transaction_price)
-            self.position_price = round(
-                transaction_price - self.profit / self.lots, 2)
-        self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
-        # else:
-        #     self.profit = (transaction_price - self.position_price) * self.lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
-        #     self.profit_ratio = str(
-        #         round(self.profit / self.position_price * 100, 2)) + '%'
-        #     self.position_price = round(transaction_price - self.profit /
-        #                                 self.lots, 2)
-        self.current_price = realtime_quote
-
-    def re_calculate_profit(self, transaction_price, trade_direction, trade_account, trade_lots, trade_time):
-        '''
-        1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
-        2. 持仓价格 =
-        2.1 如果利润是(负-)的
-            每手亏损 = 利润 / (已有持仓-卖出量(手)）
-            持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
-        2.2 如果利润是(正+)的
-            每手利润 = 利润 / (已有持仓-卖出量(手)）
-            持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
-        '''
-        # 卖出时实时价格应为用户输入的交易价
-        cali_profit = Decimal()
-        realtime_quote = transaction_price
-        prior_buy_recs = TradeRec.objects.filter(trader=self.trader, trade_account=trade_account, direction='b',
-                                                 stock_code=self.stock_code, trade_time__lt=trade_time).exclude(is_liquadated=True)
-        # 对所有之前买入的改股票交易，按照卖出价重新计算利润
-        if prior_buy_recs is not None and prior_buy_recs.count() > 0:
-            for buy_rec in prior_buy_recs:
-                cali_profit += (realtime_quote - buy_rec.price) * buy_rec.board_lots - \
-                    self.calculate_misc_trade_fee(
-                        'b', trade_account, buy_rec.board_lots, buy_rec.price)
-        self.profit = cali_profit
-        self.position_price = round(
-            realtime_quote - self.profit / self.lots, 2)
-        self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
-        # else:
-        #     self.profit = (transaction_price - self.position_price) * self.lots - self.calculate_misc_trade_fee(trade_direction, trade_account, trade_lots, transaction_price)
-        #     self.profit_ratio = str(
-        #         round(self.profit / self.position_price * 100, 2)) + '%'
-        #     self.position_price = round(transaction_price - self.profit /
-        #                                 self.lots, 2)
-        self.current_price = realtime_quote
-
     def calibrate_realtime_position(self):
         '''
         非清仓股持仓成本和利润算法
@@ -527,16 +465,31 @@ class Positions(BaseModel):
         3.2 计算买入
         3.3 计算卖出
         4. 用实时报价最后计算实时仓位利润
+
+        1. 利润 = 原持仓利润 + (如果未收盘tushare取当前股票价格/收盘价c - 交易价格) * 本次交易量(手) * 100 (1手=100股)
+        2. 持仓价格 =
+        2.1 如果利润是(负-)的
+            每手亏损 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 + 每手亏损
+        2.2 如果利润是(正+)的
+            每手利润 = 利润 / (已有持仓-卖出量(手)）
+            持仓价格 = 当前股票价格：如果未收盘/收盘价 - 每手利润
+
+        调用时需要判断是否已经synchronize，并且
         '''
         profit = Decimal()
         position_price = Decimal()
         # profit_margin = ''
-        trade_fee = Decimal()
+        # trade_fee = Decimal()
         total_shares = 0
         count = 0
         realtime_quote = self.get_realtime_quote(self.stock_code)
-        transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id).exclude(
-            created_or_mod_by='system').order_by('trade_time')
+        if not self.is_sychronized:
+            transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id).exclude(
+                created_or_mod_by='system').order_by('trade_time')
+        else:
+            transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id, trade_time__gte=self.sychronized_datetime).exclude(
+                created_or_mod_by='system').order_by('trade_time')
         # 对所有之前买入的改股票交易，按照卖出价重新计算利润
         if transaction_recs is not None and transaction_recs.count() > 0:
             for transaction_rec in transaction_recs:
@@ -567,6 +520,9 @@ class Positions(BaseModel):
             (realtime_quote - position_price) * total_shares, 2)
         self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
         self.current_price = realtime_quote
+        self.is_sychronized = True
+        self.sychronized_datetime = datetime.now()
+        self.save()
         pass
 
     def sync_position_realtime(self):
@@ -578,31 +534,6 @@ class Positions(BaseModel):
             # self.profit_ratio = str(
             #     round(self.profit / self.cash * 100, 2)) + '%'
             self.current_price = realtime_quote
-
-    def update_buy_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account):
-        '''
-        买入股票时计算持仓
-        '''
-        # 更新利润
-        self.cash += trade_cash
-        self.calculate_profit(trade_price, trade_direction,
-                              trade_account, trade_lots)
-        self.lots += trade_lots
-
-    def update_sell_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time):
-        '''
-        卖出股票时计算持仓
-        '''
-        # 更新利润
-        self.re_calculate_profit(
-            trade_price, trade_direction, trade_account, trade_lots, trade_time)
-        self.lots = self.lots - trade_lots
-        self.cash = self.cash - trade_cash
-        if self.lots == 0:
-            # 清仓，设置is_liquadated = True
-            self.is_liquadated = True
-            self.cash = 0
-        pass
 
     # 持仓算法
     def update_transaction_position(self, trade_direction, target_position, trade_lots, trade_price, trade_cash, trader, trade_account, trade_time):
