@@ -79,34 +79,40 @@ def traderec2json(trade_records):
 @login_required
 def get_transaction_detail(request, id):
     if request.method == 'GET':
-        recs_json = []
-        trade_recs = TradeRec.objects.filter(
-            in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
-        recs_json = traderec2json(trade_recs)
-        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
-    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
+        req_user = request.user
+        if req_user is not None and req_user.is_superuser:
+            recs_json = []
+            trade_recs = TradeRec.objects.filter(
+                in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
+            recs_json = traderec2json(trade_recs)
+            return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败或未授权')}, safe=False)
 
 
 @login_required
 def get_transaction_detail_breakdown(request, id, ref_num):
     if request.method == 'GET':
-        recs_json = []
-        trade_recs = TradeRec.objects.filter(
-            rec_ref_number=ref_num).exclude(id=id).exclude(direction='s').order_by('-trade_time')
-        recs_json = traderec2json(trade_recs)
-        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
-    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
+        req_user = request.user
+        if req_user is not None and req_user.is_superuser:
+            recs_json = []
+            trade_recs = TradeRec.objects.filter(
+                rec_ref_number=ref_num).exclude(id=id).exclude(direction='s').order_by('-trade_time')
+            recs_json = traderec2json(trade_recs)
+            return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败或未授权')}, safe=False)
 
 
 @login_required
 def get_transaction_detail_pkd(request, ref_id):
     if request.method == 'GET':
-        recs_json = []
-        trade_recs = TradeRec.objects.filter(
-            sell_stock_refer_id=ref_id).exclude(created_or_mod_by='human').order_by('-trade_time')
-        recs_json = traderec2json(trade_recs)
-        return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
-    return JsonResponse({'code': 'error', 'message': _('数据获取失败')}, safe=False)
+        site_admin = request.user
+        if site_admin is not None and site_admin.is_superuser:
+            recs_json = []
+            trade_recs = TradeRec.objects.filter(
+                sell_stock_refer_id=ref_id).exclude(created_or_mod_by='human').order_by('-trade_time')
+            recs_json = traderec2json(trade_recs)
+            return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('数据获取失败或未授权')}, safe=False)
 
 
 def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
@@ -209,4 +215,4 @@ def take_snapshot_manual(request):
                         # 5. 生成账户快照
                         take_account_snapshot(account)
         return JsonResponse({'code': 'ok', 'message': _('账户快照生成成功')}, safe=False)
-    return JsonResponse({'code': 'error', 'message': _('系统错误，请稍后再试')}, safe=False)
+    return JsonResponse({'code': 'error', 'message': _('系统错误或未授权')}, safe=False)

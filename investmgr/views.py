@@ -248,6 +248,81 @@ def get_stock_price_by(request, code, start_date, end_date, period):
             logger.error(e)
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
+def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period):
+    df = []
+    index_list = ['sh', 'sz', 'hs300', 'sz50', 'zxb', 'cyb', 'kcb']
+    if request.method == 'GET':
+        try:
+            # if code in index_list:
+            df = ts.get_hist_data(code, start=start_date,
+                                end=end_date, ktype=period)
+
+            stock_his_data_dic = json.loads(df.to_json(orient='index'))
+
+            data = []
+            if stock_his_data_dic is None or len(stock_his_data_dic) == 0:
+                return JsonResponse([], safe=False)
+
+            # 按照从end date（从大到小）的顺序获取历史交易数据
+            isClosed = False
+            for k, v in stock_his_data_dic.items():
+                dt = str(k).split(' ')
+                if len(dt) > 1:
+                    t = datetime.strptime(k, "%Y-%m-%d %H:%M:%S")
+                else:
+                    t = datetime.strptime(k + ' 15:00:00', "%Y-%m-%d %H:%M:%S")
+
+                for kk, vv in v.items():
+                    if kk == 'open':
+                        o = vv
+                    elif kk == 'high':
+                        h = vv
+                    elif kk == 'close':
+                        c = vv
+                    elif kk == 'low':
+                        l = vv
+                buy_sell = ''
+                if code not in index_list:
+                    buy_sell = get_traderec_direction_by_period(
+                        request, code, t, period)
+                data.append(
+                    {
+                        't': t,
+                        'o': o,
+                        'h': h,
+                        'l': l,
+                        'c': c,
+                        'd': buy_sell,
+                    }
+                )
+            # 是否需要加入当天的k线数据
+            if start_date != end_date:
+                realtime_price = get_realtime_price_for_kdata(request, code)
+                # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
+                if len(realtime_price) > 0 and realtime_price['t'].date() == data[0]['t'].date():
+                    # if realtime_price['t'].date() < date.today():
+                    isClosed = True
+
+                # 未收盘，需要从实时行情append
+                data = data[::-1]
+                if not isClosed and period == 'D':
+                    data.append(realtime_price)
+
+                # if df is not None and len(df) > 0:
+                #     for d in df.values:
+                #         data.append(
+                #             {
+                #                 't': datetime.strptime(d[1], "%Y%m%d"),
+                #                 'o': d[2],
+                #                 'h': d[3],
+                #                 'l': d[4],
+                #                 'c': d[5],
+                #             }
+                #         )
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            logger.error(e)
+    return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
 def get_traderec(request, stock_code, trade_date):
     traderec_list = TradeRec.objects.filter(trader=request.user.id,

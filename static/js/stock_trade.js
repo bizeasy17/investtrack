@@ -462,6 +462,8 @@ $(function () {
     $('.account-item').click(function () {
         $('#pickedAccount').val($(this).text());
         $('#pickedAccountID').val($(this).data('id'));
+        $('#hiddenAccountName').val($(this).text());
+        $('#hiddenAccount').val($(this).data('id'));
     });
 
     $('input:radio[name="trade-type"]').change(function () {
