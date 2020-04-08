@@ -80,12 +80,21 @@ def traderec2json(trade_records):
 def get_transaction_detail(request, id):
     if request.method == 'GET':
         req_user = request.user
-        if req_user is not None and req_user.is_superuser:
-            recs_json = []
-            trade_recs = TradeRec.objects.filter(
-                in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
-            recs_json = traderec2json(trade_recs)
-            return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+        if req_user is not None:
+            if req_user.is_superuser:
+                recs_json = []
+                trade_recs = TradeRec.objects.filter(
+                    in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
+                recs_json = traderec2json(trade_recs)
+                return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+            # workaround for use the function for normal user
+            else:
+                recs_json = []
+                trade_recs = TradeRec.objects.filter(trader=req_user.id,
+                    in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
+                recs_json = traderec2json(trade_recs)
+                return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
+
     return JsonResponse({'code': 'error', 'message': _('数据获取失败或未授权')}, safe=False)
 
 

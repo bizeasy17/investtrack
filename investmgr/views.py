@@ -254,7 +254,7 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
     if request.method == 'GET':
         try:
             # if code in index_list:
-            df = ts.get_hist_data(code, start=start_date,
+            df = ts.get_hist_data(symbol, start=start_date,
                                 end=end_date, ktype=period)
 
             stock_his_data_dic = json.loads(df.to_json(orient='index'))
@@ -282,9 +282,9 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
                     elif kk == 'low':
                         l = vv
                 buy_sell = ''
-                if code not in index_list:
+                if symbol not in index_list:
                     buy_sell = get_traderec_direction_by_period(
-                        request, code, t, period)
+                        request, symbol, t, period, account_id)
                 data.append(
                     {
                         't': t,
@@ -297,7 +297,7 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
                 )
             # 是否需要加入当天的k线数据
             if start_date != end_date:
-                realtime_price = get_realtime_price_for_kdata(request, code)
+                realtime_price = get_realtime_price_for_kdata(request, symbol)
                 # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
                 if len(realtime_price) > 0 and realtime_price['t'].date() == data[0]['t'].date():
                     # if realtime_price['t'].date() < date.today():
@@ -342,7 +342,7 @@ def get_traderec(request, stock_code, trade_date):
     return traderec
 
 
-def get_traderec_direction_by_period(request, code, trade_date, period):
+def get_traderec_direction_by_period(request, code, trade_date, period, account_id=-1):
     # original format is 000001.SZ, only 000001 needed
     user = request.user
     buy_sell = ''
@@ -360,18 +360,18 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
     delta_gmt8_hour = timedelta(hours=8)  # GMT+8, China Time
     try:
         if period == 'M':  # month
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,
+            traderec_list = TradeRec.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year, trade_time__month=input_month).order_by('direction').distinct('direction')
         elif period == 'W':  # week
             traderec_list = TradeRec.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
                                                                                             stock_code=code, trade_time__year=input_year, week=input_week).order_by('direction').distinct('direction')
         elif period == 'D':  # day
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,
+            traderec_list = TradeRec.objects.filter(trader=request.user.id,trade_account=account_id,
                                                     stock_code=code,
                                                     trade_time__startswith=trade_date.strftime('%Y-%m-%d')).order_by('direction').distinct('direction')
         elif period == '60':  # 60 min
             delta_hour = timedelta(hours=1)
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,
+            traderec_list = TradeRec.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year,
                                                     trade_time__month=input_month, trade_time__day=input_day,
                                                     trade_time__hour=(trade_date-delta_hour).strftime('%H')).order_by('direction').distinct('direction')
@@ -387,7 +387,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
                 startMin = '0'
                 endMin = '29'
 
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,
+            traderec_list = TradeRec.objects.filter(trader=request.user.id,trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year,
                                                     trade_time__month=input_month, trade_time__day=input_day,
                                                     trade_time__hour=(
@@ -412,7 +412,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period):
                 startMin = '30'
                 endMin = '44'
 
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,
+            traderec_list = TradeRec.objects.filter(trader=request.user.id,trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year,
                                                     trade_time__month=input_month, trade_time__day=input_day,
                                                     trade_time__hour=(

@@ -142,8 +142,16 @@
                 <button id="randomizeData">Randomize Data</button>
             </div>
         </div>
-        <hr>
-        {% if trade_info.trade_log %}
+        <div class="row">
+            <div class="col-lg-12">
+                <button class="btn btn-sm btn-secondary float-right mt-1" name="show-transaction-detail" id="{{trade_info.position.id}}"><i class="fa fa-plus">{% trans '交易明细' %}</i></button>
+            </div>
+            <div class="col-lg-12"><hr></div>
+            <div class="col-lg-12 d-none mt-2" id="pId{{trade_info.position.id}}">
+            </div>
+        </div>
+        
+        {% comment %} {% if trade_info.trade_log %}
         <div class="row">
             <div class="col">
             {% for trade in trade_info.trade_log %}
@@ -265,7 +273,7 @@
             {% endfor %}
             </div>
         </div>
-        {% endif %}
+        {% endif %} {% endcomment %}
     </div>
 
     <!-- Sidebar Widgets Column -->
@@ -445,7 +453,7 @@
 {% block javascript %}
 {{ block.super }}
 <script
-    src="https://cdn.polyfill.io/v2/polyfill.js?features=default,String.prototype.repeat,Array.prototype.find,Array.prototype.findIndex,Math.trunc,Math.sign"></script>
+    src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>

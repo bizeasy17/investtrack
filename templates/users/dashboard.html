@@ -81,19 +81,19 @@
                             <div class="text-muted"> {% trans '今日收益（元）' %}</div>
                             <span class="text-danger">{{ dashboard.today_pnl }}</span>
                             <div class="d-flex align-items-center justify-content-between flex-wrap mt-2">
-                                <div class="text-muted"> 
+                                <div class="text-primary"> 
                                     <div>{% trans '本金' %}</div>
                                     <div><span id="capital">{{ dashboard.capital }}</span></div>
                                 </div>
-                                <div class="text-muted"> 
+                                <div class="text-primary"> 
                                     <div>{% trans '总资产' %}</div>
                                     <div><span id="pnl">{{ dashboard.profit_loss }}</span></div>
                                 </div>
-                                <div class="text-muted"> 
+                                <div class="text-primary"> 
                                     <div>{% trans '持仓股票数' %}</div>
                                     <div><span id="shares">{{ dashboard.total_shares }}</span></div>
                                 </div>
-                                <div class="text-muted"> 
+                                <div class="text-primary"> 
                                     <div>{% trans '管理账户数' %}</div>
                                     <div><span id="accounts">{{ dashboard.total_accounts }}</span></div>
                                 </div>
@@ -101,7 +101,7 @@
                             </div>
                             {% if dashboard %}
                             {% for p in dashboard.positions %}
-                            <div class="card shadow mb-2 mt-2">
+                            <div class="card shadow mb-2 mt-4">
                                 <div class="card-body">
                                     <div class='d-flex align-items-center justify-content-between flex-wrap small'>
                                         <div class="">
@@ -121,30 +121,32 @@
                                     </div>
                                     
                                     <div class="d-flex align-items-center justify-content-between flex-wrap small">
-                                        <div class="text-muted"> 
+                                        <div class="text-primary"> 
                                             <div>{% trans '现价' %}</div>
                                             <div>{{ p.current_price }}</div>
                                         </div>
-                                        <div class="text-muted"> 
+                                        <div class="text-primary"> 
                                             <div>{% trans '成本' %}</div>
                                             <div>{{ p.position_price }}</div>
                                         </div>
-                                        <div class="text-muted">  
+                                        <div class="text-primary">  
                                             <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div>
                                             <div><span class="mr-1">{{ p.lots }}</span><span>({{ p.target_position }})</span></div>
                                         </div>
-                                        <div class="text-muted">  
+                                        <div class="text-primary">  
                                             <div>{% trans '市值' %}</div>
                                             <div>{{ p.cash|add:p.profit }}</div>
                                         </div>
 
                                     </div>
                                     <hr>
+                                    <div class="mb-2 mt-2 d-none" id="pId{{p.id}}">
+                                    </div>
                                     <div class="row">
                                         <div class="col-lg-4">
-                                            <a class="btn btn-sm btn-outline-info" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
+                                            <a class="btn btn-sm btn-outline-info mr-1" href="{% url 'user:get_record_trade_view' account=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
                                             <!-- <a class="btn btn-sm btn-outline-primary" href="#">{% trans '卖出-' %}</a> -->
-                                            <!-- <a class="btn btn-sm btn-outline-primary" href="{% url 'user:trade_log' symbol=p.stock_code %}"><i class="fa fa-eye"></i>{% trans '查看交易' %}</a> -->
+                                            <button class="btn btn-sm btn-outline-info" name="show-trade-record"  id="{{p.id}}" ><i class="fa fa-eye"></i>{% trans '交易明细' %}</button>
 
                                         </div>
                                     
@@ -278,7 +280,7 @@
 {% block javascript %}
 {{ block.super }}
 <script
-    src="https://cdn.polyfill.io/v2/polyfill.js?features=default,String.prototype.repeat,Array.prototype.find,Array.prototype.findIndex,Math.trunc,Math.sign"></script>
+    src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
 <script

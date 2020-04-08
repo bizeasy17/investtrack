@@ -135,8 +135,10 @@ $(function () {
         var dateObj = date.toString().split("T");
         var startDate = dateObj[0];
         var endDate = dateObj[0];
+        var accountId = $("#hiddenAccount").val();
         $.ajax({
-            url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+            // url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: investBaseEndpoint + 'hist/' + code + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 if(data.length>0){
                     $("#tradePrice").val(data[0].c)
@@ -147,9 +149,10 @@ $(function () {
 
     var updateChartFor = function (showName, showCode, tsCode, period) {
         var startDate = getStartDate(period, '-');
-
+        var accountId = $("#hiddenAccount").val();
         $.ajax({
-            url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
+            // url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: investBaseEndpoint + 'hist/' + tsCode + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 chart.data.datasets.forEach(function (dataset) {
                     dataset.data = data;
@@ -362,6 +365,7 @@ $(function () {
     var initStockChart = function (code, showCode, showName) {
         var period = $('input:radio[name="period"]:checked').val();
         var startDate = getStartDate(period, '-');
+        var accountId = $("#hiddenAccount").val();
         // var code = $('input:radio[name="index"]:checked').val(); // e.g. sh
         // var showCode = $('input:radio[name="index"]:checked').attr('id')// e.g. 1A0001 上证
         // var showName = $('input:radio[name="index"]:checked').parent().text().trim();
@@ -371,7 +375,8 @@ $(function () {
         // $('#hiddenTscode').val(showCode);
 
         $.ajax({
-            url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
+            // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: investBaseEndpoint + 'hist/' + code + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 // ctx1.canvas.width = 1000;
                 // ctx1.canvas.height = 250;

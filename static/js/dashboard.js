@@ -44,7 +44,7 @@ $(function () {
     var showCode = item.ts_code;
     var showName = item.text;
     var market = item.market;
-    window.location.href = userBaseEndpoint + "account/" +  $("#defaultAccount").val() + "/trade/" +  code + "/";
+    window.location.href = userBaseEndpoint + "account/" + $("#defaultAccount").val() + "/trade/" + code + "/";
   });
 
   if ($("#profitDevChart").length) {
@@ -516,6 +516,7 @@ $(function () {
     // document.getElementById('positionLegend').innerHTML = positionChart.generateLegend();
   }
 
+
   var isOpenForTrade = function (inputDatetime) {
     // var dateAndTime = inputDatetime.split(" ");
     var date = formatDate(inputDatetime, "-");
@@ -526,11 +527,11 @@ $(function () {
     var day = inputDatetime.getDay();
     var hour = inputDatetime.getHours();
     var min = inputDatetime.getMinutes();
-    if(day==0 || day==6) return false; //周六周日不需要刷新
+    if (day == 0 || day == 6) return false; //周六周日不需要刷新
     if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
       return true;
     }
-    if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime){
+    if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
       return true;
     }
     return false;
@@ -540,11 +541,11 @@ $(function () {
     $.ajax({
       url: userBaseEndpoint + 'positions/refresh/',
       success: function (data) {
-        $(data).each(function(idx, obj){
+        $(data).each(function (idx, obj) {
           // alert(idx);
-          alert(",id:" + obj.id + ",symbol:" + obj.symbol + ",name:" + obj.name + ",position_price:" 
+          alert(",id:" + obj.id + ",symbol:" + obj.symbol + ",name:" + obj.name + ",position_price:"
             + obj.position_price + ",realtime_price:" + obj.realtime_price + ",profit:" + obj.profit + ",profit_ratio:" + obj.profit_ratio
-             + ",lots:" + obj.lots + ",target_position:" + obj.target_position + ",amount:" + obj.amount);
+            + ",lots:" + obj.lots + ",target_position:" + obj.target_position + ",amount:" + obj.amount);
         });
       }
     })
