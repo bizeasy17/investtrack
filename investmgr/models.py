@@ -344,7 +344,7 @@ class Positions(BaseModel):
     trade_account = models.ForeignKey('TradeAccount', verbose_name=_(
         '交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
     is_sychronized = models.BooleanField(
-        _('是否清仓'), blank=False, null=False, default=False)
+        _('是否同步'), blank=False, null=False, default=False)
     sychronized_datetime = models.DateTimeField(
         '同步时间', blank=True, null=True)
     # realtime_objects = PositionManager() # The position-specific manager.
@@ -477,53 +477,56 @@ class Positions(BaseModel):
 
         调用时需要判断是否已经synchronize，并且
         '''
+        count = 0
         profit = Decimal()
         position_price = Decimal()
         # profit_margin = ''
         # trade_fee = Decimal()
         total_shares = 0
-        count = 0
-        realtime_quote = self.get_realtime_quote(self.stock_code)
-        if not self.is_sychronized:
+        realtime_quote = self.get_realtime_quote(self.stock_code)   
+        if self.is_sychronized:
+            transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id, last_mod_time__gte=self.sychronized_datetime).exclude(
+                    created_or_mod_by='system').order_by('trade_time')
+        # 只有在有新交易后才会重新计算
+        if not self.is_sychronized or (transaction_recs is not None and transaction_recs.count() > 0):
             transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id).exclude(
                 created_or_mod_by='system').order_by('trade_time')
-        else:
-            transaction_recs = TradeRec.objects.filter(in_stock_positions=self.id, trade_time__gte=self.sychronized_datetime).exclude(
-                created_or_mod_by='system').order_by('trade_time')
-        # 对所有之前买入的改股票交易，按照卖出价重新计算利润
-        if transaction_recs is not None and transaction_recs.count() > 0:
-            for transaction_rec in transaction_recs:
-                if count == 0:
-                    # 首次建仓
-                    if transaction_rec.direction == 'b':
-                        profit -= self.calculate_misc_trade_fee(
-                            'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
-                        total_shares = transaction_rec.board_lots
-                        position_price = transaction_rec.price - profit / total_shares
-                else:
-                    if transaction_rec.direction == 'b':
-                        profit = (transaction_rec.price - position_price) * total_shares - self.calculate_misc_trade_fee(
-                            'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
-                        total_shares += transaction_rec.board_lots
-                        position_price = transaction_rec.price - profit / total_shares
-                    elif transaction_rec.direction == 's':
-                        profit = (transaction_rec.price - position_price) * total_shares - \
-                            self.calculate_misc_trade_fee(
-                                's', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
-                        total_shares -= transaction_rec.board_lots
-                        position_price = transaction_rec.price - profit / total_shares
+            # 对所有之前买入的改股票交易，按照卖出价重新计算利润
+            if transaction_recs is not None and transaction_recs.count() > 0:
+                for transaction_rec in transaction_recs:
+                    if count == 0:
+                        # 首次建仓
+                        if transaction_rec.direction == 'b':
+                            profit -= self.calculate_misc_trade_fee(
+                                'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
+                            total_shares = transaction_rec.board_lots
+                            position_price = transaction_rec.price - profit / total_shares
                     else:
-                        pass
-                count += 1
-        if count > 0:
-            self.position_price = round(position_price, 2)
-            self.profit = round(
-                (realtime_quote - position_price) * total_shares, 2)
-            self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
-            self.current_price = realtime_quote
-            self.is_sychronized = True
-            self.sychronized_datetime = datetime.now()
-            self.save()
+                        if transaction_rec.direction == 'b':
+                            profit = (transaction_rec.price - position_price) * total_shares - self.calculate_misc_trade_fee(
+                                'b', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
+                            total_shares += transaction_rec.board_lots
+                            position_price = transaction_rec.price - profit / total_shares
+                        elif transaction_rec.direction == 's':
+                            profit = (transaction_rec.price - position_price) * total_shares - \
+                                self.calculate_misc_trade_fee(
+                                    's', self.trade_account, transaction_rec.board_lots, transaction_rec.price)
+                            total_shares -= transaction_rec.board_lots
+                            position_price = transaction_rec.price - profit / total_shares
+                        else:
+                            pass
+                    count += 1
+            if count > 0:
+                self.position_price = round(position_price, 2)
+                self.profit = round(
+                    (realtime_quote - position_price) * total_shares, 2)
+                self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
+                self.current_price = realtime_quote
+                self.is_sychronized = True
+                self.sychronized_datetime = datetime.now()
+                self.save()
+        else:
+            pass
         pass
 
     def sync_position_realtime(self):

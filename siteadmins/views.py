@@ -152,14 +152,15 @@ def sync_stock_position_for_investor(investor):
     in_stock_positions = Positions.objects.select_for_update().filter(
         trader=investor).exclude(is_liquadated=True,)
     with transaction.atomic():
-        if in_stock_positions is not None and len(in_stock_positions) > 0:
-            for position in in_stock_positions:
-                stock_symbols.append(position.stock_code)
-            realtime_quotes = utils.get_realtime_price(
-                list(set(stock_symbols)))
+        # if in_stock_positions is not None and len(in_stock_positions) > 0:
+        #     for position in in_stock_positions:
+        #         stock_symbols.append(position.stock_code)
+        #     realtime_quotes = utils.get_realtime_price(
+        #         list(set(stock_symbols)))
         for entry in in_stock_positions:
-            entry.make_profit_updated(realtime_quotes[entry.stock_code])
-            sync_stock_price_for_investor(entry.pk, realtime_quotes)
+            # entry.make_profit_updated(realtime_quotes[entry.stock_code])
+            # sync_stock_price_for_investor(entry.pk, realtime_quotes)
+            entry.calibrate_realtime_position()
             latest_positions.append(
                 {
                     'id': entry.pk,

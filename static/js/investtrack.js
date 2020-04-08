@@ -276,7 +276,7 @@ $(function () {
     }
 
     var showDetailBtns = document.getElementsByName("show-transaction-detail");
-    if(showDetailBtns){
+    if(showDetailBtns.length>0){
         showDetailBtns[0].addEventListener("click", bindDetailOfPosition)
     }
 

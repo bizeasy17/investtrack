@@ -394,8 +394,9 @@ def calc_realtime_snapshot(request):
     pass
 
 
-def is_enough_trade_records():
-    return True
+def is_enough_trade_records(trader):
+    trade_recs = TradeRec.objects.filter(trader=trader, created_or_mod_by='human')
+    return True if trade_recs.count() > 0 else False
     # pass
 
 
@@ -406,6 +407,7 @@ def get_profit_trend_by_period(request, period):
     if request.method == 'GET':
         try:
             pnl_change_today = 0
+            min_profit = 0
             total_profit = 0
             total_profit_prev = 0
             avg_profit = 0
@@ -416,8 +418,8 @@ def get_profit_trend_by_period(request, period):
             relative_pnl_data = []
             max_pnl = 0
             code = 'OK'
-            if is_enough_trade_records():
-                trader = request.user
+            trader = request.user
+            if is_enough_trade_records(trader):  
                 cal = calendar.Calendar()
                 if not (today.weekday() == calendar.SATURDAY or today.weekday() == calendar.SUNDAY):
                     # calc_realtime_snapshot(request)
@@ -533,22 +535,19 @@ def get_profit_trend_by_period(request, period):
                 min_profit = min(current_pnl) if min(current_pnl) < min(
                     relative_pnl_data) else min(relative_pnl_data)
             else:
-                code = 'BLANK'
-            if True:
-                return JsonResponse(
-                    {
-                        'code': code,
-                        'max_profit': max_pnl,
-                        'min_profit': min_profit,
-                        'total_profit': total_profit,
-                        'avg_profit': avg_profit,
-                        'profit_ratio': profit_ratio,
-                        'label': pnl_label,
-                        'profit_trend': current_pnl,
-                        'previous_profit_trend': relative_pnl_data,
-                    }, safe=False)
-            else:
-                return JsonResponse({'code': 'NULL'}, safe=False)
+                code = 'empty'
+            return JsonResponse(
+                {
+                    'code': code,
+                    'max_profit': max_pnl,
+                    'min_profit': min_profit,
+                    'total_profit': total_profit,
+                    'avg_profit': avg_profit,
+                    'profit_ratio': profit_ratio,
+                    'label': pnl_label,
+                    'profit_trend': current_pnl,
+                    'previous_profit_trend': relative_pnl_data,
+                }, safe=False)
         except Exception as e:
             logger.error(e)
 
@@ -671,16 +670,17 @@ def get_trans_success_rate_by_period(request, period):
                                 fail_count += 1
                     yoy_success_rate.append(success_count)
                     yoy_fail_rate.append(fail_count)
-            
-            success_ratio = str(round(total_success / total_attempt * 100, 2) ) + '%'
+            success_ratio = '0%'
+            yoy_ratio = '0%'
             if total_attempt != 0:
+                success_ratio = str(round(total_success / total_attempt * 100, 2) ) + '%'
                 yoy_ratio = str(round((total_attempt - total_attempt_yoy) / total_attempt, 2) * 100) + '%'
             avg_attempt = round(total_attempt / len(label), 2)
             max_attempt = max(success_rate) if max(success_rate) > max(
                 yoy_success_rate) else max(yoy_success_rate)
             min_attempt = min(success_rate) if min(success_rate) < min(
                 yoy_success_rate) else min(yoy_success_rate)
-            if True:
+            if total_attempt > 0:
                 return JsonResponse(
                     {
                         'code': 'OK',
@@ -697,7 +697,7 @@ def get_trans_success_rate_by_period(request, period):
                         'yoy_fail_rate': yoy_fail_rate,
                     }, safe=False)
             else:
-                return JsonResponse({'code': 'NULL'}, safe=False)
+                return JsonResponse({'code': 'empty'}, safe=False)
         except Exception as e:
             logger.error(e)
 
@@ -711,48 +711,52 @@ def get_position_status(request, account, symbol):
         available_pos = []
         total_avail = 0
         total_target = 0
-        total_percentage = ''
-        if account == "a":
-            if symbol == 'a':  # 取所有持仓信息
-                pos_qs = Positions.objects.filter(
-                    trader=trader, is_liquadated=False)
+        total_percentage = '0%'
+        try:
+            if account == "a":
+                if symbol == 'a':  # 取所有持仓信息
+                    pos_qs = Positions.objects.filter(
+                        trader=trader, is_liquadated=False)
+                else:
+                    symbol_list = list(symbol.split(','))
+                    pos_qs = Positions.objects.filter(
+                        trader=trader, stock_code__in=symbol_list, is_liquadated=False)
+                for pos in pos_qs:
+                    pos_label.append(pos.stock_name)
+                    target_pos.append(pos.target_position * pos.position_price)
+                    available_pos.append(pos.lots * pos.position_price)
+                    total_target += pos.target_position
+                    total_avail += pos.lots
             else:
-                symbol_list = list(symbol.split(','))
-                pos_qs = Positions.objects.filter(
-                    trader=trader, stock_code__in=symbol_list, is_liquadated=False)
-            for pos in pos_qs:
-                pos_label.append(pos.stock_name)
-                target_pos.append(pos.target_position * pos.position_price)
-                available_pos.append(pos.lots * pos.position_price)
-                total_target += pos.target_position
-                total_avail += pos.lots
-        else:
-            if symbol == 'a':
-                pos_qs = Positions.objects.filter(
-                    trader=trader, trade_account=account, is_liquadated=False)
+                if symbol == 'a':
+                    pos_qs = Positions.objects.filter(
+                        trader=trader, trade_account=account, is_liquadated=False)
+                else:
+                    symbol_list = list(symbol.split(','))
+                    pos_qs = Positions.objects.filter(
+                        trader=trader, trade_account=account, stock_code__in=symbol_list, is_liquadated=False)
+                for pos in pos_qs:
+                    pos_label.append(pos.stock_name)
+                    target_pos.append(pos.target_position * pos.position_price)
+                    available_pos.append(pos.lots * pos.position_price)
+                    total_target += pos.target_position
+                    total_avail += pos.lots
+            if total_target != 0:
+                total_percentage = str(
+                    round(total_avail / total_target * 100, 2)) + '%'
+            if len(pos_qs) > 0:
+                return JsonResponse(
+                    {
+                        'code': 'OK',
+                        'total_percentage': total_percentage,
+                        'label': pos_label,
+                        'target_position': target_pos,
+                        'available_position': available_pos,
+                    }, safe=False)
             else:
-                symbol_list = list(symbol.split(','))
-                pos_qs = Positions.objects.filter(
-                    trader=trader, trade_account=account, stock_code__in=symbol_list, is_liquadated=False)
-            for pos in pos_qs:
-                pos_label.append(pos.stock_name)
-                target_pos.append(pos.target_position * pos.position_price)
-                available_pos.append(pos.lots * pos.position_price)
-                total_target += pos.target_position
-                total_avail += pos.lots
-        total_percentage = str(
-            round(total_avail / total_target * 100, 2)) + '%'
-        if len(pos_qs) > 0:
-            return JsonResponse(
-                {
-                    'code': 'OK',
-                    'total_percentage': total_percentage,
-                    'label': pos_label,
-                    'target_position': target_pos,
-                    'available_position': available_pos,
-                }, safe=False)
-        else:
-            return JsonResponse({'code': 'NULL'}, safe=False)
+                return JsonResponse({'code': 'empty'}, safe=False)
+        except Exception as e:
+            logger.error(e)
 
 
 @login_required

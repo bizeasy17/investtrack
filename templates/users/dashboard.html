@@ -27,7 +27,7 @@
                     <div class="card shadow">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '收益分布' %}</p>
+                                <p class="card-title"><i class="fa fa-coins"></i> {% trans '收益分布' %}<span class="text-muted small"> {% trans '(下午3:30更新)' %}</span></p>
                                 <p class="font-weight-medium">
                                     <span class="text-muted small mr-1">{% trans '收益率' %}</span>
                                     <span class="text-danger" id="prfProfitRatio"></span>
@@ -50,6 +50,7 @@
                                     </label>
                                 </div>
                             </div>
+                            <div class="no-trans-data" id="noProfit"></div>
                             <canvas id="profitDevChartWeek" height="130"></canvas>
                         </div>
                     </div>
@@ -70,6 +71,7 @@
                                     mb-lg-0 mr-3" id="invAvgAttempt"></h5>
                                 <p class="text-muted mb-0">{% trans '平均成功次数' %}</p>
                             </div>
+                            <div class="no-trans-data" id="noAttempt"></div>
                             <canvas id="tradeSuccessRatio" height="130"></canvas>
                         </div>
                     </div>
@@ -229,6 +231,7 @@
                         </div>
                         <div class="d-flex flex-wrap mb-2">
                             <div class="regional-chart-legend d-flex align-items-center flex-wrap mb-1" id="positionLegend"></div>
+                            <div class="no-trans-data" id="noPosition"></div>
                             <canvas height="280" id="positionChart"></canvas>
                         </div>
                     </div>

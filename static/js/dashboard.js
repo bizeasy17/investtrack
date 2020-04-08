@@ -197,100 +197,104 @@ $(function () {
       method: 'GET',
       dataType: 'json',
       success: function (data) {
-        // 亏损的字体颜色为绿
-        if (data.avg_profit < 0) {
-          $("#prfAvgProfit").removeClass("text-danger");
-          $("#prfAvgProfit").addClass("text-success");
-        }
-        $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
-        // 亏损的字体颜色为绿
-        if (data.profit_ratio < 0) {
-          $("#prfProfitRatio").removeClass("text-danger");
-          $("#prfProfitRatio").addClass("text-success");
-        }
-        $("#prfProfitRatio").text(data.profit_ratio + '%');
+        if (data.code == "empty") {
+          $("#noProfit").append("<span class='text-muted'>无交易信息</span>");
+        } else {
+          // 亏损的字体颜色为绿
+          if (data.avg_profit < 0) {
+            $("#prfAvgProfit").removeClass("text-danger");
+            $("#prfAvgProfit").addClass("text-success");
+          }
+          $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+          // 亏损的字体颜色为绿
+          if (data.profit_ratio < 0) {
+            $("#prfProfitRatio").removeClass("text-danger");
+            $("#prfProfitRatio").addClass("text-success");
+          }
+          $("#prfProfitRatio").text(data.profit_ratio + '%');
 
-        profitWeekChart = new Chart(profitWeekChartCanvas, {
-          type: "bar",
-          data: {
-            labels: data.label,
-            datasets: [
-              {
-                type: "line",
-                fill: false,
-                label: "收益",
-                data: data.profit_trend,
-                borderColor: "#1cbccd",
-                barPercentage: 0.9,
-                categoryPercentage: 0.7
-              },
-              {
-                label: "同/环比收益",
-                data: data.previous_profit_trend,
-                backgroundColor: "#ffbf36",
-                barPercentage: 0.9,
-                categoryPercentage: 0.7
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            layout: {
-              padding: {
-                left: 0,
-                right: 0,
-                top: 20,
-                bottom: 0
-              }
-            },
-            scales: {
-              yAxes: [
+          profitWeekChart = new Chart(profitWeekChartCanvas, {
+            type: "bar",
+            data: {
+              labels: data.label,
+              datasets: [
                 {
-                  display: true,
-                  gridLines: {
-                    display: true,
-                    drawBorder: false,
-                    color: "#f8f8f8",
-                    zeroLineColor: "#f8f8f8"
-                  },
-                  ticks: {
-                    display: true,
-                    // min: data.min_profit,
-                    // max: data.max_profit,
-                    // stepSize: data.max_profit / 10,
-                    fontColor: "#b1b0b0",
-                    fontSize: 10,
-                    padding: 10
-                  }
-                }
-              ],
-              xAxes: [
+                  type: "line",
+                  fill: false,
+                  label: "收益",
+                  data: data.profit_trend,
+                  borderColor: "#1cbccd",
+                  barPercentage: 0.9,
+                  categoryPercentage: 0.7
+                },
                 {
-                  stacked: false,
-                  ticks: {
-                    beginAtZero: true,
-                    fontColor: "#b1b0b0",
-                    fontSize: 10
-                  },
-                  gridLines: {
-                    color: "rgba(0, 0, 0, 0)",
-                    display: false
-                  },
+                  label: "同/环比收益",
+                  data: data.previous_profit_trend,
+                  backgroundColor: "#ffbf36",
+                  barPercentage: 0.9,
+                  categoryPercentage: 0.7
                 }
               ]
             },
-            legend: {
-              display: false
-            },
-            elements: {
-              point: {
-                radius: 3,
-                backgroundColor: "#ff4c5b"
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              layout: {
+                padding: {
+                  left: 0,
+                  right: 0,
+                  top: 20,
+                  bottom: 0
+                }
+              },
+              scales: {
+                yAxes: [
+                  {
+                    display: true,
+                    gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color: "#f8f8f8",
+                      zeroLineColor: "#f8f8f8"
+                    },
+                    ticks: {
+                      display: true,
+                      // min: data.min_profit,
+                      // max: data.max_profit,
+                      // stepSize: data.max_profit / 10,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10,
+                      padding: 10
+                    }
+                  }
+                ],
+                xAxes: [
+                  {
+                    stacked: false,
+                    ticks: {
+                      beginAtZero: true,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10
+                    },
+                    gridLines: {
+                      color: "rgba(0, 0, 0, 0)",
+                      display: false
+                    },
+                  }
+                ]
+              },
+              legend: {
+                display: false
+              },
+              elements: {
+                point: {
+                  radius: 3,
+                  backgroundColor: "#ff4c5b"
+                }
               }
             }
-          }
-        });
+          });
+        }
       }
     });
   }
@@ -306,99 +310,103 @@ $(function () {
       method: 'GET',
       dataType: 'json',
       success: function (data) {
-        $("#invAvgAttempt").text(data.avg_attempt);
-        $("#invRelAttemptRatio").text(data.success_ratio);
-        var tradeSuccessRatiohChart = new Chart(tradeSuccessRatioChartCanvas, {
-          type: "bar",
-          data: {
-            labels: data.label,
-            datasets: [
-              {
-                type: "line",
-                fill: false,
-                label: "同比（成功）",
-                data: data.yoy_success_rate,
-                borderColor: "#1cbccd"
-              },
-              {
-                type: "line",
-                fill: false,
-                label: "同比（失败）",
-                data: data.yoy_fail_rate,
-                borderColor: "#ffbf36"
-              },
-              {
-                label: "今年（成功）",
-                data: data.success_rate,
-                backgroundColor: "#ffbf36"
-              },
-              {
-                label: "今年（失败）",
-                data: data.fail_rate,
-                backgroundColor: "#1cbccd"
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            layout: {
-              padding: {
-                left: 0,
-                right: 0,
-                top: 20,
-                bottom: 0
-              }
-            },
-            scales: {
-              yAxes: [
+        if (data.code == "empty") {
+          $("#noAttempt").append("<span class='text-muted'>无交易信息</span>");
+        } else {
+          $("#invAvgAttempt").text(data.avg_attempt);
+          $("#invRelAttemptRatio").text(data.success_ratio);
+          var tradeSuccessRatiohChart = new Chart(tradeSuccessRatioChartCanvas, {
+            type: "bar",
+            data: {
+              labels: data.label,
+              datasets: [
                 {
-                  display: true,
-                  gridLines: {
-                    display: true,
-                    drawBorder: false,
-                    color: "#f8f8f8",
-                    zeroLineColor: "#f8f8f8"
-                  },
-                  ticks: {
-                    display: true,
-                    // min: data.min_attempt,
-                    // max: data.max_attempt,
-                    stepSize: 1,
-                    fontColor: "#b1b0b0",
-                    fontSize: 10,
-                    padding: 10
-                  }
-                }
-              ],
-              xAxes: [
+                  type: "line",
+                  fill: false,
+                  label: "同比（成功）",
+                  data: data.yoy_success_rate,
+                  borderColor: "#1cbccd"
+                },
                 {
-                  stacked: false,
-                  ticks: {
-                    beginAtZero: true,
-                    fontColor: "#b1b0b0",
-                    fontSize: 10
-                  },
-                  gridLines: {
-                    color: "rgba(0, 0, 0, 0)",
-                    display: false
-                  },
-
-                  // categoryPercentage: 0.7
+                  type: "line",
+                  fill: false,
+                  label: "同比（失败）",
+                  data: data.yoy_fail_rate,
+                  borderColor: "#ffbf36"
+                },
+                {
+                  label: "今年（成功）",
+                  data: data.success_rate,
+                  backgroundColor: "#ffbf36"
+                },
+                {
+                  label: "今年（失败）",
+                  data: data.fail_rate,
+                  backgroundColor: "#1cbccd"
                 }
               ]
             },
-            legend: {
-              display: false
-            },
-            elements: {
-              point: {
-                radius: 3,
-                backgroundColor: "#ff4c5b"
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              layout: {
+                padding: {
+                  left: 0,
+                  right: 0,
+                  top: 20,
+                  bottom: 0
+                }
+              },
+              scales: {
+                yAxes: [
+                  {
+                    display: true,
+                    gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color: "#f8f8f8",
+                      zeroLineColor: "#f8f8f8"
+                    },
+                    ticks: {
+                      display: true,
+                      // min: data.min_attempt,
+                      // max: data.max_attempt,
+                      stepSize: 1,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10,
+                      padding: 10
+                    }
+                  }
+                ],
+                xAxes: [
+                  {
+                    stacked: false,
+                    ticks: {
+                      beginAtZero: true,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10
+                    },
+                    gridLines: {
+                      color: "rgba(0, 0, 0, 0)",
+                      display: false
+                    },
+
+                    // categoryPercentage: 0.7
+                  }
+                ]
+              },
+              legend: {
+                display: false
+              },
+              elements: {
+                point: {
+                  radius: 3,
+                  backgroundColor: "#ff4c5b"
+                }
               }
             }
-          }
-        });
+          });
+        }
       }
     });
   }
@@ -413,103 +421,107 @@ $(function () {
       method: 'GET',
       dataType: 'json',
       success: function (data) {
-        $("#pTotalAvailPerTarget").text(data.total_percentage);
-        var positionChart = new Chart(positionChartCanvas, {
-          type: 'horizontalBar',
-          data: {
-            labels: data.label,
-            datasets: [
-              {
-                label: '目标仓位',
-                data: data.target_position,
-                backgroundColor: '#1cbccd',
-              },
-              {
-                label: '已有仓位',
-                data: data.available_position,
-                backgroundColor: '#ffbf36',
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            layout: {
-              padding: {
-                left: -7,
-                right: 0,
-                top: 0,
-                bottom: 0
-              }
-            },
-            scales: {
-              yAxes: [{
-                display: true,
-                gridLines: {
-                  display: false,
-                  drawBorder: false
+        if (data.code == "empty") {
+          $("#noPosition").append("<span class='text-muted'>无持仓信息</span>");
+        } else {
+          $("#pTotalAvailPerTarget").text(data.total_percentage);
+          var positionChart = new Chart(positionChartCanvas, {
+            type: 'horizontalBar',
+            data: {
+              labels: data.label,
+              datasets: [
+                {
+                  label: '目标仓位',
+                  data: data.target_position,
+                  backgroundColor: '#1cbccd',
                 },
-                ticks: {
-                  display: true,
-                  min: 0,
-                  max: 400,
-                  stepSize: 100,
-                  fontColor: "#b1b0b0",
-                  fontSize: 10,
-                  padding: 10
-                },
-              }],
-              xAxes: [{
-                display: true,
-                stacked: false,
-                ticks: {
-                  display: false,
-                  beginAtZero: true,
-                  fontColor: "#b1b0b0",
-                  fontSize: 10
-                },
-                gridLines: {
-                  display: true,
-                  drawBorder: false,
-                  lineWidth: 1,
-                  color: "#f5f5f5",
-                  zeroLineColor: "#f5f5f5"
+                {
+                  label: '已有仓位',
+                  data: data.available_position,
+                  backgroundColor: '#ffbf36',
                 }
-              }]
+              ]
             },
-            legend: {
-              display: true
-            },
-            elements: {
-              point: {
-                radius: 3,
-                backgroundColor: '#ff4c5b'
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              layout: {
+                padding: {
+                  left: -7,
+                  right: 0,
+                  top: 0,
+                  bottom: 0
+                }
+              },
+              scales: {
+                yAxes: [{
+                  display: true,
+                  gridLines: {
+                    display: false,
+                    drawBorder: false
+                  },
+                  ticks: {
+                    display: true,
+                    min: 0,
+                    max: 400,
+                    stepSize: 100,
+                    fontColor: "#b1b0b0",
+                    fontSize: 10,
+                    padding: 10
+                  },
+                }],
+                xAxes: [{
+                  display: true,
+                  stacked: false,
+                  ticks: {
+                    display: false,
+                    beginAtZero: true,
+                    fontColor: "#b1b0b0",
+                    fontSize: 10
+                  },
+                  gridLines: {
+                    display: true,
+                    drawBorder: false,
+                    lineWidth: 1,
+                    color: "#f5f5f5",
+                    zeroLineColor: "#f5f5f5"
+                  }
+                }]
+              },
+              legend: {
+                display: true
+              },
+              elements: {
+                point: {
+                  radius: 3,
+                  backgroundColor: '#ff4c5b'
+                }
+              },
+              legendCallback: function (chart) {
+                var text = [];
+                text.push('<div class="item mr-4 d-flex align-items-center small">');
+                text.push(
+                  '<div class="item-box mr-2" data-color="' +
+                  chart.data.datasets[0].backgroundColor +
+                  ' "></div><p class="text-black mb-0"> ' +
+                  chart.data.datasets[0].label +
+                  "</p>"
+                );
+                text.push('</div>');
+                text.push('<div class="item d-flex align-items-center small">');
+                text.push(
+                  '<div class="item-box mr-2" data-color="' +
+                  chart.data.datasets[1].backgroundColor +
+                  '"></div><p class="text-black mb-0"> ' +
+                  chart.data.datasets[1].label +
+                  " </p>"
+                );
+                text.push('</div>');
+                return text.join('');
               }
             },
-            legendCallback: function (chart) {
-              var text = [];
-              text.push('<div class="item mr-4 d-flex align-items-center small">');
-              text.push(
-                '<div class="item-box mr-2" data-color="' +
-                chart.data.datasets[0].backgroundColor +
-                ' "></div><p class="text-black mb-0"> ' +
-                chart.data.datasets[0].label +
-                "</p>"
-              );
-              text.push('</div>');
-              text.push('<div class="item d-flex align-items-center small">');
-              text.push(
-                '<div class="item-box mr-2" data-color="' +
-                chart.data.datasets[1].backgroundColor +
-                '"></div><p class="text-black mb-0"> ' +
-                chart.data.datasets[1].label +
-                " </p>"
-              );
-              text.push('</div>');
-              return text.join('');
-            }
-          },
-        });
+          });
+        }
       }
     });
 
