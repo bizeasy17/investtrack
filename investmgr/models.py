@@ -237,6 +237,7 @@ class TradeRec(BaseModel):
                 # 卖出时需要拷贝当前持仓，由系统system创建一条新的记录 -- 新建
                 if quantity_to_sell > rec.lots_remain:
                     # 以前买入的股数不够卖，那该持仓全部卖出，
+                    remain_shares = rec.lots_remain
                     quantity_to_sell -= rec.lots_remain
                     rec.lots_remain = 0
                     rec.sold_time = self.trade_time
@@ -247,6 +248,7 @@ class TradeRec(BaseModel):
                     new_sys_rec.pk = None
                     new_sys_rec.id = None
                     # new_sys_rec.is_sold = True
+                    new_sys_rec.board_lots = remain_shares
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
@@ -263,7 +265,7 @@ class TradeRec(BaseModel):
                     new_sys_rec.pk = None
                     new_sys_rec.id = None
                     # new_sys_rec.is_sold = True
-                    # new_sys_rec.board_lots = quantity_to_sell
+                    new_sys_rec.board_lots = quantity_to_sell
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price

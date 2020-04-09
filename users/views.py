@@ -891,7 +891,7 @@ def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
     '''
     try:
         if len(realtime_quotes) > 0:
-            linked_traderecs = TradeRec.objects.select_for_update().filter(in_stock_positions=position_pk)
+            linked_traderecs = TradeRec.objects.select_for_update().filter(in_stock_positions=position_pk, direction='b').exclude(created_or_mod_by='system')
             with transaction.atomic():
                 for entry in linked_traderecs:
                     entry.current_price = realtime_quotes[entry.stock_code]

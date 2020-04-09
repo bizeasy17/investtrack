@@ -221,15 +221,15 @@ $(function () {
                 {
                   type: "line",
                   fill: false,
-                  label: "收益",
-                  data: data.profit_trend,
+                  label: "同/环比收益",
+                  data: data.previous_profit_trend,
                   borderColor: "#1cbccd",
                   barPercentage: 0.9,
                   categoryPercentage: 0.7
                 },
                 {
-                  label: "同/环比收益",
-                  data: data.previous_profit_trend,
+                  label: "收益",
+                  data: data.profit_trend,
                   backgroundColor: "#ffbf36",
                   barPercentage: 0.9,
                   categoryPercentage: 0.7
@@ -555,9 +555,9 @@ $(function () {
       success: function (data) {
         $(data).each(function (idx, obj) {
           // alert(idx);
-          alert(",id:" + obj.id + ",symbol:" + obj.symbol + ",name:" + obj.name + ",position_price:"
-            + obj.position_price + ",realtime_price:" + obj.realtime_price + ",profit:" + obj.profit + ",profit_ratio:" + obj.profit_ratio
-            + ",lots:" + obj.lots + ",target_position:" + obj.target_position + ",amount:" + obj.amount);
+          // alert(",id:" + obj.id + ",symbol:" + obj.symbol + ",name:" + obj.name + ",position_price:"
+          //   + obj.position_price + ",realtime_price:" + obj.realtime_price + ",profit:" + obj.profit + ",profit_ratio:" + obj.profit_ratio
+          //   + ",lots:" + obj.lots + ",target_position:" + obj.target_position + ",amount:" + obj.amount);
         });
       }
     })
