@@ -28,8 +28,8 @@ ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False  # True
-DEBUG = False
-ALLOWED_HOSTS = ['*',]
+DEBUG = True
+ALLOWED_HOSTS = ['127.0.0.1']
 # 卖出股票的策略是先进先出FIFO，可选的其他策略有FILO
 STOCK_OUT_STRATEGY = 'FIFO'
 
@@ -146,7 +146,7 @@ WSGI_APPLICATION = 'investtrack.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'investtrack_mvp',
+        'NAME': 'investtrack',
         'USER': 'db_usr',
         'PASSWORD': 'password',
         'HOST': '127.0.0.1',
