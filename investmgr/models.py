@@ -524,8 +524,7 @@ class Positions(BaseModel):
             # 根据实时报价更新持仓
             self.profit = round(
                 (realtime_quote - self.position_price) * self.lots, 2)
-            self.profit_ratio = str(
-                round(self.profit / self.cash * 100, 2)) + '%'
+            self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
             self.current_price = realtime_quote
             self.is_sychronized = True
             self.sychronized_datetime = datetime.now()
