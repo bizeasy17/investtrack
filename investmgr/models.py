@@ -518,15 +518,17 @@ class Positions(BaseModel):
                         else:
                             pass
                     count += 1
+            # 重新计算持仓后，更新持仓价
             if count > 0:
                 self.position_price = round(position_price, 2)
-                self.profit = round(
-                    (realtime_quote - position_price) * total_shares, 2)
-                self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
-                self.current_price = realtime_quote
-                self.is_sychronized = True
-                self.sychronized_datetime = datetime.now()
-                self.save()
+            # 根据实时报价更新持仓
+            self.profit = round(
+                (realtime_quote - self.position_price) * self.lots, 2)
+            self.profit_ratio = str(round(self.profit / self.cash * 100, 2)) + '%'
+            self.current_price = realtime_quote
+            self.is_sychronized = True
+            self.sychronized_datetime = datetime.now()
+            self.save()
         else:
             pass
         pass
