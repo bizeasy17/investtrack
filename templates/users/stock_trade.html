@@ -144,10 +144,11 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <button class="btn btn-sm btn-secondary float-right mt-1" name="show-transaction-detail" id="{{trade_info.position.id}}"><i class="fa fa-plus">{% trans '交易明细' %}</i></button>
+                <button class="btn btn-sm btn-secondary float-right mt-1" name="show-transaction-detail" id="{% if trade_info.position %}{{trade_info.position.id}}{%endif%}"><i class="fa fa-plus">{% trans '交易明细' %}</i></button>
             </div>
             <div class="col-lg-12"><hr></div>
-            <div class="col-lg-12 d-none mt-2" id="pId{{trade_info.position.id}}">
+            
+            <div class="col-lg-12 d-none mt-2" id="pId{% if trade_info.position %}{{trade_info.position.id}}{%endif%}">
             </div>
         </div>
         
@@ -289,7 +290,7 @@
                     <input type="hidden" id="hiddenTscode" value="{{trade_info.show_code}}"><!--show code, 000001.SZ-->
                     <input type="hidden" id="hiddenMarket" value="{{trade_info.market}}">
                     <input type="hidden" id="hiddenAccount" value="{{trade_info.account_id}}">
-                    <input type="hidden" id="hiddenAccountName" value="{{trade_info.account_name}}">
+                    <input type="hidden" id="hiddenAccountName" value="{{trade_info.trade_account.account_name}}">
                     <input type="hidden" id="hiddenTradeType" value="{{trade_info.type}}">
                 </div>
 
