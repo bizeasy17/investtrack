@@ -57,7 +57,6 @@
                   <li class="nav-item"><a class="nav-link" href="{% url 'user:create_account' %}">{% trans '交易账户管理' %}</a></li>
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                   {% endif %}
-                  <li class="nav-item"><a class="nav-link" href="/about/">{% trans '关于' %}</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                   {% if False %}
@@ -184,7 +183,8 @@
   <footer class="py-5 bg-dark mt-5">
     <div class="container navbar-static-bottom mb-0">
       <p class="m-0 text-center text-white">
-        {% trans '版权所有'%} &copy; {% trans '51投资'%} {% now "Y" %}
+        {% trans '版权所有'%} &copy; {% trans '51投资'%} {% now "Y" %}      
+         | <a class="text-white" href="/about/">{% trans '关于我们' %}</a>
          | <a class="text-white" href="https://www.linkedin.com/in/jay-han-48424138/">{% trans 'Linkedin'%}</a>
       </p>
     </div>
