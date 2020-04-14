@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<!-- /.container -->
+<div class="masthead text-center text-primary mb-4">
+    <div class="masthead-content p-5">
+        <div class="container">
+        <h1 class="masthead-heading mb-0">{% trans '为什么会想到做'%}<a href='http://51touz.cn'>{% trans '51投资'%}</a>{% trans '这个网站？' %}</h1>
+        </div>
+    </div>
+</div>
+<hr>
+<section>
+  <div class="container mb-4">
+    <div class="row align-items-center">
+      <div class="col-lg-6 order-lg-2">
+        <div class="">
+          <img class="img-fluid rounded" src="{% static 'img/fail-or-success.jpg' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6 order-lg-1">
+        <div class="p-5">
+          <h4 class="display-5 text-primary">{% trans '原因一：不了解每一笔交易是成功的还是失败的' %}</h4>
+          <ul class="text-muted">
+            <li>{% trans '我的每一笔交易是成功的吗？' %}</li>
+            <li>{% trans '我买入或者卖出时用的什么策略？' %}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container mb-4">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div>
+          <img class="img-fluid rounded" src="{% static 'img/size-of-pos.png' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="p-5">
+          <h4 class="display-5 text-primary">{% trans '原因二：现有交易软件不能管理多个股票账户' %}</h4>
+          <ul  class="text-muted">
+            <li>{% trans '没有多账户的全局视图' %}</li>
+            <li>{% trans '对单个股票不能进行仓位管理' %}</li>
+            <li>{% trans '即使有买卖点，但是提供的信息不够丰富' %}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container mb-4">
+    <div class="row align-items-center">
+      <div class="col-lg-6 order-lg-2">
+        <div>
+          <img class="img-fluid rounded" src="{% static 'img/profit-or-lost.jpg' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6 order-lg-1">
+        <div class="p-5">
+          <h4 class="display-5 text-primary">{% trans '原因三：现有交易平台的收益曲线缺少同比/环比' %}</h4>
+          <ul class="text-muted">
+            <li>{% trans '和上个月比我的收益怎么样？' %}</li>
+            <li>{% trans '和上周比我的收益提高了吗？' %}</li>
+            <li>{% trans '这一年来我的总收益时多少？' %} </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr>
+<section>
+  <div class="container mt-4 mb-4">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div>
+          <img class="img-fluid rounded" src="{% static 'img/continuous-improvement.jpg' %}" alt="" />
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="p-5">
+          <h4 class="display-5 text-primary">{% trans '目前存在的不足，需要持续改进的地方' %}</h4>
+          <ol  class="text-muted list-style-type:disc">
+            <li>{% trans '需要手工记录每一笔交易' %}</li>
+            <li>{% trans '计算持仓利润和价格不是特别准确' %}</li>
+            <li>{% trans '无法大批量导入交易记录' %}</li>
+            <li>{% trans 'k线图还无法显示均线' %}</li>
+            <li>{% trans 'K线图上的买入和卖出交易信息还不够丰富' %}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- content-wrapper ends -->
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+{% endblock javascript %}
