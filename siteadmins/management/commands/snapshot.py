@@ -13,9 +13,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         # Named (optional) arguments
         parser.add_argument(
-            '-p',
             '--period',
-            action=str,
+            type=str,
             help='Which period you want to apply the snapshot',
         )
         pass
