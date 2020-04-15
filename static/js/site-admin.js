@@ -1,5 +1,6 @@
 $(function () {
     var saBaseEndpoint = '/siteadmin/';
+    var investBaseEndpoint = '/invest/stocks/';
 
     function formatDate(date, conn) {
         var dayNames = [

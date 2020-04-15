@@ -138,7 +138,7 @@ $(function () {
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + code + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: investBaseEndpoint + 'hist/' + symbol + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 if(data.length>0){
                     $("#tradePrice").val(data[0].c)
