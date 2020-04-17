@@ -168,8 +168,8 @@ $(function () {
         // profitWeekChart.data.datasets.forEach((dataset) => {
         //   dataset.data.push(data);
         // });
-        profitWeekChart.data.datasets[0].data = data.profit_trend;
-        profitWeekChart.data.datasets[1].data = data.previous_profit_trend;
+        profitWeekChart.data.datasets[1].data = data.profit_trend;
+        profitWeekChart.data.datasets[0].data = data.previous_profit_trend;
         // profitWeekChart.options = {
         //   scales: {
         //       yAxes: [{
