@@ -256,13 +256,10 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
             # if code in index_list:
             df = ts.get_hist_data(symbol, start=start_date,
                                 end=end_date, ktype=period)
-
             stock_his_data_dic = json.loads(df.to_json(orient='index'))
-
             data = []
             if stock_his_data_dic is None or len(stock_his_data_dic) == 0:
                 return JsonResponse([], safe=False)
-
             # 按照从end date（从大到小）的顺序获取历史交易数据
             isClosed = False
             for k, v in stock_his_data_dic.items():
@@ -307,21 +304,9 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
                 data = data[::-1]
                 if not isClosed and period == 'D':
                     data.append(realtime_price)
-
-                # if df is not None and len(df) > 0:
-                #     for d in df.values:
-                #         data.append(
-                #             {
-                #                 't': datetime.strptime(d[1], "%Y%m%d"),
-                #                 'o': d[2],
-                #                 'h': d[3],
-                #                 'l': d[4],
-                #                 'c': d[5],
-                #             }
-                #         )
             return JsonResponse(data, safe=False)
-        except Exception as e:
-            logger.error(e)
+        except AttributeError as err:
+            logger.error(err)
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
 def get_traderec(request, stock_code, trade_date):

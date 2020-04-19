@@ -28,7 +28,7 @@ ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False  # True
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 # 卖出股票的策略是先进先出FIFO，可选的其他策略有FILO
 STOCK_OUT_STRATEGY = 'FIFO'
@@ -42,31 +42,31 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'django.contrib.sites',
     'django.contrib.humanize',
     'django.forms',
-
     # 3rd Party Apps
     # 'mdeditor',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
+    'rest_framework',
     'easy_thumbnails',
     'crispy_forms',
     'tushare',
-    # 'django_extensions',
-
     # local application
     'siteadmins.apps.SiteadminsConfig',
     'users.apps.UsersConfig',
     'investmgr.apps.InvestmgrConfig',
-    # 'dashboard.apps.DashboardConfig',
     'notifications.apps.NotificationsConfig',
-
+    # refact 1
+    'stockmarket.apps.StockmarketConfig',
+    'stocktrade.apps.StocktradeConfig',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -146,7 +146,7 @@ WSGI_APPLICATION = 'investtrack.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'investtrack',
+        'NAME': 'investtrack_refact',
         'USER': 'db_usr',
         'PASSWORD': 'password',
         'HOST': '127.0.0.1',
