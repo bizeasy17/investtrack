@@ -48,7 +48,7 @@ class Command(BaseCommand):
         '''
         latest_positions = []
         in_stock_positions = Positions.objects.select_for_update().filter(
-            trader=investor).exclude(is_liquadated=True,)
+            trader=investor).exclude(is_liquidated=True,)
         with transaction.atomic():
             for entry in in_stock_positions:
                 entry.calibrate_realtime_position()

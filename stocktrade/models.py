@@ -77,7 +77,7 @@ class Transactions(BaseModel):
     # tags = models.ManyToManyField('Tag', verbose_name=_('标签集合'), blank=True)
     in_stock_positions = models.ForeignKey(Positions, verbose_name=_('股票持仓'), blank=False, null=True,
                                            on_delete=models.CASCADE, editable=False)
-    is_liquadated = models.BooleanField(
+    is_liquidated = models.BooleanField(
         _('是否已清仓'), blank=False, null=False, default=False, editable=False)
     trade_account = models.ForeignKey(
         TradeAccount, verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
@@ -97,6 +97,6 @@ class Transactions(BaseModel):
 
     class Meta:
         ordering = ['-last_mod_time']
-        verbose_name = _('交易记录')
+        verbose_name = _('交易明细')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

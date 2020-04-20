@@ -21,7 +21,7 @@ class TradeRecListFilter(admin.SimpleListFilter):
     parameter_name = 'trader'
 
     def lookups(self, request, model_admin):
-        traders = list(set(map(lambda x: x.trader, TradeRec.objects.all())))
+        traders = list(set(map(lambda x: x.trader, Transactions.objects.all())))
         for trader in traders:
             yield (trader.id, _(trader.username))
 

@@ -50,6 +50,8 @@ class User(AbstractUser):
 
         return self.username
 
+    class Meta:
+        verbose_name = _('网站用户')
 
 
 

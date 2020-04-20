@@ -543,7 +543,7 @@ class TradeAccountSnapshot(BaseModel):
         if users is not None and len(users) > 0:
             for user in users:
                 positions = Positions.objects.filter(
-                    trader=user, is_liquadated=False)
+                    trader=user, is_liquidated=False)
                 if positions is not None and len(positions) >= 1:
                     for position in positions:
                         self.take_snapshot(position, self.applied_period)

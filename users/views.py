@@ -64,7 +64,7 @@ class UserDashboardView(LoginRequiredMixin, View):
             if today_snapshots['profit_change'] is not None:
                 today_pnl = today_snapshots['profit_change']
             trade_positions = Positions.objects.filter(
-                trader=req_user.id).exclude(is_liquadated=True).order_by('-last_mod_time')
+                trader=req_user.id).exclude(is_liquidated=True).order_by('-last_mod_time')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
             capital = 0
             profit_loss = 0
@@ -245,7 +245,7 @@ class UserTradelogView(LoginRequiredMixin, View):
             tradedetails = Transactions.objects.filter(
                 trader=req_user.id, stock_code=stock_symbol, created_or_mod_by='human')  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
-                trader=req_user.id, is_liquadated=False).exclude(lots=0)
+                trader=req_user.id, is_liquidated=False).exclude(lots=0)
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)
@@ -345,7 +345,7 @@ def calc_realtime_snapshot(request):
     for trader_position in trader_positions:
         trader_position.make_profit_updated()
     positions = Positions.objects.values('trade_account').annotate(sum_profit=Sum(
-        'profit')).values('trade_account', 'sum_profit').filter(trader=trader, is_liquadated=False)
+        'profit')).values('trade_account', 'sum_profit').filter(trader=trader, is_liquidated=False)
     # 是否今天的snapshot存在
     for position in positions:
         # 当天是否有snapshot，如果没有就创建，有就更新
@@ -717,11 +717,11 @@ def get_position_status(request, account, symbol):
             if account == "a":
                 if symbol == 'a':  # 取所有持仓信息
                     pos_qs = Positions.objects.filter(
-                        trader=trader, is_liquadated=False)
+                        trader=trader, is_liquidated=False)
                 else:
                     symbol_list = list(symbol.split(','))
                     pos_qs = Positions.objects.filter(
-                        trader=trader, stock_code__in=symbol_list, is_liquadated=False)
+                        trader=trader, stock_code__in=symbol_list, is_liquidated=False)
                 for pos in pos_qs:
                     pos_label.append(pos.stock_name)
                     target_pos.append(pos.target_position * pos.position_price)
@@ -731,11 +731,11 @@ def get_position_status(request, account, symbol):
             else:
                 if symbol == 'a':
                     pos_qs = Positions.objects.filter(
-                        trader=trader, trade_account=account, is_liquadated=False)
+                        trader=trader, trade_account=account, is_liquidated=False)
                 else:
                     symbol_list = list(symbol.split(','))
                     pos_qs = Positions.objects.filter(
-                        trader=trader, trade_account=account, stock_code__in=symbol_list, is_liquadated=False)
+                        trader=trader, trade_account=account, stock_code__in=symbol_list, is_liquidated=False)
                 for pos in pos_qs:
                     pos_label.append(pos.stock_name)
                     target_pos.append(pos.target_position * pos.position_price)
@@ -957,7 +957,7 @@ def get_position_by_symbol(request, account_id, symbol):
             trader = request.user
             # account = TradeAccount(account_id)
             pos_qs = Positions.objects.filter(
-                trader=trader, trade_account=account_id, stock_code=symbol, is_liquadated=False)
+                trader=trader, trade_account=account_id, stock_code=symbol, is_liquidated=False)
             my_pos = {}
             if len(pos_qs) > 0:
                 my_pos = {
