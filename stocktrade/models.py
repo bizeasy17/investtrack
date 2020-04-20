@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 from tradeaccounts.models import Positions, TradeAccount
-from users.models import TradeStrategy
+from investors.models import TradeStrategy
 # Create your models here.
 
 
@@ -73,14 +73,14 @@ class Transactions(BaseModel):
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('投资人'), blank=False, null=False,
                                on_delete=models.CASCADE)
     strategy = models.ForeignKey(
-        'TradeStrategy', verbose_name=_('策略'), on_delete=models.SET_NULL, blank=True, null=True)
+        TradeStrategy, verbose_name=_('策略'), on_delete=models.SET_NULL, blank=True, null=True)
     # tags = models.ManyToManyField('Tag', verbose_name=_('标签集合'), blank=True)
-    in_stock_positions = models.ForeignKey('Positions', verbose_name=_('股票持仓'), blank=False, null=True,
+    in_stock_positions = models.ForeignKey(Positions, verbose_name=_('股票持仓'), blank=False, null=True,
                                            on_delete=models.CASCADE, editable=False)
     is_liquadated = models.BooleanField(
         _('是否已清仓'), blank=False, null=False, default=False, editable=False)
     trade_account = models.ForeignKey(
-        'TradeAccount', verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
+        TradeAccount, verbose_name=_('交易账户'), on_delete=models.SET_NULL, blank=True, null=True)
     rec_ref_number = models.CharField(
         _('买入记录编号'), max_length=10, blank=True, null=True)
     sell_stock_refer = models.ForeignKey(

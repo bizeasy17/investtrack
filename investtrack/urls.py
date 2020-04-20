@@ -35,7 +35,7 @@ urlpatterns = [
     path('siteadmin/', include('siteadmins.urls')),
     path('stockmarket/', include('stockmarket.urls')),
     path('tradeaccounts/', include('tradeaccounts.urls')),
-    path('txn/', include('transactionhistory.urls')),
+    path('txn/', include('txnvisibility.urls')),
     # home pages
     re_path(r'^$',
             TemplateView.as_view(template_name='pages/home.html'), name='home'),

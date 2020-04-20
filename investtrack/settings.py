@@ -54,11 +54,14 @@ INSTALLED_APPS = [
     # local application
     'siteadmins.apps.SiteadminsConfig',
     'users.apps.UsersConfig',
-    'investmgr.apps.InvestmgrConfig',
+    # 'investmgr.apps.InvestmgrConfig',
     'notifications.apps.NotificationsConfig',
     # refact 1
     'stockmarket.apps.StockmarketConfig',
     'stocktrade.apps.StocktradeConfig',
+    'tradeaccounts.apps.TradeaccountsConfig',
+    'investors.apps.InvestorsConfig',
+    'txnvisibility.apps.TxnvisibilityConfig',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

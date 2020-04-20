@@ -4,7 +4,7 @@ import logging
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.http import HttpResponse, JsonResponse
-from investmgr.models import StockNameCodeMap
+from stockmarket.models import StockNameCodeMap
 
 # Create your views here.
 

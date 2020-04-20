@@ -2,8 +2,8 @@
 import calendar
 import decimal
 import locale
-import os
 import logging
+import os
 from datetime import date, datetime, timedelta
 
 import datedelta
@@ -21,9 +21,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 
 from investmgr import utils
-from investmgr.models import (Positions, StockFollowing, StockNameCodeMap,
-                              TradeAccount, TradeProfitSnapshot, TradeRec,
-                              TradeStrategy)
+from investors.models import StockFollowing, TradeStrategy
+from stockmarket.models import StockNameCodeMap
+from stocktrade.models import Transactions
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 
 from .forms import UserTradeForm
 from .models import User
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 class UserDashboardView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
-    # model = TradeRec
+    # model = Transactions
 
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'users/dashboard.html'
@@ -49,7 +50,7 @@ class UserDashboardView(LoginRequiredMixin, View):
         req_user = request.user
         if req_user is not None:
             today_pnl = 0
-            tradedetails = TradeRec.objects.filter(
+            tradedetails = Transactions.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
             today = date.today()
             if today.weekday() == calendar.SATURDAY:
@@ -100,7 +101,7 @@ class UserDashboardView(LoginRequiredMixin, View):
 
 class UserRecordStockTradeView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
-    # model = TradeRec
+    # model = Transactions
 
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'users/stock_trade.html'
@@ -117,7 +118,7 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
         if req_user is not None:
             try:
                 trade_accounts = TradeAccount.objects.filter(trader=req_user)
-                tradedetails = TradeRec.objects.filter(
+                tradedetails = Transactions.objects.filter(
                     trader=req_user.id, stock_code=stock_symbol, created_or_mod_by='human')
                 strategies = TradeStrategy.objects.all()
                 stock_position = []
@@ -182,7 +183,7 @@ class UserRecordStockTradeView(LoginRequiredMixin, View):
 
 class UserProfileView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
-    # model = TradeRec
+    # model = Transactions
 
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'users/user_profile.html'
@@ -203,7 +204,7 @@ class UserProfileView(LoginRequiredMixin, View):
 
 class UserTradeAccountCreateView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
-    # model = TradeRec
+    # model = Transactions
 
     # template_name属性用于指定使用哪个模板进行渲染
     model = User
@@ -241,7 +242,7 @@ class UserTradelogView(LoginRequiredMixin, View):
         req_user = request.user
         stock_symbol = self.kwargs['symbol']
         if req_user is not None:
-            tradedetails = TradeRec.objects.filter(
+            tradedetails = Transactions.objects.filter(
                 trader=req_user.id, stock_code=stock_symbol, created_or_mod_by='human')  # 前台需要添加view more...
             trade_positions = Positions.objects.filter(
                 trader=req_user.id, is_liquadated=False).exclude(lots=0)
@@ -351,10 +352,10 @@ def calc_realtime_snapshot(request):
         if today.weekday() == calendar.SATURDAY and today.weekday() == calendar.SUNDAY:
             pass
         else:
-            snapshots = TradeProfitSnapshot.objects.filter(
+            snapshots = TradeAccountnapshot.objects.filter(
                 trader=trader, trade_account=position['trade_account'], snap_date=today, applied_period='d')
             if snapshots is None or len(snapshots) == 0:
-                snapshot = TradeProfitSnapshot(trader=trader, trade_account=TradeAccount.objects.get(
+                snapshot = TradeAccountnapshot(trader=trader, trade_account=TradeAccount.objects.get(
                     id=position['trade_account']), snap_date=today)
                 snapshot.take_snapshot(position, 'd')
             else:
@@ -363,10 +364,10 @@ def calc_realtime_snapshot(request):
         start_day = today - \
             timedelta(days=today.weekday())  # 当前时间所在周的周一
         end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
-        snapshots = TradeProfitSnapshot.objects.filter(
+        snapshots = TradeAccountnapshot.objects.filter(
             trader=trader, trade_account=position['trade_account'], snap_date__range=[start_day, end_day], applied_period='w')
         if snapshots is None or len(snapshots) == 0:
-            snapshot = TradeProfitSnapshot(trader=trader, trade_account=TradeAccount.objects.get(
+            snapshot = TradeAccountnapshot(trader=trader, trade_account=TradeAccount.objects.get(
                 id=position['trade_account']), snap_date=end_day)
             snapshot.take_snapshot(position, 'w')
         else:
@@ -383,10 +384,10 @@ def calc_realtime_snapshot(request):
         start_day = today - \
             timedelta(days=today.weekday())  # 当前时间所在周的周一
         end_day = start_day + timedelta(days=4)  # 当前时间所在周周五
-        snapshots = TradeProfitSnapshot.objects.filter(
+        snapshots = TradeAccountnapshot.objects.filter(
             trader=trader, trade_account=position['trade_account'], snap_date=last_friday, applied_period='m')
         if snapshots is None or len(snapshots) == 0:
-            snapshot = TradeProfitSnapshot(trader=trader, trade_account=TradeAccount.objects.get(
+            snapshot = TradeAccountnapshot(trader=trader, trade_account=TradeAccount.objects.get(
                 id=position['trade_account']), snap_date=last_friday)
             snapshot.take_snapshot(position, 'm')
         else:
@@ -395,7 +396,7 @@ def calc_realtime_snapshot(request):
 
 
 def is_enough_trade_records(trader):
-    trade_recs = TradeRec.objects.filter(trader=trader, created_or_mod_by='human')
+    trade_recs = Transactions.objects.filter(trader=trader, created_or_mod_by='human')
     return True if trade_recs.count() > 0 else False
     # pass
 
@@ -440,7 +441,7 @@ def get_profit_trend_by_period(request, period):
                         # 日期标签
                         pnl_label.append(snap_date.strftime('%Y-%m-%d'))
                         # 统计本周所有账户profit
-                        trade_snapshots = TradeProfitSnapshot.objects.filter(
+                        trade_snapshots = TradeAccountnapshot.objects.filter(
                             trader=trader, snap_date=snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))#, sum_change=Sum('profit_change'))
                         if trade_snapshots['sum_profit'] is not None:
                             current_pnl.append(
@@ -449,7 +450,7 @@ def get_profit_trend_by_period(request, period):
                         else:
                             current_pnl.append(0)
                         # 上一周环比数据
-                        relative_snapshots = TradeProfitSnapshot.objects.filter(
+                        relative_snapshots = TradeAccountnapshot.objects.filter(
                             trader=trader, snap_date=relative_snap_date).aggregate(sum_profit=Sum('profit'))
                         if relative_snapshots['sum_profit'] is not None:
                             relative_pnl_data.append(
@@ -613,16 +614,16 @@ def get_trans_success_rate_by_period(request, period):
                     # 日期标签
                     month_label = date(year, i, 1)
                     label.append(month_label.strftime('%Y-%m'))
-                    trade_recs = TradeRec.objects.filter(trader=trader, trade_time__year=year, trade_time__month=month_label.strftime(
+                    trade_recs = Transactions.objects.filter(trader=trader, trade_time__year=year, trade_time__month=month_label.strftime(
                         '%m'), created_or_mod_by='human').order_by('trade_time')
                     total_attempt += len(trade_recs)
                     for trade_rec in trade_recs:
                         # 买入交易已经被卖出
                         if trade_rec.direction == 'b' and trade_rec.is_sold is True:
-                            sys_recs = TradeRec.objects.filter(
+                            sys_recs = Transactions.objects.filter(
                                 trader=trader, created_or_mod_by='system', rec_ref_number=trade_rec.rec_ref_number)
                             for sys_rec in sys_recs:
-                                sell_rec = TradeRec.objects.get(
+                                sell_rec = Transactions.objects.get(
                                     id=sys_rec.sell_stock_refer_id)
                                 if trade_rec.price < sell_rec.price:
                                     success_count += 1
@@ -648,16 +649,16 @@ def get_trans_success_rate_by_period(request, period):
                     # 同比去年交易成功率
                     success_count = 0
                     fail_count = 0
-                    trade_recs = TradeRec.objects.filter(trader=trader, trade_time__year=day_last_year.year, trade_time__month=month_label.strftime(
+                    trade_recs = Transactions.objects.filter(trader=trader, trade_time__year=day_last_year.year, trade_time__month=month_label.strftime(
                         '%m'), created_or_mod_by='human').order_by('trade_time')
                     total_attempt_yoy += len(trade_recs)
                     for trade_rec in trade_recs:
                         # 买入交易已经被卖出
                         if trade_rec.direction == 'b' and (trade_rec.sold_time is not None or trade_rec.is_sold is True):
-                            sys_recs = TradeRec.objects.filter(
+                            sys_recs = Transactions.objects.filter(
                                 trader=trader, created_or_mod_by='system', rec_ref_number=trade_rec.rec_ref_number)
                             for sys_rec in sys_recs:
-                                sell_rec = TradeRec.objects.get(
+                                sell_rec = Transactions.objects.get(
                                     id=sys_rec.sell_stock_refer_id)
                                 if trade_rec.price < sell_rec.price:
                                     success_count += 1
@@ -830,7 +831,7 @@ def create_trade(request):
             # trade_time = data.get('tradeTime').split('T')
             trade_account = TradeAccount.objects.get(id=data.get('tradeAcc'))
             # trade_time = trade_time[0] + ' ' + trade_time[1]
-            new_trade = TradeRec(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
+            new_trade = Transactions(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
                                 board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[0],
                                 target_position=target_position, trade_time=datetime.strptime(trade_time, '%Y-%m-%dT%H:%M:%S'),
                                 created_or_mod_by='human', trade_account=trade_account)
@@ -891,7 +892,7 @@ def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
     '''
     try:
         if len(realtime_quotes) > 0:
-            linked_traderecs = TradeRec.objects.select_for_update().filter(in_stock_positions=position_pk, direction='b').exclude(created_or_mod_by='system')
+            linked_traderecs = Transactions.objects.select_for_update().filter(in_stock_positions=position_pk, direction='b').exclude(created_or_mod_by='system')
             with transaction.atomic():
                 for entry in linked_traderecs:
                     entry.current_price = realtime_quotes[entry.stock_code]

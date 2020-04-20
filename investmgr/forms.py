@@ -1,8 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from .models import Positions, TradeRec
-
+from stocktrade.models import Transactions
 
 class StockNameWidget(forms.TextInput):
         class Media:
@@ -12,7 +11,7 @@ class TradeRecAdminForm(forms.ModelForm):
     stock_name = forms.CharField(label=_('股票名称或代码'), max_length=50,)# widget=StockNameWidget)
 
     class Meta:
-        model = TradeRec
+        model = Transactions
         fields = ('direction', 'strategy', 'stock_name', #'stock_code', 
                   'trade_time', 'current_price', 'price', 'target_position', 'board_lots', 'cash', 'target_position', 'trader', 'trade_account')
 

@@ -11,7 +11,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 
 from investmgr import utils
-from investmgr.models import TradeRec, Positions, TradeProfitSnapshot, TradeAccount
+from investors.models import StockFollowing, TradeStrategy
+from stockmarket.models import StockNameCodeMap
+from stocktrade.models import Transactions
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from users.models import User
 
 
