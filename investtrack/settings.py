@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django.forms',
     # 3rd Party Apps
     # 'mdeditor',
-    'rest_framework',
+    # 'rest_framework',
     'easy_thumbnails',
     'crispy_forms',
     'tushare',
@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     'investors.apps.InvestorsConfig',
     'txnvisibility.apps.TxnvisibilityConfig',
     'dashboard.apps.DashboardConfig',
-
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -106,7 +105,7 @@ AUTH_USER_MODEL = 'users.User'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = 'account:login'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = 'user:dashboard'
+LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = '/'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 # ACCOUNT_EMAIL_VERIFICATION = 'none'

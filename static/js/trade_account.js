@@ -17,7 +17,7 @@ $(function(){
                     + '<div>'
                         + '<h6 class="my-0">' + accountProvider + accountType + '</h6>'
                         + '<small class="text-muted">' + accountType + '</small>'
-                        + '<a href="/user/account/'+ id + '/trade/sh/" class="small badge-info badge-pill">记录交易</a>'
+                        + '<a href="/stocktrade/sh/account/' + id + '/" class="small badge-info badge-pill">记录交易</a>'
                     + '</div>'
                     + '<span class="text-muted">' + accountBalance + '</span>'
                     + '<input type="hidden" id="accProvider' + id + '" value="' + accountProvider + '"/>'

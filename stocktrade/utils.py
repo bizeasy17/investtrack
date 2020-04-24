@@ -2,6 +2,7 @@ from stockmarket.models import StockNameCodeMap
 from tradeaccounts.models import TradeAccount, Positions
 from investors.models import TradeStrategy
 
+
 def get_stockinfo_for_chart(stock_symbol='sh',):
     stock_info_list = []
     if not stock_symbol.isdigit():
@@ -11,7 +12,7 @@ def get_stockinfo_for_chart(stock_symbol='sh',):
         stock_name = '上证指数'
     else:
         symbol_map = StockNameCodeMap.objects.get(stock_code=stock_symbol)
-        stock_name = symbol_map.stock_name   
+        stock_name = symbol_map.stock_name
         if stock_symbol[0] == '3':
             market = 'CYB'
             show_code = stock_symbol + '.SZ'
@@ -24,14 +25,15 @@ def get_stockinfo_for_chart(stock_symbol='sh',):
             else:
                 market = 'ZB'
             show_code = stock_symbol + '.SH'
-    stock_info_list = [stock_symbol, stock_name,  show_code,market]
+    stock_info_list = [stock_symbol, stock_name,  show_code, market]
     return stock_info_list
+
 
 def get_stock_queryset_for_trade(user, account_id, stock_symbol='sh',):
     trade_account = TradeAccount.objects.get(id=account_id)
     trade_accounts = TradeAccount.objects.filter(trader=user)
     position = Positions.objects.filter(
-                                trader=user, stock_code=stock_symbol, trade_account=account_id)
+        trader=user, stock_code=stock_symbol, trade_account=account_id)
     strategies = TradeStrategy.objects.all()
     trade_type = 'b'  # default trade type is buy. self.kwargs['type']
     stock_info_list = get_stockinfo_for_chart(stock_symbol)
@@ -45,6 +47,6 @@ def get_stock_queryset_for_trade(user, account_id, stock_symbol='sh',):
         'trade_account': trade_account,
         'accounts': trade_accounts,
         'strategies': strategies,
-        'position': position,
+        'position': position[0] if position.count() > 0 else None,
     }
     return queryset

@@ -14,8 +14,8 @@
     <div class="row flex-grow mb-4">
         <div class="col-lg-3 grid-margin stretch-card">
             <!-- <h5>{% trans '欢迎回来，'%}{{request.user.username}}</h5> -->
-            <input type="text"  id="searchForTrade" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
-            <input type="hidden"  id="defaultAccount" value="{{ dashboard.trade_accounts.0.id }}"/>
+            <input type="text"  id="searchForTrade" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search" {% if dashboard.trade_accounts.count == 0 %}readonly{% endif %}>
+            <input type="hidden"  id="defaultAccount" value="{% if dashboard.trade_accounts.count > 0 %}{{ dashboard.trade_accounts.0.id }}{% endif %}"/>
                 
         </div>
     </div>
@@ -182,7 +182,7 @@
                         {% if dashboard %}
                         {% if dashboard.trade_accounts|length == 0 %}
                         <div class="d-flex justify-content-between align-items-center">
-                            <span>{% trans '无虚拟交易账户，请单击 ' %}<a href="{% url 'trade_account:create' %}" class="btn btn-danger"><i class="fa fa-piggy-bank mr-1"></i>{% trans '创建' %}</a></span>
+                            <span>{% trans '无虚拟交易账户，请单击 ' %}<a href="{% url 'trade_account:index' %}" class="btn btn-danger"><i class="fa fa-piggy-bank mr-1"></i>{% trans '创建' %}</a></span>
                         </div>
                         {% else %}
                         <div class="list-group mb-3" id="accountList">

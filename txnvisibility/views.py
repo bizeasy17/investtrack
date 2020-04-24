@@ -89,21 +89,21 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
         if type == 'M':  # month
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                            stock_code=symbol, trade_time__year=input_year,
-                                                           trade_time__month=input_month).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           trade_time__month=input_month).exclude(created_or_mod_by='system').order_by('direction').distinct('direction')
         elif type == 'W':  # week
             transaction_list = Transactions.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
                                                                                                     stock_code=symbol, trade_time__year=input_year,
-                                                                                                    week=input_week).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                                                                    week=input_week).exclude(created_or_mod_by='system').order_by('direction').distinct('direction')
         elif type == 'D':  # day
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                            stock_code=symbol,
-                                                           trade_time__startswith=transaction_date.strftime('%Y-%m-%d')).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           trade_time__startswith=transaction_date.strftime('%Y-%m-%d')).exclude(created_or_mod_by='system').order_by('direction').distinct('direction')
         elif type == '60':  # 60 min
             delta_hour = timedelta(hours=1)
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                            stock_code=symbol, trade_time__year=input_year,
                                                            trade_time__month=input_month, trade_time__day=input_day,
-                                                           trade_time__hour=(transaction_date-delta_hour).strftime('%H')).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           trade_time__hour=(transaction_date-delta_hour).strftime('%H')).exclude(created_or_mod_by='system').order_by('direction').distinct('direction')
         elif type == '30':  # 30 min
             start_min = '0'
             end_min = '29'
@@ -122,7 +122,7 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
                                                            trade_time__hour=(
                                                                transaction_date-delta_hour).strftime('%H'),
                                                            trade_time__minute__gte=start_min, trade_time__minute__lte=end_min,
-                                                           ).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           ).exclude(created_or_mod_by='system').order_by('direction').distinct('direction')
         elif type == '15':  # 15 min
             start_min = '0'
             end_min = '29'
@@ -146,7 +146,7 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
                                                            trade_time__hour=(
                                                                transaction_date-delta_hour).strftime('%H'),
                                                            trade_time__minute__gte=start_min, trade_time__minute__lte=end_min,
-                                                           ).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           ).exclude(created_or_mod_by='system').order_by('direction').distinct('direction')
         for rec in transaction_list:
             if rec.direction == 'b':
                 has_buy = True
