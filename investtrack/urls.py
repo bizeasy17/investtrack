@@ -25,7 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # App urls
     path('user/', include('users.urls')),
-    path('invest/', include('investmgr.urls')),
+    # path('invest/', include('investmgr.urls')),
     path('account/', include('accounts.urls')),
     # retro1
     path('auth/', include('authentication.urls')),
@@ -35,7 +35,9 @@ urlpatterns = [
     path('siteadmin/', include('siteadmins.urls')),
     path('stockmarket/', include('stockmarket.urls')),
     path('tradeaccounts/', include('tradeaccounts.urls')),
-    path('txn/', include('txnvisibility.urls')),
+    path('txnvis/', include('txnvisibility.urls')),
+    path('dashboard/', include('dashboard.urls')),
+
     # home pages
     re_path(r'^$',
             TemplateView.as_view(template_name='pages/home.html'), name='home'),

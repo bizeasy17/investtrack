@@ -8,6 +8,11 @@ $(function () {
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
+    var txnvisEndpoint = '/txnvis/';
+    var stockmarketEndpoint = '/stockmarket/';
+    var stocktradeEndpoint = '/stocktrade/';
+    var dashboardEndpoint = '/dashboard/';
+
 
     var chartShowDays15 = 15
     var chartShowDays30 = 15
@@ -43,11 +48,11 @@ $(function () {
     }
 
     // assign the selected strategy
-    var updateTradeStockInfoFor = function (code) {
+    var updateTradeStockInfoFor = function (symbol) {
         var account = $('#pickedAccountID').val();
-        if (code != '') {
+        if (symbol != '') {
             $.ajax({
-                url: userBaseEndpoint + 'get-stock-for-trade/' + account + '/' + code + '/',
+                url: txnvisEndpoint + 'stock-for-trade/' + account + '/' + symbol + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
@@ -94,7 +99,7 @@ $(function () {
                         }
                     }
                     $('#direction').val($('#hiddenTradeType').val());
-                    refreshPositionBySymbol(code, data.current_price)
+                    refreshPositionBySymbol(symbol, data.current_price)
                 },
                 statusCode: {
                     403: function () {
@@ -138,7 +143,7 @@ $(function () {
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + symbol + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/'  + accountId + "/" + symbol + '/'  + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 if(data.length>0){
                     $("#tradePrice").val(data[0].c)
@@ -147,12 +152,12 @@ $(function () {
         })
     }
 
-    var updateChartFor = function (showName, showCode, tsCode, period) {
+    var updateChartFor = function (showName, showCode, symbol, period) {
         var startDate = getStartDate(period, '-');
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + tsCode + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/'  + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 chart.data.datasets.forEach(function (dataset) {
                     dataset.data = data;
@@ -169,7 +174,7 @@ $(function () {
         if (indexList.indexOf(symbol)!=-1) return;
         var accountId = $("#pickedAccountID").val();
         $.ajax({
-            url: userBaseEndpoint + 'position/account/' + accountId + '/' + symbol,
+            url: dashboardEndpoint + 'position/account/' + accountId + '/' + symbol,
             success: function (data) {
                 if (data.code == 'OK') {
                     $("#noPosition").addClass("d-none");
@@ -229,7 +234,7 @@ $(function () {
 
     var refreshRealtimeQuote = function () {
         $.ajax({
-            url: userBaseEndpoint + 'positions/refresh/',
+            url: dashboardEndpoint + 'positions/refresh/',
             success: function (data) {
 
             }
@@ -336,7 +341,7 @@ $(function () {
             search: function (qry, callback) {
                 // let's do a custom ajax call
                 $.ajax(
-                    investBaseEndpoint + 'search-autocomplete/' + $('#searchNameOrCode').val(),
+                    stockmarketEndpoint + 'listed_companies/' + $('#searchNameOrCode').val(),
                 ).done(function (res) {
                     callback(res.results)
                 });
@@ -362,7 +367,7 @@ $(function () {
     });
 
     // 页面默认加载上证指数日K（D)
-    var initStockChart = function (code, showCode, showName) {
+    var initStockChart = function (symbol, showCode, showName) {
         var period = $('input:radio[name="period"]:checked').val();
         var startDate = getStartDate(period, '-');
         var accountId = $("#hiddenAccount").val();
@@ -376,7 +381,7 @@ $(function () {
 
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + code + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 // ctx1.canvas.width = 1000;
                 // ctx1.canvas.height = 250;
@@ -695,7 +700,7 @@ $(function () {
         }
 
         $.ajax({
-            url: userBaseEndpoint + 'create-trade',
+            url: stocktradeEndpoint + 'create/',
             headers: { 'X-CSRFToken': csrftoken },
             method: 'POST',
             dataType: 'json',

@@ -69,7 +69,7 @@ def listed_companies(request, name_or_code):
                     })
                 # c_str = 'results:[' + c_str + ']'
                 # c_dict = json.loads(c_str)
-                return JsonResponse(company_list, safe=False)
+                return JsonResponse({'results':company_list}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as e:

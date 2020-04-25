@@ -1,5 +1,6 @@
 import json
 import logging
+import decimal
 from datetime import date, datetime, timedelta
 
 import tushare as ts
@@ -10,6 +11,8 @@ from django.shortcuts import render
 
 from stockmarket.utils import get_single_realtime_quote
 from stocktrade.models import Transactions
+from tradeaccounts.models import Positions, TradeAccount
+
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -85,22 +88,22 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
         input_min = transaction_date.strftime('%M')
         if type == 'M':  # month
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
-                                                    stock_code=symbol, trade_time__year=input_year, 
-                                                    trade_time__month=input_month).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           stock_code=symbol, trade_time__year=input_year,
+                                                           trade_time__month=input_month).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
         elif type == 'W':  # week
             transaction_list = Transactions.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
-                                                                                             stock_code=symbol, trade_time__year=input_year, 
-                                                                                             week=input_week).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                                                                    stock_code=symbol, trade_time__year=input_year,
+                                                                                                    week=input_week).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
         elif type == 'D':  # day
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
-                                                    stock_code=symbol,
-                                                    trade_time__startswith=transaction_date.strftime('%Y-%m-%d')).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           stock_code=symbol,
+                                                           trade_time__startswith=transaction_date.strftime('%Y-%m-%d')).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
         elif type == '60':  # 60 min
             delta_hour = timedelta(hours=1)
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
-                                                    stock_code=symbol, trade_time__year=input_year,
-                                                    trade_time__month=input_month, trade_time__day=input_day,
-                                                    trade_time__hour=(transaction_date-delta_hour).strftime('%H')).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           stock_code=symbol, trade_time__year=input_year,
+                                                           trade_time__month=input_month, trade_time__day=input_day,
+                                                           trade_time__hour=(transaction_date-delta_hour).strftime('%H')).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
         elif type == '30':  # 30 min
             start_min = '0'
             end_min = '29'
@@ -114,12 +117,12 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
                 end_min = '29'
 
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
-                                                    stock_code=symbol, trade_time__year=input_year,
-                                                    trade_time__month=input_month, trade_time__day=input_day,
-                                                    trade_time__hour=(
-                                                        transaction_date-delta_hour).strftime('%H'),
-                                                    trade_time__minute__gte=start_min, trade_time__minute__lte=end_min,
-                                                    ).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           stock_code=symbol, trade_time__year=input_year,
+                                                           trade_time__month=input_month, trade_time__day=input_day,
+                                                           trade_time__hour=(
+                                                               transaction_date-delta_hour).strftime('%H'),
+                                                           trade_time__minute__gte=start_min, trade_time__minute__lte=end_min,
+                                                           ).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
         elif type == '15':  # 15 min
             start_min = '0'
             end_min = '29'
@@ -138,12 +141,12 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
                 start_min = '30'
                 end_min = '44'
             transaction_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
-                                                    stock_code=symbol, trade_time__year=input_year,
-                                                    trade_time__month=input_month, trade_time__day=input_day,
-                                                    trade_time__hour=(
-                                                        transaction_date-delta_hour).strftime('%H'),
-                                                    trade_time__minute__gte=start_min, trade_time__minute__lte=end_min,
-                                                    ).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
+                                                           stock_code=symbol, trade_time__year=input_year,
+                                                           trade_time__month=input_month, trade_time__day=input_day,
+                                                           trade_time__hour=(
+                                                               transaction_date-delta_hour).strftime('%H'),
+                                                           trade_time__minute__gte=start_min, trade_time__minute__lte=end_min,
+                                                           ).exclude(created_or_mod_by='human').order_by('direction').distinct('direction')
         for rec in transaction_list:
             if rec.direction == 'b':
                 has_buy = True
@@ -158,3 +161,42 @@ def retrieve_transaction_hist(request, symbol, transaction_date, type, account_i
     except Exception as e:
         logger.error(e)
     return bs_entry
+
+@login_required
+def stock_for_trade(request, account_id, symbol):
+    if request.method == 'GET':
+        req_user = request.user
+        try:
+            # 获得实时报价
+            realtime_price = get_single_realtime_quote(symbol)
+            stock_position = Positions.objects.filter(
+                trader=req_user.id, stock_code=symbol, trade_account=account_id)
+            account_id = TradeAccount.objects.filter(id=account_id)
+            if account_id is not None and len(account_id) == 1:
+                remain_to_buy = round(
+                    account_id[0].account_balance / decimal.Decimal(realtime_price['c']), 0)
+            else:
+                remain_to_buy = 0
+            if len(str(remain_to_buy)) > 2:
+                remain_to_buy = int(str(remain_to_buy)[:-2]) * 100
+            else:
+                remain_to_buy = 0
+            if stock_position is not None and len(stock_position) == 1:
+                remain_to_sell = stock_position[0].lots
+                target_cash_amount = round(
+                    stock_position[0].target_position * int(realtime_price['c']), 0)
+                target_position = stock_position[0].target_position
+            else:
+                remain_to_sell = 0
+                target_position = 0
+                target_cash_amount = 0
+            data = {
+                'current_price': realtime_price,
+                'target_position': target_position,
+                'target_cash_amount': target_cash_amount,
+                'remain_to_buy': remain_to_buy,
+                'remain_to_sell': remain_to_sell,
+            }
+        except Exception as e:
+            logger.error(e)
+    return JsonResponse(data, safe=False)

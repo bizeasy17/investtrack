@@ -9,17 +9,22 @@ def get_single_realtime_quote(symbol):
     realtime_df = ts.get_realtime_quotes(symbol)  # 需要再判断一下ts_code
     realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
-    realtime_price = {}
+    realtime_price_dict = {}
     if len(realtime_df) > 0:
         if realtime_df['open'].mean() != 0:
-            t = datetime.strptime(str(
-                realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
-            realtime_price = {
-                't': t, 'o': realtime_df['open'].mean(), 'h': realtime_df['high'].mean(),
-                'l': realtime_df['low'].mean(),
-                'c': realtime_df['price'].mean(),
-            }
-    return realtime_price
+            realtime_quote = realtime_df['open'].mean()
+        elif realtime_df['pre_open'].mean() != 0:
+            realtime_quote = realtime_df['pre_open'].mean()
+        elif realtime_df['price'].mean() != 0:
+            realtime_quote = realtime_df['price'].mean()
+        t = datetime.strptime(str(
+            realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
+        realtime_price_dict = {
+            't': t, 'o': realtime_df['open'].mean(), 'h': realtime_df['high'].mean(),
+            'l': realtime_df['low'].mean(),
+            'c': realtime_quote,
+        }
+    return realtime_price_dict
 
 
 def get_realtime_quote(stock_symbols=[]):

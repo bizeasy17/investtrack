@@ -53,8 +53,8 @@
                 <ul class="navbar-nav mr-auto">
                   <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">{% trans '首页' %} <span class="sr-only">(current)</span></a></li>
                   {% if request.user.is_authenticated %}
-                  <li class="nav-item"><a class="nav-link" href="{% url 'user:dashboard' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'user:create_account' %}">{% trans '交易账户管理' %}</a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'trade_account:index' %}">{% trans '交易账户管理' %}</a></li>
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                   {% endif %}
                 </ul>
@@ -81,7 +81,7 @@
                       </a>
                       <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="{% url 'user:get_profile' %}"><i class="fa fa-cogs fa-fw" aria-hidden="true"></i>&nbsp; {% trans '个人信息设置' %}</a>
-                        <a class="dropdown-item" href="{% url 'user:create_account' %}"><i class="fa fa-piggy-bank fa-fw" aria-hidden="true"></i>&nbsp; {% trans '交易账户管理' %}</a>
+                        <a class="dropdown-item" href="{% url 'trade_account:create' %}"><i class="fa fa-piggy-bank fa-fw" aria-hidden="true"></i>&nbsp; {% trans '交易账户管理' %}</a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{%url 'account:logout'%}" id="logout"><i class="fa fa-sign-out-alt fa-fw" aria-hidden="true"></i>&nbsp; {% trans '注销' %}</a>
                       </div>
@@ -186,6 +186,9 @@
         {% trans '版权所有'%} &copy; {% trans '51投资'%} {% now "Y" %}      
          | <a class="text-white" href="/about/">{% trans '关于我们' %}</a>
          | <a class="text-white" href="https://www.linkedin.com/in/jay-han-48424138/">{% trans 'Linkedin'%}</a>
+      </p>
+      <p class="m-0 text-center text-white">
+        <a class="text-white" href="http://www.beian.miit.gov.cn/?spm=a2c4g.11186623.2.16.31bf7dc6aTLr4u">{% trans '苏ICP备20021061号-1' %}</a> 
       </p>
     </div>
     <!-- /.container -->

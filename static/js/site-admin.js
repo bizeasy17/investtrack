@@ -405,7 +405,7 @@ $(function () {
         $(this).prop("disabled", true);
 
         $.ajax({
-            url: investBaseEndpoint + 'sync-company-list/',
+            url: saBaseEndpoint + 'companylisted/sync/',
             method: 'GET',
             dataType: 'json',
             success: function (data) {

@@ -2,9 +2,10 @@ $(function () {
     var chart;
     var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
+    var stockmarketEndpoint = '/stockmarket/';
     var indexList = "sh,sz,cyb"
     $.ajax({
-        url: investBaseEndpoint + 'get-realtime-quotes/' + indexList + '/',
+        url: stockmarketEndpoint + 'realtime-quotes/' + indexList + '/',
         success: function (data) {
             var index = "sh"
             $(data).each(function(idx, obj){

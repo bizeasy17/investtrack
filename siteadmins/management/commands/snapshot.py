@@ -3,7 +3,8 @@ from datetime import date, datetime
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from investmgr.models import Positions, TradeAccount, TradeProfitSnapshot
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 
 
@@ -51,7 +52,7 @@ class Command(BaseCommand):
             trader=investor).exclude(is_liquidated=True,)
         with transaction.atomic():
             for entry in in_stock_positions:
-                entry.calibrate_realtime_position()
+                calibrate_realtime_position(entry)
                 latest_positions.append(
                     {
                         'id': entry.pk,
@@ -71,9 +72,9 @@ class Command(BaseCommand):
     def take_account_snapshot(self, invest_account):
         today = date.today()
         # 判断是否存在snapshot
-        snapshots = TradeProfitSnapshot.objects.filter(
+        snapshots = TradeAccountSnapshot.objects.filter(
             trade_account=invest_account, snap_date=today)
         if snapshots is not None and not snapshots.exists():
-            snapshot = TradeProfitSnapshot(
+            snapshot = TradeAccountSnapshot(
                 trade_account=invest_account, snap_date=today)
             snapshot.take_account_snapshot()

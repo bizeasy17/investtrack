@@ -29,7 +29,7 @@
                     <div class="" id="stockPosition">
                         <div class='d-flex align-items-center justify-content-between flex-wrap'>
                             <div>
-                                <h6 class="card-title"><a href="#" class="text-muted"><span id="pStockName">-</span>({% trans '账户:' %}<span id="pAccount">{{trade_info.trade_account.account_name}}</span>)</h6>
+                                <h6 class="card-title"><a href="#" class="text-muted"><span id="pStockName">-</span>({% trans '账户:' %}<span id="pAccount">{% if trade_info.trade_account %}{{trade_info.trade_account.account_name}}{% endif %}</span>)</h6>
                                 <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark"><span id="pStockSymbol">-</span></a></h7>
                             </div>
                             
@@ -288,7 +288,7 @@
                     <input type="hidden" id="hiddenTscode" value="{{trade_info.show_code}}"><!--show code, 000001.SZ-->
                     <input type="hidden" id="hiddenMarket" value="{{trade_info.market}}">
                     <input type="hidden" id="hiddenAccount" value="{{trade_info.account_id}}">
-                    <input type="hidden" id="hiddenAccountName" value="{{trade_info.trade_account.account_name}}">
+                    <input type="hidden" id="hiddenAccountName" value="{% if trade_info.trade_account %} {{trade_info.trade_account.account_name}} {% endif %}">
                     <input type="hidden" id="hiddenTradeType" value="{{trade_info.type}}">
                 </div>
 
@@ -314,9 +314,9 @@
         <div class="p-1 small"> 
             <div class="">
                 <div class="row pl-3 pr-3">
-                    <form action="{% url 'user:post_trade_creation' %}" enctype="multipart/form-data" id="traderecForm" method="post"
+                    <form action="{% url 'stocktrade:create' %}" enctype="multipart/form-data" id="traderecForm" method="post"
                         role="form">
-                        <!-- {% csrf_token %} -->
+                        {% csrf_token %}
                         <input type="hidden" id="direction">
                         <div class="form-row">
                             <div class="form-group col-md-12 mb-2">
@@ -335,7 +335,7 @@
                                         </div>
                                     </div>
                                     <input class="form-control form-control-sm" type="text" id="pickedAccount" placeholder="{% trans '请选择账户' %}"
-                                        value="{{ trade_info.trade_account.account_name }}" readonly>
+                                        value="{% if trade_info.trade_account %} {{ trade_info.trade_account.account_name }} {% endif %}" readonly>
                                     <input type="hidden" id="pickedAccountID" value="{{ trade_info.account_id }}">
                                 </div>
                             </div>

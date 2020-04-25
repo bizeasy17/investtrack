@@ -1,6 +1,7 @@
 $(function(){
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
+    var tradeAccountEndpoint = '/tradeaccounts/';
     var dt = new Date();
     
     if ($("#accountValidSince").length > 0) {
@@ -162,7 +163,7 @@ $(function(){
         }
 
         $.ajax({
-            url: userBaseEndpoint + 'create-account',
+            url: tradeAccountEndpoint + 'create/',
             headers: { 'X-CSRFToken': csrftoken },
             method: 'POST',
             dataType: 'json',
