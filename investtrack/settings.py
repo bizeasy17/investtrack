@@ -183,7 +183,7 @@ LOGGING = {
         'log_file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'love_snowball.log',
+            'filename': '51touz_cn.log',
             'maxBytes': 16777216,  # 16 MB
             'formatter': 'verbose'
         },
