@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django.forms',
     # 3rd Party Apps
     # 'mdeditor',
-    # 'rest_framework',
+    'rest_framework',
     'easy_thumbnails',
     'crispy_forms',
     'tushare',
