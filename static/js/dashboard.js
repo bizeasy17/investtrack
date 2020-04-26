@@ -548,7 +548,10 @@ $(function () {
       return true;
     }
     if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
-      return true;
+        return true;
+    }
+    if(inputDatetime > date) {
+        return false;
     }
     return false;
   }

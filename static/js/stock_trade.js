@@ -35,6 +35,7 @@ $(function () {
         var day = inputDatetime.getDay();
         var hour = inputDatetime.getHours();
         var min = inputDatetime.getMinutes();
+        if (day == 0 || day == 6) return false; //周六周日不需要刷新    
         if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
             return true;
         }
@@ -60,14 +61,14 @@ $(function () {
                 //     nameOrCode: nameOrCode
                 // },
                 success: function (data) {
-                    $('#currentPrice').text(data.current_price);
+                    $('#currentPrice').text(data.current_price.c);
                     $('#cashRemainToBuy').text(parseFloat(data.remain_to_buy).toLocaleString());
                     $('#sharesRemainToSell').text(data.remain_to_sell.toLocaleString());
                     $('#hiddenSharesRemainToSell').text(data.remain_to_sell);
-                    $('#tradePrice').val(data.current_price);
+                    $('#tradePrice').val(data.current_price.c);
                     var quantity = $('#quantity').val();
                     // $('#quantity').val($('#quantity').val().toLocaleString());
-                    $('#refCashAmount').text(parseFloat(data.current_price * quantity).toLocaleString());
+                    $('#refCashAmount').text(parseFloat(data.current_price.c * quantity).toLocaleString());
                     $('#targetPositionText').text(data.target_position.toLocaleString());
                     $('#targetPosition').val(data.target_position);
                     // $('#targetCashAmount').text(Math.round(data.target_cash_amount).toLocaleString());
@@ -76,11 +77,9 @@ $(function () {
                             $('#targetPosition').removeAttr('readonly');
                             $('#targetPosition').val(100);
                             $('#targetPositionText').text(100);
-                            $('#targetCashAmount').text(Math.round(100 * data.current_price).toLocaleString());
                         } else {
                             $('#targetPosition').prop('readonly', true);
                             // $('#targetPosition').val(100);
-
                         }
                         if (parseInt($('#cashRemainToBuy').text()) <= 0) {
                             $('#btnSubmitTrade').prop('disabled', true);
@@ -89,7 +88,7 @@ $(function () {
                         }
                         $('#sharesRemainToSell').addClass('d-none');
                         $('#sharesRemainToSellLbl').addClass('d-none');
-
+                        $('#targetCashAmount').text(Math.round($('#targetPosition').val() * data.current_price.c).toLocaleString());
                     } else {
                         $('#targetPosition').prop('readonly', true);
                         if (parseInt($('#hiddenSharesRemainToSell').text()) <= 0) {
@@ -99,7 +98,7 @@ $(function () {
                         }
                     }
                     $('#direction').val($('#hiddenTradeType').val());
-                    refreshPositionBySymbol(symbol, data.current_price)
+                    refreshPositionBySymbol(symbol, data.current_price.c)
                 },
                 statusCode: {
                     403: function () {
@@ -239,21 +238,6 @@ $(function () {
 
             }
         })
-    }
-
-    var isOpenForTrade = function (inputDatetime) {
-        // var dateAndTime = inputDatetime.split(" ");
-        var date = formatDate(inputDatetime, "-");
-        var openTime = new Date(date + " 9:15:00");
-        var closeTime = new Date(date + " 15:05:00");
-        var day = inputDatetime.getDay();
-        var hour = inputDatetime.getHours();
-        var min = inputDatetime.getMinutes();
-        if (day == 6 || day == 0) return false;
-        if (inputDatetime >= openTime && inputDatetime <= closeTime) {
-            return true;
-        }
-        return false;
     }
 
     var refreshStockInfo2Realtime = function () {
@@ -485,7 +469,7 @@ $(function () {
             $('#cashRemainToBuyLbl').removeClass('d-none');
             $('#sharesRemainToSell').addClass('d-none');
             $('#sharesRemainToSellLbl').addClass('d-none');
-            if ($('#targetPositionText') == '0') {
+            if ($('#targetPositionText').text() == '0') {
                 $('#targetPosition').prop('readonly', false);
             } else {
                 $('#targetPosition').prop('readonly', true);
