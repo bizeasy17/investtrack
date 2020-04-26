@@ -1,3 +1,4 @@
+import logging
 from datetime import date, datetime
 
 import tushare as ts
@@ -10,15 +11,21 @@ from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 
-from investmgr import utils
-from investmgr.models import TradeRec, Positions, TradeProfitSnapshot, TradeAccount
+from investors.models import StockFollowing, TradeStrategy
+from stockmarket.models import StockNameCodeMap
+from stocktrade.models import Transactions
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 
+logger = logging.getLogger(__name__)
 
 # Create your views here.
+
+
 class SiteAdminGenericView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
-    # model = TradeRec
+    # model = Transactions
 
     # template_name属性用于指定使用哪个模板进行渲染
     default_template_name = 'siteadmin/dashboard.html'
@@ -83,15 +90,15 @@ def get_transaction_detail(request, id):
         if req_user is not None:
             if req_user.is_superuser:
                 recs_json = []
-                trade_recs = TradeRec.objects.filter(
+                trade_recs = Transactions.objects.filter(
                     in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
                 recs_json = traderec2json(trade_recs)
                 return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
             # workaround for use the function for normal user
             else:
                 recs_json = []
-                trade_recs = TradeRec.objects.filter(trader=req_user.id,
-                    in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
+                trade_recs = Transactions.objects.filter(trader=req_user.id,
+                                                     in_stock_positions_id=id).exclude(created_or_mod_by='system').order_by('-trade_time')
                 recs_json = traderec2json(trade_recs)
                 return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
 
@@ -104,7 +111,7 @@ def get_transaction_detail_breakdown(request, id, ref_num):
         req_user = request.user
         if req_user is not None and req_user.is_superuser:
             recs_json = []
-            trade_recs = TradeRec.objects.filter(
+            trade_recs = Transactions.objects.filter(
                 rec_ref_number=ref_num).exclude(id=id).exclude(direction='s').order_by('-trade_time')
             recs_json = traderec2json(trade_recs)
             return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
@@ -117,7 +124,7 @@ def get_transaction_detail_pkd(request, ref_id):
         site_admin = request.user
         if site_admin is not None and site_admin.is_superuser:
             recs_json = []
-            trade_recs = TradeRec.objects.filter(
+            trade_recs = Transactions.objects.filter(
                 sell_stock_refer_id=ref_id).exclude(created_or_mod_by='human').order_by('-trade_time')
             recs_json = traderec2json(trade_recs)
             return JsonResponse({'code': 'ok', 'content': recs_json}, safe=False)
@@ -129,7 +136,7 @@ def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
     将持仓股的价格更新到最新报价
     '''
     if len(realtime_quotes) > 0:
-        linked_traderecs = TradeRec.objects.select_for_update().filter(
+        linked_traderecs = Transactions.objects.select_for_update().filter(
             in_stock_positions=position_pk)
         with transaction.atomic():
             for entry in linked_traderecs:
@@ -150,17 +157,12 @@ def sync_stock_position_for_investor(investor):
     #         stock_symbols.append(stock_symbol['stock_code'])
 
     in_stock_positions = Positions.objects.select_for_update().filter(
-        trader=investor).exclude(is_liquadated=True,)
+        trader=investor).exclude(is_liquidated=True,)
     with transaction.atomic():
-        # if in_stock_positions is not None and len(in_stock_positions) > 0:
-        #     for position in in_stock_positions:
-        #         stock_symbols.append(position.stock_code)
-        #     realtime_quotes = utils.get_realtime_price(
-        #         list(set(stock_symbols)))
         for entry in in_stock_positions:
             # entry.make_profit_updated(realtime_quotes[entry.stock_code])
             # sync_stock_price_for_investor(entry.pk, realtime_quotes)
-            entry.calibrate_realtime_position()
+            calibrate_realtime_position(entry)
             latest_positions.append(
                 {
                     'id': entry.pk,
@@ -226,3 +228,38 @@ def take_snapshot_manual(request):
                         take_account_snapshot(account)
         return JsonResponse({'code': 'ok', 'message': _('账户快照生成成功')}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('系统错误或未授权')}, safe=False)
+
+
+@login_required
+def sync_company_list(request):
+    if request.method == 'GET':
+        try:
+            pro = ts.pro_api()
+
+            # 查询当前所有正常上市交易的股票列表
+            data = pro.stock_basic(exchange='', list_status='',
+                                   fields='ts_code,symbol,name,area,industry,fullname,enname,market,exchange,list_status,list_date,delist_date,is_hs')
+            company_list = StockNameCodeMap.objects.all()
+            if data is not None and len(data) > 0:
+                if company_list.count() != len(data):
+                    for v in data.values:
+                        if str(v[1])[0] == '3':
+                            v[7] = 'CYB'
+                        elif str(v[1])[0] == '0':
+                            v[7] = 'ZXB'
+                        else:
+                            if str(v[1])[:3] == '688':
+                                v[7] = 'KCB'
+                            else:
+                                v[7] = 'ZB'
+
+                        company_list = StockNameCodeMap(ts_code=v[0], stock_code=v[1], stock_name=v[2], area=v[3],
+                                                        industry=v[4], fullname=v[5], en_name=v[6], market=v[7], exchange=v[8],
+                                                        list_status=v[9], list_date=datetime.strptime(v[10], '%Y%m%d'), delist_date=v[11],
+                                                        is_hs=v[12])
+                        company_list.save()
+            # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
+            return JsonResponse({'success': _('公司信息同步成功')}, safe=False)
+        except Exception as e:
+            logger.error(e)
+    return JsonResponse({'error': _('无法创建交易记录')}, safe=False)

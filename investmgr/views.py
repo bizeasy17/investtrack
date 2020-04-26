@@ -5,18 +5,22 @@ from datetime import date, datetime, timedelta
 
 import tushare as ts
 from django.contrib.auth.decorators import login_required
+from django.db.models.functions import ExtractWeek
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.functions import ExtractWeek
 
-from .models import (StockNameCodeMap, TradeRec, Positions,
-                     TradeProfitSnapshot, TradeAccount)
+from investors.models import StockFollowing, TradeStrategy
+from stockmarket.models import StockNameCodeMap
+from stocktrade.models import Transactions
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from users.models import User
 
 logger = logging.getLogger(__name__)
 
 # Create your views here.
+
+
 def get_realtime_price(request, stock_name_or_code):
     if request.method == 'GET':
         try:
@@ -32,11 +36,12 @@ def get_realtime_price(request, stock_name_or_code):
             realtime_df = ts.get_realtime_quotes(
                 str(ts_code))  # 需要再判断一下ts_code
             realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
-                                    'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
+                                       'high', 'low', 'bid', 'ask', 'volume', 'amount', 'time']]
             realtime_price = realtime_df['price'].mean()
         except Exception as e:
             logger.error(e)
     return JsonResponse({'price': realtime_price}, safe=False)
+
 
 def get_realtime_quotes(request, code):
     # 获得实时报价
@@ -148,6 +153,7 @@ def get_company_info_autocomplete(request, name_or_code):
     empty = {'results': []}
     return JsonResponse(empty, safe=False)
 
+
 def get_realtime_price_for_kdata(request, code):
     # 获得实时报价
     realtime_df = ts.get_realtime_quotes(code)  # 需要再判断一下ts_code
@@ -172,6 +178,7 @@ def get_realtime_price_for_kdata(request, code):
     # else:
     #     return realtime_price
 
+
 def get_stock_price_by(request, code, start_date, end_date, period):
     df = []
     index_list = ['sh', 'sz', 'hs300', 'sz50', 'zxb', 'cyb', 'kcb']
@@ -179,7 +186,7 @@ def get_stock_price_by(request, code, start_date, end_date, period):
         try:
             # if code in index_list:
             df = ts.get_hist_data(code, start=start_date,
-                                end=end_date, ktype=period)
+                                  end=end_date, ktype=period)
 
             stock_his_data_dic = json.loads(df.to_json(orient='index'))
 
@@ -248,6 +255,7 @@ def get_stock_price_by(request, code, start_date, end_date, period):
             logger.error(e)
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
+
 def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period):
     df = []
     index_list = ['sh', 'sz', 'hs300', 'sz50', 'zxb', 'cyb', 'kcb']
@@ -255,14 +263,11 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
         try:
             # if code in index_list:
             df = ts.get_hist_data(symbol, start=start_date,
-                                end=end_date, ktype=period)
-
+                                  end=end_date, ktype=period)
             stock_his_data_dic = json.loads(df.to_json(orient='index'))
-
             data = []
             if stock_his_data_dic is None or len(stock_his_data_dic) == 0:
                 return JsonResponse([], safe=False)
-
             # 按照从end date（从大到小）的顺序获取历史交易数据
             isClosed = False
             for k, v in stock_his_data_dic.items():
@@ -307,25 +312,14 @@ def get_stock_hist_by(request, symbol, account_id, start_date, end_date, period)
                 data = data[::-1]
                 if not isClosed and period == 'D':
                     data.append(realtime_price)
-
-                # if df is not None and len(df) > 0:
-                #     for d in df.values:
-                #         data.append(
-                #             {
-                #                 't': datetime.strptime(d[1], "%Y%m%d"),
-                #                 'o': d[2],
-                #                 'h': d[3],
-                #                 'l': d[4],
-                #                 'c': d[5],
-                #             }
-                #         )
             return JsonResponse(data, safe=False)
-        except Exception as e:
-            logger.error(e)
+        except AttributeError as err:
+            logger.error(err)
     return JsonResponse({'error': _('输入信息有误，无相关数据')}, safe=False)
 
+
 def get_traderec(request, stock_code, trade_date):
-    traderec_list = TradeRec.objects.filter(trader=request.user.id,
+    traderec_list = Transactions.objects.filter(trader=request.user.id,
                                             stock_code=stock_code, trade_time__startswith=trade_date,)
 
     traderec = []
@@ -360,18 +354,18 @@ def get_traderec_direction_by_period(request, code, trade_date, period, account_
     delta_gmt8_hour = timedelta(hours=8)  # GMT+8, China Time
     try:
         if period == 'M':  # month
-            traderec_list = TradeRec.objects.filter(trader=request.user.id, trade_account=account_id,
+            traderec_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year, trade_time__month=input_month).order_by('direction').distinct('direction')
         elif period == 'W':  # week
-            traderec_list = TradeRec.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
-                                                                                            stock_code=code, trade_time__year=input_year, week=input_week).order_by('direction').distinct('direction')
+            traderec_list = Transactions.objects.annotate(week=ExtractWeek('trade_time')).filter(trader=request.user.id,
+                                                                                             stock_code=code, trade_time__year=input_year, week=input_week).order_by('direction').distinct('direction')
         elif period == 'D':  # day
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,trade_account=account_id,
+            traderec_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code,
                                                     trade_time__startswith=trade_date.strftime('%Y-%m-%d')).order_by('direction').distinct('direction')
         elif period == '60':  # 60 min
             delta_hour = timedelta(hours=1)
-            traderec_list = TradeRec.objects.filter(trader=request.user.id, trade_account=account_id,
+            traderec_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year,
                                                     trade_time__month=input_month, trade_time__day=input_day,
                                                     trade_time__hour=(trade_date-delta_hour).strftime('%H')).order_by('direction').distinct('direction')
@@ -387,7 +381,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period, account_
                 startMin = '0'
                 endMin = '29'
 
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,trade_account=account_id,
+            traderec_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year,
                                                     trade_time__month=input_month, trade_time__day=input_day,
                                                     trade_time__hour=(
@@ -412,7 +406,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period, account_
                 startMin = '30'
                 endMin = '44'
 
-            traderec_list = TradeRec.objects.filter(trader=request.user.id,trade_account=account_id,
+            traderec_list = Transactions.objects.filter(trader=request.user.id, trade_account=account_id,
                                                     stock_code=code, trade_time__year=input_year,
                                                     trade_time__month=input_month, trade_time__day=input_day,
                                                     trade_time__hour=(
@@ -426,7 +420,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period, account_
             else:
                 sell = True
 
-        # traderec_list = TradeRec.objects.filter(trader=request.user.id,
+        # traderec_list = Transactions.objects.filter(trader=request.user.id,
         #                                         stock_code=code).order_by('direction')
         # if traderec_list is not None and len(traderec_list) > 0:
         #     for rec in traderec_list:
@@ -438,7 +432,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period, account_
         #         recHour = rec_trade_local_time.strftime('%H')
         #         recMin = rec_trade_local_time.strftime('%M')
         #         if period == 'M':  # month
-        #             traderec_list = TradeRec.objects.filter(trader=request.user.id,
+        #             traderec_list = Transactions.objects.filter(trader=request.user.id,
         #                                                     stock_code=code, trade_time__year=input_year, trade_time__month=input_month).order_by('direction').distinct('direction')
         #             for rec in traderec_list:
         #                 if recYear == input_year and recMonth == input_month:
@@ -507,6 +501,7 @@ def get_traderec_direction_by_period(request, code, trade_date, period, account_
         logger.error(e)
     return buy_sell
 
+
 @login_required
 def sync_company_list(request):
     if request.method == 'GET':
@@ -515,7 +510,7 @@ def sync_company_list(request):
 
             # 查询当前所有正常上市交易的股票列表
             data = pro.stock_basic(exchange='', list_status='',
-                                fields='ts_code,symbol,name,area,industry,fullname,enname,market,exchange,list_status,list_date,delist_date,is_hs')
+                                   fields='ts_code,symbol,name,area,industry,fullname,enname,market,exchange,list_status,list_date,delist_date,is_hs')
             company_list = StockNameCodeMap.objects.all()
             if data is not None and len(data) > 0:
                 if company_list.count() != len(data):

@@ -8,6 +8,9 @@ $(function () {
   var csrftoken = Cookies.get('csrftoken');
   var userBaseEndpoint = '/user/';
   var investBaseEndpoint = '/invest/stocks/';
+  var stockmarketEndpoint = '/stockmarket/';
+  var dashboardEndpoint = '/dashboard/';
+  var stocktradeEndpoint = '/stocktrade/';
 
   var chartShowDays15 = 5
   var chartShowDays30 = 10
@@ -31,7 +34,7 @@ $(function () {
       search: function (qry, callback) {
         // let's do a custom ajax call
         $.ajax(
-          investBaseEndpoint + 'search-autocomplete/' + $('#searchForTrade').val(),
+          stockmarketEndpoint + 'listed_companies/' + $('#searchForTrade').val(),
         ).done(function (res) {
           callback(res.results)
         });
@@ -44,7 +47,8 @@ $(function () {
     var showCode = item.ts_code;
     var showName = item.text;
     var market = item.market;
-    window.location.href = userBaseEndpoint + "account/" + $("#defaultAccount").val() + "/trade/" + code + "/";
+    window.location.href = stocktradeEndpoint  + code + "/account/" + $("#defaultAccount").val();
+    // window.location.href = userBaseEndpoint + "account/" + $("#defaultAccount").val() + "/trade/" + code + "/";
   });
 
   if ($("#profitDevChart").length) {
@@ -149,7 +153,7 @@ $(function () {
     // 设置当前选定利润分析周期
     var period = $(this).val();
     $.ajax({
-      url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
+      url: dashboardEndpoint + 'profit-trend/period/' + period + '/',
       success: function (data) {
         // 亏损的字体颜色为绿
         if (data.avg_profit < 0) {
@@ -192,7 +196,7 @@ $(function () {
       .getContext("2d");
     var period = $('input:radio[name="period"]:checked').val();
     $.ajax({
-      url: userBaseEndpoint + 'profit-trend/period/' + period + '/',
+      url: dashboardEndpoint + 'profit-trend/period/' + period + '/',
       // headers: { 'X-CSRFToken': csrftoken },
       method: 'GET',
       dataType: 'json',
@@ -305,7 +309,7 @@ $(function () {
       .getContext("2d");
     var defaultPeriod = 'y'; //all stock shares
     $.ajax({
-      url: userBaseEndpoint + 'invest-attempt-trend/period/' + defaultPeriod + '/',
+      url: dashboardEndpoint + 'invest-attempt-trend/period/' + defaultPeriod + '/',
       // headers: { 'X-CSRFToken': csrftoken },
       method: 'GET',
       dataType: 'json',
@@ -416,7 +420,7 @@ $(function () {
     var account = 'a'; //all account
     var stock_symbol = 'a'; //all stock shares
     $.ajax({
-      url: userBaseEndpoint + 'position-vs-status/' + account + '/' + stock_symbol + '/',
+      url: dashboardEndpoint + 'position-vs-status/' + account + '/' + stock_symbol + '/',
       // headers: { 'X-CSRFToken': csrftoken },
       method: 'GET',
       dataType: 'json',
@@ -529,29 +533,32 @@ $(function () {
   }
 
 
-  var isOpenForTrade = function (inputDatetime) {
-    // var dateAndTime = inputDatetime.split(" ");
-    var date = formatDate(inputDatetime, "-");
-    var openTime = new Date(date + " 9:30:00");
-    var morningCloseTime = new Date(date + " 11:30:00");
-    var afternoonOpenTime = new Date(date + " 13:00:00");
-    var closeTime = new Date(date + " 15:00:00");
-    var day = inputDatetime.getDay();
-    var hour = inputDatetime.getHours();
-    var min = inputDatetime.getMinutes();
-    if (day == 0 || day == 6) return false; //周六周日不需要刷新
-    if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
-      return true;
-    }
-    if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
-      return true;
-    }
-    return false;
-  }
+  // var isOpenForTrade = function (inputDatetime) {
+  //   // var dateAndTime = inputDatetime.split(" ");
+  //   var date = formatDate(inputDatetime, "-");
+  //   var openTime = new Date(date + " 9:30:00");
+  //   var morningCloseTime = new Date(date + " 11:30:00");
+  //   var afternoonOpenTime = new Date(date + " 13:00:00");
+  //   var closeTime = new Date(date + " 15:00:00");
+  //   var day = inputDatetime.getDay();
+  //   var hour = inputDatetime.getHours();
+  //   var min = inputDatetime.getMinutes();
+  //   if (day == 0 || day == 6) return false; //周六周日不需要刷新
+  //   if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
+  //     return true;
+  //   }
+  //   if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
+  //       return true;
+  //   }
+  //   if(inputDatetime > date) {
+  //       return false;
+  //   }
+  //   return false;
+  // }
 
   var refreshRealtimeQuote = function () {
     $.ajax({
-      url: userBaseEndpoint + 'positions/refresh/',
+      url: dashboardEndpoint + 'positions/refresh/',
       success: function (data) {
         $(data).each(function (idx, obj) {
           // alert(idx);

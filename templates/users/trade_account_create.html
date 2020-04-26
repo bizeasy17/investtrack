@@ -19,7 +19,7 @@
             <h6 class="my-0">{{trade_account.account_name}}
             </h6>
             <small class="text-muted">{{trade_account.account_type}}</small>
-            <a href="{% url 'user:get_record_trade_view' account=trade_account.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '记录交易'%}</a>
+            <a href="{% url 'stocktrade:home' account_id=trade_account.id symbol='sh' %}" class="small badge-info badge-pill">{%trans '记录交易'%}</a>
           </div>
           <span class="text-muted">{{trade_account.account_balance}}</span>
           

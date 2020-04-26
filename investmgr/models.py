@@ -39,7 +39,7 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-class TradeRec(BaseModel):
+class OldTradeRec(BaseModel):
     """交易记录"""
     VISIBLE_CHOICES = (
         ('g', _('公开')),
@@ -303,7 +303,7 @@ class TradeRec(BaseModel):
 
 # 目前持有仓位数据model
 
-class Positions(BaseModel):
+class OldPositions(BaseModel):
     '''
     深交所和上海交易所的股票均需要收取过户费，过户费按成交股票金额的0.02%进行双向收取，即买入和卖出都需要收取。
     一般股票市场上的交易费由三部分组成，分别是佣金、印花税和过户费。
@@ -649,7 +649,7 @@ class Positions(BaseModel):
         get_latest_by = 'id'
 
 
-class TradeSettings(BaseModel):
+class OldTradeSettings(BaseModel):
 
     SETTING_CHOICES = (
         ('TARGET_POSITION', _('目标仓位')),
@@ -668,7 +668,7 @@ class TradeSettings(BaseModel):
         verbose_name_plural = verbose_name
 
 
-class TradeStrategy(BaseModel):
+class OldTradeStrategy(BaseModel):
     PERIOD_CHOICE = {
         ('mm', _('月线')),
         ('wk', _('周线')),
@@ -734,7 +734,7 @@ class TradeStrategy(BaseModel):
         return strategies
 
 
-class StockNameCodeMap(BaseModel):
+class OldStockNameCodeMap(BaseModel):
     STOCK_MARKET_CHOICES = (
         ('ZB', _('主板')),
         ('ZXB', _('中小板')),
@@ -805,7 +805,7 @@ class StockNameCodeMap(BaseModel):
         get_latest_by = 'id'
 
 
-class StockFollowing(BaseModel):
+class OldStockFollowing(BaseModel):
     stock_code = models.CharField(
         _('股票代码'), max_length=50, blank=False, null=False)
     stock_name = models.CharField(
@@ -826,7 +826,7 @@ class StockFollowing(BaseModel):
         get_latest_by = 'id'
 
 
-class TradeAccount(BaseModel):
+class OldTradeAccount(BaseModel):
     TRADE_PROVIDER_CHOICES = (
         ('htzq', _('华泰证券')),
         ('zszq', _('招商证券')),
@@ -892,7 +892,7 @@ class TradeAccount(BaseModel):
 #         ordering = ['name']
 #         verbose_name = _('持仓股卖出策略')
 #         verbose_name_plural = verbose_name
-class StockPositionSnapshot(BaseModel):
+class OldStockPositionSnapshot(BaseModel):
     """
     should run every day after 3:30pm, on trade date
     """
@@ -925,7 +925,7 @@ class StockPositionSnapshot(BaseModel):
         return str(self.trade_account)
 
 
-class TradeProfitSnapshot(BaseModel):
+class OldTradeProfitSnapshot(BaseModel):
     """
     should run every day after 3:30pm, on trade date
     """

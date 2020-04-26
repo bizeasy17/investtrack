@@ -6,9 +6,12 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
+from investors.models import StockFollowing, TradeStrategy
+from stockmarket.models import StockNameCodeMap
+from stocktrade.models import Transactions
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+
 from .forms import TradeRecAdminForm
-from .models import (Positions, StockFollowing, StockNameCodeMap, TradeRec,
-                     TradeSettings, TradeStrategy, TradeAccount, TradeProfitSnapshot)
 
 # Register your models here.
 
@@ -18,7 +21,7 @@ class TradeRecListFilter(admin.SimpleListFilter):
     parameter_name = 'trader'
 
     def lookups(self, request, model_admin):
-        traders = list(set(map(lambda x: x.trader, TradeRec.objects.all())))
+        traders = list(set(map(lambda x: x.trader, Transactions.objects.all())))
         for trader in traders:
             yield (trader.id, _(trader.username))
 
@@ -38,16 +41,6 @@ class TradeRecAdmin(admin.ModelAdmin):
     list_display_links = ('stock_name', 'stock_code')
     list_filter = (TradeRecListFilter, 'strategy')
     exclude = ('created_time', 'last_mod_time')
-
-    form = TradeRecAdminForm
-
-    def get_form(self, request, obj=None, *args, **kwargs):
-        form = super(TradeRecAdmin, self).get_form(request, *args, **kwargs)
-        setting_target_position = TradeSettings.objects.filter(
-            creator=request.user.id, name='TARGET_POSITION')
-        if setting_target_position.count() > 0:
-            form.base_fields['target_position'].initial = setting_target_position[0].value
-        return form
 
 
 class StrategyAdmin(admin.ModelAdmin):
@@ -96,11 +89,11 @@ class TradeSnapshotAdmin(admin.ModelAdmin):
 
 
 # Register your models here.
-admin.site.register(TradeRec, TradeRecAdmin)
+admin.site.register(Transactions, TradeRecAdmin)
 admin.site.register(TradeStrategy, StrategyAdmin)
-admin.site.register(TradeSettings, TradeSettingsAdmin)
+# admin.site.register(TradeSettings, TradeSettingsAdmin)
 admin.site.register(StockNameCodeMap, StockNameCodeMapAdmin)
 admin.site.register(Positions, PositionsAdmin)
 admin.site.register(StockFollowing, StockFollowingAdmin)
 admin.site.register(TradeAccount, TradeAccountAdmin)
-admin.site.register(TradeProfitSnapshot, TradeSnapshotAdmin)
+admin.site.register(TradeAccountSnapshot, TradeSnapshotAdmin)

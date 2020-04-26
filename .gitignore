@@ -128,7 +128,7 @@ dmypy.json
 .pyre/
 
 # vscode configuration
-.vscode/settings.json
 uploads/
 uwsgi/uwsgi_pid
 collectedstatic/
+.vscode/

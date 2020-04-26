@@ -13,7 +13,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>{% trans '51投资 - 用户登录' %}</title>
+  <title>{% trans '我爱投资 - 用户登录' %}</title>
 
   <!-- Custom fonts for this template-->
   <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
@@ -45,8 +45,8 @@
                   <div class="text-center">
                     <h1 class="h4 text-gray-900 mb-4">{% trans '欢迎回来！' %}</h1>
                   </div>
-                  <form class="login" id="loginForm" method="POST" action="{% url 'account:login' %}">
-                    <input type="hidden" id="nextUrl" value="{{ request.GET.urlencode }}"/>
+                  <form class="login" id="loginForm" method="POST" action="{% url 'account:login' %}">{% csrf_token %}
+                    <input type="hidden" id="nextUrl" value="{% if request.GET.urlencode == '' %} {% url 'dashboard:index' %} {% else %}{{ request.GET.urlencode }}{% endif %}"/>
                     <div id="div_id_login" class="form-group"> <label for="id_login" class=" requiredField">
                         {% trans '用户名' %}<span class="asteriskField">*</span> </label>
                       <div class=""> 
@@ -128,7 +128,7 @@
                   if(searchParams.has("next")){
                     window.location.href = searchParams.get("next");
                   }else{
-                    window.location.href = "/user/dashboard/";
+                    window.location.href = $("#nextUrl").val();
                   }
                 }else{
                   alert("用户名或密码错误，登录失败！");

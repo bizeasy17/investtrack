@@ -21,31 +21,35 @@ from django.urls import path, re_path
 from django.views.generic import TemplateView
 
 urlpatterns = [
+    # admin url
     path('admin/', admin.site.urls),
     # App urls
-    path('siteadmin/', include('siteadmins.urls')),
     path('user/', include('users.urls')),
-    path('notifications/', include('notifications.urls')),
-    path('invest/', include('investmgr.urls')),
+    # path('invest/', include('investmgr.urls')),
     path('account/', include('accounts.urls')),
-    
+    # retro1
+    path('auth/', include('authentication.urls')),
+    path('investors/', include('investors.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('stocktrade/', include('stocktrade.urls')),
+    path('siteadmin/', include('siteadmins.urls')),
+    path('stockmarket/', include('stockmarket.urls')),
+    path('tradeaccounts/', include('tradeaccounts.urls')),
+    path('txnvis/', include('txnvisibility.urls')),
+    path('dashboard/', include('dashboard.urls')),
+
     # home pages
     re_path(r'^$',
             TemplateView.as_view(template_name='pages/home.html'), name='home'),
     # simple pages
     re_path(r'^about/$',
         TemplateView.as_view(template_name='pages/about.html'), name='about'),
-    
     # test pages
     re_path(r'^404/$',
             TemplateView.as_view(template_name='pages/404.html'), name='404'),
-
     # 3rd Party Apps
-    
 ]
-
 handler404 = 'users.views.page_not_found_view'
-
 if settings.DEBUG:
     # static files (images, css, javascript, etc.)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

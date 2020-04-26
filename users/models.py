@@ -1,10 +1,13 @@
+from abc import ABCMeta, abstractmethod, abstractproperty
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.db import models
 from django.urls import reverse
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-
-from investmgr.models import TradeAccount
 
 
 # Create your models here.
@@ -46,3 +49,9 @@ class User(AbstractUser):
             return self.name
 
         return self.username
+
+    class Meta:
+        verbose_name = _('网站用户')
+
+
+

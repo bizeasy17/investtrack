@@ -8,6 +8,11 @@ $(function () {
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
     var investBaseEndpoint = '/invest/stocks/';
+    var txnvisEndpoint = '/txnvis/';
+    var stockmarketEndpoint = '/stockmarket/';
+    var stocktradeEndpoint = '/stocktrade/';
+    var dashboardEndpoint = '/dashboard/';
+
 
     var chartShowDays15 = 15
     var chartShowDays30 = 15
@@ -20,34 +25,35 @@ $(function () {
     var endDate = formatDate(dt, '-');
     var chartCanvas = document.getElementById('stockChart').getContext('2d');
 
-    var isOpenForTrade = function (inputDatetime) {
-        // var dateAndTime = inputDatetime.split(" ");
-        var date = formatDate(inputDatetime, "-");
-        var openTime = new Date(date + " 9:30:00");
-        var morningCloseTime = new Date(date + " 11:30:00");
-        var afternoonOpenTime = new Date(date + " 13:00:00");
-        var closeTime = new Date(date + " 15:00:00");
-        var day = inputDatetime.getDay();
-        var hour = inputDatetime.getHours();
-        var min = inputDatetime.getMinutes();
-        if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
-            return true;
-        }
-        if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
-            return true;
-        }
-        if(inputDatetime > date) {
-            return false;
-        }
-        return false;
-    }
+    // var isOpenForTrade = function (inputDatetime) {
+    //     // var dateAndTime = inputDatetime.split(" ");
+    //     var date = formatDate(inputDatetime, "-");
+    //     var openTime = new Date(date + " 9:30:00");
+    //     var morningCloseTime = new Date(date + " 11:30:00");
+    //     var afternoonOpenTime = new Date(date + " 13:00:00");
+    //     var closeTime = new Date(date + " 15:00:00");
+    //     var day = inputDatetime.getDay();
+    //     var hour = inputDatetime.getHours();
+    //     var min = inputDatetime.getMinutes();
+    //     if (day == 0 || day == 6) return false; //周六周日不需要刷新    
+    //     if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
+    //         return true;
+    //     }
+    //     if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
+    //         return true;
+    //     }
+    //     if(inputDatetime > date) {
+    //         return false;
+    //     }
+    //     return false;
+    // }
 
     // assign the selected strategy
-    var updateTradeStockInfoFor = function (code) {
+    var updateTradeStockInfoFor = function (symbol) {
         var account = $('#pickedAccountID').val();
-        if (code != '') {
+        if (symbol != '') {
             $.ajax({
-                url: userBaseEndpoint + 'get-stock-for-trade/' + account + '/' + code + '/',
+                url: txnvisEndpoint + 'stock-for-trade/' + account + '/' + symbol + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
@@ -55,14 +61,14 @@ $(function () {
                 //     nameOrCode: nameOrCode
                 // },
                 success: function (data) {
-                    $('#currentPrice').text(data.current_price);
+                    $('#currentPrice').text(data.current_price.c);
                     $('#cashRemainToBuy').text(parseFloat(data.remain_to_buy).toLocaleString());
                     $('#sharesRemainToSell').text(data.remain_to_sell.toLocaleString());
                     $('#hiddenSharesRemainToSell').text(data.remain_to_sell);
-                    $('#tradePrice').val(data.current_price);
+                    $('#tradePrice').val(data.current_price.c);
                     var quantity = $('#quantity').val();
                     // $('#quantity').val($('#quantity').val().toLocaleString());
-                    $('#refCashAmount').text(parseFloat(data.current_price * quantity).toLocaleString());
+                    $('#refCashAmount').text(parseFloat(data.current_price.c * quantity).toLocaleString());
                     $('#targetPositionText').text(data.target_position.toLocaleString());
                     $('#targetPosition').val(data.target_position);
                     // $('#targetCashAmount').text(Math.round(data.target_cash_amount).toLocaleString());
@@ -71,11 +77,9 @@ $(function () {
                             $('#targetPosition').removeAttr('readonly');
                             $('#targetPosition').val(100);
                             $('#targetPositionText').text(100);
-                            $('#targetCashAmount').text(Math.round(100 * data.current_price).toLocaleString());
                         } else {
                             $('#targetPosition').prop('readonly', true);
                             // $('#targetPosition').val(100);
-
                         }
                         if (parseInt($('#cashRemainToBuy').text()) <= 0) {
                             $('#btnSubmitTrade').prop('disabled', true);
@@ -84,7 +88,7 @@ $(function () {
                         }
                         $('#sharesRemainToSell').addClass('d-none');
                         $('#sharesRemainToSellLbl').addClass('d-none');
-
+                        $('#targetCashAmount').text(Math.round($('#targetPosition').val() * data.current_price.c).toLocaleString());
                     } else {
                         $('#targetPosition').prop('readonly', true);
                         if (parseInt($('#hiddenSharesRemainToSell').text()) <= 0) {
@@ -94,7 +98,7 @@ $(function () {
                         }
                     }
                     $('#direction').val($('#hiddenTradeType').val());
-                    refreshPositionBySymbol(code, data.current_price)
+                    refreshPositionBySymbol(symbol, data.current_price.c)
                 },
                 statusCode: {
                     403: function () {
@@ -138,7 +142,7 @@ $(function () {
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + symbol + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/'  + accountId + "/" + symbol + '/'  + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 if(data.length>0){
                     $("#tradePrice").val(data[0].c)
@@ -147,12 +151,12 @@ $(function () {
         })
     }
 
-    var updateChartFor = function (showName, showCode, tsCode, period) {
+    var updateChartFor = function (showName, showCode, symbol, period) {
         var startDate = getStartDate(period, '-');
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + tsCode + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/'  + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 chart.data.datasets.forEach(function (dataset) {
                     dataset.data = data;
@@ -169,7 +173,7 @@ $(function () {
         if (indexList.indexOf(symbol)!=-1) return;
         var accountId = $("#pickedAccountID").val();
         $.ajax({
-            url: userBaseEndpoint + 'position/account/' + accountId + '/' + symbol,
+            url: dashboardEndpoint + 'position/account/' + accountId + '/' + symbol,
             success: function (data) {
                 if (data.code == 'OK') {
                     $("#noPosition").addClass("d-none");
@@ -229,26 +233,11 @@ $(function () {
 
     var refreshRealtimeQuote = function () {
         $.ajax({
-            url: userBaseEndpoint + 'positions/refresh/',
+            url: dashboardEndpoint + 'positions/refresh/',
             success: function (data) {
 
             }
         })
-    }
-
-    var isOpenForTrade = function (inputDatetime) {
-        // var dateAndTime = inputDatetime.split(" ");
-        var date = formatDate(inputDatetime, "-");
-        var openTime = new Date(date + " 9:15:00");
-        var closeTime = new Date(date + " 15:05:00");
-        var day = inputDatetime.getDay();
-        var hour = inputDatetime.getHours();
-        var min = inputDatetime.getMinutes();
-        if (day == 6 || day == 0) return false;
-        if (inputDatetime >= openTime && inputDatetime <= closeTime) {
-            return true;
-        }
-        return false;
     }
 
     var refreshStockInfo2Realtime = function () {
@@ -336,7 +325,7 @@ $(function () {
             search: function (qry, callback) {
                 // let's do a custom ajax call
                 $.ajax(
-                    investBaseEndpoint + 'search-autocomplete/' + $('#searchNameOrCode').val(),
+                    stockmarketEndpoint + 'listed_companies/' + $('#searchNameOrCode').val(),
                 ).done(function (res) {
                     callback(res.results)
                 });
@@ -362,7 +351,7 @@ $(function () {
     });
 
     // 页面默认加载上证指数日K（D)
-    var initStockChart = function (code, showCode, showName) {
+    var initStockChart = function (symbol, showCode, showName) {
         var period = $('input:radio[name="period"]:checked').val();
         var startDate = getStartDate(period, '-');
         var accountId = $("#hiddenAccount").val();
@@ -376,7 +365,7 @@ $(function () {
 
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: investBaseEndpoint + 'hist/' + code + '/account/' + accountId + "/" + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 // ctx1.canvas.width = 1000;
                 // ctx1.canvas.height = 250;
@@ -480,7 +469,7 @@ $(function () {
             $('#cashRemainToBuyLbl').removeClass('d-none');
             $('#sharesRemainToSell').addClass('d-none');
             $('#sharesRemainToSellLbl').addClass('d-none');
-            if ($('#targetPositionText') == '0') {
+            if ($('#targetPositionText').text() == '0') {
                 $('#targetPosition').prop('readonly', false);
             } else {
                 $('#targetPosition').prop('readonly', true);
@@ -695,7 +684,7 @@ $(function () {
         }
 
         $.ajax({
-            url: userBaseEndpoint + 'create-trade',
+            url: stocktradeEndpoint + 'create/',
             headers: { 'X-CSRFToken': csrftoken },
             method: 'POST',
             dataType: 'json',
