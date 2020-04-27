@@ -183,10 +183,10 @@ def sync_stock_position_for_investor(investor):
 def take_account_snapshot(invest_account):
     today = date.today()
     # 判断是否存在snapshot
-    snapshots = TradeProfitSnapshot.objects.filter(
+    snapshots = TradeAccountSnapshot.objects.filter(
         trade_account=invest_account, snap_date=today)
     if snapshots is not None and not snapshots.exists():
-        snapshot = TradeProfitSnapshot(
+        snapshot = TradeAccountSnapshot(
             trade_account=invest_account, snap_date=today)
         snapshot.take_account_snapshot()
 
