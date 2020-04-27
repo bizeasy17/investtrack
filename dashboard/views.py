@@ -497,7 +497,7 @@ def sync_stock_position_for_investor(investor):
     #     for stock_symbol in in_stock_symbols:
     #         stock_symbols.append(stock_symbol['stock_code'])
     try:
-        in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquadated=True,)
+        in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquidated=True,)
         with in_stock_positions.atomic():
             if in_stock_positions is not None and len(in_stock_positions) > 0:
                 for position in in_stock_positions:
