@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+import pytz
 import tushare as ts
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -13,7 +14,6 @@ from django.db.models import Sum
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-
 
 # Create your models here.
 logger = logging.getLogger(__name__)
@@ -210,7 +210,8 @@ class Positions(BaseModel):
             if self.lots == 0:
                 # 清仓，设置is_liquadated = True
                 self.is_liquidated = True
-                self.ltd = trade_time # 清仓时间
+                cn_tz = pytz.timezone("Asia/Shanghai")
+                self.ltd = cn_tz.localize(trade_time)  # 清仓时间
                 self.cash = 0
             # self.update_sell_position(trade_direction, target_position, trade_lots,
             #                           trade_price, trade_cash, trader, trade_account, trade_time)

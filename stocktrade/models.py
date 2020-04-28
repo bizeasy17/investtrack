@@ -1,5 +1,5 @@
 import logging
-
+import pytz
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
@@ -13,6 +13,7 @@ from investors.models import TradeStrategy
 
 # Create your models here.
 logger = logging.getLogger(__name__)
+cn_tz = pytz.timezone('Asia/Shanghai')
 
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)
@@ -125,7 +126,8 @@ class Transactions(BaseModel):
                         # 新建仓
                         p = Positions(market=self.market,
                                       stock_name=self.stock_name, stock_code=self.stock_code)
-                        p.ftd = self.trade_time # 建仓时间
+                        cn_tz = pytz.timezone('Asia/Shanghai')
+                        p.ftd = cn_tz.localize(self.trade_time) # 建仓时间
                         self.in_stock_positions = p
                     else:
                         # 增仓或者减仓
