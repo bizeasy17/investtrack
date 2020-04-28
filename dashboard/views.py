@@ -65,7 +65,10 @@ class DashboardHomeView(LoginRequiredMixin, View):
             total_accounts = len(accounts)
             # update the position based on the realtime price
             for p in trade_positions:
+                # p.transactions_set.all()[0] to get the transactions
                 calibrate_realtime_position(p)
+                from .utils import days_to_now
+                p.ftd = days_to_now(p.ftd)
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]

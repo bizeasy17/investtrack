@@ -1,7 +1,7 @@
 from decimal import Decimal
 from datetime import datetime
 from stocktrade.models import Transactions
-
+from django.utils import timezone
 
 def calibrate_realtime_position(p):
     '''
@@ -74,6 +74,6 @@ def calibrate_realtime_position(p):
     p.profit_ratio = str(round(p.profit / p.cash * 100, 2)) + '%'
     p.current_price = realtime_quote
     p.is_sychronized = True
-    p.sychronized_datetime = datetime.now()
+    p.sychronized_datetime = datetime.now(tz=timezone.utc)
     p.save()
     pass

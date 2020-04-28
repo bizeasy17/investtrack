@@ -7,7 +7,7 @@ $(function () {
 
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
-    var investBaseEndpoint = '/invest/stocks/';
+    var investorEndpoint = '/investors/';
     var txnvisEndpoint = '/txnvis/';
     var stockmarketEndpoint = '/stockmarket/';
     var stocktradeEndpoint = '/stocktrade/';
@@ -271,7 +271,7 @@ $(function () {
         var name = $("#hiddenName").val();
         $.ajax(
             {
-                url: userBaseEndpoint + 'stock/' + symbol + "/follow/",
+                url: investorEndpoint + 'follow-stock/' + symbol + "/",
                 data:{
                     name: name
                 },

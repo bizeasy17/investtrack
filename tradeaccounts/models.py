@@ -139,6 +139,12 @@ class Positions(BaseModel):
         _('是否同步'), blank=False, null=False, default=False)
     sychronized_datetime = models.DateTimeField(
         '同步时间', blank=True, null=True)
+    # first transaction datetime
+    ftd = models.DateTimeField(
+        '建仓时间', blank=True, null=True)
+    # last transaction datetime
+    ltd = models.DateTimeField(
+        '清仓时间', blank=True, null=True)
     # realtime_objects = PositionManager() # The position-specific manager.
 
     def __str__(self):
@@ -204,6 +210,7 @@ class Positions(BaseModel):
             if self.lots == 0:
                 # 清仓，设置is_liquadated = True
                 self.is_liquidated = True
+                self.ltd = trade_time # 清仓时间
                 self.cash = 0
             # self.update_sell_position(trade_direction, target_position, trade_lots,
             #                           trade_price, trade_cash, trader, trade_account, trade_time)

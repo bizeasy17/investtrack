@@ -123,6 +123,7 @@ class Transactions(BaseModel):
                         # 新建仓
                         p = Positions(market=self.market,
                                       stock_name=self.stock_name, stock_code=self.stock_code)
+                        p.ftd = self.trade_time # 建仓时间
                         self.in_stock_positions = p
                     else:
                         # 增仓或者减仓

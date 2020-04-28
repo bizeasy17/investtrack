@@ -78,10 +78,10 @@ class StockNameCodeMap(BaseModel):
                                blank=True, null=True)
     list_status = models.CharField(
         _('上市状态'), choices=LIST_STATUS_CHOICES, max_length=1, blank=True, null=True)
-    list_date = models.DateTimeField(
-        _('上市日期'), default=now, blank=True, null=True)
-    delist_date = models.DateTimeField(
-        _('退市日期'), default=now, blank=True, null=True)
+    list_date = models.DateField(
+        _('上市日期'), blank=True, null=True)
+    delist_date = models.DateField(
+        _('退市日期'), blank=True, null=True)
     is_hs = models.CharField(
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
 
