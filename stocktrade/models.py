@@ -4,6 +4,8 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from django.db import models, transaction
+
 
 from tradeaccounts.models import Positions, TradeAccount
 from investtrack import utils
@@ -137,10 +139,10 @@ class Transactions(BaseModel):
                         self.board_lots, self.price, self.cash, self.trader, self.trade_account, self.trade_time)
 
                     if self.is_liquidated:
-                        transaction = Transactions.objects.select_for_update().filter(
+                        stock_transactions = Transactions.objects.select_for_update().filter(
                             trader=self.trader, stock_code=self.stock_code, direction='b', is_liquidated=False,)
                         with transaction.atomic():
-                            for entry in entries:
+                            for entry in stock_transactions:
                                 entry.is_liquidated = True
                                 entry.save()
 
