@@ -1,3 +1,6 @@
+# local lib settings
+.vscode/settings.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -131,4 +134,4 @@ dmypy.json
 uploads/
 uwsgi/uwsgi_pid
 collectedstatic/
-.vscode/
+
