@@ -53,7 +53,7 @@ class DashboardHomeView(LoginRequiredMixin, View):
             if today_snapshots['profit_change'] is not None:
                 today_pnl = today_snapshots['profit_change']
             trade_positions = Positions.objects.filter(
-                trader=req_user.id).exclude(is_liquidated=True).order_by('-last_mod_time')
+                trader=req_user.id).order_by('is_liquidated')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
             capital = 0
             profit_loss = 0
@@ -67,7 +67,9 @@ class DashboardHomeView(LoginRequiredMixin, View):
             for p in trade_positions:
                 # p.transactions_set.all()[0] to get the transactions
                 calibrate_realtime_position(p)
-                from .utils import days_to_now
+                from .utils import days_to_now, days_between
+                if p.is_liquidated:
+                    p.ltd = days_between(p.ltd, p.ftd)
                 p.ftd = days_to_now(p.ftd)
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(

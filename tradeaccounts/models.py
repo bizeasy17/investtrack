@@ -81,6 +81,7 @@ class TradeAccount(BaseModel):
             self.save()
 
     def save(self, *args, **kwargs):
+        # bug, if none type of provider
         self.account_name = self.account_provider + self.account_type
         super().save()
         return self.id

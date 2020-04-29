@@ -106,7 +106,7 @@
                                 <div class="card-body">
                                     <div class='d-flex align-items-center justify-content-between flex-wrap small'>
                                         <div class="">
-                                            <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }}) - <span class="small text-muted">{% trans '已持仓' %}{{ p.ftd }}{% trans '天' %}</span></h6>
+                                            <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }}) - <span class="small text-muted">{% if p.lots != 0 %}{% trans '已持仓' %}{{ p.ftd }}{% trans '天' %}{% else %}<span class="text-danger">{% trans '已清仓，共持仓' %}{{ p.ltd }}{% trans '天' %}</span>{% endif %}</span></h6>
                                             <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
@@ -132,7 +132,7 @@
                                         </div>
                                         <div class="text-primary">  
                                             <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div>
-                                            <div><span class="mr-1">{{ p.lots }}</span><span>({{ p.target_position }})</span></div>
+                                            <div><span class="mr-1">{% ifequal p.lots 0 %}<span class="text-danger">{% trans '已清仓' %}</span>{% else %}{{ p.lots }}{% endifequal %}</span><span>({{ p.target_position }})</span></div>
                                         </div>
                                         <div class="text-primary">  
                                             <div>{% trans '市值' %}</div>

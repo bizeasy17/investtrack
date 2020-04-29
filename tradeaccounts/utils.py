@@ -71,7 +71,7 @@ def calibrate_realtime_position(p):
     # 根据实时报价更新持仓
     p.profit = round(
         (realtime_quote - p.position_price) * p.lots, 2)
-    p.profit_ratio = str(round(p.profit / p.cash * 100, 2)) + '%'
+    p.profit_ratio = str(round(p.profit / p.cash * 100, 2)) + '%' if p.cash != 0 else '0.0%'
     p.current_price = realtime_quote
     p.is_sychronized = True
     p.sychronized_datetime = datetime.now(tz=timezone.utc)
