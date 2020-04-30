@@ -10,6 +10,7 @@ import tushare as ts
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
@@ -483,7 +484,7 @@ def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
     try:
         if len(realtime_quotes) > 0:
             transactions = Transactions.objects.select_for_update().filter(in_stock_positions=position_pk, direction='b').exclude(created_or_mod_by='system')
-            with transactions.atomic():
+            with transaction.atomic():
                 for entry in transactions:
                     entry.current_price = realtime_quotes[entry.stock_code]
                     entry.save()
@@ -503,13 +504,14 @@ def sync_stock_position_for_investor(investor):
     #         stock_symbols.append(stock_symbol['stock_code'])
     try:
         in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquidated=True,)
-        with in_stock_positions.atomic():
+        with transaction.atomic():
             if in_stock_positions is not None and len(in_stock_positions) > 0:
                 for position in in_stock_positions:
                     stock_symbols.append(position.stock_code)
                 realtime_quotes = get_realtime_quote(stock_symbols)
             for entry in in_stock_positions:
-                entry.make_profit_updated(realtime_quotes[entry.stock_code])
+                # entry.make_profit_updated(realtime_quotes[entry.stock_code])
+                calibrate_realtime_position(entry)
                 sync_stock_price_for_investor(entry.pk, realtime_quotes)
                 updated_positions.append(
                     {
