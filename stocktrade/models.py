@@ -126,8 +126,11 @@ class Transactions(BaseModel):
                         # 新建仓
                         p = Positions(market=self.market,
                                       stock_name=self.stock_name, stock_code=self.stock_code)
-                        cn_tz = pytz.timezone('Asia/Shanghai')
-                        p.ftd = cn_tz.localize(self.trade_time) # 建仓时间
+                        if self.trade_time.tzinfo is None and self.trade_time.tzinfo.utcoffset(self.trade_time) is None:
+                            cn_tz = pytz.timezone('Asia/Shanghai')
+                            p.ftd = cn_tz.localize(self.trade_time) # 建仓时间
+                        else:
+                            p.ftd = self.trade_time  # 建仓时间
                         self.in_stock_positions = p
                     else:
                         # 增仓或者减仓
@@ -135,6 +138,13 @@ class Transactions(BaseModel):
                         self.in_stock_positions = p
                         if self.direction == 's' and self.board_lots > p.lots:  # 卖出不能大于现有持仓
                             return False  # 需要返回定义好的code
+                    # 根据策略：FIFO/LIFO，卖出符合要求的仓位
+                    sys_alloc_list = []
+                    if self.direction == 's':  
+                        try:
+                            sys_alloc_list = self.allocate_stock_for_sell()
+                        except Exception as e:
+                            logger.error(e)
                     # 更新持仓信息后返回是否清仓
                     self.is_liquidated = p.update_transaction_position(  # update_stock_position(
                         self.direction, self.target_position,
@@ -150,23 +160,22 @@ class Transactions(BaseModel):
 
                     self.rec_ref_number = utils.id_generator()
                     super().save(*args, **kwargs)
+                    # 由于原有买入记录在引用卖出交易时，FK需要先save，所以将system交易记录的save放在这之后
+                    if sys_alloc_list is not None and len(sys_alloc_list) > 0:
+                        for sys_gen_item in sys_alloc_list:
+                            sys_gen_item.save()
                 else:
                     super().save()
             except Exception as e:
                 logger.error(e)
         else:
             super().save()
-
-        if self.direction == 's':  # 根据策略：FIFO/LIFO，卖出符合要求的仓位
-            try:
-                self.allocate_stock_for_sell()
-            except Exception as e:
-                logger.error(e)
         return True
 
     def allocate_stock_for_sell(self):
         # self 当前的卖出记录
         if settings.STOCK_OUT_STRATEGY == 'FIFO':  # 先进先出
+            system_gen_recs = []
             quantity_to_sell = self.board_lots
             recs = Transactions.objects.filter(trader=self.trader, trade_account=self.trade_account, stock_code=self.stock_code, direction='b',
                                            lots_remain__gt=0, is_sold=False, is_liquidated=False,).exclude(created_or_mod_by='system').order_by('trade_time')
@@ -190,7 +199,8 @@ class Transactions(BaseModel):
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
                     # new_sys_rec.board_lots = quantity_to_sell
-                    new_sys_rec.save()
+                    # new_sys_rec.save()
+                    system_gen_recs.append(new_sys_rec)
                 elif quantity_to_sell == rec.lots_remain:
                     # 以前买入的股数刚好等于卖出量，那该持仓全部卖出，
                     rec.lots_remain = 0
@@ -206,7 +216,8 @@ class Transactions(BaseModel):
                     new_sys_rec.created_or_mod_by = 'system'
                     new_sys_rec.sell_stock_refer = self
                     new_sys_rec.sell_price = self.price
-                    new_sys_rec.save()
+                    # new_sys_rec.save()
+                    system_gen_recs.append(new_sys_rec)
                     # allocate已有持仓，当前持仓已经满足卖出条件，需要卖出股数设置为0，退出循环。
                     quantity_to_sell = 0
                     break
@@ -227,7 +238,8 @@ class Transactions(BaseModel):
                     new_sys_rec.sell_price = self.price
                     new_sys_rec.sold_time = self.trade_time
                     new_sys_rec.board_lots = quantity_to_sell
-                    new_sys_rec.save()
+                    # new_sys_rec.save()
+                    system_gen_recs.append(new_sys_rec)
                     # allocate已有持仓，当前持仓已经满足卖出条件，需要卖出设置为0，退出循环。
                     quantity_to_sell = 0
                     break
@@ -235,4 +247,5 @@ class Transactions(BaseModel):
             pass
         else:
             pass
+        return system_gen_recs
 # First, define the Manager subclass.

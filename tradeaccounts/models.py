@@ -211,8 +211,11 @@ class Positions(BaseModel):
             if self.lots == 0:
                 # 清仓，设置is_liquadated = True
                 self.is_liquidated = True
-                cn_tz = pytz.timezone("Asia/Shanghai")
-                self.ltd = cn_tz.localize(trade_time)  # 清仓时间
+                if trade_time.tzinfo is None and trade_time.tzinfo.utcoffset(trade_time) is None:
+                    cn_tz = pytz.timezone("Asia/Shanghai")
+                    self.ltd = cn_tz.localize(trade_time)  # 清仓时间
+                else:
+                    self.ltd = trade_time  # 清仓时间
                 self.cash = 0
             # self.update_sell_position(trade_direction, target_position, trade_lots,
             #                           trade_price, trade_cash, trader, trade_account, trade_time)

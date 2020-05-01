@@ -293,14 +293,14 @@ def get_trans_success_rate_by_period(request, period):
                             for sys_rec in sys_recs:
                                 sell_rec = Transactions.objects.get(
                                     id=sys_rec.sell_stock_refer_id)
-                                if trade_rec.price < sell_rec.price:
+                                if trade_rec.price <= sell_rec.price:
                                     success_count += 1
                                 else:
                                     fail_count += 1
                         else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
                             # 买入交易判断
                             if trade_rec.direction == 'b':
-                                if trade_rec.price < trade_rec.current_price:
+                                if trade_rec.price <= trade_rec.current_price:
                                     success_count += 1
                                 else:
                                     fail_count += 1
@@ -328,12 +328,12 @@ def get_trans_success_rate_by_period(request, period):
                             for sys_rec in sys_recs:
                                 sell_rec = Transactions.objects.get(
                                     id=sys_rec.sell_stock_refer_id)
-                                if trade_rec.price < sell_rec.price:
+                                if trade_rec.price <= sell_rec.price:
                                     success_count += 1
                                 else:
                                     fail_count += 1
                         else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
-                            if trade_rec.price < trade_rec.current_price:
+                            if trade_rec.price <= trade_rec.current_price:
                                 success_count += 1
                             else:
                                 fail_count += 1

@@ -142,40 +142,40 @@ $(function () {
     let ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
     let ws_path = ws_scheme + '://' + window.location.host + "/notifications/";
     let webSocket = new channels.WebSocketBridge();
-    // webSocket.connect(ws_path);
+    webSocket.connect(ws_path);
 
     // Helpful debugging
-    // webSocket.socket.onopen = function () {
-    //     console.log("Connected to " + ws_path);
-    // };
+    webSocket.socket.onopen = function () {
+        console.log("Connected to " + ws_path);
+    };
 
-    // webSocket.socket.onclose = function () {
-    //     console.error("Disconnected from " + ws_path);
-    // };
+    webSocket.socket.onclose = function () {
+        console.error("Disconnected from " + ws_path);
+    };
 
     // Listen the WebSocket bridge created throug django-channels library.
-    // webSocket.listen(function (event) {
-    //     switch (event.key) {
-    //         case "notification":
-    //             $("#notifications").addClass("btn-danger");
-    //             break;
+    webSocket.listen(function (event) {
+        switch (event.key) {
+            case "notification":
+                $("#notifications").addClass("btn-danger");
+                break;
 
-    //         case "social_update":
-    //             $("#notifications").addClass("btn-danger");
-    //             update_social_activity(event.id_value);
-    //             break;
+            case "social_update":
+                $("#notifications").addClass("btn-danger");
+                update_social_activity(event.id_value);
+                break;
 
-    //         case "additional_news":
-    //             if (event.actor_name !== currentUser) {
-    //                 $(".stream-update").show();
-    //             }
-    //             break;
+            case "additional_news":
+                if (event.actor_name !== currentUser) {
+                    $(".stream-update").show();
+                }
+                break;
 
-    //         default:
-    //             console.log('error: ', event);
-    //             break;
-    //     };
-    // });
+            default:
+                console.log('error: ', event);
+                break;
+        };
+    });
 
     var showDetailOfPosition = function (pId) {
         // var pId = $(this).attr("id");
