@@ -170,7 +170,7 @@ def stock_for_trade(request, account_id, symbol):
             # 获得实时报价
             realtime_price = get_single_realtime_quote(symbol)
             stock_position = Positions.objects.filter(
-                trader=req_user.id, stock_code=symbol, trade_account=account_id)
+                trader=req_user.id, stock_code=symbol, trade_account=account_id).exclude(is_liquidated=True)
             account_id = TradeAccount.objects.filter(id=account_id)
             if account_id is not None and len(account_id) == 1:
                 remain_to_buy = round(

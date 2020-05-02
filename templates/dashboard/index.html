@@ -113,9 +113,9 @@
                                         <div class="">
                                             <div class="">
                                             {% if p.profit < 0 %}
-                                            <td><span class="badge badge-pill badge-success mr-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-success mr-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit|floatformat }}</span></td>
                                             {% else %}
-                                            <td><span class="badge badge-pill badge-danger mr-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-danger mr-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit|floatformat }}</span></td>
                                             {% endif %}
                                             </div>
                                         </div>
