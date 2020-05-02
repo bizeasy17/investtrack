@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+import pytz
 import tushare as ts
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -13,7 +14,6 @@ from django.db.models import Sum
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-
 
 # Create your models here.
 logger = logging.getLogger(__name__)
@@ -81,6 +81,7 @@ class TradeAccount(BaseModel):
             self.save()
 
     def save(self, *args, **kwargs):
+        # bug, if none type of provider
         self.account_name = self.account_provider + self.account_type
         super().save()
         return self.id
@@ -139,6 +140,12 @@ class Positions(BaseModel):
         _('是否同步'), blank=False, null=False, default=False)
     sychronized_datetime = models.DateTimeField(
         '同步时间', blank=True, null=True)
+    # first transaction datetime
+    ftd = models.DateTimeField(
+        '建仓时间', blank=True, null=True)
+    # last transaction datetime
+    ltd = models.DateTimeField(
+        '清仓时间', blank=True, null=True)
     # realtime_objects = PositionManager() # The position-specific manager.
 
     def __str__(self):
@@ -204,6 +211,11 @@ class Positions(BaseModel):
             if self.lots == 0:
                 # 清仓，设置is_liquadated = True
                 self.is_liquidated = True
+                if trade_time.tzinfo is None and trade_time.tzinfo.utcoffset(trade_time) is None:
+                    cn_tz = pytz.timezone("Asia/Shanghai")
+                    self.ltd = cn_tz.localize(trade_time)  # 清仓时间
+                else:
+                    self.ltd = trade_time  # 清仓时间
                 self.cash = 0
             # self.update_sell_position(trade_direction, target_position, trade_lots,
             #                           trade_price, trade_cash, trader, trade_account, trade_time)

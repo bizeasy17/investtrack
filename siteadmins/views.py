@@ -1,4 +1,5 @@
 import logging
+import pytz
 from datetime import date, datetime
 
 import tushare as ts
@@ -151,11 +152,6 @@ def sync_stock_position_for_investor(investor):
     stock_symbols = []
     latest_positions = []
     realtime_quotes = []
-    # in_stock_symbols = Positions.objects.filter(trader=investor).exclude(is_liquadated=True,).distinct().values('stock_code')
-    # if in_stock_symbols is not None and len(in_stock_symbols) > 0:
-    #     for stock_symbol in in_stock_symbols:
-    #         stock_symbols.append(stock_symbol['stock_code'])
-
     in_stock_positions = Positions.objects.select_for_update().filter(
         trader=investor).exclude(is_liquidated=True,)
     with transaction.atomic():
@@ -252,7 +248,7 @@ def sync_company_list(request):
                                 v[7] = 'KCB'
                             else:
                                 v[7] = 'ZB'
-
+                        # cn_tz = pytz.timezone("Asia/Shanghai")
                         company_list = StockNameCodeMap(ts_code=v[0], stock_code=v[1], stock_name=v[2], area=v[3],
                                                         industry=v[4], fullname=v[5], en_name=v[6], market=v[7], exchange=v[8],
                                                         list_status=v[9], list_date=datetime.strptime(v[10], '%Y%m%d'), delist_date=v[11],

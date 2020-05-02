@@ -10,6 +10,7 @@ import tushare as ts
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
@@ -24,6 +25,7 @@ from tradeaccounts.utils import calibrate_realtime_position
 
 # Create your views here.
 logger = logging.getLogger(__name__)
+
 
 class DashboardHomeView(LoginRequiredMixin, View):
     # form_class = UserTradeForm
@@ -41,19 +43,21 @@ class DashboardHomeView(LoginRequiredMixin, View):
             today_pnl = 0
             tradedetails = Transactions.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
-            today = date.today()
-            if today.weekday() == calendar.SATURDAY:
-                snap_date = today - timedelta(days=1)
-            elif today.weekday() == calendar.SUNDAY:
-                snap_date = today - timedelta(days=2)
-            else:
-                snap_date = today
-            today_snapshots = TradeAccountSnapshot.objects.filter(
-                trader=req_user.id, snap_date=snap_date, applied_period='d').aggregate(profit_change=Sum('profit_change'))  # , sum_change=Sum('profit_change'))
-            if today_snapshots['profit_change'] is not None:
-                today_pnl = today_snapshots['profit_change']
-            trade_positions = Positions.objects.filter(
-                trader=req_user.id).exclude(is_liquidated=True).order_by('-last_mod_time')
+            # today = date.today()
+            # if today.weekday() == calendar.SATURDAY:
+            #     snap_date = today - timedelta(days=1)
+            # elif today.weekday() == calendar.SUNDAY:
+            #     snap_date = today - timedelta(days=2)
+            # else:
+            #     snap_date = today
+            # today_snapshots = TradeAccountSnapshot.objects.filter(
+            #     trader=req_user.id, snap_date=snap_date, applied_period='d').aggregate(profit_change=Sum('profit_change'))  # , sum_change=Sum('profit_change'))
+            # if today_snapshots['profit_change'] is not None:
+            #     today_pnl = today_snapshots['profit_change']
+            # update the position based on the realtime price
+            trade_positions = sync_stock_positions(req_user)
+            # trade_positions = Positions.objects.filter(
+            #     trader=req_user.id).order_by('is_liquidated')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
             capital = 0
             profit_loss = 0
@@ -63,9 +67,7 @@ class DashboardHomeView(LoginRequiredMixin, View):
                 capital += acc.account_capital
                 profit_loss += acc.account_balance
             total_accounts = len(accounts)
-            # update the position based on the realtime price
-            for p in trade_positions:
-                calibrate_realtime_position(p)
+            
             strategies = TradeStrategy.objects.filter(creator=req_user.id)
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
@@ -89,13 +91,16 @@ class DashboardHomeView(LoginRequiredMixin, View):
 
 
 def is_enough_trade_records(trader):
-    trade_recs = Transactions.objects.filter(trader=trader, created_or_mod_by='human')
+    trade_recs = Transactions.objects.filter(
+        trader=trader, created_or_mod_by='human')
     return True if trade_recs.count() > 0 else False
     # pass
 
+
 @login_required
 def get_profit_trend_by_period(request, period):
-    from datetime import date # workaround for UnboundLocalError: local variable 'date' referenced before assignment; don know waht
+    # workaround for UnboundLocalError: local variable 'date' referenced before assignment; don know waht
+    from datetime import date
     today = date.today()
     if request.method == 'GET':
         try:
@@ -111,7 +116,7 @@ def get_profit_trend_by_period(request, period):
             max_pnl = 0
             code = 'OK'
             trader = request.user
-            if is_enough_trade_records(trader):  
+            if is_enough_trade_records(trader):
                 cal = calendar.Calendar()
                 if not (today.weekday() == calendar.SATURDAY or today.weekday() == calendar.SUNDAY):
                     # calc_realtime_snapshot(request)
@@ -128,12 +133,13 @@ def get_profit_trend_by_period(request, period):
                     #     timedelta(days=4)  # 当前时间前一周周五
                     for i in range(0, 5):
                         snap_date = start_day + timedelta(days=i)
-                        relative_snap_date = relative_start_day + timedelta(days=i)
+                        relative_snap_date = relative_start_day + \
+                            timedelta(days=i)
                         # 日期标签
                         pnl_label.append(snap_date.strftime('%Y-%m-%d'))
                         # 统计本周所有账户profit
                         trade_snapshots = TradeAccountSnapshot.objects.filter(
-                            trader=trader, snap_date=snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))#, sum_change=Sum('profit_change'))
+                            trader=trader, snap_date=snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))  # , sum_change=Sum('profit_change'))
                         if trade_snapshots['sum_profit'] is not None:
                             current_pnl.append(
                                 int(trade_snapshots['sum_profit']))
@@ -287,14 +293,14 @@ def get_trans_success_rate_by_period(request, period):
                             for sys_rec in sys_recs:
                                 sell_rec = Transactions.objects.get(
                                     id=sys_rec.sell_stock_refer_id)
-                                if trade_rec.price < sell_rec.price:
+                                if trade_rec.price <= sell_rec.price:
                                     success_count += 1
                                 else:
                                     fail_count += 1
                         else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
                             # 买入交易判断
                             if trade_rec.direction == 'b':
-                                if trade_rec.price < trade_rec.current_price:
+                                if trade_rec.price <= trade_rec.current_price:
                                     success_count += 1
                                 else:
                                     fail_count += 1
@@ -322,12 +328,12 @@ def get_trans_success_rate_by_period(request, period):
                             for sys_rec in sys_recs:
                                 sell_rec = Transactions.objects.get(
                                     id=sys_rec.sell_stock_refer_id)
-                                if trade_rec.price < sell_rec.price:
+                                if trade_rec.price <= sell_rec.price:
                                     success_count += 1
                                 else:
                                     fail_count += 1
                         else:  # 还处于持仓阶段,与当前最新价格比较，如果小于最新价，买入成功次数+1，否则-1
-                            if trade_rec.price < trade_rec.current_price:
+                            if trade_rec.price <= trade_rec.current_price:
                                 success_count += 1
                             else:
                                 fail_count += 1
@@ -336,8 +342,10 @@ def get_trans_success_rate_by_period(request, period):
             success_ratio = '0%'
             yoy_ratio = '0%'
             if total_attempt != 0:
-                success_ratio = str(round(total_success / total_attempt * 100, 2) ) + '%'
-                yoy_ratio = str(round((total_attempt - total_attempt_yoy) / total_attempt, 2) * 100) + '%'
+                success_ratio = str(
+                    round(total_success / total_attempt * 100, 2)) + '%'
+                yoy_ratio = str(
+                    round((total_attempt - total_attempt_yoy) / total_attempt, 2) * 100) + '%'
             avg_attempt = round(total_attempt / len(label), 2)
             max_attempt = max(success_rate) if max(success_rate) > max(
                 yoy_success_rate) else max(yoy_success_rate)
@@ -363,6 +371,7 @@ def get_trans_success_rate_by_period(request, period):
                 return JsonResponse({'code': 'empty'}, safe=False)
         except Exception as e:
             logger.error(e)
+
 
 @login_required
 def get_position_status(request, account, symbol):
@@ -471,19 +480,46 @@ def get_stock_for_trade(request, account, stock_code):
         }
     return JsonResponse(data, safe=False)
 
+
 def sync_stock_price_for_investor(position_pk, realtime_quotes=[]):
     '''
     将持仓股的价格更新到最新报价
     '''
     try:
         if len(realtime_quotes) > 0:
-            transactions = Transactions.objects.select_for_update().filter(in_stock_positions=position_pk, direction='b').exclude(created_or_mod_by='system')
-            with transactions.atomic():
+            transactions = Transactions.objects.select_for_update().filter(
+                in_stock_positions=position_pk, direction='b').exclude(created_or_mod_by='system')
+            with transaction.atomic():
                 for entry in transactions:
                     entry.current_price = realtime_quotes[entry.stock_code]
                     entry.save()
     except Exception as e:
         logger.error(e)
+
+
+def sync_stock_positions(investor):
+    stock_symbols = []
+    realtime_quotes = []
+    try:
+        in_stock_positions = Positions.objects.select_for_update().filter(
+            trader=investor).order_by('is_liquidated')
+        with transaction.atomic():
+            if in_stock_positions is not None and len(in_stock_positions) > 0:
+                for position in in_stock_positions:
+                    stock_symbols.append(position.stock_code)
+                realtime_quotes = get_realtime_quote(stock_symbols)
+            for p in in_stock_positions:
+                # p.transactions_set.all()[0] to get the transactions
+                calibrate_realtime_position(p)
+                from .utils import days_to_now, days_between
+                if p.is_liquidated:
+                    p.ltd = days_between(p.ltd, p.ftd)
+                p.ftd = days_to_now(p.ftd)
+                sync_stock_price_for_investor(p.pk, realtime_quotes)
+        return in_stock_positions
+    except Exception as e:
+        logger.error(e)
+
 
 def sync_stock_position_for_investor(investor):
     '''
@@ -492,19 +528,17 @@ def sync_stock_position_for_investor(investor):
     stock_symbols = []
     updated_positions = []
     realtime_quotes = []
-    # in_stock_symbols = Positions.objects.filter(trader=investor).exclude(is_liquadated=True,).distinct().values('stock_code')
-    # if in_stock_symbols is not None and len(in_stock_symbols) > 0:
-    #     for stock_symbol in in_stock_symbols:
-    #         stock_symbols.append(stock_symbol['stock_code'])
     try:
-        in_stock_positions = Positions.objects.select_for_update().filter(trader=investor).exclude(is_liquidated=True,)
-        with in_stock_positions.atomic():
+        in_stock_positions = Positions.objects.select_for_update().filter(
+            trader=investor).exclude(is_liquidated=True,)
+        with transaction.atomic():
             if in_stock_positions is not None and len(in_stock_positions) > 0:
                 for position in in_stock_positions:
                     stock_symbols.append(position.stock_code)
                 realtime_quotes = get_realtime_quote(stock_symbols)
             for entry in in_stock_positions:
-                entry.make_profit_updated(realtime_quotes[entry.stock_code])
+                # entry.make_profit_updated(realtime_quotes[entry.stock_code])
+                calibrate_realtime_position(entry)
                 sync_stock_price_for_investor(entry.pk, realtime_quotes)
                 updated_positions.append(
                     {
@@ -523,6 +557,7 @@ def sync_stock_position_for_investor(investor):
         return updated_positions
     except Exception as e:
         logger.error(e)
+
 
 @login_required
 def refresh_my_position(request):

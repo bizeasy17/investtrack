@@ -106,16 +106,16 @@
                                 <div class="card-body">
                                     <div class='d-flex align-items-center justify-content-between flex-wrap small'>
                                         <div class="">
-                                            <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }})</h6>
+                                            <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }}) - <span class="small text-muted">{% if p.lots != 0 %}{% trans '已持仓' %}{{ p.ftd }}{% trans '天' %}{% else %}<span class="text-danger">{% trans '已清仓，共持仓' %}{{ p.ltd }}{% trans '天' %}</span>{% endif %}</span></h6>
                                             <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
                                         <div class="">
                                             <div class="">
                                             {% if p.profit < 0 %}
-                                            <td><span class="badge badge-pill badge-success mr-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-success mr-1">{{ p.profit_ratio }}</span><span class="badge badge-pill badge-success">{{ p.profit|floatformat }}</span></td>
                                             {% else %}
-                                            <td><span class="badge badge-pill badge-danger mr-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit }}</span></td>
+                                            <td><span class="badge badge-pill badge-danger mr-1">+{{ p.profit_ratio }}</span><span class="badge badge-pill badge-danger">+{{ p.profit|floatformat }}</span></td>
                                             {% endif %}
                                             </div>
                                         </div>
@@ -132,11 +132,15 @@
                                         </div>
                                         <div class="text-primary">  
                                             <div>{% trans '持仓' %}{% trans ' (目标仓位)' %}</div>
-                                            <div><span class="mr-1">{{ p.lots }}</span><span>({{ p.target_position }})</span></div>
+                                            <div><span class="mr-1">{{ p.lots }}<span> ({{ p.target_position }})</span></div>
                                         </div>
                                         <div class="text-primary">  
                                             <div>{% trans '市值' %}</div>
+                                            {% ifequal p.lots 0  %}
+                                            <div>0</div>
+                                            {% else %}
                                             <div>{{ p.cash|add:p.profit }}</div>
+                                            {% endifequal %}
                                         </div>
 
                                     </div>
@@ -145,7 +149,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-lg-4">
-                                            <a class="btn btn-sm btn-outline-info mr-1" href="{% url 'stocktrade:home' account_id=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a>
+                                            <a class="btn btn-sm btn-outline-info mr-1" href="{% url 'stocktrade:home' account_id=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% ifequal p.lots 0  %}{% trans '再次买入' %}{% else %}{% trans '记录交易' %}{% endifequal %}</a>
                                             <!-- <a class="btn btn-sm btn-outline-primary" href="#">{% trans '卖出-' %}</a> -->
                                             <button class="btn btn-sm btn-outline-info" name="show-trade-record"  id="{{p.id}}" ><i class="fa fa-eye"></i>{% trans '交易明细' %}</button>
 

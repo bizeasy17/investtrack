@@ -1,5 +1,6 @@
 import decimal
 import logging
+import pytz
 from datetime import date, datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -12,7 +13,7 @@ from django.views.generic import View
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from tradeaccounts.models import Positions, TradeAccount
-
+from tradeaccounts.utils import calibrate_realtime_position
 from stocktrade.models import Transactions
 from .utils import *
 
@@ -58,17 +59,21 @@ def make_transaction(request):
             quantity = int(data.get('quantity'))
             target_position = data.get('targetPosition')
             direction = data.get('direction')
-            trade_time = data.get('tradeTime')
+            cn_tz = pytz.timezone('Asia/Shanghai')
+            trade_time = cn_tz.localize(datetime.strptime(
+                data.get('tradeTime'), '%Y-%m-%dT%H:%M:%S'))
             # trade_time = data.get('tradeTime').split('T')
             trade_account = TradeAccount.objects.get(id=data.get('tradeAcc'))
+            force_calculate = data.get('forceCalculate')
             # trade_time = trade_time[0] + ' ' + trade_time[1]
             transaction = Transactions(trader=trader, market=market, stock_name=company_name, stock_code=code, direction=direction, current_price=current_price, price=price,
                                      board_lots=quantity, lots_remain=quantity, cash=cash, strategy=strategy[0],
-                                     target_position=target_position, trade_time=datetime.strptime(
-                                         trade_time, '%Y-%m-%dT%H:%M:%S'),
+                                     target_position=target_position, trade_time=trade_time,
                                      created_or_mod_by='human', trade_account=trade_account)
             # if direction == 'b':
             is_ok = transaction.save()
+            # if force_calculate:
+            #     calibrate_realtime_position(transaction.in_stock_positions)
             if is_ok:
                 return JsonResponse({'success': _('交易成功')}, safe=False)
         except Exception as e:

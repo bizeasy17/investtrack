@@ -11,12 +11,12 @@ def get_single_realtime_quote(symbol):
                                'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
     realtime_price_dict = {}
     if len(realtime_df) > 0:
-        if realtime_df['open'].mean() != 0:
-            realtime_quote = realtime_df['open'].mean()
-        elif realtime_df['pre_open'].mean() != 0:
-            realtime_quote = realtime_df['pre_open'].mean()
-        elif realtime_df['price'].mean() != 0:
+        if realtime_df['price'].mean() != 0:
             realtime_quote = realtime_df['price'].mean()
+        elif realtime_df['pre_close'].mean() != 0:
+            realtime_quote = realtime_df['pre_close'].mean()
+        elif realtime_df['open'].mean() != 0:
+            realtime_quote = realtime_df['open'].mean()
         t = datetime.strptime(str(
             realtime_df['date'][0]) + ' ' + str(realtime_df['time'][0]), "%Y-%m-%d %H:%M:%S")
         realtime_price_dict = {

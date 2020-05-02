@@ -8,6 +8,5 @@ urlpatterns = [
          views.UserProfileView.as_view(), name='get_profile'),
     path('profile/update',
          views.update_user_profile, name='update_profile'),
-    path('stock/<symbol>/follow/',
-         views.follow_stock),
+
 ]

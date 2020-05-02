@@ -139,17 +139,6 @@ def update_user_profile(request):
         #     return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('更新失败')}, safe=False)
 
-@login_required
-def follow_stock(request, symbol):
-    if request.method == 'POST':
-        data = request.POST.copy()
-        name = data.get('name')
-        investor = request.user
-        new_follow = StockFollowing(trader=investor, stock_code=symbol, stock_name=name)
-        new_follow.save()
-        return JsonResponse({'code': 'ok', 'message': _('添加成功')}, safe=False)
-    return JsonResponse({'code': 'error', 'message': _('添加失败')}, safe=False)
-
 def get_week_of_month(year, month, day):
     """
     获取指定的某天是某个月中的第几周

@@ -1,6 +1,7 @@
 from decimal import Decimal
 from datetime import datetime
 from stocktrade.models import Transactions
+from django.utils import timezone
 
 
 def calibrate_realtime_position(p):
@@ -61,19 +62,28 @@ def calibrate_realtime_position(p):
                             p.calculate_misc_trade_fee(
                                 's', p.trade_account, transaction_rec.board_lots, transaction_rec.price)
                         total_shares -= transaction_rec.board_lots
-                        position_price = transaction_rec.price - profit / total_shares
+                        position_price = transaction_rec.price - profit / \
+                            total_shares if total_shares != 0 else position_price
                     else:
                         pass
                 count += 1
+            # 根据实时报价更新持仓
+        # 如果已经清仓，按照卖出时的利润作为最后持仓利润，不需要实时更新
+        if p.is_liquidated:
+            p.profit = round(profit, 2)
+            p.profit_ratio = '0.0%'
+            pass
     # 重新计算持仓后，更新持仓价
     if count > 0:
         p.position_price = round(position_price, 2)
-    # 根据实时报价更新持仓
-    p.profit = round(
-        (realtime_quote - p.position_price) * p.lots, 2)
-    p.profit_ratio = str(round(p.profit / p.cash * 100, 2)) + '%'
+    # 如果未清仓，则实时更新
+    if not p.is_liquidated:
+        p.profit = round(
+            (realtime_quote - p.position_price) * p.lots, 2)
+        p.profit_ratio = str(round(p.profit / p.cash * 100, 2)
+                             ) + '%' if p.cash != 0 else '0.0%'
     p.current_price = realtime_quote
     p.is_sychronized = True
-    p.sychronized_datetime = datetime.now()
+    p.sychronized_datetime = datetime.now(tz=timezone.utc)
     p.save()
     pass

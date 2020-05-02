@@ -7,7 +7,7 @@ $(function () {
 
     var csrftoken = Cookies.get('csrftoken');
     var userBaseEndpoint = '/user/';
-    var investBaseEndpoint = '/invest/stocks/';
+    var investorEndpoint = '/investors/';
     var txnvisEndpoint = '/txnvis/';
     var stockmarketEndpoint = '/stockmarket/';
     var stocktradeEndpoint = '/stocktrade/';
@@ -64,7 +64,7 @@ $(function () {
                     $('#currentPrice').text(data.current_price.c);
                     $('#cashRemainToBuy').text(parseFloat(data.remain_to_buy).toLocaleString());
                     $('#sharesRemainToSell').text(data.remain_to_sell.toLocaleString());
-                    $('#hiddenSharesRemainToSell').text(data.remain_to_sell);
+                    $('#hiddenSharesRemainToSell').val(data.remain_to_sell);
                     $('#tradePrice').val(data.current_price.c);
                     var quantity = $('#quantity').val();
                     // $('#quantity').val($('#quantity').val().toLocaleString());
@@ -91,7 +91,7 @@ $(function () {
                         $('#targetCashAmount').text(Math.round($('#targetPosition').val() * data.current_price.c).toLocaleString());
                     } else {
                         $('#targetPosition').prop('readonly', true);
-                        if (parseInt($('#hiddenSharesRemainToSell').text()) <= 0) {
+                        if (parseInt($('#hiddenSharesRemainToSell').val()) <= 0) {
                             $('#btnSubmitTrade').prop('disabled', true);
                         } else {
                             $('#btnSubmitTrade').removeAttr('disabled');
@@ -142,9 +142,9 @@ $(function () {
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: txnvisEndpoint + 'hist/'  + accountId + "/" + symbol + '/'  + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
-                if(data.length>0){
+                if (data.length > 0) {
                     $("#tradePrice").val(data[0].c)
                 }
             }
@@ -156,7 +156,7 @@ $(function () {
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/'  + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 chart.data.datasets.forEach(function (dataset) {
                     dataset.data = data;
@@ -170,7 +170,7 @@ $(function () {
     var refreshPositionBySymbol = function (symbol, price) {
         // var symbol = $("#hiddenCode");
         var indexList = ["sh", "sz", "cyb"];
-        if (indexList.indexOf(symbol)!=-1) return;
+        if (indexList.indexOf(symbol) != -1) return;
         var accountId = $("#pickedAccountID").val();
         $.ajax({
             url: dashboardEndpoint + 'position/account/' + accountId + '/' + symbol,
@@ -207,7 +207,7 @@ $(function () {
                     $("#pLots").text(content.lots.toLocaleString());//目标仓位
                     $("#pTargetPosition").text(content.target_position.toLocaleString());//目标仓位
                     $("#pCash").text(parseInt(content.capital).toLocaleString()); //市值
-                } 
+                }
                 else {
                     $("#pStockName").text($("#hiddenName").val()); //股票名
                     $("#pStockSymbol").text(symbol);//股票代码
@@ -222,12 +222,12 @@ $(function () {
             }
         })
     }
-    if ($("#tradeDatetime").length > 0){
+    if ($("#tradeDatetime").length > 0) {
         var date = formatDate(dt, "-");
         var hour = dt.getHours().toString().length == 2 ? dt.getHours() : "0" + dt.getHours();
         var min = dt.getMinutes().toString().length == 2 ? dt.getMinutes() : "0" + dt.getMinutes();
         var sec = dt.getSeconds().toString().length == 2 ? dt.getSeconds() : "0" + dt.getSeconds();
-        $("#tradeDatetime").val(date+"T"+hour+":"+min+":"+sec);
+        $("#tradeDatetime").val(date + "T" + hour + ":" + min + ":" + sec);
     }
     refreshPositionBySymbol($("#hiddenCode").val(), null);
 
@@ -266,22 +266,22 @@ $(function () {
         getHistoricPrice(symbol, $(this).val(), "D");
     });
 
-    $("#followStock").click(function(){
+    $("#followStock").click(function () {
         var symbol = $("#hiddenCode").val();
         var name = $("#hiddenName").val();
         $.ajax(
             {
-                url: userBaseEndpoint + 'stock/' + symbol + "/follow/",
-                data:{
+                url: investorEndpoint + 'follow-stock/' + symbol + "/",
+                data: {
                     name: name
                 },
                 headers: { 'X-CSRFToken': csrftoken },
                 method: 'POST',
                 success: function (data) {
                     $("#messages").removeClass('d-none');
-                    if(data.code=="ok"){
+                    if (data.code == "ok") {
                         $("#messages").addClass('alert-success');
-                    }else{
+                    } else {
                         $("#messages").addClass('alert-danger');
                     }
                     $("#messageText").html("<strong>" + data.message + "</strong>");
@@ -415,7 +415,7 @@ $(function () {
                                     var dataset = data.datasets[tooltipItem.datasetIndex];
                                     var point = dataset.data[tooltipItem.index];
                                     var label = data.datasets[tooltipItem.datasetIndex].label || '';
-                                    
+
                                     var o = point.o;
                                     var h = point.h;
                                     var l = point.l;
@@ -426,16 +426,16 @@ $(function () {
                                     if (label) {
                                         label += ': ';
                                     }
-                                    label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c  + ' 涨幅: ' + percentage;
+                                    label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c + ' 涨幅: ' + percentage;
                                     return label;
 
-                                    
+
 
                                     // if (!helpers$1.isNullOrUndef(point.y)) {
                                     //     return Chart.defaults.global.tooltips.callbacks.label(tooltipItem, data);
                                     // }
 
-                                    
+
 
                                 }
                             }
@@ -469,11 +469,7 @@ $(function () {
             $('#cashRemainToBuyLbl').removeClass('d-none');
             $('#sharesRemainToSell').addClass('d-none');
             $('#sharesRemainToSellLbl').addClass('d-none');
-            if ($('#targetPositionText').text() == '0') {
-                $('#targetPosition').prop('readonly', false);
-            } else {
-                $('#targetPosition').prop('readonly', true);
-            }
+            $('#targetPosition').prop('readonly', false);
         } else {
             $('#hiddenTradeType').val('s');
             $('#sharesRemainToSell').removeClass('d-none');
@@ -525,7 +521,7 @@ $(function () {
                 $("#messages").removeClass('d-none');
                 // $("#messages").addClass('d-block');
                 $("#messageText").html('<strong>非交易时间，实时行情不可用，请在交易时间查看.</strong>');
-            } 
+            }
         } else
             updateChartFor(showName, showCode, code, period);
     });
@@ -615,10 +611,10 @@ $(function () {
     //     }
     // });
 
-    $(".close").click(function(){
+    $(".close").click(function () {
         $("#messages").addClass('d-none');
     });
-    
+
     $('#btnSubmitTrade').click(function () {
         event.preventDefault();
         if ($('#btnSubmitTrade').hasClass("disabled")) return;
@@ -635,6 +631,7 @@ $(function () {
         var direction = $('#direction').val();
         var tradeTime = $('#tradeDatetime').val();
         var tradeAcc = $('#pickedAccountID').val();
+        var forceCalculate = false;
 
         if (strategy.length < 1) {
             $('#pickedStrategy').addClass("is-invalid");
@@ -664,11 +661,14 @@ $(function () {
             $('#quantity').removeClass("is-invalid");
         }
 
-        if (direction == "s" && quantity > parseInt($("#hiddenSharesRemainToSell").text())) {
+        if (direction == "s" && quantity > parseInt($("#hiddenSharesRemainToSell").val())) {
             $('#quantity').addClass("is-invalid");
             return;
         } else {
             $('#quantity').removeClass("is-invalid");
+            if (quantity == $("#hiddenSharesRemainToSell").val()) {
+                forceCalculate = true;
+            }
         }
 
         if (targetPosition.length < 1) {
@@ -701,7 +701,8 @@ $(function () {
                 targetPosition: targetPosition,
                 direction: direction,
                 tradeTime: tradeTime,
-                tradeAcc: tradeAcc
+                tradeAcc: tradeAcc,
+                forceCalculate: forceCalculate
                 // csrfmiddlewaretoken: '{{ csrf_token }}'
             },
             success: function (data) {
