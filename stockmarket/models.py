@@ -2,7 +2,7 @@ import random
 import string
 from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import date, datetime, timedelta
-from decimal import *
+import decimal
 
 import tushare as ts
 from django.conf import settings
@@ -84,6 +84,8 @@ class StockNameCodeMap(BaseModel):
         _('退市日期'), blank=True, null=True)
     is_hs = models.CharField(
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
+    is_marked_jiuzhuan = models.BooleanField(
+        _('是否标注九转'), blank=False, null=False, default=False)
 
     def __str__(self):
         return self.stock_name

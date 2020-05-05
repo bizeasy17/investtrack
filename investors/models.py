@@ -30,6 +30,8 @@ class TradeStrategy(BaseModel):
         'self', verbose_name=_('父级策略'), blank=True, null=True, on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
                                 on_delete=models.CASCADE)
+    is_visible = models.BooleanField(
+        _('是否可见'), blank=False, null=False, default=False)
 
     class Meta:
         ordering = ['name']
