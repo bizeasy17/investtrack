@@ -45,31 +45,33 @@ class StockHistoryDaily(BaseModel):
     '''
 
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
-    stock_code = models.CharField(
-        _('股票代码'), max_length=50, blank=False, null=False)  # symbol, e.g. 000001
-    trade_date = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    trade_date = models.DateField(
         _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
     # new fields
     open = models.FloatField(
         _('开盘价'), blank=True, null=True)
     high = models.FloatField(
-        _('开盘价'), blank=True, null=True)
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
     pre_close = models.FloatField(
-        _('前一日收盘价'), blank=True, null=True)
+        _('前日收盘价'), blank=True, null=True)
     close = models.FloatField(_('收盘价'), blank=True, null=True)
     change = models.FloatField(
-        _('与前日价格变化'), max_length=50, blank=True, null=True)
+        _('价格变化'), blank=True, null=True)
     pct_chg = models.FloatField(
-        _('与前日价格变化%'), max_length=50, blank=True, null=True)
+        _('价格变化%'), blank=True, null=True)
     vol = models.FloatField(
-        _('交易量'), max_length=50, blank=True, null=True)
+        _('交易量'), blank=True, null=True)
     amount = models.FloatField(
-        _('金额'), max_length=50, blank=True, null=True)
+        _('金额'), blank=True, null=True)
     chg4 = models.FloatField(
-        _('与4日前变化'), max_length=50, blank=True, null=True)
+        _('与4日前变化'), blank=True, null=True)
     jiuzhuan_count = models.FloatField(
-        _('九转序列'), max_length=50, blank=True, null=True, default=-1)
+        _('九转序列B'),  blank=False, null=False, default=-1)
+    jiuzhuan_count_s = models.FloatField(
+        _('九转序列S'),  blank=False, null=False, default=-1)
 
     def __str__(self):
         return self.stock_code

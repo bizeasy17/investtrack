@@ -36,3 +36,4 @@ class AnalysisHomeView(LoginRequiredMixin, View):
                 return HttpResponse(status=404)
         else:
             return HttpResponse(status=404)
+

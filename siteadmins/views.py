@@ -18,6 +18,7 @@ from stocktrade.models import Transactions
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
+from analysis.strategy_jiuzhuan import test_mark
 
 logger = logging.getLogger(__name__)
 
@@ -259,3 +260,12 @@ def sync_company_list(request):
         except Exception as e:
             logger.error(e)
     return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
+
+def jiuzhuan_test(request, stock_symbol, start_date):
+    end_date = date.today()
+    start_date = datetime.strptime(start_date, '%Y%m%d')
+    res = test_mark(stock_symbol, start_date, end_date)
+    if res:
+        return HttpResponse(200)
+    else:
+        return HttpResponse(500)

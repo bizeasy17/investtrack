@@ -15,4 +15,6 @@ urlpatterns = [
     path('trans/detail/pkd/<int:ref_id>',
          views.get_transaction_detail_pkd),
     path('companylisted/sync/', views.sync_company_list),
+    path('analysis/jiuzhuan/mark-test/<stock_symbol>/<start_date>/', views.jiuzhuan_test),
+
 ]

@@ -2,12 +2,14 @@
 import tushare as ts
 import pandas as pd
 import time
+import logging
 from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
+from .models import StockHistoryDaily
 
 pro = ts.pro_api()
-
+logger = logging.getLogger(__name__)
 
 def trade_calendar(exchange, start_date, end_date):
     # 获取20200101～20200401之间所有有交易的日期
@@ -25,21 +27,66 @@ def recon_strategy_usage():
     '''
     pass
 
+def test_mark(ts_code, start_date, end_date):
+    try:
+        end_date = date.today()
+        df = hist_since_listed(ts_code, start_date, end_date)
+        marked_df = mark_jiuzhuan(df)
+        for v in marked_df.values:
+            hist_D = StockHistoryDaily(ts_code = v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                amount=v[10], chg4=v[11], jiuzhuan_count=v[12])
+            '''
+            ts_code	str	股票代码
+            trade_date	str	交易日期
+            open	float	开盘价
+            high	float	最高价
+            low	float	最低价
+            close	float	收盘价
+            pre_close	float	昨收价
+            change	float	涨跌额
+            pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+            vol	float	成交量 （手）
+            amount	float	成交额 （千元）
+            '''
+            hist_D.save()
+    except Exception as e:
+        logger.error(e)
+        return False
+    else:
+        return True
 
 def mark_jiuzhuan_listed():
     '''
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
     '''
-    today = date.today()
+    end_date = date.today()
     listed_companies = StockNameCodeMap.objects.filter(
         is_marked_jiuzhuan=False)
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
             df = hist_since_listed(
-                listed_company.ts_code, listed_company.list_date.strftime('%Y%m%d'))
-            mark_jiuzhuan(df)
-
+                listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
+            marked_df = mark_jiuzhuan(df)
+            for v in marked_df.values:
+                hist_D = StockHistoryDaily(ts_code = v[0], trade_date=v[1], open=v[2], high=v[3],
+                    low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                    amount=v[10], chg4=v[11], jiuzhuan_count=v[12])
+                '''
+                ts_code	str	股票代码
+                trade_date	str	交易日期
+                open	float	开盘价
+                high	float	最高价
+                low	float	最低价
+                close	float	收盘价
+                pre_close	float	昨收价
+                change	float	涨跌额
+                pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+                vol	float	成交量 （手）
+                amount	float	成交额 （千元）
+                '''
+                hist_D.save()
 
 def split_trade_cal(start_date, end_date):
     '''
@@ -55,24 +102,27 @@ def split_trade_cal(start_date, end_date):
     if end_year - start_year <= 10:
         split_date_list.append([start_date, end_date])
     elif end_year - start_year <= 20:
-        mid_date = end_year + timedelta(days=365 * 10)
+        mid_date = start_date + timedelta(days=365 * 10)
         split_date_list.append(
-            [start_date, mid_date],
+            [start_date, mid_date])
+        split_date_list.append(
             [mid_date + timedelta(days=1), start_date]
         )
     elif end_year - start_year <= 30:
-        mid_date = end_year + timedelta(days=365*10)
+        mid_date = start_date + timedelta(days=365*10)
         split_date_list.append(
-            [start_date, mid_date],
+            [start_date, mid_date])
+        split_date_list.append(
             [mid_date + timedelta(days=1), mid_date +
-             timedelta(days=365*10) + timedelta(days=1)],
-            [mid_date + timedelta(days=365*10) + timedelta(days=1),
+             timedelta(days=365*10) + timedelta(days=1)])
+        split_date_list.append(
+            [mid_date + timedelta(days=365*10) + timedelta(days=2),
              end_date],
         )
     return split_date_list
 
 
-def hist_since_listed(stock_symbol, start_date='', end_date='', freq='D'):
+def hist_since_listed(stock_symbol, start_date, end_date, freq='D'):
     '''
     将每次的收盘历史数据按照10年分隔从tushare接口获取
     再按照时间先后顺序拼接
@@ -81,8 +131,8 @@ def hist_since_listed(stock_symbol, start_date='', end_date='', freq='D'):
     split_cal_list = split_trade_cal(start_date, end_date)
     df_list = []
     for trade_cal in split_cal_list:
-        df = ts.pro_bar(ts_code=stock_symbol, adj=None, freq=freq,
-                        start_date=trade_cal[0], end_date=trade_cal[1])
+        df = ts.pro_bar(ts_code=stock_symbol, freq=freq,
+                        start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
         df = df.iloc[::-1]  # 将数据按照时间顺序排列
         df_list.append(df)
     return pd.concat(df_list)
