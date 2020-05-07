@@ -29,6 +29,7 @@ def recon_strategy_usage():
 
 def test_mark(ts_code, start_date, end_date):
     try:
+        hist_list = []
         end_date = date.today()
         df = hist_since_listed(ts_code, start_date, end_date)
         marked_df = mark_jiuzhuan(df)
@@ -49,7 +50,9 @@ def test_mark(ts_code, start_date, end_date):
             vol	float	成交量 （手）
             amount	float	成交额 （千元）
             '''
-            hist_D.save()
+            # hist_D.save()
+            hist_list.append(hist_D)
+        StockHistoryDaily.objects.bulk_create(hist_list)
     except Exception as e:
         logger.error(e)
         return False
