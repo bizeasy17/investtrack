@@ -68,7 +68,7 @@ class StockHistoryDaily(BaseModel):
         _('金额'), blank=True, null=True)
     chg4 = models.FloatField(
         _('与4日前变化'), blank=True, null=True)
-    jiuzhuan_count = models.FloatField(
+    jiuzhuan_count_b = models.FloatField(
         _('九转序列B'),  blank=False, null=False, default=-1)
     jiuzhuan_count_s = models.FloatField(
         _('九转序列S'),  blank=False, null=False, default=-1)

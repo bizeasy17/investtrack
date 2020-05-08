@@ -36,7 +36,7 @@ def test_mark(ts_code, start_date, end_date):
         for v in marked_df.values:
             hist_D = StockHistoryDaily(ts_code = v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
                 low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                amount=v[10], chg4=v[11], jiuzhuan_count=v[12])
+                amount=v[10], chg4=v[11], jiuzhuan_count_b=v[12], jiuzhuan_count_s=v[13])
             '''
             ts_code	str	股票代码
             trade_date	str	交易日期
@@ -64,6 +64,7 @@ def mark_jiuzhuan_listed():
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
     '''
+    hist_list = []
     end_date = date.today()
     listed_companies = StockNameCodeMap.objects.filter(
         is_marked_jiuzhuan=False)
@@ -75,7 +76,7 @@ def mark_jiuzhuan_listed():
             for v in marked_df.values:
                 hist_D = StockHistoryDaily(ts_code = v[0], trade_date=v[1], open=v[2], high=v[3],
                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                    amount=v[10], chg4=v[11], jiuzhuan_count=v[12])
+                    amount=v[10], chg4=v[11], jiuzhuan_count_b=v[12], jiuzhuan_count_s=v[13])
                 '''
                 ts_code	str	股票代码
                 trade_date	str	交易日期
@@ -89,7 +90,8 @@ def mark_jiuzhuan_listed():
                 vol	float	成交量 （手）
                 amount	float	成交额 （千元）
                 '''
-                hist_D.save()
+                hist_list.append(hist_D)
+        StockHistoryDaily.objects.bulk_create(hist_list)
 
 def split_trade_cal(start_date, end_date):
     '''
@@ -145,26 +147,39 @@ def mark_jiuzhuan(df):
     '''
     标记股票的九转序列
     '''
-    count = 0
+    count_b = 0 # 九转买点
+    count_s = 0 # 九转卖点
     jiuzhuan_diff_list = []
+    jiuzhuan_diff_s_list = []
     try:
         # df = pro.daily(ts_code=stock_symbol, trade_date=trade_date)
+        # 与4天前的收盘价比较
         df_close_diff4 = df['close'].diff(periods=4)
         if df_close_diff4 is not None and len(df_close_diff4) > 0:
             for stock_hist in df_close_diff4.values:
                 if stock_hist is not None:
-                    if stock_hist < 0:
-                        if count < 9:
-                            count += 1
+                    if stock_hist < 0: # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
+                        # 同时九转卖点设置为0
+                        if count_b < 9:
+                            count_b += 1
                         else:
-                            count = 1
-                    else:
-                        count = 0
-                    jiuzhuan_diff_list.append(count)
+                            count_b = 1
+                        count_s = 0
+                    else:  # 股价与往前第四个交易日比较，如果>前值，那么开始计算九转卖点，
+                        # 同时九转买点设置为0
+                        if count_s < 9:
+                            count_s += 1
+                        else:
+                            count_s = 1
+                        count_b = 0
+                    jiuzhuan_diff_list.append(count_b)
+                    jiuzhuan_diff_s_list.append(count_s)
                 else:
                     jiuzhuan_diff_list.append(0)
+                    jiuzhuan_diff_s_list.append(0)
         df['diff'] = df_close_diff4
         df['diff_count'] = jiuzhuan_diff_list
+        df['diff_count_s'] = jiuzhuan_diff_s_list
     except:
         time.sleep(1)
     else:
