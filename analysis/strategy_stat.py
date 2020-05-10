@@ -10,9 +10,11 @@ def calc_strategy_on_days(stock_symbol, strategy_name='jz', test_period=20):
     3. 根据测试周期获取从买入点或者卖出点开始最大/小，平均涨跌幅
     4. 测试结果存入表
     '''
-    if strategy_name == 'jz':
-        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=stock_symbol).values())
-    
+    if strategy_name.startswith('jz_'):
+        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=stock_symbol).order_by('trade_date').values())
+        df.loc[df['jiuzhuan_b'] == 9]
+        # idx = df.loc[df['close'] > 16.66].index
+        # df.iloc[idx]
     pass
 
 
