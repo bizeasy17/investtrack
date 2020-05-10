@@ -12,6 +12,7 @@ from django.views.generic import View
 
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
+from .models import TradeStrategyStat
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +29,10 @@ class AnalysisHomeView(LoginRequiredMixin, View):
         req_user = request.user
         if req_user is not None:
             try:
-                strategy_list = TradeStrategy.objects.filter(is_visible=True)
-                
+                strategy_list = TradeStrategyStat.objects.filter(creator=req_user)
+                query_list = {
+                    'strategy': strategy_list
+                }
                 return render(request, self.template_name, {self.context_object_name: queryset})
             except Exception as e:
                 logger.error(e)

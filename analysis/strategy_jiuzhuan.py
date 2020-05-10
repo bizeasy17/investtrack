@@ -185,7 +185,6 @@ def mark_jiuzhuan(df):
     else:
         return df
 
-
 def get_daily(self, ts_code='', trade_date='', start_date='', end_date=''):
     for _ in range(3):
         try:

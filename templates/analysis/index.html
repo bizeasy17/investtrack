@@ -8,6 +8,25 @@
 {% endblock %}
 
 {% block content %}
+<div class="content-wrapper">
+    {% comment %} 策略列表 {% endcomment %}
+    {% comment %} 股票搜索框 {% endcomment %}
+    <div class="row flex-grow mb-4">
+        <div class="col-lg-3 grid-margin stretch-card">
+            <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
+            <input type="hidden"  id="hiddenCode"/>
+        </div>
+    </div>
+    {% comment %} 
+    策略分析股票历史数据模拟 
+    可选分析周期: 60日，120日，240日
+    1. 买入后最大涨幅，最大跌幅（买入策略）
+    2. 买入后涨幅达到10%，20%，30%的时间（买入策略）
+    3. 卖出后最大涨幅（卖出策略）
+    4. 卖出后最大跌幅（卖出策略）
+    5. 买入/卖出成功率（历史记录）
+
+    {% endcomment %}
 
 <!-- content-wrapper ends -->
 {% endblock content %}
