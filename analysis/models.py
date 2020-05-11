@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
+from investors.models import TradeStrategy
 # Create your models here.
 
 
@@ -130,7 +131,58 @@ class StockStatDaily(BaseModel):
         _('九转序列S'),  blank=False, null=False, default=-1, db_index=True)
 
     def __str__(self):
-        return self.stock_code
+        return self.ts_code
+
+
+class StrategyTestResultOnDays(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    open	float	开盘价
+    high	float	最高价
+    low	float	最低价
+    close	float	收盘价
+    pre_close	float	昨收价
+    change	float	涨跌额
+    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    vol	float	成交量 （手）
+    amount	float	成交额 （千元）
+    '''
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    applied_period = models.CharField(
+        _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='60')
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    open = models.FloatField(
+        _('开盘价'), blank=True, null=True)
+    high = models.FloatField(
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
+    pre_close = models.FloatField(
+        _('前日收盘价'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'), blank=True, null=True)
+    change = models.FloatField(
+        _('价格变化'), blank=True, null=True)
+    pct_chg = models.FloatField(
+        _('涨幅%'), blank=True, null=True)
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    stage_low = models.BooleanField(
+        _('低点?'), blank=True, null=True, default=False)
+    stage_high = models.BooleanField(
+        _('高点?'), blank=True, null=True, default=False)
+    tnx_point = models.BooleanField(
+        _('b/s点?'), blank=True, null=True, default=False)
+    test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+                                      on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.ts_code
 
 class StrategyOnPctTest(BaseModel):
     PERIOD_CHOICE = {
