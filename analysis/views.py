@@ -13,6 +13,7 @@ from django.views.generic import View
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import TradeStrategyStat
+from .strategy_stat import calc_strategy_on_days
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class AnalysisHomeView(LoginRequiredMixin, View):
                 query_list = {
                     'strategy': strategy_list
                 }
-                return render(request, self.template_name, {self.context_object_name: queryset})
+                return render(request, self.template_name, {self.context_object_name: query_list})
             except Exception as e:
                 logger.error(e)
                 return HttpResponse(status=404)

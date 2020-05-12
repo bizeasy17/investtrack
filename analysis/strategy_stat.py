@@ -2,7 +2,8 @@ import pandas as pd
 
 from .models import StrategyOnDaysTest, StrategyOnPctTest, StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays
 
-def calc_strategy_on_days(stock_symbol, strategy_name='jz', test_period=20):
+
+def calc_strategy_on_days(stock_symbol, test_period, strategy_name='jz'):
     '''
     计算策略在某只股票上在某个时间周期上的最小/大，和平均涨跌幅值的统计
     1. 需要传入的参数为策略名称

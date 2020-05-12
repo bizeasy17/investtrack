@@ -151,7 +151,9 @@ class BStrategyTestResultOnDays(BaseModel):
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     trade_date = models.DateField(
-        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+        _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
+    test_period = models.IntegerField(
+        _('测试周期长度'), blank=True, null=False, default=10)
     # new fields
     open = models.FloatField(
         _('开盘价'), blank=True, null=True)
