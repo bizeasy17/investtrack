@@ -75,7 +75,7 @@ class StockHistoryDaily(BaseModel):
         _('九转序列S'),  blank=False, null=False, default=-1)
 
     def __str__(self):
-        return self.stock_code
+        return self.ts_code
 
     # def save(self, *args, **kwargs):
     #     self.stock_code = self.stock_code + '.' + self.market
@@ -134,7 +134,7 @@ class StockStatDaily(BaseModel):
         return self.ts_code
 
 
-class StrategyTestResultOnDays(BaseModel):
+class BStrategyTestResultOnDays(BaseModel):
     '''
     ts_code	str	股票代码
     trade_date	str	交易日期
@@ -150,8 +150,6 @@ class StrategyTestResultOnDays(BaseModel):
     '''
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
-    applied_period = models.CharField(
-        _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='60')
     trade_date = models.DateField(
         _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
     # new fields
@@ -174,10 +172,14 @@ class StrategyTestResultOnDays(BaseModel):
         _('金额'), blank=True, null=True)
     stage_low = models.BooleanField(
         _('低点?'), blank=True, null=True, default=False)
+    stage_low_pct = models.FloatField(
+        _('低点/买点%?'), blank=True, null=True, default=False)
     stage_high = models.BooleanField(
         _('高点?'), blank=True, null=True, default=False)
+    stage_high_pct = models.FloatField(
+        _('高点/买点%?'), blank=True, null=True, default=False)
     tnx_point = models.BooleanField(
-        _('b/s点?'), blank=True, null=True, default=False)
+        _('b点?'), blank=True, null=True, default=False)
     test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
                                       on_delete=models.CASCADE)
 
