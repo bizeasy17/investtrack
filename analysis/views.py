@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
-from django.views.generic import View
+from django.views.generic import TemplateView
 
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
@@ -20,24 +20,24 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 
-class AnalysisHomeView(LoginRequiredMixin, View):
+class AnalysisHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'analysis/index.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'analysis'
 
-    def get(self, request, *args, **kwargs):
-        req_user = request.user
-        if req_user is not None:
-            try:
-                strategy_list = TradeStrategyStat.objects.filter(creator=req_user)
-                query_list = {
-                    'strategy': strategy_list
-                }
-                return render(request, self.template_name, {self.context_object_name: query_list})
-            except Exception as e:
-                logger.error(e)
-                return HttpResponse(status=404)
-        else:
-            return HttpResponse(status=404)
+def strategies_by_category(strategy_ctg):
+    
+    pass
 
+def bstrategy_test_result_incr(strategy, stock_symbol, test_period):
+    pass
+
+def bstrategy_test_result_drop(strategy, stock_symbol, test_period):
+    pass
+
+def sstrategy_test_result_incr(strategy, stock_symbol, test_period):
+    pass
+
+def sstrategy_test_result_drop(strategy, stock_symbol, test_period):
+    pass

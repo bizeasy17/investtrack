@@ -37,6 +37,8 @@ urlpatterns = [
     path('tradeaccounts/', include('tradeaccounts.urls')),
     path('txnvis/', include('txnvisibility.urls')),
     path('dashboard/', include('dashboard.urls')),
+    path('analysis/', include('analysis.urls')),
+
 
     # home pages
     re_path(r'^$',

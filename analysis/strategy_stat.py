@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .models import StrategyOnDaysTest, StrategyOnPctTest, StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays
+from .models import StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays
 
 
 def calc_strategy_on_days(stock_symbol, test_period, strategy_name='jz'):

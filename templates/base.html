@@ -54,8 +54,8 @@
                   <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">{% trans '首页' %} <span class="sr-only">(current)</span></a></li>
                   {% if request.user.is_authenticated %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '交易策略分析 (测试)' %} <span class="sr-only">(current)</span></a></li>
-                  <!-- <li class="nav-item"><a class="nav-link" href="{% url 'trade_account:index' %}">{% trans '交易账户管理' %}</a></li> -->
+                  <li class="nav-item"><a class="nav-link" href="{% url 'analysis:home' %}">{% trans '交易策略分析 (测试)' %} </a></li>
+                  {% comment %} <li class="nav-item"><a class="nav-link" href="{% url 'analysis:pick_stock' %}">{% trans 'AI选股（测试）' %}</a></li> {% endcomment %}
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                   {% endif %}
                 </ul>
@@ -182,7 +182,7 @@
   <!-- /.container -->
   <!-- Footer -->
   <footer class="py-5 bg-dark mt-5">
-    <div class="container navbar-static-bottom mb-0">
+    <div class="mb-0">
       <p class="m-0 text-center text-white">
         {% trans '版权所有'%} &copy; {% trans '我爱投资'%} {% now "Y" %}      
          | <a class="text-white" href="/about/">{% trans '关于我们' %}</a>
