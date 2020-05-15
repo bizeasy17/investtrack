@@ -1,9 +1,9 @@
 import pandas as pd
 
-from .models import StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays
+from .models import StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays, BStrategyOnPctTest
 
 
-def calc_strategy_on_days(stock_symbol, test_period, strategy_name='jz'):
+def test_strategy_on_days(stock_symbol, strategy_name, test_period):
     '''
     计算策略在某只股票上在某个时间周期上的最小/大，和平均涨跌幅值的统计
     1. 需要传入的参数为策略名称
@@ -50,11 +50,11 @@ def calc_strategy_on_days(stock_symbol, test_period, strategy_name='jz'):
             BStrategyTestResultOnDays.objects.bulk_create(strategy_test_list)
         else:
             idx_list = df.loc[df['jiuzhuan_s'] == 9]
-
         # idx = df.loc[df['close'] > 16.66].index
         # df.iloc[idx]
     pass
 
 
-def calc_strategy_on_pct():
+def test_strategy_on_pct(stock_symbol, strategy):
+    
     pass

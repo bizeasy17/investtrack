@@ -73,321 +73,358 @@ $(function () {
         var market = item.market;
     });
 
-    $('input:button[name="show-test-rst"]').click(function () {
-        alert("dddd");
+    $("button").click(function () {
+        alert($(this).val());
+        $.ajax({
+            url: analysisEndpoint + "bstrategy-test/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+            // headers: { 'X-CSRFToken': csrftoken },
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                if (data == 200) {
+                    showIncrDistChart();
+                    showDropDistChart();
+                    showIncrPctByDayChart()
+                }
+            },
+            statusCode: {
+                403: function () {
+                    $("#messages").removeClass('d-none');
+                    // $("#messages").addClass('d-block');
+                    $("#messageText").html('<strong>403 forbidden</strong>.');
+                },
+                404: function () {
+                    $("#messages").removeClass('d-none');
+                    // $("#messages").addClass('d-block');
+                    $("#messageText").html('<strong>404 page not found</strong>.');
+                },
+                500: function () {
+                    $("#messages").removeClass('d-none');
+                    // $("#messages").addClass('d-block');
+                    $("#messageText").html('<strong>500 internal server error</strong>.');
+                }
+            }
+        });
     });
 
     // 涨幅分布
-    if ($("#incrDist").length) {
-        var incrChartCanvas = $("#incrDist")
-            .get(0)
-            .getContext("2d");
-        var strategy = "9";
-        var stock_symbol = "000001.SZ"
-        var period = $('input:radio[name="period"]:checked').val();
-        $.ajax({
-            url: analysisEndpoint + "b-test-result-incr/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
-            // headers: { 'X-CSRFToken': csrftoken },
-            method: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                // 亏损的字体颜色为绿
-                // if (data.avg_profit < 0) {
-                //     $("#prfAvgProfit").removeClass("text-danger");
-                //     $("#prfAvgProfit").addClass("text-success");
-                // }
-                // $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
-                // // 亏损的字体颜色为绿
-                // if (data.profit_ratio < 0) {
-                //     $("#prfProfitRatio").removeClass("text-danger");
-                //     $("#prfProfitRatio").addClass("text-success");
-                // }
-                // $("#prfProfitRatio").text(data.profit_ratio + '%');
+    var showIncrDistChart = function () {
+        if ($("#incrDist").length) {
+            var incrChartCanvas = $("#incrDist")
+                .get(0)
+                .getContext("2d");
+            var strategy = "9";
+            var stock_symbol = "000001.SZ"
+            var period = $('input:radio[name="period"]:checked').val();
+            $.ajax({
+                url: analysisEndpoint + "b-test-result-incr/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                // headers: { 'X-CSRFToken': csrftoken },
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 亏损的字体颜色为绿
+                    // if (data.avg_profit < 0) {
+                    //     $("#prfAvgProfit").removeClass("text-danger");
+                    //     $("#prfAvgProfit").addClass("text-success");
+                    // }
+                    // $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+                    // // 亏损的字体颜色为绿
+                    // if (data.profit_ratio < 0) {
+                    //     $("#prfProfitRatio").removeClass("text-danger");
+                    //     $("#prfProfitRatio").addClass("text-success");
+                    // }
+                    // $("#prfProfitRatio").text(data.profit_ratio + '%');
 
-                incrChart = new Chart(incrChartCanvas, {
-                    type: "line",
-                    data: {
-                        labels: data.label,
-                        datasets: [
-                            {
-                                fill: true,
-                                label: "最大涨幅%",
-                                data: data.value,
-                                borderColor: "#1cbccd",
-                                barPercentage: 0.9,
-                                categoryPercentage: 0.7
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        layout: {
-                            padding: {
-                                left: 0,
-                                right: 0,
-                                top: 20,
-                                bottom: 0
-                            }
-                        },
-                        scales: {
-                            yAxes: [
+                    incrChart = new Chart(incrChartCanvas, {
+                        type: "line",
+                        data: {
+                            labels: data.label,
+                            datasets: [
                                 {
-                                    display: true,
-                                    gridLines: {
-                                        display: true,
-                                        drawBorder: false,
-                                        color: "#f8f8f8",
-                                        zeroLineColor: "#f8f8f8"
-                                    },
-                                    ticks: {
-                                        display: true,
-                                        // min: data.min_profit,
-                                        // max: data.max_profit,
-                                        // stepSize: data.max_profit / 10,
-                                        fontColor: "#b1b0b0",
-                                        fontSize: 10,
-                                        padding: 10
-                                    }
-                                }
-                            ],
-                            xAxes: [
-                                {
-                                    stacked: false,
-                                    ticks: {
-                                        beginAtZero: true,
-                                        fontColor: "#b1b0b0",
-                                        fontSize: 10
-                                    },
-                                    gridLines: {
-                                        color: "rgba(0, 0, 0, 0)",
-                                        display: false
-                                    },
+                                    fill: true,
+                                    label: "最大涨幅%",
+                                    data: data.value,
+                                    borderColor: "#1cbccd",
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 0.7
                                 }
                             ]
                         },
-                        legend: {
-                            display: false
-                        },
-                        elements: {
-                            point: {
-                                radius: 3,
-                                backgroundColor: "#ff4c5b"
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            layout: {
+                                padding: {
+                                    left: 0,
+                                    right: 0,
+                                    top: 20,
+                                    bottom: 0
+                                }
+                            },
+                            scales: {
+                                yAxes: [
+                                    {
+                                        display: true,
+                                        gridLines: {
+                                            display: true,
+                                            drawBorder: false,
+                                            color: "#f8f8f8",
+                                            zeroLineColor: "#f8f8f8"
+                                        },
+                                        ticks: {
+                                            display: true,
+                                            // min: data.min_profit,
+                                            // max: data.max_profit,
+                                            // stepSize: data.max_profit / 10,
+                                            fontColor: "#b1b0b0",
+                                            fontSize: 10,
+                                            padding: 10
+                                        }
+                                    }
+                                ],
+                                xAxes: [
+                                    {
+                                        stacked: false,
+                                        ticks: {
+                                            beginAtZero: true,
+                                            fontColor: "#b1b0b0",
+                                            fontSize: 10
+                                        },
+                                        gridLines: {
+                                            color: "rgba(0, 0, 0, 0)",
+                                            display: false
+                                        },
+                                    }
+                                ]
+                            },
+                            legend: {
+                                display: false
+                            },
+                            elements: {
+                                point: {
+                                    radius: 3,
+                                    backgroundColor: "#ff4c5b"
+                                }
                             }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
     }
 
     // 跌幅分布
-    if ($("#dropDist").length) {
-        var dropChartCanvas = $("#dropDist")
-            .get(0)
-            .getContext("2d");
-        var strategy = "9";
-        var stock_symbol = "000001.SZ"
-        var period = $('input:radio[name="period"]:checked').val();
-        $.ajax({
-            url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
-            // headers: { 'X-CSRFToken': csrftoken },
-            method: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                // 亏损的字体颜色为绿
-                // if (data.avg_profit < 0) {
-                //     $("#prfAvgProfit").removeClass("text-danger");
-                //     $("#prfAvgProfit").addClass("text-success");
-                // }
-                // $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
-                // // 亏损的字体颜色为绿
-                // if (data.profit_ratio < 0) {
-                //     $("#prfProfitRatio").removeClass("text-danger");
-                //     $("#prfProfitRatio").addClass("text-success");
-                // }
-                // $("#prfProfitRatio").text(data.profit_ratio + '%');
+    var showDropDistChart = function () {
+        if ($("#dropDist").length) {
+            var dropChartCanvas = $("#dropDist")
+                .get(0)
+                .getContext("2d");
+            var strategy = "9";
+            var stock_symbol = "000001.SZ"
+            var period = $('input:radio[name="period"]:checked').val();
+            $.ajax({
+                url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                // headers: { 'X-CSRFToken': csrftoken },
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // 亏损的字体颜色为绿
+                    // if (data.avg_profit < 0) {
+                    //     $("#prfAvgProfit").removeClass("text-danger");
+                    //     $("#prfAvgProfit").addClass("text-success");
+                    // }
+                    // $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+                    // // 亏损的字体颜色为绿
+                    // if (data.profit_ratio < 0) {
+                    //     $("#prfProfitRatio").removeClass("text-danger");
+                    //     $("#prfProfitRatio").addClass("text-success");
+                    // }
+                    // $("#prfProfitRatio").text(data.profit_ratio + '%');
 
-                dropChart = new Chart(dropChartCanvas, {
-                    type: "line",
-                    data: {
-                        labels: data.label,
-                        datasets: [
-                            {
-                                fill: true,
-                                label: "最大跌幅%",
-                                data: data.value,
-                                borderColor: "#1cbccd",
-                                barPercentage: 0.9,
-                                categoryPercentage: 0.7
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        layout: {
-                            padding: {
-                                left: 0,
-                                right: 0,
-                                top: 20,
-                                bottom: 0
-                            }
-                        },
-                        scales: {
-                            yAxes: [
+                    dropChart = new Chart(dropChartCanvas, {
+                        type: "line",
+                        data: {
+                            labels: data.label,
+                            datasets: [
                                 {
-                                    display: true,
-                                    gridLines: {
-                                        display: true,
-                                        drawBorder: false,
-                                        color: "#f8f8f8",
-                                        zeroLineColor: "#f8f8f8"
-                                    },
-                                    ticks: {
-                                        display: true,
-                                        // min: data.min_profit,
-                                        // max: data.max_profit,
-                                        // stepSize: data.max_profit / 10,
-                                        fontColor: "#b1b0b0",
-                                        fontSize: 10,
-                                        padding: 10
-                                    }
-                                }
-                            ],
-                            xAxes: [
-                                {
-                                    stacked: false,
-                                    ticks: {
-                                        beginAtZero: true,
-                                        fontColor: "#b1b0b0",
-                                        fontSize: 10
-                                    },
-                                    gridLines: {
-                                        color: "rgba(0, 0, 0, 0)",
-                                        display: false
-                                    },
+                                    fill: true,
+                                    label: "最大跌幅%",
+                                    data: data.value,
+                                    borderColor: "#1cbccd",
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 0.7
                                 }
                             ]
                         },
-                        legend: {
-                            display: false
-                        },
-                        elements: {
-                            point: {
-                                radius: 3,
-                                backgroundColor: "#ff4c5b"
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            layout: {
+                                padding: {
+                                    left: 0,
+                                    right: 0,
+                                    top: 20,
+                                    bottom: 0
+                                }
+                            },
+                            scales: {
+                                yAxes: [
+                                    {
+                                        display: true,
+                                        gridLines: {
+                                            display: true,
+                                            drawBorder: false,
+                                            color: "#f8f8f8",
+                                            zeroLineColor: "#f8f8f8"
+                                        },
+                                        ticks: {
+                                            display: true,
+                                            // min: data.min_profit,
+                                            // max: data.max_profit,
+                                            // stepSize: data.max_profit / 10,
+                                            fontColor: "#b1b0b0",
+                                            fontSize: 10,
+                                            padding: 10
+                                        }
+                                    }
+                                ],
+                                xAxes: [
+                                    {
+                                        stacked: false,
+                                        ticks: {
+                                            beginAtZero: true,
+                                            fontColor: "#b1b0b0",
+                                            fontSize: 10
+                                        },
+                                        gridLines: {
+                                            color: "rgba(0, 0, 0, 0)",
+                                            display: false
+                                        },
+                                    }
+                                ]
+                            },
+                            legend: {
+                                display: false
+                            },
+                            elements: {
+                                point: {
+                                    radius: 3,
+                                    backgroundColor: "#ff4c5b"
+                                }
                             }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
     }
 
-    if ($("#expIncrPct").length) {
-        var pctIncrChartCanvas = $("#expIncrPct")
-            .get(0)
-            .getContext("2d");
-        var strategy = "9";
-        var stock_symbol = "000001.SZ"
-        var period = $('input:radio[name="pct_period"]:checked').val();
-        $.ajax({
-            url: analysisEndpoint + "b-test-result-incr-pct/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
-            // headers: { 'X-CSRFToken': csrftoken },
-            method: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                pctIncrChart = new Chart(pctIncrChartCanvas, {
-                    type: "bar",
-                    data: {
-                        labels: data.label,
-                        datasets: [
-                            {
-                                label: "最小周期",
-                                data: data.v_min,
-                                barPercentage: 0.9,
-                                categoryPercentage: 0.7,
-                                backgroundColor: "#4472C4"
-                            },
-                            {
-                                label: "最大周期",
-                                data: data.v_max,
-                                barPercentage: 0.9,
-                                categoryPercentage: 0.7,
-                                backgroundColor: "#ED7D31"
-
-                            },
-                            {
-                                label: "平均周期",
-                                data: data.v_mean,
-                                barPercentage: 0.9,
-                                categoryPercentage: 0.7,
-                                backgroundColor: "#A5A5A5"
-
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        layout: {
-                            padding: {
-                                left: 0,
-                                right: 0,
-                                top: 20,
-                                bottom: 0
-                            }
-                        },
-                        scales: {
-                            yAxes: [
+    // 达到预期涨幅天数
+    var showIncrPctByDayChart = function () {
+        if ($("#expIncrPct").length) {
+            var pctIncrChartCanvas = $("#expIncrPct")
+                .get(0)
+                .getContext("2d");
+            var strategy = "9";
+            var stock_symbol = "000001.SZ"
+            var period = $('input:radio[name="pct_period"]:checked').val();
+            $.ajax({
+                url: analysisEndpoint + "b-test-result-incr-pct/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                // headers: { 'X-CSRFToken': csrftoken },
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    pctIncrChart = new Chart(pctIncrChartCanvas, {
+                        type: "bar",
+                        data: {
+                            labels: data.label,
+                            datasets: [
                                 {
-                                    display: true,
-                                    gridLines: {
-                                        display: true,
-                                        drawBorder: false,
-                                        color: "#f8f8f8",
-                                        zeroLineColor: "#f8f8f8"
-                                    },
-                                    ticks: {
-                                        display: true,
-                                        // min: data.min_profit,
-                                        // max: data.max_profit,
-                                        // stepSize: data.max_profit / 10,
-                                        fontColor: "#b1b0b0",
-                                        fontSize: 10,
-                                        padding: 10
-                                    }
-                                }
-                            ],
-                            xAxes: [
+                                    label: "最小周期",
+                                    data: data.v_min,
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 0.7,
+                                    backgroundColor: "#4472C4"
+                                },
                                 {
-                                    stacked: false,
-                                    ticks: {
-                                        beginAtZero: true,
-                                        fontColor: "#b1b0b0",
-                                        fontSize: 10
-                                    },
-                                    gridLines: {
-                                        color: "rgba(0, 0, 0, 0)",
-                                        display: false
-                                    },
+                                    label: "最大周期",
+                                    data: data.v_max,
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 0.7,
+                                    backgroundColor: "#ED7D31"
+
+                                },
+                                {
+                                    label: "平均周期",
+                                    data: data.v_mean,
+                                    barPercentage: 0.9,
+                                    categoryPercentage: 0.7,
+                                    backgroundColor: "#A5A5A5"
+
                                 }
                             ]
                         },
-                        legend: {
-                            display: false
-                        },
-                        elements: {
-                            point: {
-                                radius: 3,
-                                backgroundColor: "#ff4c5b"
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            layout: {
+                                padding: {
+                                    left: 0,
+                                    right: 0,
+                                    top: 20,
+                                    bottom: 0
+                                }
+                            },
+                            scales: {
+                                yAxes: [
+                                    {
+                                        display: true,
+                                        gridLines: {
+                                            display: true,
+                                            drawBorder: false,
+                                            color: "#f8f8f8",
+                                            zeroLineColor: "#f8f8f8"
+                                        },
+                                        ticks: {
+                                            display: true,
+                                            // min: data.min_profit,
+                                            // max: data.max_profit,
+                                            // stepSize: data.max_profit / 10,
+                                            fontColor: "#b1b0b0",
+                                            fontSize: 10,
+                                            padding: 10
+                                        }
+                                    }
+                                ],
+                                xAxes: [
+                                    {
+                                        stacked: false,
+                                        ticks: {
+                                            beginAtZero: true,
+                                            fontColor: "#b1b0b0",
+                                            fontSize: 10
+                                        },
+                                        gridLines: {
+                                            color: "rgba(0, 0, 0, 0)",
+                                            display: false
+                                        },
+                                    }
+                                ]
+                            },
+                            legend: {
+                                display: false
+                            },
+                            elements: {
+                                point: {
+                                    radius: 3,
+                                    backgroundColor: "#ff4c5b"
+                                }
                             }
                         }
-                    }
-                });
+                    });
 
-            }
-        });
+                }
+            });
+        }
     }
 });  

@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import TradeStrategyStat, BStrategyTestResultOnDays, BStrategyOnPctTest
-from .strategy_stat import calc_strategy_on_days
+from .strategy_stat import test_strategy_on_days, test_strategy_on_pct
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,17 @@ def strategies_by_category(request, strategy_ctg):
             logging.error(err)
             return HttpResponse(status=404)
 
+@login_required
+def bstrategy_test(request,  strategy, stock_symbol, test_period):
+    user = request.user
+    if request.method == 'GET':
+        try:
+            test_strategy_on_days(stock_symbol, strategy, test_period)
+            test_strategy_on_pct(stock_symbol, strategy)
+            return HttpResponse(status=200)
+        except IndexError as err:
+            logging.error(err)
+            return HttpResponse(status=404)
 
 @login_required
 def bstrategy_test_result_incr_pct(request, strategy, stock_symbol, test_period):
