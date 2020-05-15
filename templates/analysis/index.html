@@ -18,12 +18,12 @@
         <div class="col-lg-9">
 
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                <span class="mt-1 mr-1">{% trans '测试周期' %}</span>
-                <label class="btn btn-light">
-                    <input type="radio" name="period" id="p10" autocomplete="off" value="10">{% trans '10天' %}
-                </label>
+                <span class="mt-1 mr-1 small">{% trans '测试周期' %}</span>
                 <label class="btn btn-light active">
-                    <input type="radio" name="period" id="p20" autocomplete="off" value="20" checked>{% trans '20天' %} 
+                    <input type="radio" name="period" id="p10" autocomplete="off" value="10" checked>{% trans '10天' %}
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p20" autocomplete="off" value="20" >{% trans '20天' %} 
                 </label>
                 <label class="btn btn-light">
                     <input type="radio" name="period" id="p30" autocomplete="off" value="30">{% trans '30天' %} 
@@ -39,51 +39,70 @@
     </div>
     <hr/>
     {% comment %} 策略列表 {% endcomment %}
-    <div class="row flex-grow mb-4">
+    <div class="row flex-grow">
         <div class="col-lg-12">
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                <label class="btn btn-light active">
-                    <input type="radio" name="strategy-ctg" id="scBuy" autocomplete="off" value="buy" checked>{% trans '买入策略' %}
-                </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="strategy-ctg" id="scSell" autocomplete="off" value="sell" >{% trans '买出策略' %} 
-                </label>
-                <label class="btn btn-light">
-                    <input type="radio" name="strategy-ctg" id="scAdd" autocomplete="off" value="add">{% trans '加仓策略' %} 
-                </label>
-                <label class="btn btn-light">
-                    <input type="radio" name="strategy-ctg" id="scReduce" autocomplete="off" value="reduce">{% trans '减仓策略' %} 
-                </label>
+                {% if analysis %}
+                {% for ctg in analysis.strategy_ctgs %}
+                    <label class="btn btn-light  {% if forloop.first %}active{% endif %}">
+                        <input type="radio" name="strategy-ctg" id="{{ctg.code}}" autocomplete="off" value="{{ctg.id}}" {% if forloop.first %}checked{% endif %}>{{ctg.name}}{% trans '策略' %}
+                    </label>
+                {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
     <hr/>
-    <div class="row flex-grow">
-        <div class="col-md-12 stretch-card">
+    <div class="row flex-grow" id="strategyList">
+        <div class="col-lg-3 stretch-card">
             <div class="card shadow">
                 <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-coins"></i> {% trans '预期涨幅vs.天数分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
-                        <p class="font-weight-medium">
-                            <span class="text-muted small mr-1">{% trans '平均涨幅%' %}</span>
-                            <span class="text-danger" id="prfProfitRatio"></span>
-                        </p>
+                    <div class='d-flex align-items-center justify-content-between flex-wrap small'>
+                        <h6 class="card-title">{% trans '九转序列买入' %} - <span class="small text-muted">{% trans '75%成功率' %}</span></h6>
+                        <span class="badge badge-pill badge-danger">{% trans '买' %}</span>                      
+                        {% comment %} <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{% trans 'jz_b' %}</a></h7> {% endcomment %}
                     </div>
-                    <div class="no-trans-data" id="noProfit"></div>
-                    <canvas id="incrOn" height="200"></canvas>
+                    
+                    <div class="d-flex align-items-center justify-content-between flex-wrap small">
+                        <div class="text-primary"> 
+                            <div>{% trans '总应用次数' %}</div>
+                            <div>9</div>
+                        </div>
+                        <div class="text-primary"> 
+                            <div>{% trans '成功次数' %}</div>
+                            <div>6</div>
+                        </div>
+                        <div class="text-primary">  
+                            <div>{% trans '失败次数' %}</div>
+                            <div>3</div>
+                        </div>
+                    </div>
                 </div>
+                <button class="btn btn-sm btn-outline-info" name="show-test-rst" id="9" ><i class="fa fa-eye"></i>{% trans '测试' %}</button>
             </div>
         </div>
     </div>
+    <hr/>
+        
+    {% comment %} 
+    策略分析股票历史数据模拟 
+    可选分析周期: 60日，120日，240日
+    1. 买入后最大涨幅，最大跌幅（买入策略）
+    2. 买入后涨幅达到10%，20%，30%的时间（买入策略）
+    3. 卖出后最大涨幅（卖出策略）
+    4. 卖出后最大跌幅（卖出策略）
+    5. 买入/卖出成功率（历史记录）
+
+    {% endcomment %}
     <div class="row flex-grow mt-5">
-        <div class="col-md-6 stretch-card">
+        <div class="col-md-6 stretch-card mb-2">
             <div class="card shadow">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-coins"></i> {% trans '涨幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '历史涨幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
                             <span class="text-muted small mr-1">{% trans '平均涨幅%' %}</span>
-                            <span class="text-danger" id="prfProfitRatio"></span>
+                            <span class="text-danger" id="avgIncr"></span>
                         </p>
                     </div>
                     <div class="no-trans-data" id="noProfit"></div>
@@ -96,10 +115,10 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center
                         justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-arrow-alt-circle-left"></i>{% trans '跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="text-danger font-weight-medium" id="">
                             <span class="text-muted small mr-1">{% trans '平均跌幅' %}</span>
-                            <span class="text-danger" id="invRelAttemptRatio"></span>
+                            <span class="text-danger" id="avgDrop"></span>
                         </p>
                     </div>
                     <div class="no-trans-data" id="noAttempt"></div>
@@ -108,16 +127,38 @@
             </div>
         </div>
     </div>
-    {% comment %} 
-    策略分析股票历史数据模拟 
-    可选分析周期: 60日，120日，240日
-    1. 买入后最大涨幅，最大跌幅（买入策略）
-    2. 买入后涨幅达到10%，20%，30%的时间（买入策略）
-    3. 卖出后最大涨幅（卖出策略）
-    4. 卖出后最大跌幅（卖出策略）
-    5. 买入/卖出成功率（历史记录）
+        <div class="row flex-grow">
+        <div class="col-md-12 stretch-card">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap">
+                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '达到预期涨幅@天数分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="font-weight-medium">
+                            <span class="text-muted small mr-1">{% trans '平均涨幅%' %}</span>
+                            <span class="text-danger" id="avgExpIncr"></span>
+                        </p>
+                    </div>
+                    <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-light ">
+                            <input type="radio" name="pct_period" autocomplete="off" value="60" >{% trans '60分钟' %}
+                        </label>
+                        <label class="btn btn-light active">
+                            <input type="radio" name="pct_period" autocomplete="off" value="D" checked>{% trans '日线' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="pct_period" autocomplete="off" value="W">{% trans '周线' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="pct_period" autocomplete="off" value="M">{% trans '月线' %} 
+                        </label>
+                    </div>
+                    <div class="no-trans-data" id="noProfit"></div>
+                    <canvas id="expIncrPct" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    {% endcomment %}
 </div>
 <!-- content-wrapper ends -->
 {% endblock content %}

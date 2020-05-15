@@ -32,6 +32,8 @@ class TradeStrategy(BaseModel):
                                 on_delete=models.CASCADE)
     is_visible = models.BooleanField(
         _('是否可见'), blank=False, null=False, default=False)
+    code = models.CharField(
+        _('策略代码'), max_length=10, blank=False, null=False, default='jz_b')
 
     class Meta:
         ordering = ['name']

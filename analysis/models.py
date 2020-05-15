@@ -188,56 +188,62 @@ class BStrategyTestResultOnDays(BaseModel):
     def __str__(self):
         return self.ts_code
 
-# class StrategyOnPctTest(BaseModel):
-#     PERIOD_CHOICE = {
-#         ('M', _('月线')),
-#         ('W', _('周线')),
-#         ('D', _('日线')),
-#         ('60', _('60分钟')),
-#         ('30', _('30分钟')),
-#         ('15', _('15分钟')),
-#     }
-#     name = models.CharField(_('策略名'), max_length=30)
-#     applied_period = models.CharField(
-#         _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='60')
-#     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
-#                                 on_delete=models.CASCADE)
-#     ts_code = models.CharField(
-#         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
-#     b_10_min_pct_days = models.FloatField(
-#         _('+10%最小天数'), blank=True, null=True, default=-1) 
-#     b_10_pct_max_days = models.FloatField(
-#         _('+10%最大天数'), blank=True, null=True, default=-1) 
-#     b_10_pct_mean_days = models.FloatField(
-#         _('+10%平均天数'), blank=True, null=True, default=-1) 
-#     b_20_pct_min_days = models.FloatField(
-#         _('+20%最小天数'), blank=True, null=True, default=-1)
-#     b_20_pct_min_days = models.FloatField(
-#         _('+20%最大天数'), blank=True, null=True, default=-1)
-#     b_20_pct_min_days = models.FloatField(
-#         _('+20%最小天数'), blank=True, null=True, default=-1)
-#     b_30_pct_min_days = models.FloatField(
-#         _('+30%最小天数'), blank=True, null=True, default=-1)
-#     b_30_pct_max_days = models.FloatField(
-#         _('+30%最大天数'), blank=True, null=True, default=-1)
-#     b_50_pct_min_days = models.FloatField(
-#         _('+50%最小天数'), blank=True, null=True, default=-1)
-#     b_50_pct_max_days = models.FloatField(
-#         _('+50%最大天数'), blank=True, null=True, default=-1)
-#     b_50_pct_mean_days = models.FloatField(
-#         _('+50%平均天数'), blank=True, null=True, default=-1)
-#     b_80_pct_min_days = models.FloatField(
-#         _('+80%最小天数'), blank=True, null=True, default=-1)
-#     b_80_pct_max_days = models.FloatField(
-#         _('+80%最大天数'), blank=True, null=True, default=-1)
-#     b_80_pct_mean_days = models.FloatField(
-#         _('+80%平均天数'), blank=True, null=True, default=-1)
-#     b_100_pct_min_days = models.FloatField(
-#         _('+100%最小天数'), blank=True, null=True, default=-1)
-#     b_100_pct_max_days = models.FloatField(
-#         _('+100%最大天数'), blank=True, null=True, default=-1)
-#     b_100_pct_mean_days = models.FloatField(
-#         _('+100%平均天数'), blank=True, null=True, default=-1)
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('交易策略日线测试')
+        verbose_name_plural = verbose_name
+
+class BStrategyOnPctTest(BaseModel):
+    test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+                                      on_delete=models.CASCADE)
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    b_10_pct_min = models.FloatField(
+        _('+10%最小周期'), blank=True, null=True, default=-1) 
+    b_10_pct_max = models.FloatField(
+        _('+10%最大周期'), blank=True, null=True, default=-1) 
+    b_10_pct_mean = models.FloatField(
+        _('+10%平均周期'), blank=True, null=True, default=-1) 
+    b_20_pct_min = models.FloatField(
+        _('+20%最小周期'), blank=True, null=True, default=-1)
+    b_20_pct_max = models.FloatField(
+        _('+20%最大周期'), blank=True, null=True, default=-1)
+    b_20_pct_mean = models.FloatField(
+        _('+20%平均周期'), blank=True, null=True, default=-1)
+    b_30_pct_min = models.FloatField(
+        _('+30%最小周期'), blank=True, null=True, default=-1)
+    b_30_pct_max = models.FloatField(
+        _('+30%最大周期'), blank=True, null=True, default=-1)
+    b_30_pct_mean = models.FloatField(
+        _('+30%平均周期'), blank=True, null=True, default=-1)
+    b_50_pct_min = models.FloatField(
+        _('+50%最小周期'), blank=True, null=True, default=-1)
+    b_50_pct_max = models.FloatField(
+        _('+50%最大周期'), blank=True, null=True, default=-1)
+    b_50_pct_mean = models.FloatField(
+        _('+50%平均周期'), blank=True, null=True, default=-1)
+    b_80_pct_min = models.FloatField(
+        _('+80%最小周期'), blank=True, null=True, default=-1)
+    b_80_pct_max = models.FloatField(
+        _('+80%最大周期'), blank=True, null=True, default=-1)
+    b_80_pct_mean = models.FloatField(
+        _('+80%平均周期'), blank=True, null=True, default=-1)
+    b_100_pct_min = models.FloatField(
+        _('+100%最小周期'), blank=True, null=True, default=-1)
+    b_100_pct_max = models.FloatField(
+        _('+100%最大周期'), blank=True, null=True, default=-1)
+    b_100_pct_mean = models.FloatField(
+        _('+100%平均周期'), blank=True, null=True, default=-1)
+    test_period = models.CharField(
+        _('测试周期'), max_length=5, blank=False, null=False, default='D')
+
+    def __str__(self):
+        return self.ts_code
+        
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('达到固定涨幅周期')
+        verbose_name_plural = verbose_name
 
 # class StrategyOnDaysTest(BaseModel):
 #     PERIOD_CHOICE = {
@@ -308,8 +314,10 @@ class TradeStrategyStat(BaseModel):
         _('成功次数'), blank=False, null=False, default=0)
     fail_count = models.IntegerField(
         _('失败次数'), blank=False, null=False, default=0)
-    success_rate = models.IntegerField(
+    success_rate = models.FloatField(
         _('成功率'), blank=False, null=False, default=0)
+    code = models.CharField(
+        _('策略代码'), max_length=10, blank=False, null=False, default='jz_b')
 
     class Meta:
         ordering = ['name']

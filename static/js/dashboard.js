@@ -47,7 +47,7 @@ $(function () {
     var showCode = item.ts_code;
     var showName = item.text;
     var market = item.market;
-    window.location.href = stocktradeEndpoint  + code + "/account/" + $("#defaultAccount").val();
+    window.location.href = stocktradeEndpoint + code + "/account/" + $("#defaultAccount").val();
     // window.location.href = userBaseEndpoint + "account/" + $("#defaultAccount").val() + "/trade/" + code + "/";
   });
 

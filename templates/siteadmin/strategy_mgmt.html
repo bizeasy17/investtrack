@@ -37,8 +37,8 @@
     </div>
 
     <!-- Nav Item - Pages Collapse Menu -->
-    <li class="nav-item active">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="/siteadmin/settings" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
             aria-controls="collapseTwo">
             <i class="fas fa-fw fa-cog"></i>
             <span>{% trans '网站设置' %}</span>
@@ -51,9 +51,22 @@
             </div>
         </div> -->
     </li>
+    <!-- Heading -->
+    <div class="sidebar-heading ">
+        {% trans '交易策略管理' %}
+    </div>
+
+    <!-- Nav Item - Pages Collapse Menu -->
+    <li class="nav-item active">
+        <a class="nav-link collapsed" href="/siteadmin/strategy-mgmt/" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true"
+            aria-controls="collapseTwo">
+            <i class="fas fa-fw fa-trade-federation"></i>
+            <span>{% trans '交易策略管理' %}</span>
+        </a>
+    </li>
 
     <!-- Heading -->
-    <div class="sidebar-heading">
+    <div class="sidebar-heading ">
         {% trans '查询分析' %}
     </div>
 
@@ -65,7 +78,7 @@
             <span>{% trans '查询分析' %}</span>
         </a>
     </li>
-
+    
 </ul>
 {% endblock sidebar %}
 
@@ -74,7 +87,7 @@
 
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">{% trans '网站设置' %}</h1>
+        <h1 class="h3 mb-0 text-gray-800">{% trans '策略分析' %}</h1>
         <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
                 class="fas fa-download fa-sm text-white-50"></i> {% trans '生成报表' %}</a>
     </div>
@@ -85,9 +98,9 @@
         <div class="media text-muted pt-3">
             <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
                 <div class="d-flex justify-content-between align-items-center w-100">
-                    <strong class="text-gray-dark">{% trans '上市公司信息' %}</strong>
+                    <strong class="text-gray-dark">{% trans '九转序列买点' %}</strong>
                     <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
-                        <button type="button" class="btn btn-success" id="syncCompanyInfo">{% trans '同步' %}</button>
+                        <button type="button" class="btn btn-success" id="syncCompanyInfo">{% trans '分析' %}</button>
                     </div>
                 </div>
                 <span class="d-block" id="syncStatus">{% trans '@tushare lib' %}</span>
@@ -97,20 +110,19 @@
         <div class="media text-muted pt-3">
             <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
                 <div class="d-flex justify-content-between align-items-center w-100">
-                    <strong class="text-gray-dark">{% trans '手动生成账户快照' %}</strong>
+                    <strong class="text-gray-dark">{% trans '九转序列卖点' %}</strong>
                     <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
-                        <button type="button" class="btn btn-success" id="executeStockSnapshot">{% trans '执行' %}</button>
+                        <button type="button" class="btn btn-success" id="executeStockSnapshot">{% trans '分析' %}</button>
                     </div>
                 </div>
-                <span class="d-block" id="snapshotStatus">{% trans '@LoveRollingSnowball' %}</span>
+                <span class="d-block" id="snapshotStatus">{% trans '@tushare lib' %}</span>
                 <i class="fa fa-spinner fa-spin d-none" id="snapshotSpinner"></i>
             </div>
         </div>
         <small class="d-block text-right mt-3">
-            <a href="#">{% trans '所有设置' %}</a>
+            <a href="#">{% trans '所有策略分析' %}</a>
         </small>
     </div>
-
 </div>
 {% endblock content %}
 
