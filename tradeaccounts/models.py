@@ -283,7 +283,7 @@ class TradeAccountSnapshot(BaseModel):
             relative_snapshot = TradeAccountSnapshot.objects.filter(
                 trader=self.trader, trade_account=self.trade_account, snap_date=last_friday, applied_period='w')
             if relative_snapshot is not None and len(relative_snapshot) >= 1:
-                profit_change = self.profit - relative_snapshot.profit
+                profit_change = self.profit - relative_snapshot[0].profit
             else:
                 profit_change = self.profit
             week_snapshot = TradeAccountSnapshot(
@@ -309,7 +309,7 @@ class TradeAccountSnapshot(BaseModel):
                 trader=self.trader, trade_account=self.trade_account,
                 snap_date__year=last_year, snap_date__month=last_mon, applied_period='m')
             if relative_snapshot is not None and len(relative_snapshot) >= 1:
-                profit_change = self.profit - relative_snapshot.profit
+                profit_change = self.profit - relative_snapshot[0].profit
             else:
                 profit_change = self.profit
             last_day = self.snap_date - timedelta(days=7)  # 前一周周五
