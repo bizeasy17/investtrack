@@ -74,9 +74,12 @@ $(function () {
     });
 
     $("button").click(function () {
-        alert($(this).val());
+        var strategy = "jz_b";
+        var stock_symbol = "000001.SZ";
+        var period = $('input:radio[name="period"]:checked').val();
+        var freq = "D";
         $.ajax({
-            url: analysisEndpoint + "bstrategy-test/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+            url: analysisEndpoint + "b-test/strategy/" + strategy + "/" + stock_symbol + "/" + freq + "/" + period + '/',
             // headers: { 'X-CSRFToken': csrftoken },
             method: 'GET',
             dataType: 'json',

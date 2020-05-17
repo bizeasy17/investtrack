@@ -245,6 +245,56 @@ class BStrategyOnPctTest(BaseModel):
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
+class BStrategyOnFixedPctTest(BaseModel):
+    test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+                                      on_delete=models.CASCADE)
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    open = models.FloatField(
+        _('开盘价'), blank=True, null=True)
+    high = models.FloatField(
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
+    pre_close = models.FloatField(
+        _('前日收盘价'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'), blank=True, null=True)
+    change = models.FloatField(
+        _('价格变化'), blank=True, null=True)
+    pct_chg = models.FloatField(
+        _('涨幅%'), blank=True, null=True)
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    pct10_period = models.FloatField(
+        _('+10%最小周期'), blank=True, null=True, default=-1) 
+    pct20_period = models.FloatField(
+        _('+20%最小周期'), blank=True, null=True, default=-1)
+    pct30_period = models.FloatField(
+        _('+30%最小周期'), blank=True, null=True, default=-1)
+    pct50_period = models.FloatField(
+        _('+50%最小周期'), blank=True, null=True, default=-1)
+    pct80_period = models.FloatField(
+        _('+80%最小周期'), blank=True, null=True, default=-1)
+    pct100_period = models.FloatField(
+        _('+100%最小周期'), blank=True, null=True, default=-1)
+    pct130_period = models.FloatField(
+        _('+130%最小周期'), blank=True, null=True, default=-1)
+    test_freq = models.CharField(
+        _('测试周期'), max_length=5, blank=False, null=False, default='D')
+
+    def __str__(self):
+        return self.ts_code
+        
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('达到固定涨幅周期')
+        verbose_name_plural = verbose_name
+
 # class StrategyOnDaysTest(BaseModel):
 #     PERIOD_CHOICE = {
 #         ('M', _('月线')),
@@ -317,7 +367,7 @@ class TradeStrategyStat(BaseModel):
     success_rate = models.FloatField(
         _('成功率'), blank=False, null=False, default=0)
     code = models.CharField(
-        _('策略代码'), max_length=10, blank=False, null=False, default='jz_b')
+        _('策略代码'), max_length=10, blank=False, null=False, default='jz_b', unique=True)
 
     class Meta:
         ordering = ['name']

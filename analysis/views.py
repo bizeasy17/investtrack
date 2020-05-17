@@ -63,16 +63,16 @@ def strategies_by_category(request, strategy_ctg):
             return HttpResponse(status=404)
 
 @login_required
-def bstrategy_test(request,  strategy, stock_symbol, test_period):
+def bstrategy_test(request,  strategy, stock_symbol, test_freq, test_period):
     user = request.user
     if request.method == 'GET':
         try:
-            test_strategy_on_days(stock_symbol, strategy, test_period)
-            test_strategy_on_pct(stock_symbol, strategy)
+            # test_strategy_on_days(stock_symbol, strategy, test_period)
+            test_strategy_on_pct(stock_symbol, strategy, test_freq)
             return HttpResponse(status=200)
-        except IndexError as err:
-            logging.error(err)
-            return HttpResponse(status=404)
+        except Exception as e:
+            logging.error(e)
+            return HttpResponse(status=500)
 
 @login_required
 def bstrategy_test_result_incr_pct(request, strategy, stock_symbol, test_period):
