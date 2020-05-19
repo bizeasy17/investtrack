@@ -51,15 +51,15 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
                                                   amount=b.amount, tnx_point=True, test_strategy=TradeStrategy.objects.get(code='jz_b'))
                 # 查询周期内最高价
                 max = df.iloc[idx_max]
-                    # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
+                # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                 test_max = BStrategyTestResultOnDays(ts_code=max.ts_code, trade_date=max.trade_date, open=max.open, high=max.high,
-                                                        low=max.low, close=max.close, pre_close=max.pre_close, change=max.change, pct_chg=max.pct_chg, vol=max.vol,
-                                                        amount=max.amount, stage_high=True, stage_high_pct=pct_incr, test_strategy=TradeStrategy.objects.get(code='jz_b'))
+                                                     low=max.low, close=max.close, pre_close=max.pre_close, change=max.change, pct_chg=max.pct_chg, vol=max.vol,
+                                                     amount=max.amount, stage_high=True, stage_high_pct=pct_incr, test_strategy=TradeStrategy.objects.get(code='jz_b'))
                 # 查询周期内最低价
                 min = df.iloc[idx_min]
                 test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, open=min.open, high=min.high,
-                                                        low=min.low, close=min.close, pre_close=min.pre_close, change=min.change, pct_chg=min.pct_chg, vol=min.vol,
-                                                        amount=min.amount, stage_low=True, stage_low_pct=pct_drop, test_strategy=TradeStrategy.objects.get(code='jz_b'))
+                                                     low=min.low, close=min.close, pre_close=min.pre_close, change=min.change, pct_chg=min.pct_chg, vol=min.vol,
+                                                     amount=min.amount, stage_low=True, stage_low_pct=pct_drop, test_strategy=TradeStrategy.objects.get(code='jz_b'))
                 strategy_test_list.append(b_tnx)
                 strategy_test_list.append(test_min)
                 strategy_test_list.append(test_max)
@@ -74,7 +74,7 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
 def get_pct_days_between(df, b, b_date, pct_incr):
     try:
         closest_date = df[(df['close'] >= b['close'] * pct_incr) &
-           (df['close'] <= b['close'] * (pct_incr + 0.05))].head(1).trade_date.values #??方法是否对？
+                          (df['close'] <= b['close'] * (pct_incr + 0.05)) & (df['trade_date'] > b['trade_date'])].head(1).trade_date.values  # ??方法是否对？
         # pct_date = closest_date[0].strptime('%Y%m%d')
         pct_days = days_between(closest_date[0], b_date)
     except Exception as e:
@@ -89,7 +89,7 @@ def get_fixed_pct_list(df, b):
     '''
     fixed_pct_list = []
     try:
-        b_date = b['trade_date']#.strftime('%Y%m%d')
+        b_date = b['trade_date']  # .strftime('%Y%m%d')
         # 15% - 20%
         fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.15))
         # 28% - 29%
@@ -134,7 +134,8 @@ def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                 b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date, open=b.open, high=b.high,
                                                 low=b.low, close=b.close, pre_close=b.pre_close, change=b.change, pct_chg=b.pct_chg, vol=b.vol,
-                                                amount=b.amount, pct10_period=pct_list[0], pct20_period=pct_list[1], pct30_period=pct_list[2],
+                                                amount=b.amount, pct10_period=pct_list[
+                                                    0], pct20_period=pct_list[1], pct30_period=pct_list[2],
                                                 pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
                                                 pct130_period=pct_list[6], test_strategy=TradeStrategy.objects.get(code='jz_b'), test_freq=test_freq)
                 strategy_test_list.append(b_tnx)
