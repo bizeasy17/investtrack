@@ -234,6 +234,12 @@ class BStrategyOnPctTest(BaseModel):
         _('+100%最大周期'), blank=True, null=True, default=-1)
     b_100_pct_mean = models.FloatField(
         _('+100%平均周期'), blank=True, null=True, default=-1)
+    b_130_pct_min = models.FloatField(
+        _('+130%最小周期'), blank=True, null=True, default=-1)
+    b_130_pct_max = models.FloatField(
+        _('+13%最大周期'), blank=True, null=True, default=-1)
+    b_130_pct_mean = models.FloatField(
+        _('+130%平均周期'), blank=True, null=True, default=-1)
     test_period = models.CharField(
         _('测试周期'), max_length=5, blank=False, null=False, default='D')
 

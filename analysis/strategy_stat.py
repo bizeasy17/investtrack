@@ -71,6 +71,48 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
     pass
 
 
+def cal_exp_days_pct(pct_list):
+    '''
+    计算在测试的策略下，达到10%，20%。。。的最大，最小，平均天数
+    '''
+    labels = ['pct10', 'pct20',
+              'pct30', 'pct50', 'pct80', 'pct100', 'pct130',  'ts_code', 'strategy',]
+    df = pd.DataFrame.from_records(pct_list, columns=labels)
+    ts_code = pct_list[0][7]
+    test_strategy = pct_list[0][8]
+    pct10_min = df[df['pct10'] != -1]['pct10'].min(axis=0)
+    pct10_mean = df[df['pct10'] != -1]['pct10'].mean(axis=0)
+    pct10_max = df[df['pct10'] != -1]['pct10'].max(axis=0)
+    pct20_min = df[df['pct20'] != -1]['pct20'].min(axis=0)
+    pct20_mean = df[df['pct20'] != -1]['pct20'].mean(axis=0)
+    pct20_max = df[df['pct20'] != -1]['pct20'].max(axis=0)
+    pct30_min = df[df['pct30'] != -1]['pct30'].min(axis=0)
+    pct30_mean = df[df['pct30'] != -1]['pct30'].mean(axis=0)
+    pct30_max = df[df['pct30'] != -1]['pct30'].max(axis=0)
+    pct50_min = df[df['pct50'] != -1]['pct50'].min(axis=0)
+    pct50_mean = df[df['pct50'] != -1]['pct50'].mean(axis=0)
+    pct50_max = df[df['pct50'] != -1]['pct50'].max(axis=0)
+    pct80_min = df[df['pct80'] != -1]['pct80'].min(axis=0)
+    pct80_mean = df[df['pct80'] != -1]['pct80'].mean(axis=0)
+    pct80_max = df[df['pct80'] != -1]['pct80'].max(axis=0)
+    pct100_min = df[df['pct100'] != -1]['pct100'].min(axis=0)
+    pct100_mean = df[df['pct100'] != -1]['pct100'].mean(axis=0)
+    pct100_max = df[df['pct100'] != -1]['pct100'].max(axis=0)
+    pct130_min = df[df['pct130'] != -1]['pct130'].min(axis=0)
+    pct130_mean = df[df['pct130'] != -1]['pct130'].mean(axis=0)
+    pct130_max = df[df['pct130'] != -1]['pct130'].max(axis=0)
+    pct_test = BStrategyOnPctTest(ts_code=ts_code, 
+                                  b_10_pct_min=pct10_min, b_10_pct_mean=pct10_mean, b_10_pct_max=pct10_max,
+                                  b_20_pct_min=pct20_min, b_20_pct_mean=pct20_mean, b_20_pct_max=pct20_max,
+                                  b_30_pct_min=pct30_min, b_30_pct_mean=pct30_mean, b_30_pct_max=pct30_max,
+                                  b_50_pct_min=pct50_min, b_50_pct_mean=pct50_mean, b_50_pct_max=pct50_max,
+                                  b_80_pct_min=pct80_min, b_80_pct_mean=pct80_mean, b_80_pct_max=pct80_max,
+                                  b_100_pct_min=pct100_min, b_100_pct_mean=pct100_mean, b_100_pct_max=pct100_max,
+                                  b_130_pct_min=pct130_min, b_130_pct_mean=pct130_mean, b_130_pct_max=pct130_max,
+                                  test_strategy=test_strategy)
+    pct_test.save()
+
+
 def get_pct_days_between(df, b, b_date, pct_incr):
     try:
         closest_date = df[(df['close'] >= b['close'] * pct_incr) &
@@ -83,19 +125,19 @@ def get_pct_days_between(df, b, b_date, pct_incr):
     return pct_days
 
 
-def get_fixed_pct_list(df, b):
+def get_fixed_pct_list(df, b, strategy_code):
     '''
     计算并返回10%，20% 。。。最小/大/平均时间
     '''
     fixed_pct_list = []
     try:
         b_date = b['trade_date']  # .strftime('%Y%m%d')
-        # 15% - 20%
-        fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.15))
-        # 28% - 29%
-        fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.28))
-        # 40% - 41%
-        fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.40))
+        # 实际达到15% - 20%，才能保证
+        fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.10))
+        # 实际达到28% - 29%，才能保证
+        fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.20))
+        # 实际达到40% - 41%，才能保证
+        fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.30))
         # 50% - 51%
         fixed_pct_list.append(get_pct_days_between(df, b, b_date, 1.50))
         # 80% - 81%
@@ -104,6 +146,9 @@ def get_fixed_pct_list(df, b):
         fixed_pct_list.append(get_pct_days_between(df, b, b_date, 2.00))
         # 130% - 131%
         fixed_pct_list.append(get_pct_days_between(df, b, b_date, 2.30))
+        # code
+        fixed_pct_list.append(b['ts_code'])
+        fixed_pct_list.append(TradeStrategy.objects.get(code='jz_b'))
     except Exception as e:
         logger.err(e)
     return fixed_pct_list
@@ -127,9 +172,11 @@ def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
             # 获取当前买点往后所有交易记录（日）
             # 和当前买点比较，
             idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
+            all_pct_list = []
             for idx in idx_list:
                 b = df.iloc[idx]
-                pct_list = get_fixed_pct_list(df, b)
+                pct_list = get_fixed_pct_list(df, b, strategy_code)
+                all_pct_list.append(pct_list)
                 # 买入点
                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                 b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date, open=b.open, high=b.high,
@@ -140,3 +187,4 @@ def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
                                                 pct130_period=pct_list[6], test_strategy=TradeStrategy.objects.get(code='jz_b'), test_freq=test_freq)
                 strategy_test_list.append(b_tnx)
             BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
+            cal_exp_days_pct(all_pct_list)
