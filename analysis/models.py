@@ -87,51 +87,66 @@ class StockHistoryDaily(BaseModel):
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
-# class StockStatDaily(BaseModel):
-#     '''
-#     ts_code	str	股票代码
-#     trade_date	str	交易日期
-#     open	float	开盘价
-#     high	float	最高价
-#     low	float	最低价
-#     close	float	收盘价
-#     pre_close	float	昨收价
-#     change	float	涨跌额
-#     pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-#     vol	float	成交量 （手）
-#     amount	float	成交额 （千元）
-#     '''
-#     ts_code = models.CharField(
-#         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
-#     trade_date = models.DateField(
-#         _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
-#     # new fields
-#     open = models.FloatField(
-#         _('开盘价'), blank=True, null=True)
-#     high = models.FloatField(
-#         _('最高价'), blank=True, null=True)
-#     low = models.FloatField(
-#         _('最低价'), blank=True, null=True)
-#     pre_close = models.FloatField(
-#         _('前日收盘价'), blank=True, null=True)
-#     close = models.FloatField(_('收盘价'), blank=True, null=True)
-#     change = models.FloatField(
-#         _('价格变化'), blank=True, null=True)
-#     pct_chg = models.FloatField(
-#         _('价格变化%'), blank=True, null=True)
-#     vol = models.FloatField(
-#         _('交易量'), blank=True, null=True)
-#     amount = models.FloatField(
-#         _('金额'), blank=True, null=True)
-#     chg4 = models.FloatField(
-#         _('与4日前变化'), blank=True, null=True)
-#     jiuzhuan_count_b = models.FloatField(
-#         _('九转序列B'),  blank=False, null=False, default=-1, db_index=True)
-#     jiuzhuan_count_s = models.FloatField(
-#         _('九转序列S'),  blank=False, null=False, default=-1, db_index=True)
+class StockStrategyTestLog(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    策略测试状态
+    1. 获得股票交易历史
+    2. 应用策略分析所有历史交易记录
+    3. 标记临界点（买，卖，加仓，减仓，平仓）
+    4. 测试策略
+    5. 记录策略测试结果
+        - 方法1：给定测试周期，标记周期内最高最低点的涨幅%
+        - 方法2：无输入值，测试达到涨幅10%。。。，130%需要的最大，最小和平均天数
+    '''
+    EVENT_TYPE = {
+        ('DOWNLOAD', _('下载历史交易')),
+        ('UPD_DOWNLOAD', _('更新下载历史交易')),
+        ('MARK_CP', _('标记临界点')),
+        ('UPD_CP', _('更新临界点')),
+        ('MARK_LH_PCT', _('标记高低点涨幅')),
+        ('UPD_LH_PCT', _('更新高低点涨幅')),
+        ('MARK_EXP_PCT', _('标记预期涨幅')),
+        ('UPD_EXP_PCT', _('更新预期涨幅')),
+    }
 
-#     def __str__(self):
-#         return self.ts_code
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    strategy = models.ForeignKey(
+        TradeStrategy, verbose_name=_('测试策略'), blank=True, null=True, on_delete=models.SET_NULL)
+    event_type = models.CharField(
+        _('日志类型'), choices=EVENT_TYPE, max_length=50, blank=False, null=False)  # e.g. 000001.SZ
+    is_done = models.BooleanField(
+        _('已完成'),  blank=False, null=False, default=True)
+    # hist_downloaded = models.BooleanField(
+    #     _('交易已下载？'),  blank=False, null=False, default=False)
+    # hist_download_dt = models.DateTimeField(
+    #     _('下载时间？'),  blank=True, null=True, default=now)
+    # hist_update_dt = models.DateTimeField(
+    #     _('下载更新时间？'),  blank=True, null=True, default=now)
+    # critical_point_marked = models.BooleanField(
+    #     _('临界点已标记？'),  blank=False, null=False, default=False)
+    # cp_marked_dt = models.DateTimeField(
+    #     _('临界点标记时间？'),  blank=True, null=True)
+    # cp_update_dt = models.DateTimeField(
+    #     _('临界点更新时间？'),  blank=True, null=True)
+    # low_high_pct_marked = models.BooleanField(
+    #     _('高低点涨幅已标记？'),  blank=False, null=False, default=False)    
+    # lhpct_mark_dt = models.DateTimeField(
+    #     _('高低点标记时间？'),  blank=True, null=True)
+    # lhpct_update_dt = models.DateTimeField(
+    #     _('高低点更新时间？'),  blank=True, null=True)
+    # exp_pct_marked = models.BooleanField(
+    #     _('预期涨幅已标记？'),  blank=False, null=False, default=False)
+    # exppct_mark_dt = models.DateTimeField(
+    #     _('预期涨幅标记时间？'),  blank=True, null=True)
+    # exppct_mark_update_dt = models.DateTimeField(
+    #     _('预期涨幅更新时间？'),  blank=True, null=True)
+
+    def __str__(self):
+        return self.ts_code
+
 
 
 class BStrategyTestResultOnDays(BaseModel):

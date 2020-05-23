@@ -67,7 +67,7 @@ def bstrategy_test(request,  strategy, stock_symbol, test_freq, test_period):
     user = request.user
     if request.method == 'GET':
         try:
-            # test_strategy_on_days(stock_symbol, strategy, test_period)
+            test_strategy_on_days(stock_symbol, strategy, test_period)
             test_strategy_on_pct(stock_symbol, strategy, test_freq)
             return HttpResponse(status=200)
         except Exception as e:

@@ -4,6 +4,7 @@ from datetime import datetime, date
 from dashboard.utils import days_between
 from .models import StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays, BStrategyOnFixedPctTest, BStrategyOnPctTest
 from investors.models import TradeStrategy
+from utils import log_test_status
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
     pass
 
 
-def cal_exp_days_pct(pct_list):
+def cal_exp_days_pct(pct_list, log_list):
     '''
     计算在测试的策略下，达到10%，20%。。。的最大，最小，平均天数
     '''
@@ -111,7 +112,7 @@ def cal_exp_days_pct(pct_list):
                                   b_130_pct_min=pct130_min, b_130_pct_mean=pct130_mean, b_130_pct_max=pct130_max,
                                   test_strategy=test_strategy)
     pct_test.save()
-
+    log_test_status(log_list, ts_code, 'MARK_EXP_PCT',['jz_b'])
 
 def get_pct_days_between(df, b, b_date, pct_incr):
     try:
@@ -173,6 +174,7 @@ def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
             # 和当前买点比较，
             idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
             all_pct_list = []
+            log_list = []
             for idx in idx_list:
                 b = df.iloc[idx]
                 pct_list = get_fixed_pct_list(df, b, strategy_code)
@@ -188,3 +190,22 @@ def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
                 strategy_test_list.append(b_tnx)
             BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
             cal_exp_days_pct(all_pct_list)
+
+
+def test_transaction_strategy():
+    '''
+    1. 获得股票交易历史
+    get_stock_hist()
+    2. 应用策略分析所有历史交易记录
+    apply_given_strategy()
+    3. 标记临界点（买，卖，加仓，减仓，平仓）
+    mark_critical_point()
+    4. 测试策略
+    test_strategy()
+    5. 记录策略测试结果
+        - 方法1：给定测试周期，标记周期内最高最低点的涨幅%
+        cal_low_high_pct()
+        - 方法2：无输入值，测试达到涨幅10%。。。，130%需要的最大，最小和平均天数
+        cal_exp_pct()
+    '''
+    pass

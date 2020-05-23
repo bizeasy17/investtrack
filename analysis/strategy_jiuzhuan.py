@@ -3,10 +3,12 @@ import tushare as ts
 import pandas as pd
 import time
 import logging
+from datetime import datetime, date
 from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
-from .models import StockHistoryDaily
+from .models import StockHistoryDaily, StockStrategyTestLog
+from .utils import log_test_status
 
 pro = ts.pro_api()
 logger = logging.getLogger(__name__)
@@ -68,6 +70,7 @@ def mark_jiuzhuan_listed():
     end_date = date.today()
     listed_companies = StockNameCodeMap.objects.filter(
         is_marked_jiuzhuan=False)
+    log_list =[]
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
             df = hist_since_listed(
@@ -91,7 +94,11 @@ def mark_jiuzhuan_listed():
                 amount	float	成交额 （千元）
                 '''
                 hist_list.append(hist_D)
+            log_test_status(log_list, listed_company.ts_code, 'MARK_CP',['jz_b', 'jz_s'])
         StockHistoryDaily.objects.bulk_create(hist_list)
+        StockStrategyTestLog.objects.bulk_create(log_list)
+        
+
 
 def split_trade_cal(start_date, end_date):
     '''
