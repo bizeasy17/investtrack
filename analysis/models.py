@@ -388,7 +388,7 @@ class TradeStrategyStat(BaseModel):
     success_rate = models.FloatField(
         _('成功率'), blank=False, null=False, default=0)
     code = models.CharField(
-        _('策略代码'), max_length=10, blank=False, null=False, default='jz_b', unique=True)
+        _('策略代码'), max_length=10, blank=False, null=False, default='buy', unique=True)
 
     class Meta:
         ordering = ['name']

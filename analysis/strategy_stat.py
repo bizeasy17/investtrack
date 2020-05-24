@@ -2,14 +2,33 @@ import pandas as pd
 import logging
 from datetime import datetime, date
 from dashboard.utils import days_between
+from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, TradeStrategyStat, BStrategyTestResultOnDays, BStrategyOnFixedPctTest, BStrategyOnPctTest
 from investors.models import TradeStrategy
-from utils import log_test_status
+from .utils import log_test_status
 
 logger = logging.getLogger(__name__)
 
+def test_low_high_pct(strategy_name, test_period):
+    log_list = []
+    listed_companies = StockNameCodeMap.objects.filter
+    for company in listed_companies:
+        test_strategy_low_high(company.stock_symbol, strategy_name, test_period)
+        log_test_status(company.stock_symbol, 'MARK_LH_PCT', ['jiuzhuan_b'])
+    # StockStrategyTestLog.objects.bulk_create(log_list)
 
-def test_strategy_on_days(stock_symbol, strategy_name, test_period):
+
+def test_expected_pct(strategy_name, test_freq):
+    log_list = []
+    listed_companies = StockNameCodeMap.objects.filter
+    for company in listed_companies:
+        test_strategy_exp_pct(company.stock_symbol,
+                               strategy_name, test_freq)
+        log_test_status(company.stock_symbol, 'MARK_EXP_PCT', ['jiuzhuan_b'])
+    # StockStrategyTestLog.objects.bulk_create(log_list)
+
+
+def test_strategy_low_high(stock_symbol, strategy_name, test_period):
     '''
     计算策略在某只股票上在某个时间周期上的最小/大，和平均涨跌幅值的统计
     1. 需要传入的参数为策略名称
@@ -17,7 +36,7 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
     3. 根据测试周期获取从买入点或者卖出点开始最大/小，平均涨跌幅
     4. 测试结果存入表
     '''
-    if strategy_name.startswith('jz_'):
+    if strategy_name.startswith('jiuzhuan_'):
         df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
             ts_code=stock_symbol).order_by('trade_date').values())
         idx_list = []
@@ -49,18 +68,18 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                 b_tnx = BStrategyTestResultOnDays(ts_code=b.ts_code, trade_date=b.trade_date, open=b.open, high=b.high,
                                                   low=b.low, close=b.close, pre_close=b.pre_close, change=b.change, pct_chg=b.pct_chg, vol=b.vol,
-                                                  amount=b.amount, tnx_point=True, test_strategy=TradeStrategy.objects.get(code='jz_b'))
+                                                  amount=b.amount, tnx_point=True, test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'))
                 # 查询周期内最高价
                 max = df.iloc[idx_max]
                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                 test_max = BStrategyTestResultOnDays(ts_code=max.ts_code, trade_date=max.trade_date, open=max.open, high=max.high,
                                                      low=max.low, close=max.close, pre_close=max.pre_close, change=max.change, pct_chg=max.pct_chg, vol=max.vol,
-                                                     amount=max.amount, stage_high=True, stage_high_pct=pct_incr, test_strategy=TradeStrategy.objects.get(code='jz_b'))
+                                                     amount=max.amount, stage_high=True, stage_high_pct=pct_incr, test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'))
                 # 查询周期内最低价
                 min = df.iloc[idx_min]
                 test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, open=min.open, high=min.high,
                                                      low=min.low, close=min.close, pre_close=min.pre_close, change=min.change, pct_chg=min.pct_chg, vol=min.vol,
-                                                     amount=min.amount, stage_low=True, stage_low_pct=pct_drop, test_strategy=TradeStrategy.objects.get(code='jz_b'))
+                                                     amount=min.amount, stage_low=True, stage_low_pct=pct_drop, test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'))
                 strategy_test_list.append(b_tnx)
                 strategy_test_list.append(test_min)
                 strategy_test_list.append(test_max)
@@ -72,7 +91,7 @@ def test_strategy_on_days(stock_symbol, strategy_name, test_period):
     pass
 
 
-def cal_exp_days_pct(pct_list, log_list):
+def cal_exp_days_pct(pct_list):
     '''
     计算在测试的策略下，达到10%，20%。。。的最大，最小，平均天数
     '''
@@ -112,7 +131,6 @@ def cal_exp_days_pct(pct_list, log_list):
                                   b_130_pct_min=pct130_min, b_130_pct_mean=pct130_mean, b_130_pct_max=pct130_max,
                                   test_strategy=test_strategy)
     pct_test.save()
-    log_test_status(log_list, ts_code, 'MARK_EXP_PCT',['jz_b'])
 
 def get_pct_days_between(df, b, b_date, pct_incr):
     try:
@@ -149,20 +167,20 @@ def get_fixed_pct_list(df, b, strategy_code):
         fixed_pct_list.append(get_pct_days_between(df, b, b_date, 2.30))
         # code
         fixed_pct_list.append(b['ts_code'])
-        fixed_pct_list.append(TradeStrategy.objects.get(code='jz_b'))
+        fixed_pct_list.append(TradeStrategy.objects.get(code='jiuzhuan_b'))
     except Exception as e:
         logger.err(e)
     return fixed_pct_list
 
 
-def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
+def test_strategy_exp_pct(stock_symbol, strategy_code, test_freq):
     '''
     计算策略在某只股票涨幅达到10%，20% 。。。最小/大/平均时间
     1. 需要传入的参数为策略名称
     2. 遍历该股票测试策略买入
     3. 测试结果存入表
     '''
-    if strategy_code.startswith('jz_'):
+    if strategy_code.startswith('jiuzhuan_'):
         df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
             ts_code=stock_symbol).order_by('trade_date').values())
         idx_list = []
@@ -186,7 +204,7 @@ def test_strategy_on_pct(stock_symbol, strategy_code, test_freq):
                                                 amount=b.amount, pct10_period=pct_list[
                                                     0], pct20_period=pct_list[1], pct30_period=pct_list[2],
                                                 pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
-                                                pct130_period=pct_list[6], test_strategy=TradeStrategy.objects.get(code='jz_b'), test_freq=test_freq)
+                                                pct130_period=pct_list[6], test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'), test_freq=test_freq)
                 strategy_test_list.append(b_tnx)
             BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
             cal_exp_days_pct(all_pct_list)

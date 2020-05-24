@@ -19,6 +19,7 @@ from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 from analysis.strategy_jiuzhuan import test_mark
+from analysis.strategy_stat import test_strategy_low_high, test_strategy_exp_pct
 
 logger = logging.getLogger(__name__)
 
@@ -269,3 +270,27 @@ def jiuzhuan_test(request, stock_symbol, start_date):
         return HttpResponse(200)
     else:
         return HttpResponse(500)
+
+
+@login_required
+def bstrategy_low_high_test(request,  strategy, stock_symbol, test_period):
+    user = request.user
+    if request.method == 'GET':
+        try:
+            test_strategy_low_high(stock_symbol, strategy, test_period)
+            return HttpResponse(status=200)
+        except Exception as e:
+            logging.error(e)
+            return HttpResponse(status=500)
+
+
+@login_required
+def bstrategy_exp_pct_test(request,  strategy, stock_symbol, test_freq):
+    user = request.user
+    if request.method == 'GET':
+        try:
+            test_strategy_exp_pct(stock_symbol, strategy, test_freq)
+            return HttpResponse(status=200)
+        except Exception as e:
+            logging.error(e)
+            return HttpResponse(status=500)

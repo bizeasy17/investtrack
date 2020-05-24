@@ -70,7 +70,6 @@ def mark_jiuzhuan_listed():
     end_date = date.today()
     listed_companies = StockNameCodeMap.objects.filter(
         is_marked_jiuzhuan=False)
-    log_list =[]
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
             df = hist_since_listed(
@@ -94,9 +93,8 @@ def mark_jiuzhuan_listed():
                 amount	float	成交额 （千元）
                 '''
                 hist_list.append(hist_D)
-            log_test_status(log_list, listed_company.ts_code, 'MARK_CP',['jz_b', 'jz_s'])
+            log_test_status(listed_company.ts_code, 'MARK_CP',['jiuzhuan_b', 'jiuzhuan_s'])
         StockHistoryDaily.objects.bulk_create(hist_list)
-        StockStrategyTestLog.objects.bulk_create(log_list)
         
 
 

@@ -23,5 +23,8 @@ urlpatterns = [
     path('companylisted/sync/', views.sync_company_list),
     path('analysis/jiuzhuan/mark-test/<stock_symbol>/<start_date>/',
          views.jiuzhuan_test),
-
+    path('analysis/low-high/strategy/<strategy>/<stock_symbol>/<test_freq>/<test_period>/',
+         views.bstrategy_low_high_test),  # ??
+    path('analysis/exp-pct/strategy/<strategy>/<stock_symbol>/<test_freq>/',
+         views.bstrategy_exp_pct_test),  # ??
 ]
