@@ -21,10 +21,10 @@ urlpatterns = [
     path('trans/detail/pkd/<int:ref_id>',
          views.get_transaction_detail_pkd),
     path('companylisted/sync/', views.sync_company_list),
-    path('analysis/jiuzhuan/mark-test/<stock_symbol>/<start_date>/',
+    path('analysis/mark-jz-cp/<stock_symbol>/<start_date>/',
          views.jiuzhuan_test),
-    path('analysis/low-high/strategy/<strategy>/<stock_symbol>/<test_freq>/<test_period>/',
-         views.bstrategy_low_high_test),  # ??
-    path('analysis/exp-pct/strategy/<strategy>/<stock_symbol>/<test_freq>/',
+    path('strategy-test-by-period/<strategy>/<stock_symbol>/<test_period>/',
+         views.bstrategy_test_by_period),  # ??
+    path('strategy-test-exp-pct/<strategy>/<stock_symbol>/<test_freq>/',
          views.bstrategy_exp_pct_test),  # ??
 ]

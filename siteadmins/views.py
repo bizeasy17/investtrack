@@ -18,8 +18,10 @@ from stocktrade.models import Transactions
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.strategy_jiuzhuan import test_mark
-from analysis.strategy_stat import test_strategy_low_high, test_strategy_exp_pct
+from analysis.strategy_jiuzhuan import test_mark, mark_jiuzhuan_listed
+from analysis.strategy_test_pct import test_exp_pct
+from analysis.strategy_test_period import test_by_period
+
 
 logger = logging.getLogger(__name__)
 
@@ -263,21 +265,23 @@ def sync_company_list(request):
     return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
 
 def jiuzhuan_test(request, stock_symbol, start_date):
-    end_date = date.today()
+    # end_date = date.today()
     start_date = datetime.strptime(start_date, '%Y%m%d')
-    res = test_mark(stock_symbol, start_date, end_date)
+    symbol_list = stock_symbol.split(',')
+    res = mark_jiuzhuan_listed(symbol_list)
     if res:
-        return HttpResponse(200)
+        return HttpResponse(status=200)
     else:
-        return HttpResponse(500)
+        return HttpResponse(status=500)
 
 
 @login_required
-def bstrategy_low_high_test(request,  strategy, stock_symbol, test_period):
+def bstrategy_test_by_period(request,  strategy, stock_symbol, test_period):
     user = request.user
     if request.method == 'GET':
         try:
-            test_strategy_low_high(stock_symbol, strategy, test_period)
+            symbol_list = stock_symbol.split(',')
+            test_by_period(symbol_list, strategy)
             return HttpResponse(status=200)
         except Exception as e:
             logging.error(e)
@@ -289,7 +293,8 @@ def bstrategy_exp_pct_test(request,  strategy, stock_symbol, test_freq):
     user = request.user
     if request.method == 'GET':
         try:
-            test_strategy_exp_pct(stock_symbol, strategy, test_freq)
+            symbol_list = stock_symbol.split(',')
+            test_exp_pct(symbol_list, strategy, test_freq)
             return HttpResponse(status=200)
         except Exception as e:
             logging.error(e)

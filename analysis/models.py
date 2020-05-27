@@ -46,7 +46,7 @@ class StockHistoryDaily(BaseModel):
     '''
 
     ts_code = models.CharField(
-        _('TS代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     trade_date = models.DateField(
         _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
     # new fields
@@ -73,6 +73,8 @@ class StockHistoryDaily(BaseModel):
         _('九转序列B'),  blank=False, null=False, default=-1)
     jiuzhuan_count_s = models.FloatField(
         _('九转序列S'),  blank=False, null=False, default=-1)
+    freq = models.CharField(
+        _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
 
     def __str__(self):
         return self.ts_code
@@ -105,10 +107,10 @@ class StockStrategyTestLog(BaseModel):
         ('UPD_DOWNLOAD', _('更新下载历史交易')),
         ('MARK_CP', _('标记临界点')),
         ('UPD_CP', _('更新临界点')),
-        ('MARK_LH_PCT', _('标记高低点涨幅')),
-        ('UPD_LH_PCT', _('更新高低点涨幅')),
-        ('MARK_EXP_PCT', _('标记预期涨幅')),
-        ('UPD_EXP_PCT', _('更新预期涨幅')),
+        ('PERIOD_TEST', _('标记高低点涨幅')),
+        ('PERIOD_UPD', _('更新高低点涨幅')),
+        ('EXP_PCT_TEST', _('标记预期涨幅')),
+        ('EXP_PCT_UPD', _('更新预期涨幅')),
     }
 
     ts_code = models.CharField(
