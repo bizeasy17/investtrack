@@ -5,6 +5,7 @@ Chart.defaults.global.defaultFontColor = '#858796';
 $(function () {
     var chart;
     var analysisEndpoint = '/analysis/';
+    var stockmarketEndpoint = '/stockmarket/';
     var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
 
     var fetchStrategyByCtg = function (category) {
@@ -58,7 +59,7 @@ $(function () {
             search: function (qry, callback) {
                 // let's do a custom ajax call
                 $.ajax(
-                    stockmarketEndpoint + 'listed_companies/' + $('#searchForTrade').val(),
+                    stockmarketEndpoint + 'listed_companies/' + $('#searchForAnalysis').val(),
                 ).done(function (res) {
                     callback(res.results)
                 });
@@ -68,59 +69,42 @@ $(function () {
 
     $('#searchForAnalysis').on('autocomplete.select', function (evt, item) {
         var code = item.id;
-        var showCode = item.ts_code;
+        var tsCode = item.ts_code;
         var showName = item.text;
         var market = item.market;
+        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
+        var period = $('input:radio[name="period"]:checked').val();
+        var strategyCode = $('#hiddenStrategyCode').val();
+        $('#hiddenTsCode').val(tsCode);
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
+
     $("button").click(function () {
-        var strategy = "jz_b";
-        var stock_symbol = "000001.SZ";
+        // var strategy = "jz_b";
+        var tsCode =  $('#hiddenTsCode').val();
+        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
-        var freq = "D";
-        $.ajax({
-            url: analysisEndpoint + "b-test/strategy/" + strategy + "/" + stock_symbol + "/" + freq + "/" + period + '/',
-            // headers: { 'X-CSRFToken': csrftoken },
-            method: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                if (data == 200) {
-                    showIncrDistChart();
-                    showDropDistChart();
-                    showIncrPctByDayChart()
-                }
-            },
-            statusCode: {
-                403: function () {
-                    $("#messages").removeClass('d-none');
-                    // $("#messages").addClass('d-block');
-                    $("#messageText").html('<strong>403 forbidden</strong>.');
-                },
-                404: function () {
-                    $("#messages").removeClass('d-none');
-                    // $("#messages").addClass('d-block');
-                    $("#messageText").html('<strong>404 page not found</strong>.');
-                },
-                500: function () {
-                    $("#messages").removeClass('d-none');
-                    // $("#messages").addClass('d-block');
-                    $("#messageText").html('<strong>500 internal server error</strong>.');
-                }
-            }
-        });
+        var strategyCode = $('#hiddenStrategyCode').val();
+        // var freq = "D";
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
     // 涨幅分布
-    var showIncrDistChart = function () {
+    var showHighPeriodChart = function (tsCode, strategyCode, period) {
         if ($("#incrDist").length) {
             var incrChartCanvas = $("#incrDist")
                 .get(0)
                 .getContext("2d");
-            var strategy = "9";
-            var stock_symbol = "000001.SZ"
-            var period = $('input:radio[name="period"]:checked').val();
+            // var strategy = "9";
+            // var stock_symbol = "600626.SH"
+            // var period = $('input:radio[name="period"]:checked').val();
             $.ajax({
-                url: analysisEndpoint + "b-test-result-incr/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                url: analysisEndpoint + "high-pct-data/strategy/" + strategyCode + "/" + tsCode + "/" + period + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
@@ -211,22 +195,31 @@ $(function () {
                             }
                         }
                     });
+                },
+                statusCode: {
+                    403: function () {
+                    },
+                    404: function () {
+                    },
+                    500: function () {
+                    }
                 }
             });
         }
     }
 
     // 跌幅分布
-    var showDropDistChart = function () {
+    var showLowPeriodDistChart = function (tsCode, strategyCode, period) {
         if ($("#dropDist").length) {
             var dropChartCanvas = $("#dropDist")
                 .get(0)
                 .getContext("2d");
-            var strategy = "9";
-            var stock_symbol = "000001.SZ"
-            var period = $('input:radio[name="period"]:checked').val();
+            // var strategy = "9";
+            // var stock_symbol = "600626.SH"
+            // var period = $('input:radio[name="period"]:checked').val();
             $.ajax({
-                url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                url: analysisEndpoint + "low-pct-data/strategy/" + strategyCode + "/" + tsCode + "/" + period + '/',
+                // url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
@@ -317,22 +310,30 @@ $(function () {
                             }
                         }
                     });
+                },
+                statusCode: {
+                    403: function () {
+                    },
+                    404: function () {
+                    },
+                    500: function () {
+                    }
                 }
             });
         }
     }
 
     // 达到预期涨幅天数
-    var showIncrPctByDayChart = function () {
+    var showExpectedPctChart = function (tsCode, strategyCode, expPct) {
         if ($("#expIncrPct").length) {
             var pctIncrChartCanvas = $("#expIncrPct")
                 .get(0)
                 .getContext("2d");
-            var strategy = "9";
-            var stock_symbol = "000001.SZ"
-            var period = $('input:radio[name="pct_period"]:checked').val();
+            // var strategy = "jiuzhuan_b";
+            // var stock_symbol = "600626.SH"
+            // var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
             $.ajax({
-                url: analysisEndpoint + "b-test-result-incr-pct/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                url: analysisEndpoint + "expected-pct-data/strategy/" + strategyCode + "/" + tsCode + "/D/" + expPct + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
@@ -343,28 +344,12 @@ $(function () {
                             labels: data.label,
                             datasets: [
                                 {
-                                    label: "最小周期",
-                                    data: data.v_min,
+                                    label: "涨幅天数",
+                                    data: data.value,
                                     barPercentage: 0.9,
                                     categoryPercentage: 0.7,
                                     backgroundColor: "#4472C4"
                                 },
-                                {
-                                    label: "最大周期",
-                                    data: data.v_max,
-                                    barPercentage: 0.9,
-                                    categoryPercentage: 0.7,
-                                    backgroundColor: "#ED7D31"
-
-                                },
-                                {
-                                    label: "平均周期",
-                                    data: data.v_mean,
-                                    barPercentage: 0.9,
-                                    categoryPercentage: 0.7,
-                                    backgroundColor: "#A5A5A5"
-
-                                }
                             ]
                         },
                         options: {
@@ -426,8 +411,39 @@ $(function () {
                         }
                     });
 
+                },
+                statusCode: {
+                    403: function () {
+                    },
+                    404: function () {
+                    },
+                    500: function () {
+                    }
                 }
             });
         }
     }
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="pct_period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        var expPct = this.value;
+        var tsCode = $('#hiddenTsCode').val();
+        var strategyCode = $('#hiddenStrategyCode').val();
+        showExpectedPctChart(tsCode, strategyCode, expPct);
+    });
+
+    // 根据选择的周期，显示该周期中最大跌幅，最大涨幅
+    $('input:radio[name="period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        var period = this.value;
+        var tsCode = $('#hiddenTsCode').val();
+        var strategyCode = $('#hiddenStrategyCode').val();
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
+    });
+    
+    // showHighPeriodChart();
+    // showLowPeriodDistChart();
+    // showExpectedPctChart();
 });  

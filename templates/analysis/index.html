@@ -13,10 +13,21 @@
     <div class="row flex-grow mb-4">
         <div class="col-lg-3 grid-margin stretch-card">
             <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
-            <input type="hidden"  id="hiddenCode"/>
+            <input type="hidden"  id="hiddenTsCode"/>
         </div>
-        <div class="col-lg-9">
-
+        {% comment %} 策略列表 {% endcomment %}
+        <div class="col-lg-5">
+            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                {% if analysis %}
+                {% for ctg in analysis.strategy_ctgs %}
+                    <label class="btn btn-light  {% if forloop.first %}active{% endif %}">
+                        <input type="radio" name="strategy-ctg" id="{{ctg.code}}" autocomplete="off" value="{{ctg.id}}" {% if forloop.first %}checked{% endif %}>{{ctg.name}}{% trans '策略' %}
+                    </label>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4">
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                 <span class="mt-1 mr-1 small">{% trans '测试周期' %}</span>
                 <label class="btn btn-light active">
@@ -34,21 +45,6 @@
                 <label class="btn btn-light ">
                     <input type="radio" name="period" id="p80" autocomplete="off" value="80" >{% trans '80天' %} 
                 </label>
-            </div>
-        </div>
-    </div>
-    <hr/>
-    {% comment %} 策略列表 {% endcomment %}
-    <div class="row flex-grow">
-        <div class="col-lg-12">
-            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                {% if analysis %}
-                {% for ctg in analysis.strategy_ctgs %}
-                    <label class="btn btn-light  {% if forloop.first %}active{% endif %}">
-                        <input type="radio" name="strategy-ctg" id="{{ctg.code}}" autocomplete="off" value="{{ctg.id}}" {% if forloop.first %}checked{% endif %}>{{ctg.name}}{% trans '策略' %}
-                    </label>
-                {% endfor %}
-                {% endif %}
             </div>
         </div>
     </div>
@@ -78,10 +74,12 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-outline-info" name="test-strategy" id="9" value="jz_b"><i class="fa fa-eye"></i>{% trans '测试' %}</button>
+                <button class="btn btn-sm btn-outline-info" name="test-strategy" id="9" value="jiuzhuan_b"><i class="fa fa-eye"></i>{% trans '查看' %}</button>
             </div>
         </div>
     </div>
+    <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_b"/>
+
     <hr/>
         
     {% comment %} 
@@ -95,11 +93,11 @@
 
     {% endcomment %}
     <div class="row flex-grow">
-        <div class="col-md-6 stretch-card mb-2">
+        <div class="col-md-6 stretch-card mb-4">
             <div class="card shadow">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '历史涨幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '涨幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
                             <span class="text-muted small mr-1">{% trans '平均涨幅%' %}</span>
                             <span class="text-danger" id="avgIncr"></span>
@@ -110,14 +108,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6 stretch-card">
+        <div class="col-md-6 stretch-card  mb-4">
             <div class="card shadow">
                 <div class="card-body">
                     <div class="d-flex align-items-center
                         justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="text-danger font-weight-medium" id="">
-                            <span class="text-muted small mr-1">{% trans '平均跌幅' %}</span>
+                            <span class="text-muted small mr-1">{% trans '平均跌幅%' %}</span>
                             <span class="text-danger" id="avgDrop"></span>
                         </p>
                     </div>
@@ -127,29 +125,38 @@
             </div>
         </div>
     </div>
-        <div class="row flex-grow">
+    <div class="row flex-grow">
         <div class="col-md-12 stretch-card">
             <div class="card shadow">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '达到预期涨幅@天数分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '预期涨幅天数' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
-                            <span class="text-muted small mr-1">{% trans '平均涨幅%' %}</span>
+                            <span class="text-muted small mr-1">{% trans '平均天数%' %}</span>
                             <span class="text-danger" id="avgExpIncr"></span>
                         </p>
                     </div>
                     <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                         <label class="btn btn-light ">
-                            <input type="radio" name="pct_period" autocomplete="off" value="60" >{% trans '60分钟' %}
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct10_period" >{% trans '10%' %}
                         </label>
                         <label class="btn btn-light active">
-                            <input type="radio" name="pct_period" autocomplete="off" value="D" checked>{% trans '日线' %} 
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct20_period" checked>{% trans '20%' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="W">{% trans '周线' %} 
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct30_period">{% trans '30%' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="M">{% trans '月线' %} 
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct50_period">{% trans '50%' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct80_period">{% trans '80%' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct100_period">{% trans '100%' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="pct_period" autocomplete="off" value="pct130_period">{% trans '130%' %} 
                         </label>
                     </div>
                     <div class="no-trans-data" id="noProfit"></div>
