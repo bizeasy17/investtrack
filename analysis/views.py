@@ -40,13 +40,13 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
 
 
 @login_required
-def strategies_by_category(request, strategy_ctg):
+def strategies_by_category(request, parent_strategy):
     user = request.user
     if request.method == 'GET':
         try:
             strategy_list = []
             strategies = TradeStrategyStat.objects.filter(
-                parent_strategy=strategy_ctg)
+                parent_strategy=parent_strategy)
             for strategy in strategies:
                 strategy_list.append(
                     {

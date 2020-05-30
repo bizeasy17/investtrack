@@ -8,7 +8,7 @@ $(function () {
     var stockmarketEndpoint = '/stockmarket/';
     var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
 
-    var fetchStrategyByCtg = function (category) {
+    var fetchStrategyByCtg = function (strategyId) {
         var strategyDiv = $("#strategyList");
         $.ajax(
             {
@@ -17,10 +17,11 @@ $(function () {
                 success: function (data) {
                     var strategiesTag = '<div class="col-lg-12">';
                     $(data).each(function (idx, obj) {
-                        strategiesTag += '<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">' +
-                            '<label class="btn btn-light active">' +
-                            '<input type="radio" name="strategy-name" id="' + obj.id + '" autocomplete="off" value="' + obj.strategy_name + '" checked>' + obj.strategy_name +
-                            '</label>' +
+                        strategiesTag += 
+                            '<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">' +
+                                '<label class="btn btn-light active">' +
+                                '<input type="radio" name="strategy-name" id="' + obj.id + '" autocomplete="off" value="' + obj.strategy_name + '" checked>' + obj.strategy_name +
+                                '</label>' +
                             '</div>';
                     });
                     strategiesTag += "</div>";
@@ -423,6 +424,13 @@ $(function () {
             });
         }
     }
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="strategy-ctg"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        var parentStrategyId = this.value;
+        fetchStrategyByCtg(parentStrategyId);
+    });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="pct_period"]').change(function () {
