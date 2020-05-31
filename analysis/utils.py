@@ -24,4 +24,3 @@ def is_strategy_tested(ts_code, event, strategy_code):
     except Exception as e:
         print(e)
         return False
- 

@@ -53,10 +53,11 @@ def strategies_by_category(request, parent_strategy):
                         'id': strategy.id,
                         'strategy_code': strategy.code,
                         'strategy_name': strategy.name,
-                        'count': strategy.cound,
+                        'count': strategy.count,
                         'success_count': strategy.success_count,
                         'fail_count': strategy.fail_count,
                         'success_rate': strategy.success_rate,
+                        'code': strategy.code,
                     }
                 )
             return JsonResponse(strategy_list, safe=False)

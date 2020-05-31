@@ -375,7 +375,7 @@ class TradeStrategyStat(BaseModel):
         ('15', _('15分钟')),
     }
     applied_period = models.CharField(
-        _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='60')
+        _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=True, default='60')
     name = models.CharField(_('策略名'), max_length=30)
     parent_strategy = models.ForeignKey(
         'self', verbose_name=_('父级策略'), blank=True, null=True, on_delete=models.CASCADE)
@@ -390,7 +390,7 @@ class TradeStrategyStat(BaseModel):
     success_rate = models.FloatField(
         _('成功率'), blank=False, null=False, default=0)
     code = models.CharField(
-        _('策略代码'), max_length=10, blank=False, null=False, default='buy', unique=True)
+        _('策略代码'), max_length=25, blank=False, null=False, default='buy', unique=True)
 
     class Meta:
         ordering = ['name']

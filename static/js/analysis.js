@@ -8,24 +8,67 @@ $(function () {
     var stockmarketEndpoint = '/stockmarket/';
     var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
 
-    var fetchStrategyByCtg = function (strategyId) {
+    var showAnalysisHist = function () {
+        // var strategy = "jz_b";
+        alert('clicked - ' + $(this).val())
+        var tsCode = $('#hiddenTsCode').val();
+        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
+        var period = $('input:radio[name="period"]:checked').val();
+        var strategyCode = $('#hiddenStrategyCode').val();
+        // var freq = "D";
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
+    }
+
+    var fetchStrategyByCtg = function (parentId) {
         var strategyDiv = $("#strategyList");
         $.ajax(
             {
-                url: analysisEndpoint + 'strategies/category/' + category + "/",
+                url: analysisEndpoint + 'strategies/by-category/' + parentId + "/",
                 method: 'GET',
                 success: function (data) {
-                    var strategiesTag = '<div class="col-lg-12">';
+                    var strategiesTag = "";
                     $(data).each(function (idx, obj) {
-                        strategiesTag += 
-                            '<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">' +
-                                '<label class="btn btn-light active">' +
-                                '<input type="radio" name="strategy-name" id="' + obj.id + '" autocomplete="off" value="' + obj.strategy_name + '" checked>' + obj.strategy_name +
-                                '</label>' +
-                            '</div>';
+                        strategyDiv.append( 
+                            '<div class="row col-lg-4">'+
+                                '<div class="col">'+
+                                    '<img src="' + imgRoot + obj.code + '.png" height="144" width="144" style="border-radius: 10%">'+
+                                '</div>'+
+                                '<div class="col small">'+
+                                    '<div class="badge badge-pill badge-danger">'+ obj.strategy_name + '</div>'+
+                                    '<div class="small text-muted">成功率-'+obj.success_rate+'%</div>'+
+                                    '<div class="container">'+
+                                        '<div class="row">'+
+                                            '<div class="col-4 text-primary">总数</div>'+
+                                            '<div class="col-4 text-primary">成功</div>'+
+                                            '<div class="col-4 text-primary">失败</div>'+
+                                            '<div class="w-100"></div>'+
+                                            '<div class="col-4 text-primary">'+
+                                                obj.count+
+                                            '</div>'+
+                                            '<div class="col-4 text-primary">'+
+                                                obj.success_count+
+                                            '</div>'+
+                                            '<div class="col-4 text-primary">'+
+                                                obj.fail_count+
+                                            '</div>'+
+                                        '</div>'+
+                                    '</div>'+
+                                    '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye"></i>历史分析</button>'+
+                                '</div>'+
+                            '</div>')
+                        // strategyDiv.append(strategiesTag);
+                        var showAnalysisBtn = document.getElementById("showHistBtn"+obj.id);
+                        showAnalysisBtn.addEventListener("click", showAnalysisHist);     
                     });
-                    strategiesTag += "</div>";
-                    strategyDiv.html(strategiesTag);
+                    // strategiesTag += '</div>';
+                    
+                    // if (btns) {
+                    //     $(btns).each(function (id, obj) {
+                    //         $(obj).on("click", bindDetailOfPosition);
+                    //     });
+                    // }
                 },
                 statusCode: {
                     403: function () {
@@ -43,7 +86,7 @@ $(function () {
     }
 
     // 根据默认策略分类显示该分类下的默认策略
-    // fetchStrategyByCtg(selCategory);
+    fetchStrategyByCtg(selCategory);
 
     $('#searchForAnalysis').autoComplete({
         resolver: 'custom',
@@ -77,19 +120,6 @@ $(function () {
         var period = $('input:radio[name="period"]:checked').val();
         var strategyCode = $('#hiddenStrategyCode').val();
         $('#hiddenTsCode').val(tsCode);
-        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
-        showHighPeriodChart(tsCode, strategyCode, period);
-        showLowPeriodDistChart(tsCode, strategyCode, period);
-    });
-
-
-    $("button").click(function () {
-        // var strategy = "jz_b";
-        var tsCode =  $('#hiddenTsCode').val();
-        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
-        var period = $('input:radio[name="period"]:checked').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
-        // var freq = "D";
         showExpectedPctChart(tsCode, strategyCode, pctPeriod);
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
