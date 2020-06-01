@@ -32,7 +32,7 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
         req_user = request.user
         if req_user is not None:
             strategie_ctgs = TradeStrategyStat.objects.filter(
-                parent_strategy=None)
+                category=None)
             queryset = {
                 'strategy_ctgs': strategie_ctgs,
             }
@@ -46,7 +46,7 @@ def strategies_by_category(request, parent_strategy):
         try:
             strategy_list = []
             strategies = TradeStrategyStat.objects.filter(
-                parent_strategy=parent_strategy)
+                category=parent_strategy)
             for strategy in strategies:
                 strategy_list.append(
                     {
@@ -58,6 +58,7 @@ def strategies_by_category(request, parent_strategy):
                         'fail_count': strategy.fail_count,
                         'success_rate': strategy.success_rate,
                         'code': strategy.code,
+                        'analyzed': strategy.hist_analyzed,
                     }
                 )
             return JsonResponse(strategy_list, safe=False)

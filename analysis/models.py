@@ -377,8 +377,7 @@ class TradeStrategyStat(BaseModel):
     applied_period = models.CharField(
         _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=True, default='60')
     name = models.CharField(_('策略名'), max_length=30)
-    parent_strategy = models.ForeignKey(
-        'self', verbose_name=_('父级策略'), blank=True, null=True, on_delete=models.CASCADE)
+    category = models.CharField(_('策略分类'), blank=True, null=True, max_length=25)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
                                 on_delete=models.CASCADE)
     count = models.IntegerField(
@@ -391,6 +390,8 @@ class TradeStrategyStat(BaseModel):
         _('成功率'), blank=False, null=False, default=0)
     code = models.CharField(
         _('策略代码'), max_length=25, blank=False, null=False, default='buy', unique=True)
+    hist_analyzed = models.BooleanField(
+        _('历史数据已分析？'), blank=False, null=False, default=False)
 
     class Meta:
         ordering = ['name']

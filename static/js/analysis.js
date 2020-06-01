@@ -21,16 +21,17 @@ $(function () {
         showLowPeriodDistChart(tsCode, strategyCode, period);
     }
 
-    var fetchStrategyByCtg = function (parentId) {
+    var fetchStrategyByCtg = function (categoryName) {
         var strategyDiv = $("#strategyList");
         $.ajax(
             {
-                url: analysisEndpoint + 'strategies/by-category/' + parentId + "/",
+                url: analysisEndpoint + 'strategies/by-category/' + categoryName + "/",
                 method: 'GET',
                 success: function (data) {
                     var strategiesTag = "";
+                    strategyDiv.html("");
                     $(data).each(function (idx, obj) {
-                        strategyDiv.append( 
+                        strategiesTag += 
                             '<div class="row col-lg-4">'+
                                 '<div class="col">'+
                                     '<img src="' + imgRoot + obj.code + '.png" height="144" width="144" style="border-radius: 10%">'+
@@ -54,11 +55,14 @@ $(function () {
                                                 obj.fail_count+
                                             '</div>'+
                                         '</div>'+
-                                    '</div>'+
-                                    '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye"></i>历史分析</button>'+
-                                '</div>'+
-                            '</div>')
-                        // strategyDiv.append(strategiesTag);
+                                    '</div>';
+                        if(obj.analyzed){
+                            strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye"></i>历史分析</button>';
+                        }else{
+                            strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>历史分析</button>';
+                        }
+                        strategiesTag += '</div></div>';
+                        strategyDiv.append(strategiesTag);
                         var showAnalysisBtn = document.getElementById("showHistBtn"+obj.id);
                         showAnalysisBtn.addEventListener("click", showAnalysisHist);     
                     });
