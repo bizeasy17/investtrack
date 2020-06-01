@@ -10,12 +10,12 @@ def analyze_trade_strategy():
         transactions__price__lt=F('transactions__sell_price'), transactions__is_sold=True, transactions__created_or_mod_by='human'))
     num_f = Count('transactions', filter=Q(
         transactions__price__gt=F('transactions__sell_price'), transactions__is_sold=True, transactions__created_or_mod_by='human'))
-    strategies = TradeStrategy.objects.exclude(applied_period=None).annotate(num_used=Count(
+    strategies = TradeStrategy.objects.exclude(parent_strategy=None).annotate(num_used=Count(
         'transactions')).annotate(num_s=num_s).annotate(num_f=num_f)
     for s in strategies:
         stat = TradeStrategyStat()
         stat.applied_period = s.applied_period
-        # stat.parent_strategy = s.parent_strategy
+        stat.category = s.parent_strategy.name
         stat.name = s.name
         stat.creator = s.creator
         stat.count = s.num_used
