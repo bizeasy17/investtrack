@@ -34,7 +34,7 @@ $(function () {
                         strategiesTag += 
                             '<div class="row col-lg-4">'+
                                 '<div class="col">'+
-                                    '<img src="' + imgRoot + obj.code + '.png" height="144" width="144" style="border-radius: 10%">'+
+                                    '<img src="' + imgRoot + obj.code + '.png" height="100" width="100" style="border-radius: 10%">'+
                                 '</div>'+
                                 '<div class="col small">'+
                                     '<div class="badge badge-pill badge-danger">'+ obj.strategy_name + '</div>'+
@@ -57,14 +57,15 @@ $(function () {
                                         '</div>'+
                                     '</div>';
                         if(obj.analyzed){
-                            strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye"></i>历史分析</button>';
+                            strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
                         }else{
-                            strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>历史分析</button>';
+                            strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
                         }
                         strategiesTag += '</div></div>';
                         strategyDiv.append(strategiesTag);
+                        strategiesTag = "";   
                         var showAnalysisBtn = document.getElementById("showHistBtn"+obj.id);
-                        showAnalysisBtn.addEventListener("click", showAnalysisHist);     
+                        showAnalysisBtn.addEventListener("click", showAnalysisHist);  
                     });
                     // strategiesTag += '</div>';
                     
@@ -124,9 +125,9 @@ $(function () {
         var period = $('input:radio[name="period"]:checked').val();
         var strategyCode = $('#hiddenStrategyCode').val();
         $('#hiddenTsCode').val(tsCode);
-        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
-        showHighPeriodChart(tsCode, strategyCode, period);
-        showLowPeriodDistChart(tsCode, strategyCode, period);
+        // showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        // showHighPeriodChart(tsCode, strategyCode, period);
+        // showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
     // 涨幅分布

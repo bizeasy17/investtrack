@@ -46,7 +46,7 @@ def strategies_by_category(request, parent_strategy):
         try:
             strategy_list = []
             strategies = TradeStrategyStat.objects.filter(
-                category=parent_strategy)
+                category=parent_strategy).order_by('-hist_analyzed')
             for strategy in strategies:
                 strategy_list.append(
                     {
