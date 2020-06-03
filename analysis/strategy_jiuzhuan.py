@@ -83,38 +83,39 @@ def mark_jiuzhuan_listed(ts_code_list=[]):
             # df = hist_since_listed(
             #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
             df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by('trade_date').values())
-            marked_df = pre_mark_jiuzhuan(df)
-            for v in marked_df.values:
-                # hist_D = StockHistoryDaily(ts_code = v[0], trade_date=v[1], open=v[2], high=v[3],
-                #     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                #     amount=v[10], chg4=v[11], jiuzhuan_count_b=v[12], jiuzhuan_count_s=v[13])
-                # print(v[14])
-                # print(v[15])
-                # print(v[16])
-                # pass
-                stock = StockHistoryDaily(pk=v[0])
-                stock.chg4 = round(v[14], 3)
-                stock.jiuzhuan_count_b = v[15]
-                stock.jiuzhuan_count_s = v[16]
-                '''
-                ts_code	str	股票代码
-                trade_date	str	交易日期
-                open	float	开盘价
-                high	float	最高价
-                low	float	最低价
-                close	float	收盘价
-                pre_close	float	昨收价
-                change	float	涨跌额
-                pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-                vol	float	成交量 （手）
-                amount	float	成交额 （千元）
-                '''
-                hist_list.append(stock)
-            StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
-            log_test_status(listed_company.ts_code, 'MARK_CP',['jiuzhuan_b', 'jiuzhuan_s'])
-            listed_company.is_marked_jiuzhuan = True
-            listed_company.save()
-            print(' marked jiuzhuan on end code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            if df is not None and len(df) > 0:
+                marked_df = pre_mark_jiuzhuan(df)
+                for v in marked_df.values:
+                    # hist_D = StockHistoryDaily(ts_code = v[0], trade_date=v[1], open=v[2], high=v[3],
+                    #     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                    #     amount=v[10], chg4=v[11], jiuzhuan_count_b=v[12], jiuzhuan_count_s=v[13])
+                    # print(v[14])
+                    # print(v[15])
+                    # print(v[16])
+                    # pass
+                    stock = StockHistoryDaily(pk=v[0])
+                    stock.chg4 = round(v[14], 3)
+                    stock.jiuzhuan_count_b = v[15]
+                    stock.jiuzhuan_count_s = v[16]
+                    '''
+                    ts_code	str	股票代码
+                    trade_date	str	交易日期
+                    open	float	开盘价
+                    high	float	最高价
+                    low	float	最低价
+                    close	float	收盘价
+                    pre_close	float	昨收价
+                    change	float	涨跌额
+                    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+                    vol	float	成交量 （手）
+                    amount	float	成交额 （千元）
+                    '''
+                    hist_list.append(stock)
+                StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
+                log_test_status(listed_company.ts_code, 'MARK_CP',['jiuzhuan_b', 'jiuzhuan_s'])
+                listed_company.is_marked_jiuzhuan = True
+                listed_company.save()
+                print(' marked jiuzhuan on end code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)  
 
 def pre_mark_jiuzhuan(df):
