@@ -67,20 +67,22 @@ def mark_jiuzhuan_listed(ts_code_list=[]):
     每次运行只是增量上市股票标记
     '''
     hist_list = []
+    print(ts_code_list)
     # end_date = date.today()
     if len(ts_code_list) == 0 :
         listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=False)
+            is_marked_jiuzhuan=False, is_hist_downloaded=True)
     else:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=False, ts_code__in=ts_code_list)
-        # print(len(listed_companies))
-    print(' marked jiuzhuan on start - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            is_marked_jiuzhuan=False, is_hist_downloaded=True, ts_code__in=ts_code_list)
+    print(len(listed_companies))
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
+            print(' marked jiuzhuan on start code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
             # df = hist_since_listed(
             #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
-            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).values())
+            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by('trade_date').values())
             marked_df = pre_mark_jiuzhuan(df)
             for v in marked_df.values:
                 # hist_D = StockHistoryDaily(ts_code = v[0], trade_date=v[1], open=v[2], high=v[3],
@@ -108,11 +110,11 @@ def mark_jiuzhuan_listed(ts_code_list=[]):
                 amount	float	成交额 （千元）
                 '''
                 hist_list.append(stock)
+            StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
             log_test_status(listed_company.ts_code, 'MARK_CP',['jiuzhuan_b', 'jiuzhuan_s'])
             listed_company.is_marked_jiuzhuan = True
             listed_company.save()
-        StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
-        print(' marked jiuzhuan on end - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            print(' marked jiuzhuan on end code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)  
 
 def pre_mark_jiuzhuan(df):
