@@ -10,7 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
-from django.views.generic import DetailView, FormView, ListView, View
+from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
@@ -18,44 +18,48 @@ from stocktrade.models import Transactions
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
+from analysis.strategy_jiuzhuan import test_mark, mark_jiuzhuan_listed
+from analysis.strategy_test_pct import test_exp_pct
+from analysis.strategy_test_period import test_by_period
+
 
 logger = logging.getLogger(__name__)
 
 # Create your views here.
 
-
-class SiteAdminGenericView(LoginRequiredMixin, View):
-    # form_class = UserTradeForm
-    # model = Transactions
-
+class DashboardView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
-    default_template_name = 'siteadmin/dashboard.html'
-    site_settings_template_name = 'siteadmin/settings.html'
-    site_query_analyzer_template_name = 'siteadmin/query_analyzer.html'
+    template_name = 'siteadmin/dashboard.html'
 
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'site_admin'
+    context_object_name = 'dashboard'
+
+class SettingsView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'siteadmin/settings.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'settings'
+
+class QueryAnalyzerView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'siteadmin/query-analyzer.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'query_analyzer'
 
     def get(self, request, *args, **kwargs):
-        module_name = self.kwargs['module_name']
         req_user = request.user
         if req_user is not None and req_user.is_superuser:
-            if module_name is not None:
-                if module_name == 'dashboard':
-                    return render(request, self.default_template_name)
-                elif module_name == 'settings':
-                    return render(request, self.site_settings_template_name)
-                elif module_name == 'query-analyzer':
-                    positions = Positions.objects.filter()[:10]
-                    queryset = {
-                        'positions': positions,
-                    }
-                    return render(request, self.site_query_analyzer_template_name, {self.context_object_name: queryset})
-                else:
-                    return render(request, self.default_template_name)
-        else:
-            return HttpResponseRedirect(reverse('404'))
+            positions = Positions.objects.filter()[:10]
+            queryset = {
+                'positions': positions,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
 
+class StrategyMgmtView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'siteadmin/strategy_mgmt.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'strategy'
 
 def traderec2json(trade_records):
     recs_json = []
@@ -259,3 +263,39 @@ def sync_company_list(request):
         except Exception as e:
             logger.error(e)
     return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
+
+def jiuzhuan_test(request, stock_symbol, start_date):
+    # end_date = date.today()
+    start_date = datetime.strptime(start_date, '%Y%m%d')
+    symbol_list = stock_symbol.split(',')
+    res = mark_jiuzhuan_listed(symbol_list)
+    if res:
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=500)
+
+
+@login_required
+def bstrategy_test_by_period(request,  strategy, stock_symbol, test_period):
+    user = request.user
+    if request.method == 'GET':
+        try:
+            symbol_list = stock_symbol.split(',')
+            test_by_period(strategy, symbol_list)
+            return HttpResponse(status=200)
+        except Exception as e:
+            logging.error(e)
+            return HttpResponse(status=500)
+
+
+@login_required
+def bstrategy_exp_pct_test(request,  strategy, stock_symbol, test_freq):
+    user = request.user
+    if request.method == 'GET':
+        try:
+            symbol_list = stock_symbol.split(',')
+            test_exp_pct(strategy, symbol_list, test_freq)
+            return HttpResponse(status=200)
+        except Exception as e:
+            logging.error(e)
+            return HttpResponse(status=500)

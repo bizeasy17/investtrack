@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'investors.apps.InvestorsConfig',
     'txnvisibility.apps.TxnvisibilityConfig',
     'dashboard.apps.DashboardConfig',
+    'analysis.apps.AnalysisConfig',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

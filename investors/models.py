@@ -15,6 +15,23 @@ class BaseModel(models.Model):
 
 
 class TradeStrategy(BaseModel):
+    ST_CODE_CHOICES = {
+        ('open_a_position', _('建仓')),
+        ('add_positions', _('加仓')),
+        ('reduce_positions', _('减仓')),
+        ('sell', _('卖出')),
+        ('stop_loss', _('止损')),
+        ('take_profit', _('止盈')),
+        ('liquidation', _('平仓/清仓')),
+        ('jiuzhuan_b', _('九转序列买点')),
+        ('jiuzhuan_s', _('九转序列卖点')),
+        ('shuangdi_b', _('双底买点')),
+        ('shuangtou_s', _('双头卖点')),
+        ('break_through', _('突破阻力位')),
+        ('fall_below', _('跌破支撑位')),
+        
+    }
+
     PERIOD_CHOICE = {
         ('mm', _('月线')),
         ('wk', _('周线')),
@@ -24,12 +41,18 @@ class TradeStrategy(BaseModel):
         ('15', _('15分钟')),
     }
     applied_period = models.CharField(
-        _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='60')
-    name = models.CharField(_('策略名'), max_length=30, unique=True)
+        _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=True, default='60')
+    name = models.CharField(_('策略名'), max_length=30)
     parent_strategy = models.ForeignKey(
         'self', verbose_name=_('父级策略'), blank=True, null=True, on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
                                 on_delete=models.CASCADE)
+    is_visible = models.BooleanField(
+        _('是否可见'), blank=False, null=False, default=False)
+    code = models.CharField(
+        _('策略代码'), choices=ST_CODE_CHOICES, max_length=50, blank=False, null=False, default='buy')
+    is_manual = models.BooleanField(
+        _('手工创建？'), blank=True, null=True, default=True)
 
     class Meta:
         ordering = ['name']
@@ -38,6 +61,24 @@ class TradeStrategy(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        '''
+        将生成的策略拷贝到不同时间周期
+        '''
+        super().save()
+        if self.is_manual:
+            freq_list = ['60','D','W','M']
+            for freq in freq_list:
+                strategy_freq = TradeStrategy()
+                strategy_freq.applied_period = freq
+                strategy_freq.name = self.name + '(' + freq + ')'
+                strategy_freq.parent_strategy = self
+                strategy_freq.creator = self.creator
+                strategy_freq.code = self.code
+                strategy_freq.is_manual = False
+                strategy_freq.save()
+        pass
 
     def get_strategy_tree(self):
         """
