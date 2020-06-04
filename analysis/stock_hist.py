@@ -8,7 +8,16 @@ from stockmarket.models import StockNameCodeMap
 
 from .models import StockHistoryDaily, StockStrategyTestLog
 
-
+'''
+check the missing history sql query
+SELECT ts_code 
+FROM   public.stockmarket_stocknamecodemap code 
+WHERE  NOT EXISTS (
+   SELECT  -- SELECT list mostly irrelevant; can just be empty in Postgres
+   FROM   public.analysis_stockhistorydaily
+   WHERE  ts_code = code.ts_code
+   );
+'''
 def split_trade_cal(start_date, end_date):
     '''
     如果取数的时间跨度大于10年，就需要对时间进行拆分

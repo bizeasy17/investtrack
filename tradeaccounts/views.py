@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
-from rest_framework import serializers
+# from rest_framework import serializers
 from users.models import User
 
 from .models import TradeAccount
