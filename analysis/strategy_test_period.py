@@ -15,7 +15,7 @@ from .utils import log_test_status, is_strategy_tested
 logger = logging.getLogger(__name__)
 
 
-def test_by_period(ts_code_list, strategy_code):
+def test_by_period(strategy_code, ts_code_list=[]):
     '''
     计算策略在某只股票上在某个时间周期上的最小/大，和平均涨跌幅值的统计
     1. 需要传入的参数为策略名称
