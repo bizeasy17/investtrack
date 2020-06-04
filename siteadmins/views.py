@@ -281,7 +281,7 @@ def bstrategy_test_by_period(request,  strategy, stock_symbol, test_period):
     if request.method == 'GET':
         try:
             symbol_list = stock_symbol.split(',')
-            test_by_period(symbol_list, strategy)
+            test_by_period(strategy, symbol_list)
             return HttpResponse(status=200)
         except Exception as e:
             logging.error(e)
@@ -294,7 +294,7 @@ def bstrategy_exp_pct_test(request,  strategy, stock_symbol, test_freq):
     if request.method == 'GET':
         try:
             symbol_list = stock_symbol.split(',')
-            test_exp_pct(symbol_list, strategy, test_freq)
+            test_exp_pct(strategy, symbol_list, test_freq)
             return HttpResponse(status=200)
         except Exception as e:
             logging.error(e)

@@ -15,7 +15,7 @@ from .utils import log_test_status, is_strategy_tested
 logger = logging.getLogger(__name__)
 
 
-def test_exp_pct(ts_code_list, strategy_code, test_freq='D'):
+def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     '''
     计算策略在某只股票涨幅达到10%，20% 。。。最小/大/平均时间
     1. 需要传入的参数为策略名称
