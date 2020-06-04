@@ -16,17 +16,20 @@ class BaseModel(models.Model):
 
 class TradeStrategy(BaseModel):
     ST_CODE_CHOICES = {
+        ('open_a_position', _('建仓')),
+        ('add_positions', _('加仓')),
+        ('reduce_positions', _('减仓')),
+        ('sell', _('卖出')),
+        ('stop_loss', _('止损')),
+        ('take_profit', _('止盈')),
+        ('liquidation', _('平仓/清仓')),
         ('jiuzhuan_b', _('九转序列买点')),
         ('jiuzhuan_s', _('九转序列卖点')),
         ('shuangdi_b', _('双底买点')),
         ('shuangtou_s', _('双头卖点')),
         ('break_through', _('突破阻力位')),
         ('fall_below', _('跌破支撑位')),
-        ('buy', _('买入')),
-        ('sell', _('卖出')),
-        ('add_positions', _('加仓')),
-        ('stop_loss', _('止损')),
-        ('take_profit', _('止盈')),
+        
     }
 
     PERIOD_CHOICE = {
