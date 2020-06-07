@@ -15,7 +15,7 @@ from .utils import log_test_status, is_strategy_tested
 logger = logging.getLogger(__name__)
 
 
-def test_by_period(strategy_code, ts_code_list=[]):
+def test_by_period(strategy_code, freq, ts_code_list=[]):
     '''
     计算策略在某只股票上在某个时间周期上的最小/大，和平均涨跌幅值的统计
     1. 需要传入的参数为策略名称
@@ -36,13 +36,17 @@ def test_by_period(strategy_code, ts_code_list=[]):
             listed_companies = StockNameCodeMap.objects.filter(
                 is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
         for listed_company in listed_companies:
-            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
-                ts_code=listed_company.ts_code).order_by('trade_date').values())
+            df = pd.DataFrame()
+            if freq == 'D':
+                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
+                    ts_code=listed_company.ts_code).order_by('trade_date').values())
+            else:
+                pass
             idx_list = []
             idx_list_period = []
             strategy_test_list = []
             if strategy_code.endswith('_b'):
-                if not is_strategy_tested(listed_company.ts_code, 'PERIOD_TEST', 'jiuzhuan_b'):
+                if not is_strategy_tested(listed_company.ts_code, 'PERIOD_TEST', 'jiuzhuan_b', freq):
                     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
                     for test_period in periods:
                         for idx in idx_list:
@@ -92,7 +96,7 @@ def test_by_period(strategy_code, ts_code_list=[]):
                                 strategy_test_list.append(test_min)
                                 strategy_test_list.append(test_max)
             log_test_status(listed_company.ts_code,
-                            'PERIOD_TEST', ['jiuzhuan_b'])
+                            'PERIOD_TEST', freq, ['jiuzhuan_b'], )
             BStrategyTestResultOnDays.objects.bulk_create(strategy_test_list)
     else:
         idx_list = df.loc[df['jiuzhuan_s'] == 9]

@@ -21,7 +21,7 @@
                 {% if analysis %}
                 {% for ctg in analysis.strategy_ctgs %}
                     <label class="btn btn-light  {% if forloop.first %}active{% endif %}">
-                        <input type="radio" name="strategy-ctg" id="{{ctg.code}}" autocomplete="off" value="{{ctg.name}}" {% if forloop.first %}checked{% endif %}>{{ctg.name}}{% trans '策略' %}
+                        <input type="radio" name="strategy-ctg" id="{{ctg.category}}" autocomplete="off" value="{{ctg.category}}" {% if forloop.first %}checked{% endif %}>{{ctg.category}}
                     </label>
                 {% endfor %}
                 {% endif %}

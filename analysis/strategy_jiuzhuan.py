@@ -61,7 +61,7 @@ def test_mark(ts_code, start_date, end_date):
     else:
         return True
 
-def mark_jiuzhuan_listed(ts_code_list=[]):
+def mark_jiuzhuan_listed(freq, ts_code_list=[]):
     '''
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
@@ -82,7 +82,11 @@ def mark_jiuzhuan_listed(ts_code_list=[]):
 
             # df = hist_since_listed(
             #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
-            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by('trade_date').values())
+            df = pd.DataFrame()
+            if freq == 'D':
+                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by('trade_date').values())
+            else:
+                pass
             if df is not None and len(df) > 0:
                 marked_df = pre_mark_jiuzhuan(df)
                 for v in marked_df.values:
@@ -93,10 +97,14 @@ def mark_jiuzhuan_listed(ts_code_list=[]):
                     # print(v[15])
                     # print(v[16])
                     # pass
-                    stock = StockHistoryDaily(pk=v[0])
-                    stock.chg4 = round(v[14], 3)
-                    stock.jiuzhuan_count_b = v[15]
-                    stock.jiuzhuan_count_s = v[16]
+                    hist = object
+                    if freq == 'D':
+                        hist = StockHistoryDaily(pk=v[0])
+                    else:
+                        pass
+                    hist.chg4 = round(v[14], 3)
+                    hist.jiuzhuan_count_b = v[15]
+                    hist.jiuzhuan_count_s = v[16]
                     '''
                     ts_code	str	股票代码
                     trade_date	str	交易日期
@@ -110,9 +118,12 @@ def mark_jiuzhuan_listed(ts_code_list=[]):
                     vol	float	成交量 （手）
                     amount	float	成交额 （千元）
                     '''
-                    hist_list.append(stock)
-                StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
-                log_test_status(listed_company.ts_code, 'MARK_CP',['jiuzhuan_b', 'jiuzhuan_s'])
+                    hist_list.append(hist)
+                if freq == 'D':
+                    StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
+                else:
+                    pass
+                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['jiuzhuan_b', 'jiuzhuan_s'])
                 listed_company.is_marked_jiuzhuan = True
                 listed_company.save()
                 print(' marked jiuzhuan on end code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

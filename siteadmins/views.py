@@ -264,11 +264,11 @@ def sync_company_list(request):
             logger.error(e)
     return JsonResponse({'error': _('无法创建交易记录')}, safe=False)
 
-def jiuzhuan_test(request, stock_symbol, start_date):
+def jiuzhuan_test(request, stock_symbol, start_date, freq):
     # end_date = date.today()
     start_date = datetime.strptime(start_date, '%Y%m%d')
     symbol_list = stock_symbol.split(',')
-    res = mark_jiuzhuan_listed(symbol_list)
+    res = mark_jiuzhuan_listed(freq, symbol_list)
     if res:
         return HttpResponse(status=200)
     else:

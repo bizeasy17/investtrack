@@ -115,12 +115,14 @@ class StockStrategyTestLog(BaseModel):
 
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
-    strategy = models.ForeignKey(
-        TradeStrategy, verbose_name=_('测试策略'), blank=True, null=True, on_delete=models.SET_NULL)
+    analysis_code = models.CharField(
+        _('测试策略'), max_length=15, blank=True, null=True)
     event_type = models.CharField(
         _('日志类型'), choices=EVENT_TYPE, max_length=50, blank=False, null=False)  # e.g. 000001.SZ
     is_done = models.BooleanField(
         _('已完成'),  blank=False, null=False, default=True)
+    freq = models.CharField(
+        _('测试频率'), max_length=5, blank=False, null=False, default='D')
     # hist_downloaded = models.BooleanField(
     #     _('交易已下载？'),  blank=False, null=False, default=False)
     # hist_download_dt = models.DateTimeField(
@@ -367,9 +369,9 @@ class BStrategyOnFixedPctTest(BaseModel):
 
 class TradeStrategyStat(BaseModel):
     PERIOD_CHOICE = {
-        ('mm', _('月线')),
-        ('wk', _('周线')),
-        ('dd', _('日线')),
+        ('M', _('月线')),
+        ('W', _('周线')),
+        ('D', _('日线')),
         ('60', _('60分钟')),
         ('30', _('30分钟')),
         ('15', _('15分钟')),
@@ -389,7 +391,7 @@ class TradeStrategyStat(BaseModel):
     success_rate = models.FloatField(
         _('成功率'), blank=False, null=False, default=0)
     code = models.CharField(
-        _('策略代码'), max_length=25, blank=False, null=False, default='buy', unique=True)
+        _('策略代码'), max_length=25, blank=False, null=False, default='buy')
     hist_analyzed = models.BooleanField(
         _('历史数据已分析？'), blank=False, null=False, default=False)
 

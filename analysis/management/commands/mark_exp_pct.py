@@ -25,6 +25,12 @@ class Command(BaseCommand):
             type=str,
             help='Which strategy_code you want to apply the snapshot',
         )
+        # Named (mandatory) arguments
+        parser.add_argument(
+            '--freq',
+            type=str,
+            help='Which freq you want to apply the snapshot',
+        )
         pass
 
     def handle(self, *args, **options):

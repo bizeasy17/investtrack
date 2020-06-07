@@ -31,8 +31,8 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         req_user = request.user
         if req_user is not None:
-            strategie_ctgs = TradeStrategyStat.objects.filter(
-                category=None)
+            strategie_ctgs = TradeStrategyStat.objects.all().order_by(
+                'category').distinct('category')
             queryset = {
                 'strategy_ctgs': strategie_ctgs,
             }
@@ -51,7 +51,6 @@ def strategies_by_category(request, parent_strategy):
                 strategy_list.append(
                     {
                         'id': strategy.id,
-                        'strategy_code': strategy.code,
                         'strategy_name': strategy.name,
                         'count': strategy.count,
                         'success_count': strategy.success_count,

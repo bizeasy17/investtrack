@@ -67,7 +67,7 @@ def hist_since_listed(stock_symbol, start_date, end_date, freq='D'):
     return pd.concat(df_list)
 
 
-def download_stock_hist(ts_code_list=[]):
+def download_stock_hist(freq, ts_code_list=[]):
     end_date = date.today()
     if len(ts_code_list) == 0:
         listed_companies = StockNameCodeMap.objects.filter(
@@ -78,12 +78,16 @@ def download_stock_hist(ts_code_list=[]):
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
             df = hist_since_listed(
-                listed_company.ts_code, listed_company.list_date, end_date)
+                listed_company.ts_code, listed_company.list_date, end_date, freq)
             hist_list = []
             for v in df.values:
-                hist_D = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                           low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                           amount=v[10], freq='D')
+                hist = object
+                if freq == 'D':
+                    hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                                            low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                                            amount=v[10], freq=freq)
+                else:
+                    pass
                 '''
                 ts_code	str	股票代码
                 trade_date	str	交易日期
@@ -97,8 +101,11 @@ def download_stock_hist(ts_code_list=[]):
                 vol	float	成交量 （手）
                 amount	float	成交额 （千元）
                 '''
-                hist_list.append(hist_D)
-            StockHistoryDaily.objects.bulk_create(hist_list)
+                hist_list.append(hist)
+            if freq == 'D':
+                StockHistoryDaily.objects.bulk_create(hist_list)
+            else:
+                pass
             listed_company.is_hist_downloaded = True
             listed_company.hist_update_date = end_date
             listed_company.save()

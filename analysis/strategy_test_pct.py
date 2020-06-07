@@ -32,8 +32,12 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
             listed_companies = StockNameCodeMap.objects.filter(
                 is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
         for listed_company in listed_companies:
-            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
-                ts_code=listed_company.ts_code).order_by('trade_date').values())
+            df = pd.DataFrame()
+            if test_freq == 'D':
+                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
+                    ts_code=listed_company.ts_code).order_by('trade_date').values())
+            else:
+                pass
             idx_list = []
             strategy_test_list = []
             if strategy_code.endswith('_b'):
@@ -41,7 +45,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 # 循环所有九转序列（时间顺序）
                 # 获取当前买点往后所有交易记录（日）
                 # 和当前买点比较，
-                if not is_strategy_tested(listed_company.ts_code, 'EXP_PCT_TEST', 'jiuzhuan_b'):
+                if not is_strategy_tested(listed_company.ts_code, 'EXP_PCT_TEST', 'jiuzhuan_b', test_freq):
                     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
                     all_pct_list = []
                     log_list = []
@@ -60,7 +64,8 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                         strategy_test_list.append(b_tnx)
                     BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
                     post_exp_days_pct_test(all_pct_list)
-                    log_test_status(listed_company.ts_code, 'EXP_PCT_TEST', ['jiuzhuan_b'])
+                    log_test_status(listed_company.ts_code,
+                                    'EXP_PCT_TEST', test_freq, ['jiuzhuan_b'])
             elif strategy_code.endswith('_b'):
                 pass
     print(' test on period end - ' +
@@ -73,7 +78,8 @@ def test_expected_pct(strategy_name, test_freq):
     for company in listed_companies:
         test_exp_pct(company.stock_symbol,
                               strategy_name, test_freq)
-        log_test_status(company.stock_symbol, 'MARK_EXP_PCT', ['jiuzhuan_b'])
+        log_test_status(company.stock_symbol, 'MARK_EXP_PCT',
+                        test_freq, ['jiuzhuan_b'])
     # StockStrategyTestLog.objects.bulk_create(log_list)
 
 
