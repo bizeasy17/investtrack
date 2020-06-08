@@ -89,6 +89,7 @@ class StockHistoryDaily(BaseModel):
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
+
 class StockStrategyTestLog(BaseModel):
     '''
     ts_code	str	股票代码
@@ -136,7 +137,7 @@ class StockStrategyTestLog(BaseModel):
     # cp_update_dt = models.DateTimeField(
     #     _('临界点更新时间？'),  blank=True, null=True)
     # low_high_pct_marked = models.BooleanField(
-    #     _('高低点涨幅已标记？'),  blank=False, null=False, default=False)    
+    #     _('高低点涨幅已标记？'),  blank=False, null=False, default=False)
     # lhpct_mark_dt = models.DateTimeField(
     #     _('高低点标记时间？'),  blank=True, null=True)
     # lhpct_update_dt = models.DateTimeField(
@@ -150,7 +151,6 @@ class StockStrategyTestLog(BaseModel):
 
     def __str__(self):
         return self.ts_code
-
 
 
 class BStrategyTestResultOnDays(BaseModel):
@@ -201,8 +201,10 @@ class BStrategyTestResultOnDays(BaseModel):
         _('高点/买点%?'), blank=True, null=True, default=False)
     tnx_point = models.BooleanField(
         _('b点?'), blank=True, null=True, default=False)
-    test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
-                                      on_delete=models.CASCADE)
+    # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+    #                                   on_delete=models.CASCADE)
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
 
     def __str__(self):
         return self.ts_code
@@ -212,17 +214,21 @@ class BStrategyTestResultOnDays(BaseModel):
         verbose_name = _('交易策略日线测试')
         verbose_name_plural = verbose_name
 
+
 class BStrategyOnPctTest(BaseModel):
-    test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
-                                      on_delete=models.CASCADE)
+    # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+    #                                   on_delete=models.CASCADE)
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
     b_10_pct_min = models.FloatField(
-        _('+10%最小周期'), blank=True, null=True, default=-1) 
+        _('+10%最小周期'), blank=True, null=True, default=-1)
     b_10_pct_max = models.FloatField(
-        _('+10%最大周期'), blank=True, null=True, default=-1) 
+        _('+10%最大周期'), blank=True, null=True, default=-1)
     b_10_pct_mean = models.FloatField(
-        _('+10%平均周期'), blank=True, null=True, default=-1) 
+        _('+10%平均周期'), blank=True, null=True, default=-1)
     b_20_pct_min = models.FloatField(
         _('+20%最小周期'), blank=True, null=True, default=-1)
     b_20_pct_max = models.FloatField(
@@ -264,15 +270,19 @@ class BStrategyOnPctTest(BaseModel):
 
     def __str__(self):
         return self.ts_code
-        
+
     class Meta:
         ordering = ['ts_code']
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
+
 class BStrategyOnFixedPctTest(BaseModel):
-    test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
-                                      on_delete=models.CASCADE)
+    # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+    #                                   on_delete=models.CASCADE)
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
     trade_date = models.DateField(
@@ -296,7 +306,7 @@ class BStrategyOnFixedPctTest(BaseModel):
     amount = models.FloatField(
         _('金额'), blank=True, null=True)
     pct10_period = models.FloatField(
-        _('+10%最小周期'), blank=True, null=True, default=-1) 
+        _('+10%最小周期'), blank=True, null=True, default=-1)
     pct20_period = models.FloatField(
         _('+20%最小周期'), blank=True, null=True, default=-1)
     pct30_period = models.FloatField(
@@ -314,7 +324,7 @@ class BStrategyOnFixedPctTest(BaseModel):
 
     def __str__(self):
         return self.ts_code
-        
+
     class Meta:
         ordering = ['ts_code']
         verbose_name = _('达到固定涨幅周期')
@@ -367,6 +377,7 @@ class BStrategyOnFixedPctTest(BaseModel):
 #     s_max_drop_date = models.DateField(
 #         _('-最大跌幅日期'), blank=True, null=True)
 
+
 class TradeStrategyStat(BaseModel):
     PERIOD_CHOICE = {
         ('M', _('月线')),
@@ -379,7 +390,8 @@ class TradeStrategyStat(BaseModel):
     applied_period = models.CharField(
         _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=True, default='60')
     name = models.CharField(_('策略名'), max_length=30)
-    category = models.CharField(_('策略分类'), blank=True, null=True, max_length=25)
+    category = models.CharField(
+        _('策略分类'), blank=True, null=True, max_length=25)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
                                 on_delete=models.CASCADE)
     count = models.IntegerField(
@@ -402,18 +414,3 @@ class TradeStrategyStat(BaseModel):
 
     def __str__(self):
         return self.name
-
-    def get_strategy_tree(self):
-        """
-        递归获得策略目录的父级
-        :return:
-        """
-        strategies = []
-
-        def parse(strategy):
-            strategies.append(strategy)
-            if strategy.parent_strategy:
-                parse(strategy.parent_strategy)
-
-        parse(self)
-        return strategies

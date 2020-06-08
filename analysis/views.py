@@ -109,7 +109,7 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
             # }
 
             results = BStrategyOnFixedPctTest.objects.filter(
-                test_strategy=TradeStrategy.objects.get(code=strategy), ts_code=stock_symbol,
+                strategy_code=strategy, ts_code=stock_symbol,
                 test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
             for rst in results:
                 if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
@@ -134,7 +134,7 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
             result_pct = []
             result_label = []
             results = BStrategyTestResultOnDays.objects.filter(
-                test_strategy=TradeStrategy.objects.get(code=strategy), ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
             for result in results:
                 result_pct.append(round(result.stage_high_pct,2))
                 result_label.append(result.trade_date)
@@ -156,7 +156,7 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
             result_pct = []
             result_label = []
             results = BStrategyTestResultOnDays.objects.filter(
-                test_strategy=TradeStrategy.objects.get(code=strategy), ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
             for result in results:
                 result_pct.append(round(result.stage_low_pct,2))
                 result_label.append(result.trade_date)

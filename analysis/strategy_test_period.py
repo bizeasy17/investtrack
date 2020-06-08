@@ -80,18 +80,18 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                                 b_tnx = BStrategyTestResultOnDays(ts_code=b.ts_code, trade_date=b.trade_date, test_period=test_period, open=b.open, high=b.high,
                                                                   low=b.low, close=b.close, pre_close=b.pre_close, change=b.change, pct_chg=b.pct_chg, vol=b.vol,
-                                                                  amount=b.amount, tnx_point=True, test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'))
+                                                                  amount=b.amount, tnx_point=True, strategy_code=strategy_code)
                                 # 查询周期内最高价
                                 max = df.iloc[idx_max]
                                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                                 test_max = BStrategyTestResultOnDays(ts_code=max.ts_code, trade_date=max.trade_date, test_period=test_period, open=max.open, high=max.high,
                                                                      low=max.low, close=max.close, pre_close=max.pre_close, change=max.change, pct_chg=max.pct_chg, vol=max.vol,
-                                                                     amount=max.amount, stage_high=True, stage_high_pct=pct_incr, test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'))
+                                                                     amount=max.amount, stage_high=True, stage_high_pct=pct_incr, strategy_code=strategy_code)
                                 # 查询周期内最低价
                                 min = df.iloc[idx_min]
                                 test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period, open=min.open, high=min.high,
                                                                      low=min.low, close=min.close, pre_close=min.pre_close, change=min.change, pct_chg=min.pct_chg, vol=min.vol,
-                                                                     amount=min.amount, stage_low=True, stage_low_pct=pct_drop, test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'))
+                                                                     amount=min.amount, stage_low=True, stage_low_pct=pct_drop, strategy_code=strategy_code)
                                 strategy_test_list.append(b_tnx)
                                 strategy_test_list.append(test_min)
                                 strategy_test_list.append(test_max)

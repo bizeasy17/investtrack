@@ -10,7 +10,7 @@ $(function () {
 
     var showAnalysisHist = function () {
         // var strategy = "jz_b";
-        alert('clicked - ' + $(this).val())
+        // alert('clicked - ' + $(this).val())
         var tsCode = $('#hiddenTsCode').val();
         var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
@@ -281,7 +281,7 @@ $(function () {
                     //     $("#prfProfitRatio").addClass("text-success");
                     // }
                     // $("#prfProfitRatio").text(data.profit_ratio + '%');
-                    if(incrChart){
+                    if(dropChart){
                         // update chart
                         dropChart.data.labels = data.label;
                         dropChart.data.datasets[0].data = data.value;
