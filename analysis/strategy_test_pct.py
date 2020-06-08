@@ -66,7 +66,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                     post_exp_days_pct_test(all_pct_list)
                     log_test_status(listed_company.ts_code,
                                     'EXP_PCT_TEST', test_freq, ['jiuzhuan_b'])
-            elif strategy_code.endswith('_b'):
+            elif strategy_code.endswith('_s'):
                 pass
     print(' test on period end - ' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        

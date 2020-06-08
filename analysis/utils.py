@@ -13,12 +13,12 @@ def log_test_status(ts_code, event, freq, strategy_list=[]):
             mark_log = StockStrategyTestLog(ts_code=ts_code,
                                             analysis_code=strategy,
                                             event_type=event, freq=freq)
-            try:
-                strategy_stat = TradeStrategyStat.objects.get(applied_period=freq, code=strategy)
-                strategy_stat.hist_analyzed = True
-                strategy_stat.save()
-            except Exception as e:
-                print(e)
+            # try:
+            #     strategy_stat = TradeStrategyStat.objects.get(applied_period=freq, code=strategy)
+            #     strategy_stat.hist_analyzed = True
+            #     strategy_stat.save()
+            # except Exception as e:
+            #     print(e)
             mark_log.save()
 
 
