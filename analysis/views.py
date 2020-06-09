@@ -48,6 +48,7 @@ def strategies_by_category(request, parent_strategy):
             strategies = TradeStrategyStat.objects.filter(
                 category=parent_strategy).order_by('code').distinct('code')
             for strategy in strategies:
+                strategy.name = strategy.name.split('(')[0]
                 strategy_list.append(
                     {
                         'id': strategy.id,

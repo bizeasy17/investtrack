@@ -31,45 +31,45 @@ $(function () {
                     var strategiesTag = "";
                     strategyDiv.html("");
                     $(data).each(function (idx, obj) {
-                        strategiesTag += 
-                            '<div class="row col-lg-4">'+
-                                '<div class="col">'+
-                                    '<img src="' + imgRoot + obj.code + '.png" height="100" width="100" style="border-radius: 10%">'+
-                                '</div>'+
-                                '<div class="col small">'+
-                                    '<div class="badge badge-pill badge-danger">'+ obj.strategy_name + '</div>'+
-                                    '<div class="small text-muted">成功率-'+obj.success_rate+'%</div>';
-                                    // '<div class="container">'+
-                                    //     '<div class="row">'+
-                                    //         '<div class="col-4 text-primary">总数</div>'+
-                                    //         '<div class="col-4 text-primary">成功</div>'+
-                                    //         '<div class="col-4 text-primary">失败</div>'+
-                                    //         '<div class="w-100"></div>'+
-                                    //         '<div class="col-4 text-primary">'+
-                                    //             obj.count+
-                                    //         '</div>'+
-                                    //         '<div class="col-4 text-primary">'+
-                                    //             obj.success_count+
-                                    //         '</div>'+
-                                    //         '<div class="col-4 text-primary">'+
-                                    //             obj.fail_count+
-                                    //         '</div>'+
-                                    //     '</div>'+
-                                    // '</div>';
+                        strategiesTag +=
+                            '<div class="row col-lg-4">' +
+                            '<div class="col">' +
+                            '<img src="' + imgRoot + obj.code + '.png" height="90" width="90" style="border-radius: 10%">' +
+                            '</div>' +
+                            '<div class="col small">' +
+                            '<div><span class="badge badge-pill badge-danger">' + obj.strategy_name + '</span><span class="small"> 成功率-' + obj.success_rate + '%</span></div>'
+                            // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';
+                        // '<div class="container">'+
+                        //     '<div class="row">'+
+                        //         '<div class="col-4 text-primary">总数</div>'+
+                        //         '<div class="col-4 text-primary">成功</div>'+
+                        //         '<div class="col-4 text-primary">失败</div>'+
+                        //         '<div class="w-100"></div>'+
+                        //         '<div class="col-4 text-primary">'+
+                        //             obj.count+
+                        //         '</div>'+
+                        //         '<div class="col-4 text-primary">'+
+                        //             obj.success_count+
+                        //         '</div>'+
+                        //         '<div class="col-4 text-primary">'+
+                        //             obj.fail_count+
+                        //         '</div>'+
+                        //     '</div>'+
+                        // '</div>';
                         // if(obj.analyzed){
                         //     strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
                         // }else{
                         //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
                         // }
-                        strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
+                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + '"><small><i class="fa fa-eye">历史分析</i></small></button>';
                         strategiesTag += '</div></div>';
                         strategyDiv.append(strategiesTag);
-                        strategiesTag = "";   
-                        var showAnalysisBtn = document.getElementById("showHistBtn"+obj.id);
-                        showAnalysisBtn.addEventListener("click", showAnalysisHist);  
+                        strategiesTag = "";
+                        var showAnalysisBtn = document.getElementById("showHistBtn" + obj.id);
+                        showAnalysisBtn.addEventListener("click", showAnalysisHist);
                     });
                     // strategiesTag += '</div>';
-                    
+
                     // if (btns) {
                     //     $(btns).each(function (id, obj) {
                     //         $(obj).on("click", bindDetailOfPosition);
@@ -159,12 +159,12 @@ $(function () {
                     //     $("#prfProfitRatio").addClass("text-success");
                     // }
                     // $("#prfProfitRatio").text(data.profit_ratio + '%');
-                    if(incrChart){
+                    if (incrChart) {
                         // update chart
                         incrChart.data.labels = data.label;
                         incrChart.data.datasets[0].data = data.value;
                         incrChart.update();
-                    }else{
+                    } else {
                         // new chart
                         incrChart = new Chart(incrChartCanvas, {
                             type: "line",
@@ -209,7 +209,10 @@ $(function () {
                                                 // stepSize: data.max_profit / 10,
                                                 fontColor: "#b1b0b0",
                                                 fontSize: 10,
-                                                padding: 10
+                                                padding: 10,
+                                                callback: function (value) {
+                                                    return value.toFixed(0) + '%'; // convert it to percentage
+                                                },
                                             }
                                         }
                                     ],
@@ -282,12 +285,12 @@ $(function () {
                     //     $("#prfProfitRatio").addClass("text-success");
                     // }
                     // $("#prfProfitRatio").text(data.profit_ratio + '%');
-                    if(dropChart){
+                    if (dropChart) {
                         // update chart
                         dropChart.data.labels = data.label;
                         dropChart.data.datasets[0].data = data.value;
                         dropChart.update();
-                    }else{
+                    } else {
                         dropChart = new Chart(dropChartCanvas, {
                             type: "line",
                             data: {
@@ -331,7 +334,10 @@ $(function () {
                                                 // stepSize: data.max_profit / 10,
                                                 fontColor: "#b1b0b0",
                                                 fontSize: 10,
-                                                padding: 10
+                                                padding: 10,
+                                                callback: function (value) {
+                                                    return value.toFixed(0) + '%'; // convert it to percentage
+                                                },
                                             }
                                         }
                                     ],
@@ -391,12 +397,12 @@ $(function () {
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
-                    if(pctIncrChart){
+                    if (pctIncrChart) {
                         // update chart
                         pctIncrChart.data.labels = data.label;
                         pctIncrChart.data.datasets[0].data = data.value;
                         pctIncrChart.update();
-                    }else{
+                    } else {
                         pctIncrChart = new Chart(pctIncrChartCanvas, {
                             type: "bar",
                             data: {
@@ -439,7 +445,10 @@ $(function () {
                                                 // stepSize: data.max_profit / 10,
                                                 fontColor: "#b1b0b0",
                                                 fontSize: 10,
-                                                padding: 10
+                                                padding: 10,
+                                                callback: function (value) {
+                                                    return value.toFixed(0) + '天'; // convert it to day
+                                                },
                                             }
                                         }
                                     ],
@@ -509,7 +518,7 @@ $(function () {
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
     });
-    
+
     // showHighPeriodChart();
     // showLowPeriodDistChart();
     // showExpectedPctChart();
