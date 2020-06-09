@@ -25,8 +25,7 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
     '''
     # end_date = date.today()
     periods = [10, 20, 30, 50, 80]
-    print(' test on period start - ' +
-          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
 
     if strategy_code.startswith('jiuzhuan_'):
         if len(ts_code_list) == 0:
@@ -36,6 +35,7 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
             listed_companies = StockNameCodeMap.objects.filter(
                 is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
         for listed_company in listed_companies:
+            print(' test on period start - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             df = pd.DataFrame()
             if freq == 'D':
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
@@ -95,14 +95,16 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                                 strategy_test_list.append(b_tnx)
                                 strategy_test_list.append(test_min)
                                 strategy_test_list.append(test_max)
-            log_test_status(listed_company.ts_code,
-                            'PERIOD_TEST', freq, ['jiuzhuan_b'], )
-            BStrategyTestResultOnDays.objects.bulk_create(strategy_test_list)
+            if len(strategy_test_list) > 0:
+                log_test_status(listed_company.ts_code,
+                                'PERIOD_TEST', freq, ['jiuzhuan_b'], )
+                BStrategyTestResultOnDays.objects.bulk_create(strategy_test_list)
+            print(' test on period end - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     else:
         idx_list = df.loc[df['jiuzhuan_s'] == 9]
         # idx = df.loc[df['close'] > 16.66].index
         # df.iloc[idx]
-    print(' test on period end - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
 
 
 def test_by_period1(stock_symbol, strategy_code, test_period):

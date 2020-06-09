@@ -36,14 +36,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         ts_code = options['ts_code']
         strategy_code = options['strategy_code']
-        if strategy_code is not None:
+        freq = options['freq']
+        if strategy_code is not None and freq is not None:
             if ts_code is not None:
                 ts_code_list = ts_code.split(',')
                 if ts_code_list is not None and len(ts_code_list) >= 1:
                     # print(ts_code_list)
-                    test_exp_pct(strategy_code, ts_code_list)
+                    test_exp_pct(strategy_code, ts_code_list, test_freq=freq)
             else:
-                test_exp_pct(strategy_code)
+                test_exp_pct(strategy_code, test_freq=freq)
         else:
             print('please input the mandatory strategy code')
             pass

@@ -22,8 +22,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     2. 遍历该股票测试策略买入
     3. 测试结果存入表
     '''
-    print(' test on period start - ' +
-          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
     if strategy_code.startswith('jiuzhuan_'):
         if len(ts_code_list) == 0:
             listed_companies = StockNameCodeMap.objects.filter(
@@ -32,6 +31,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
             listed_companies = StockNameCodeMap.objects.filter(
                 is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
         for listed_company in listed_companies:
+            print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             df = pd.DataFrame()
             if test_freq == 'D':
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
@@ -45,7 +45,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 # 循环所有九转序列（时间顺序）
                 # 获取当前买点往后所有交易记录（日）
                 # 和当前买点比较，
-                if not is_strategy_tested(listed_company.ts_code, 'EXP_PCT_TEST', 'jiuzhuan_b', test_freq):
+                if not is_strategy_tested(listed_company.ts_code, 'EXP_PCT_TEST', strategy_code, test_freq):
                     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
                     all_pct_list = []
                     log_list = []
@@ -62,16 +62,15 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                                                         pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
                                                         pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
                         strategy_test_list.append(b_tnx)
-                    BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
-                    post_exp_days_pct_test(all_pct_list)
-                    log_test_status(listed_company.ts_code,
-                                    'EXP_PCT_TEST', test_freq, ['jiuzhuan_b'])
+                    if len(strategy_test_list) > 0:
+                        BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
+                        post_exp_days_pct_test(all_pct_list)
+                        log_test_status(listed_company.ts_code,
+                                        'EXP_PCT_TEST', test_freq, [strategy_code])
+                    print(' test on period end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
             elif strategy_code.endswith('_s'):
                 pass
-    print(' test on period end - ' +
-          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
-
-
+    
 def test_expected_pct(strategy_name, test_freq):
     log_list = []
     listed_companies = StockNameCodeMap.objects.filter
@@ -132,7 +131,7 @@ def get_pct_days_between(df, b, b_date, pct_incr):
         # pct_date = closest_date[0].strptime('%Y%m%d')
         pct_days = days_between(closest_date[0], b_date)
     except Exception as e:
-        logger.error(e)
+        # logger.error(e)
         pct_days = -1
     return pct_days
 
@@ -163,7 +162,8 @@ def get_fixed_pct_list(df, b, strategy_code):
         # fixed_pct_list.append(TradeStrategy.objects.get(code='jiuzhuan_b'))
         fixed_pct_list.append(strategy_code)
     except Exception as e:
-        logger.error(e)
+        # logger.error(e)
+        pass
     return fixed_pct_list
 
 

@@ -38,29 +38,30 @@ $(function () {
                                 '</div>'+
                                 '<div class="col small">'+
                                     '<div class="badge badge-pill badge-danger">'+ obj.strategy_name + '</div>'+
-                                    '<div class="small text-muted">成功率-'+obj.success_rate+'%</div>'+
-                                    '<div class="container">'+
-                                        '<div class="row">'+
-                                            '<div class="col-4 text-primary">总数</div>'+
-                                            '<div class="col-4 text-primary">成功</div>'+
-                                            '<div class="col-4 text-primary">失败</div>'+
-                                            '<div class="w-100"></div>'+
-                                            '<div class="col-4 text-primary">'+
-                                                obj.count+
-                                            '</div>'+
-                                            '<div class="col-4 text-primary">'+
-                                                obj.success_count+
-                                            '</div>'+
-                                            '<div class="col-4 text-primary">'+
-                                                obj.fail_count+
-                                            '</div>'+
-                                        '</div>'+
-                                    '</div>';
-                        if(obj.analyzed){
-                            strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
-                        }else{
-                            strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
-                        }
+                                    '<div class="small text-muted">成功率-'+obj.success_rate+'%</div>';
+                                    // '<div class="container">'+
+                                    //     '<div class="row">'+
+                                    //         '<div class="col-4 text-primary">总数</div>'+
+                                    //         '<div class="col-4 text-primary">成功</div>'+
+                                    //         '<div class="col-4 text-primary">失败</div>'+
+                                    //         '<div class="w-100"></div>'+
+                                    //         '<div class="col-4 text-primary">'+
+                                    //             obj.count+
+                                    //         '</div>'+
+                                    //         '<div class="col-4 text-primary">'+
+                                    //             obj.success_count+
+                                    //         '</div>'+
+                                    //         '<div class="col-4 text-primary">'+
+                                    //             obj.fail_count+
+                                    //         '</div>'+
+                                    //     '</div>'+
+                                    // '</div>';
+                        // if(obj.analyzed){
+                        //     strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
+                        // }else{
+                        //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
+                        // }
+                        strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
                         strategiesTag += '</div></div>';
                         strategyDiv.append(strategiesTag);
                         strategiesTag = "";   
@@ -390,7 +391,7 @@ $(function () {
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
-                    if(incrChart){
+                    if(pctIncrChart){
                         // update chart
                         pctIncrChart.data.labels = data.label;
                         pctIncrChart.data.datasets[0].data = data.value;

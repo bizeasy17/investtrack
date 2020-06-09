@@ -293,8 +293,12 @@ def bstrategy_exp_pct_test(request,  strategy, stock_symbol, test_freq):
     user = request.user
     if request.method == 'GET':
         try:
-            symbol_list = stock_symbol.split(',')
-            test_exp_pct(strategy, symbol_list, test_freq)
+            if stock_symbol != 'all':
+                symbol_list = stock_symbol.split(',')
+                if len(symbol_list) > 0:
+                    test_exp_pct(strategy, symbol_list, test_freq)
+            else:
+                test_exp_pct(strategy, test_freq=test_freq)
             return HttpResponse(status=200)
         except Exception as e:
             logging.error(e)

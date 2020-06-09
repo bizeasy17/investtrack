@@ -9,7 +9,7 @@ def log_test_status(ts_code, event, freq, strategy_list=[]):
             mark_log = StockStrategyTestLog.objects.get(
                 ts_code=ts_code, analysis_code=strategy, event_type=event, freq=freq)
         except Exception as e:
-            print(e)
+            # print(e)
             mark_log = StockStrategyTestLog(ts_code=ts_code,
                                             analysis_code=strategy,
                                             event_type=event, freq=freq)
@@ -28,5 +28,5 @@ def is_strategy_tested(ts_code, event, strategy_code, freq):
             ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq)
         return True
     except Exception as e:
-        print(e)
+        # print(e)
         return False
