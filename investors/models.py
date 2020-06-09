@@ -13,29 +13,98 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+# class StrategyCategory(BaseModel):
+#     '''
+#     1. 策略分类 （I)
+#         建仓 - Open a Position - O
+#         增仓 - Increase a Position - I
+#         减仓 - Reduce a Position - R
+#         清仓 - Liquidate - L
+#         持仓 - Hold a Position - H
+#     '''
+#     name = models.CharField(_('分类名称'), max_length=30,
+#                             blank=False, null=False, default='')
+#     category_code = models.CharField(
+#         _('分类编号'), max_length=25, blank=False, null=False, default='')
+#     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
+#                                 on_delete=models.CASCADE)
+
+#     class Meta:
+#         verbose_name = _('策略分类')
+#         verbose_name_plural = verbose_name
+#     pass
+
+class StrategyAnalysisCode(BaseModel):
+    '''
+    2. 交易策略 （II)
+        建仓 - Open a Position - O
+            九转买点 - jiuzhuan_b > O, I
+            双底 - shuangdi > O, I
+        增仓 - Increase a Position - I
+            九转买点 - jiuzhuan_b > O, I
+            MA25支撑 - ma25_zhicheng > O, I
+        减仓 - Reduce a Position - R
+            九转卖点 - jiuzhuan_s > R, L
+            MA25跌破 - zhicheng_ma25 > R, L
+            下跌% - xiadie% > R, L
+        清仓 - Liquidate - L
+            九转卖点 - jiuzhuan_s > R, L
+            MA25跌破- zhicheng_ma25 > R, L
+            下跌% - xiadie% > R, L
+        持仓 - Hold a Position - H
+
+        压力位 - tupo > O, I
+        支撑位 - diepo > R, L
+    '''
+    name = models.CharField(_('代码名称'), max_length=30,
+                            blank=False, null=False, default='')
+    analysis_code = models.CharField(
+        _('代码编号'), max_length=25, blank=False, null=False, default='')
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
+                                on_delete=models.CASCADE)
+    class Meta:
+        ordering = ['analysis_code']
+        verbose_name = _('策略分析代码')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+#     pass
 
 class TradeStrategy(BaseModel):
+    '''
+    Option 1. 策略分类 （I)
+        建仓 - Open a Position - O
+        增仓 - Increase a Position - I
+        减仓 - Reduce a Position - R
+        清仓 - Liquidate - L
+        持仓 - Hold a Position - H
+    Option 2. 策略分类 （I)
+        买 - Buy Stock - B
+        卖 - Sell Stock - S
+        持 - Hold a Position - H
+    '''
     ST_CODE_CHOICES = {
-        ('open_a_position', _('建仓')),
-        ('add_positions', _('加仓')),
-        ('reduce_positions', _('减仓')),
-        ('sell', _('卖出')),
-        ('stop_loss', _('止损')),
-        ('take_profit', _('止盈')),
-        ('liquidation', _('平仓/清仓')),
-        ('jiuzhuan_b', _('九转序列买点')),
-        ('jiuzhuan_s', _('九转序列卖点')),
-        ('shuangdi_b', _('双底买点')),
-        ('shuangtou_s', _('双头卖点')),
-        ('break_through', _('突破阻力位')),
-        ('fall_below', _('跌破支撑位')),
-        
+        ('B', _('买')),
+        ('S', _('卖')),
+        ('H', _('持仓')),
+        # ('sell', _('卖出')),
+        # ('stop_loss', _('止损')),
+        # ('take_profit', _('止盈')),
+        # ('liquidation', _('平仓/清仓')),
+        # ('jiuzhuan_b', _('九转序列买点')),
+        # ('jiuzhuan_s', _('九转序列卖点')),
+        # ('shuangdi_b', _('双底买点')),
+        # ('shuangtou_s', _('双头卖点')),
+        # ('tupo_b', _('突破阻力位')),
+        # ('diepo_s', _('跌破支撑位')),
+        # ('ma25_b', _('MA25支撑位')),
     }
 
     PERIOD_CHOICE = {
-        ('mm', _('月线')),
-        ('wk', _('周线')),
-        ('dd', _('日线')),
+        ('M', _('月线')),
+        ('W', _('周线')),
+        ('D', _('日线')),
         ('60', _('60分钟')),
         ('30', _('30分钟')),
         ('15', _('15分钟')),
@@ -49,8 +118,13 @@ class TradeStrategy(BaseModel):
                                 on_delete=models.CASCADE)
     is_visible = models.BooleanField(
         _('是否可见'), blank=False, null=False, default=False)
-    code = models.CharField(
-        _('策略代码'), choices=ST_CODE_CHOICES, max_length=50, blank=False, null=False, default='buy')
+    category = models.CharField(
+        _('策略分类'), choices=ST_CODE_CHOICES, max_length=50, blank=True, null=True)
+    ana_code = models.ForeignKey('StrategyAnalysisCode',
+                                      verbose_name=_('分析代码'), blank=True, null=True, on_delete=models.SET_NULL)
+    # analysis_category = models.ForeignKey('StrategyCategory',
+    #                               verbose_name=_('分析代码'), blank=True, null=True, on_delete=models.SET_NULL)
+
     is_manual = models.BooleanField(
         _('手工创建？'), blank=True, null=True, default=True)
 
@@ -75,7 +149,8 @@ class TradeStrategy(BaseModel):
                 strategy_freq.name = self.name + '(' + freq + ')'
                 strategy_freq.parent_strategy = self
                 strategy_freq.creator = self.creator
-                strategy_freq.code = self.code
+                strategy_freq.category = self.category
+                strategy_freq.ana_code = self.ana_code
                 strategy_freq.is_manual = False
                 strategy_freq.save()
         pass

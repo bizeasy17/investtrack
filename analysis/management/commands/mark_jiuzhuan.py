@@ -19,15 +19,22 @@ class Command(BaseCommand):
             type=str,
             help='Which ts_code you want to apply the snapshot',
         )
+        # Named (mandatory) arguments
+        parser.add_argument(
+            '--freq',
+            type=str,
+            help='Which freq you want to apply the snapshot',
+        )
         pass
 
     def handle(self, *args, **options):
         ts_code = options['ts_code']
-        if ts_code is not None:
+        freq = options['freq']
+        if ts_code is not None and freq is not None:
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 # print(ts_code_list)
-                mark_jiuzhuan_listed(ts_code_list)
+                mark_jiuzhuan_listed(freq, ts_code_list)
         else:
-            mark_jiuzhuan_listed()
+            mark_jiuzhuan_listed(freq)
         

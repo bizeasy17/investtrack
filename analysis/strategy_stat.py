@@ -13,11 +13,21 @@ def analyze_trade_strategy():
     strategies = TradeStrategy.objects.exclude(parent_strategy=None).annotate(num_used=Count(
         'transactions')).annotate(num_s=num_s).annotate(num_f=num_f)
     for s in strategies:
-        stat = TradeStrategyStat()
-        stat.applied_period = s.applied_period
-        stat.category = s.parent_strategy.name
-        stat.name = s.name
-        stat.creator = s.creator
+        try:
+            stat = TradeStrategyStat.objects.get(
+                applied_period=s.applied_period, code=s.ana_code.analysis_code)
+        except Exception as error:
+            stat = TradeStrategyStat()
+            stat.applied_period = s.applied_period
+            if s.category =='B':
+                stat.category = '买策略'
+            elif s.category == 'S':
+                stat.category = '卖策略'
+            elif s.category == 'H':
+                stat.category = '持仓策略'
+            stat.name = s.name
+            stat.creator = s.creator
+            stat.code = s.ana_code.analysis_code
         stat.count = s.num_used
         stat.success_count = s.num_s
         stat.fail_count = s.num_f
@@ -25,6 +35,5 @@ def analyze_trade_strategy():
             stat.success_rate = round(s.num_s / (s.num_s + s.num_f) * 100, 2)
         else:
             stat.success_rate = 0
-        stat.code = s.code
         stat.save()
     pass

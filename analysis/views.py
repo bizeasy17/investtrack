@@ -31,8 +31,8 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         req_user = request.user
         if req_user is not None:
-            strategie_ctgs = TradeStrategyStat.objects.filter(
-                category=None)
+            strategie_ctgs = TradeStrategyStat.objects.all().order_by(
+                'category').distinct('category')
             queryset = {
                 'strategy_ctgs': strategie_ctgs,
             }
@@ -46,12 +46,12 @@ def strategies_by_category(request, parent_strategy):
         try:
             strategy_list = []
             strategies = TradeStrategyStat.objects.filter(
-                category=parent_strategy).order_by('-hist_analyzed')
+                category=parent_strategy).order_by('code').distinct('code')
             for strategy in strategies:
+                strategy.name = strategy.name.split('(')[0]
                 strategy_list.append(
                     {
                         'id': strategy.id,
-                        'strategy_code': strategy.code,
                         'strategy_name': strategy.name,
                         'count': strategy.count,
                         'success_count': strategy.success_count,
@@ -110,7 +110,7 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
             # }
 
             results = BStrategyOnFixedPctTest.objects.filter(
-                test_strategy=TradeStrategy.objects.get(code=strategy), ts_code=stock_symbol,
+                strategy_code=strategy, ts_code=stock_symbol,
                 test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
             for rst in results:
                 if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
@@ -135,7 +135,7 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
             result_pct = []
             result_label = []
             results = BStrategyTestResultOnDays.objects.filter(
-                test_strategy=TradeStrategy.objects.get(code=strategy), ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
             for result in results:
                 result_pct.append(round(result.stage_high_pct,2))
                 result_label.append(result.trade_date)
@@ -157,7 +157,7 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
             result_pct = []
             result_label = []
             results = BStrategyTestResultOnDays.objects.filter(
-                test_strategy=TradeStrategy.objects.get(code=strategy), ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
             for result in results:
                 result_pct.append(round(result.stage_low_pct,2))
                 result_label.append(result.trade_date)

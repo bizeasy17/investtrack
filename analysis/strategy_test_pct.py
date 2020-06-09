@@ -22,8 +22,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     2. 遍历该股票测试策略买入
     3. 测试结果存入表
     '''
-    print(' test on period start - ' +
-          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    
     if strategy_code.startswith('jiuzhuan_'):
         if len(ts_code_list) == 0:
             listed_companies = StockNameCodeMap.objects.filter(
@@ -32,8 +31,13 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
             listed_companies = StockNameCodeMap.objects.filter(
                 is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
         for listed_company in listed_companies:
-            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
-                ts_code=listed_company.ts_code).order_by('trade_date').values())
+            print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            df = pd.DataFrame()
+            if test_freq == 'D':
+                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
+                    ts_code=listed_company.ts_code).order_by('trade_date').values())
+            else:
+                pass
             idx_list = []
             strategy_test_list = []
             if strategy_code.endswith('_b'):
@@ -41,7 +45,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 # 循环所有九转序列（时间顺序）
                 # 获取当前买点往后所有交易记录（日）
                 # 和当前买点比较，
-                if not is_strategy_tested(listed_company.ts_code, 'EXP_PCT_TEST', 'jiuzhuan_b'):
+                if not is_strategy_tested(listed_company.ts_code, 'EXP_PCT_TEST', strategy_code, test_freq):
                     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
                     all_pct_list = []
                     log_list = []
@@ -56,24 +60,25 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                                                         amount=b.amount, pct10_period=pct_list[
                                                             0], pct20_period=pct_list[1], pct30_period=pct_list[2],
                                                         pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
-                                                        pct130_period=pct_list[6], test_strategy=TradeStrategy.objects.get(code='jiuzhuan_b'), test_freq=test_freq)
+                                                        pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
                         strategy_test_list.append(b_tnx)
-                    BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
-                    post_exp_days_pct_test(all_pct_list)
-                    log_test_status(listed_company.ts_code, 'EXP_PCT_TEST', ['jiuzhuan_b'])
-            elif strategy_code.endswith('_b'):
+                    if len(strategy_test_list) > 0:
+                        BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
+                        post_exp_days_pct_test(all_pct_list)
+                        log_test_status(listed_company.ts_code,
+                                        'EXP_PCT_TEST', test_freq, [strategy_code])
+                    print(' test on period end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
+            elif strategy_code.endswith('_s'):
                 pass
-    print(' test on period end - ' +
-          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
-
-
+    
 def test_expected_pct(strategy_name, test_freq):
     log_list = []
     listed_companies = StockNameCodeMap.objects.filter
     for company in listed_companies:
         test_exp_pct(company.stock_symbol,
                               strategy_name, test_freq)
-        log_test_status(company.stock_symbol, 'MARK_EXP_PCT', ['jiuzhuan_b'])
+        log_test_status(company.stock_symbol, 'MARK_EXP_PCT',
+                        test_freq, ['jiuzhuan_b'])
     # StockStrategyTestLog.objects.bulk_create(log_list)
 
 
@@ -108,14 +113,14 @@ def post_exp_days_pct_test(pct_list):
     pct130_mean = df[df['pct130'] != -1]['pct130'].mean(axis=0)
     pct130_max = df[df['pct130'] != -1]['pct130'].max(axis=0)
     pct_test = BStrategyOnPctTest(ts_code=ts_code,
-                                  b_10_pct_min=pct10_min, b_10_pct_mean=pct10_mean, b_10_pct_max=pct10_max,
-                                  b_20_pct_min=pct20_min, b_20_pct_mean=pct20_mean, b_20_pct_max=pct20_max,
-                                  b_30_pct_min=pct30_min, b_30_pct_mean=pct30_mean, b_30_pct_max=pct30_max,
-                                  b_50_pct_min=pct50_min, b_50_pct_mean=pct50_mean, b_50_pct_max=pct50_max,
-                                  b_80_pct_min=pct80_min, b_80_pct_mean=pct80_mean, b_80_pct_max=pct80_max,
-                                  b_100_pct_min=pct100_min, b_100_pct_mean=pct100_mean, b_100_pct_max=pct100_max,
-                                  b_130_pct_min=pct130_min, b_130_pct_mean=pct130_mean, b_130_pct_max=pct130_max,
-                                  test_strategy=test_strategy)
+                                  b_10_pct_min=pct10_min, b_10_pct_mean=round(pct10_mean,2), b_10_pct_max=pct10_max,
+                                  b_20_pct_min=pct20_min, b_20_pct_mean=round(pct20_mean,2), b_20_pct_max=pct20_max,
+                                  b_30_pct_min=pct30_min, b_30_pct_mean=round(pct30_mean,2), b_30_pct_max=pct30_max,
+                                  b_50_pct_min=pct50_min, b_50_pct_mean=round(pct50_mean,2), b_50_pct_max=pct50_max,
+                                  b_80_pct_min=pct80_min, b_80_pct_mean=round(pct80_mean,2), b_80_pct_max=pct80_max,
+                                  b_100_pct_min=pct100_min, b_100_pct_mean=round(pct100_mean,2), b_100_pct_max=pct100_max,
+                                  b_130_pct_min=pct130_min, b_130_pct_mean=round(pct130_mean,2), b_130_pct_max=pct130_max,
+                                  strategy_code=test_strategy)
     pct_test.save()
 
 
@@ -126,7 +131,7 @@ def get_pct_days_between(df, b, b_date, pct_incr):
         # pct_date = closest_date[0].strptime('%Y%m%d')
         pct_days = days_between(closest_date[0], b_date)
     except Exception as e:
-        logger.error(e)
+        # logger.error(e)
         pct_days = -1
     return pct_days
 
@@ -154,9 +159,11 @@ def get_fixed_pct_list(df, b, strategy_code):
         fixed_pct_list.append(get_pct_days_between(df, b, b_date, 2.30))
         # code
         fixed_pct_list.append(b['ts_code'])
-        fixed_pct_list.append(TradeStrategy.objects.get(code='jiuzhuan_b'))
+        # fixed_pct_list.append(TradeStrategy.objects.get(code='jiuzhuan_b'))
+        fixed_pct_list.append(strategy_code)
     except Exception as e:
-        logger.err(e)
+        # logger.error(e)
+        pass
     return fixed_pct_list
 
 
