@@ -2,6 +2,7 @@ import decimal
 import logging
 from datetime import date, datetime, timedelta
 
+import pandas as pd
 import pytz
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -102,7 +103,7 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
         try:
             exp_pct_data = []
             data_label = []
-            # rst_pct_max = []
+            quantile = []
             # rst_pct_mean = []
             # kwargs = {
             #     # '{0}'.format(exp_pct): -1,
@@ -112,12 +113,18 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
             results = BStrategyOnFixedPctTest.objects.filter(
                 strategy_code=strategy, ts_code=stock_symbol,
                 test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
+            df = pd.DataFrame(results.values())
+            qtiles = df[exp_pct].quantile([0.25,0.5,0.75])
+            # for qtile in qtiles.values():
+            for index, value in qtiles.items():
+                quantile.append(value)
+            quantile.append(round(df[exp_pct].mean(),3))
             for rst in results:
                 if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
                     data_label.append(rst['trade_date'])
                     exp_pct_data.append(rst[exp_pct])
-            return JsonResponse({'value': exp_pct_data, 'label': data_label}, safe=False)
-        except IndexError as err:
+            return JsonResponse({'value': exp_pct_data, 'label': data_label, 'quantile': quantile}, safe=False)
+        except Exception as err:
             print(err)
             logging.error(err)
             return HttpResponse(status=404)
@@ -134,12 +141,18 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
         try:
             result_pct = []
             result_label = []
+            quantile = []
             results = BStrategyTestResultOnDays.objects.filter(
                 strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
+            df = pd.DataFrame(results.values('stage_high_pct'))
+            qtiles = df.stage_high_pct.quantile([0.25,0.5,0.75])
+            for qtile in qtiles:
+                quantile.append(round(qtile, 3))
+            quantile.append(round(df.mean().stage_high_pct,3))
             for result in results:
                 result_pct.append(round(result.stage_high_pct,2))
                 result_label.append(result.trade_date)
-            return JsonResponse({'value': result_pct, 'label': result_label}, safe=False)
+            return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
             logging.error(err)
             return HttpResponse(status=404)
@@ -156,12 +169,19 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
         try:
             result_pct = []
             result_label = []
+            quantile = []
+
             results = BStrategyTestResultOnDays.objects.filter(
                 strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
+            df = pd.DataFrame(results.values('stage_low_pct'))
+            qtiles = df.stage_low_pct.quantile([0.25,0.5,0.75])
+            for qtile in qtiles:
+                quantile.append(round(qtile, 3))
+            quantile.append(round(df.mean().stage_low_pct,3))
             for result in results:
                 result_pct.append(round(result.stage_low_pct,2))
                 result_label.append(result.trade_date)
-            return JsonResponse({'value': result_pct, 'label': result_label}, safe=False)
+            return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
             logging.error(err)
             return HttpResponse(status=404)

@@ -158,7 +158,10 @@ $(function () {
                     //     $("#prfProfitRatio").removeClass("text-danger");
                     //     $("#prfProfitRatio").addClass("text-success");
                     // }
-                    // $("#prfProfitRatio").text(data.profit_ratio + '%');
+                    $("#incr25ile").text(data.quantile[0] + '%');
+                    $("#incr50ile").text(data.quantile[1] + '%');
+                    $("#incr75ile").text(data.quantile[2] + '%');
+                    $("#avgIncr").text(data.quantile[3] + '%');
                     if (incrChart) {
                         // update chart
                         incrChart.data.labels = data.label;
@@ -285,6 +288,10 @@ $(function () {
                     //     $("#prfProfitRatio").addClass("text-success");
                     // }
                     // $("#prfProfitRatio").text(data.profit_ratio + '%');
+                    $("#drop25ile").text(data.quantile[0] + '%');
+                    $("#drop50ile").text(data.quantile[1] + '%');
+                    $("#drop75ile").text(data.quantile[2] + '%');
+                    $("#avgDrop").text(data.quantile[3] + '%');
                     if (dropChart) {
                         // update chart
                         dropChart.data.labels = data.label;
@@ -397,6 +404,10 @@ $(function () {
                 method: 'GET',
                 dataType: 'json',
                 success: function (data) {
+                    $("#expPct25ile").text(data.quantile[0] + '天');
+                    $("#expPct50ile").text(data.quantile[1] + '天');
+                    $("#expPct75ile").text(data.quantile[2] + '天');
+                    $("#avgExpPct").text(data.quantile[3] + '天');
                     if (pctIncrChart) {
                         // update chart
                         pctIncrChart.data.labels = data.label;
