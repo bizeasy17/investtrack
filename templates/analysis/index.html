@@ -71,11 +71,19 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '涨幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i> <span id="maxIncrTitle">{% trans '历史最大涨幅分布' %}</span><span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
-                            <span class="text-muted small mr-1">{% trans '平均涨幅%' %}</span>
-                            <span class="text-danger" id="avgIncr"></span>
+                            <span class="text-muted small mr-1">{% trans '平均涨幅 - ' %}</span>
+                            <span class="text-danger" id="avgIncr">-</span>
                         </p>
+                    </div>
+                    <div>
+                        <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
+                        <span class="text-primary" id="incr25ile">-</span>
+                        <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
+                        <span class="text-primary" id="incr50ile">-</span>
+                        <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
+                        <span class="text-primary" id="incr75ile">-</span>
                     </div>
                     <div class="no-trans-data" id="noProfit"></div>
                     <canvas id="incrDist" height="130"></canvas>
@@ -87,11 +95,19 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center
                         justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史最大跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="text-danger font-weight-medium" id="">
-                            <span class="text-muted small mr-1">{% trans '平均跌幅%' %}</span>
-                            <span class="text-danger" id="avgDrop"></span>
+                            <span class="text-muted small mr-1">{% trans '平均跌幅 - ' %}</span>
+                            <span class="text-success" id="avgDrop">-</span>
                         </p>
+                    </div>
+                    <div>
+                        <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
+                        <span class="text-primary" id="drop25ile">-</span>
+                        <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
+                        <span class="text-primary" id="drop50ile">-</span>
+                        <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
+                        <span class="text-primary" id="drop75ile">-</span>
                     </div>
                     <div class="no-trans-data" id="noAttempt"></div>
                     <canvas id="dropDist" height="130"></canvas>
@@ -106,11 +122,19 @@
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
                         <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '预期涨幅天数' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
-                            <span class="text-muted small mr-1">{% trans '平均天数%' %}</span>
-                            <span class="text-danger" id="avgExpIncr"></span>
+                            <span class="text-muted small mr-1">{% trans '平均天数 - ' %}</span>
+                            <span class="text-danger" id="avgExpPct">-</span>
                         </p>
                     </div>
-                    <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <div>
+                        <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
+                        <span class="text-primary" id="expPct25ile">-</span>
+                        <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
+                        <span class="text-primary" id="expPct50ile">-</span>
+                        <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
+                        <span class="text-primary" id="expPct75ile">-</span>
+                    </div>
+                    <div class="btn-group btn-group-sm btn-group-toggle mt-2" data-toggle="buttons">
                         <label class="btn btn-light ">
                             <input type="radio" name="pct_period" autocomplete="off" value="pct10_period" >{% trans '10%' %}
                         </label>
@@ -133,6 +157,7 @@
                             <input type="radio" name="pct_period" autocomplete="off" value="pct130_period">{% trans '130%' %} 
                         </label>
                     </div>
+                   
                     <div class="no-trans-data" id="noProfit"></div>
                     <canvas id="expIncrPct" height="150"></canvas>
                 </div>
