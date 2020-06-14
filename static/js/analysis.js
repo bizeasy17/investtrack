@@ -36,9 +36,9 @@ $(function () {
                             '<div class="col">' +
                             '<img src="' + imgRoot + obj.code + '.png" height="90" width="90" style="border-radius: 10%">' +
                             '</div>' +
-                            '<div class="col small">' +
-                            '<div><span class="badge badge-pill badge-danger">' + obj.strategy_name + '</span><span class="small"> 成功率-' + obj.success_rate + '%</span></div>'
-                            // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';
+                            '<div class="col">' +
+                            '<div><span class="badge badge-info">' + obj.strategy_name + '</span></div>'
+                            // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';<span class="small"> 成功率-' + obj.success_rate + '%</span>
                         // '<div class="container">'+
                         //     '<div class="row">'+
                         //         '<div class="col-4 text-primary">总数</div>'+

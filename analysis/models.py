@@ -70,9 +70,21 @@ class StockHistoryDaily(BaseModel):
     chg4 = models.FloatField(
         _('与4日前变化'), blank=True, null=True)
     jiuzhuan_count_b = models.FloatField(
-        _('九转序列B'),  blank=False, null=False, default=-1)
+        _('九转序列B'),  blank=False, null=False, default=-1, db_index=True)
     jiuzhuan_count_s = models.FloatField(
-        _('九转序列S'),  blank=False, null=False, default=-1)
+        _('九转序列S'),  blank=False, null=False, default=-1, db_index=True)
+    ma25 = models.FloatField(
+        _('MA25'),  blank=True, null=True, default=-1, db_index=True)
+    slope = models.FloatField(
+        _('斜率'), blank=True, null=True, db_index=True)
+    dibu_b = models.BooleanField(
+        _('底部B'),  blank=True, null=True, default=False, db_index=True)
+    dingbu_s = models.BooleanField(
+        _('顶部S'),  blank=True, null=True, default=False, db_index=True)
+    tupo_b = models.BooleanField(
+        _('突破压力位B'),  blank=True, null=True, default=False, db_index=True)   
+    junxian_zhicheng_b = models.BooleanField(
+        _('均线支撑B'),  blank=True, null=True, default=False, db_index=True)        
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
 

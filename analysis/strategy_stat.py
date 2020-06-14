@@ -12,6 +12,7 @@ def analyze_trade_strategy():
         transactions__price__gt=F('transactions__sell_price'), transactions__is_sold=True, transactions__created_or_mod_by='human'))
     strategies = TradeStrategy.objects.exclude(parent_strategy=None).annotate(num_used=Count(
         'transactions')).annotate(num_s=num_s).annotate(num_f=num_f)
+    print(len(strategies))
     for s in strategies:
         try:
             stat = TradeStrategyStat.objects.get(
