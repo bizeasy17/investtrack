@@ -47,7 +47,7 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
     else:
         listed_companies = StockNameCodeMap.objects.filter(
             is_hist_downloaded=True, ts_code__in=ts_code_list)
-    print(len(listed_companies))
+    # print(len(listed_companies))
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
@@ -60,7 +60,7 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
                 pass
             if df is not None and len(df) > 0:
                 pre_marked_df = pre_mark_dingdi(listed_company.ts_code, df)
-                post_marked_df = post_mark_dingdi(pre_marked_df)
+                # post_marked_df = med_mark_dingdi(pre_marked_df)
                 # for index, row in post_marked_df.iterrows():
                 #     hist = object
                 #     if freq == 'D':
@@ -85,32 +85,50 @@ def pre_mark_dingdi(ts_code, df):
     标记股票的顶底
     '''
     print('pre mark dingdi on code - ' + ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    print(len(df))
+    # print(len(df))
     slope_deg3 = 0.05241
     slope_deg5 = 0.08749
+    slope = object
     day_offset = 2
+    dingdi_count = 0
+    is_dingdi = False
     slope_list = []
     dingdi_list = []
+    dingdi_count_list = []
     try:
         for index, row in df.iterrows():
             # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
-            if index - day_offset < 0 or index + day_offset > len(df):
-                slope_list.append(None)
+            if index - day_offset < 0 or index + day_offset + 1 > len(df):
                 print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
-                slope_dingdi_list.append(False)
+                # dingdi_list.append(False)
+                slope = 'NaN'
             else:
                 offset_df = df[['close']].iloc[index - day_offset : index + day_offset]
                 offset_df.reset_index(level=0, inplace=True)
                 offset_df.columns=['ds','y']
                 slope, intercept, r_value, p_value, std_err = stats.linregress(offset_df.ds, offset_df.y)
-                slope_list.append(slope)
+                # slope_list.append(slope)
+                slope = slope
                 if abs(slope) < slope_deg3:
-                    print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s ding/di slope is ' + str(round(slope,5)))
-                    slope_dingdi_list.append(True)
-                elif slope >=1:
-                    print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s zhang slope is ' + str(round(slope,5)))
+                    # dingdi_count += 1
+                    is_dingdi = True
+                    print(ts_code + ' on ' + row['trade_date'].strftime(
+                        '%Y-%m-%d') + '/s ding/di slope is ' + str(round(slope, 3)))
+                # elif slope >=1:
+                #     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s zhang slope is ' + str(round(slope,5)))
+                else:
+                    print(ts_code + ' on ' + row['trade_date'].strftime(
+                        '%Y-%m-%d') + '/s normal slope is ' + str(round(slope, 3)))
+                    # dingdi_list.append(False)
+            slope_list.append(slope)
+            dingdi_list.append(is_dingdi)
+            # dingdi_count_list.append(dingdi_count)
+        # print(len(slope_list))
+        # print(len(dingdi_list))
+        # print(len(dingdi_count_list))
         df['slope'] = slope_list
         df['dingdi'] = dingdi_list
+        # df['dingdi_count'] = dingdi_count_list
         print('pre mark dingdi end on code - ' + ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
         time.sleep(1)
@@ -118,32 +136,38 @@ def pre_mark_dingdi(ts_code, df):
     else:
         return df
 
-def post_mark_dingdi(pre_marked_df, sequence_count):
+def med_mark_dingdi(pre_marked_df, sequence_count):
     day_offset = 5
     slope_deg3 = 0.05241
     slope_deg5 = 0.08749
     dibu_b_list = []
     dingbu_s_list = []
+    dingdi_index_list = []
+    dd_idx_list = pre_marked_df.loc[pre_marked_df['dingdi'] == True].index
+    for idx in dd_idx_list:
+        pass
     for index, row in pre_marked_df.iterrows():
-        if row['slope'] is not None:
-            if abs(row['slope']) <= slope_deg3:# 斜率<3°，认为是顶或者底
-                offset_df = row[['slope']].iloc[index - sequence_count : index + day_offset]
-                if stock_hist < 0: # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
-                    # 同时九转卖点设置为0
-                    if count_b < 9:
-                        count_b += 1
-                    else:
-                        count_b = 1
-                    count_s = 0
-                else:  # 股价与往前第四个交易日比较，如果>前值，那么开始计算九转卖点，
-                    # 同时九转买点设置为0
-                    if count_s < 9:
-                        count_s += 1
-                    else:
-                        count_s = 1
-                    count_b = 0
-            dibu_b_list.append(count_b)
-            dingbu_s_list.append(count_s)
-        else:
-            dingbu_s_list.append(True)
+        if row['dingdi']:# 斜率<5°，认为是顶或者底 
+            dingdi_index_list.append(index)
+               
+            offset_df = row[['slope']].iloc[index - sequence_count : index]
+            offset_df = row[['slope']].iloc[index + 1 : index + day_offset]
+            if stock_hist < 0: # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
+                # 同时九转卖点设置为0
+                if count_b < 9:
+                    count_b += 1
+                else:
+                    count_b = 1
+                count_s = 0
+            else:  # 股价与往前第四个交易日比较，如果>前值，那么开始计算九转卖点，
+                # 同时九转买点设置为0
+                if count_s < 9:
+                    count_s += 1
+                else:
+                    count_s = 1
+                count_b = 0
+        dibu_b_list.append(count_b)
+        dingbu_s_list.append(count_s)
+    else:
+        dingbu_s_list.append(True)
     pass
