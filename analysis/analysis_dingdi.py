@@ -90,12 +90,14 @@ def pre_mark_dingdi(ts_code, df):
     slope_deg5 = 0.08749
     day_offset = 2
     slope_list = []
+    dingdi_list = []
     try:
         for index, row in df.iterrows():
             # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
             if index - day_offset < 0 or index + day_offset > len(df):
                 slope_list.append(None)
                 print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
+                slope_dingdi_list.append(False)
             else:
                 offset_df = df[['close']].iloc[index - day_offset : index + day_offset]
                 offset_df.reset_index(level=0, inplace=True)
@@ -104,9 +106,11 @@ def pre_mark_dingdi(ts_code, df):
                 slope_list.append(slope)
                 if abs(slope) < slope_deg3:
                     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s ding/di slope is ' + str(round(slope,5)))
+                    slope_dingdi_list.append(True)
                 elif slope >=1:
                     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s zhang slope is ' + str(round(slope,5)))
         df['slope'] = slope_list
+        df['dingdi'] = dingdi_list
         print('pre mark dingdi end on code - ' + ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
         time.sleep(1)
@@ -122,26 +126,22 @@ def post_mark_dingdi(pre_marked_df, sequence_count):
     dingbu_s_list = []
     for index, row in pre_marked_df.iterrows():
         if row['slope'] is not None:
-            if index - day_offset < 0 or index + day_offset > len(pre_marked_df):
-                pass
-            else:
-                if abs(row['slope']) <= slope_deg3:
-                    offset_df = pre_marked_df[['slope']].iloc[index - sequence_count : index + day_offset]
-                    if stock_hist < 0: # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
-                        # 同时九转卖点设置为0
-                        if count_b < 9:
-                            count_b += 1
-                        else:
-                            count_b = 1
-                        count_s = 0
-                    else:  # 股价与往前第四个交易日比较，如果>前值，那么开始计算九转卖点，
-                        # 同时九转买点设置为0
-                        if count_s < 9:
-                            count_s += 1
-                        else:
-                            count_s = 1
-                        count_b = 0
-            
+            if abs(row['slope']) <= slope_deg3:# 斜率<3°，认为是顶或者底
+                offset_df = row[['slope']].iloc[index - sequence_count : index + day_offset]
+                if stock_hist < 0: # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
+                    # 同时九转卖点设置为0
+                    if count_b < 9:
+                        count_b += 1
+                    else:
+                        count_b = 1
+                    count_s = 0
+                else:  # 股价与往前第四个交易日比较，如果>前值，那么开始计算九转卖点，
+                    # 同时九转买点设置为0
+                    if count_s < 9:
+                        count_s += 1
+                    else:
+                        count_s = 1
+                    count_b = 0
             dibu_b_list.append(count_b)
             dingbu_s_list.append(count_s)
         else:
