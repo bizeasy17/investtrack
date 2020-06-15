@@ -97,7 +97,7 @@ def pre_mark_dingdi(ts_code, df):
             if index - day_offset < 0 or index + day_offset > len(df):
                 slope_list.append(None)
                 print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
-                slope_dingdi_list.append(False)
+                dingdi_list.append(False)
             else:
                 offset_df = df[['close']].iloc[index - day_offset : index + day_offset]
                 offset_df.reset_index(level=0, inplace=True)
@@ -106,7 +106,7 @@ def pre_mark_dingdi(ts_code, df):
                 slope_list.append(slope)
                 if abs(slope) < slope_deg3:
                     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s ding/di slope is ' + str(round(slope,5)))
-                    slope_dingdi_list.append(True)
+                    dingdi_list.append(True)
                 elif slope >=1:
                     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s zhang slope is ' + str(round(slope,5)))
         df['slope'] = slope_list
