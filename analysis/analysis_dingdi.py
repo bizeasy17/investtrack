@@ -44,48 +44,59 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
     # end_date = date.today()
     if len(ts_code_list) == 0:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True)
+            is_hist_downloaded=True, is_marked_dingdi=False)
     else:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, ts_code__in=ts_code_list)
+            is_hist_downloaded=True, is_marked_dingdi=False, ts_code__in=ts_code_list)
     # print(len(listed_companies))
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            hist_list = []
             print(' marked dingdi on start code - ' + listed_company.ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             df = pd.DataFrame()
             if freq == 'D':
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                    'trade_date').values('id', 'trade_date', 'close', 'change', 'slope', 'dibu_b', 'dingbu_s'))
+                    'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'))
             else:
                 pass
             if df is not None and len(df) > 0:
+                # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
                 pre_marked_df = pre_mark_dingdi(listed_company.ts_code, df)
+                # 记录顶部还是底部的index，顶部的最大值的index，底部的最小值的index
                 dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list = med_mark_dingdi(
-                    pre_marked_df, compare_offset)
+                    pre_marked_df, compare_offset, listed_company.ts_code,)
+                # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
                 post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
-                                 dibu_b_list, ding_max_idx_list, di_min_idx_list)
-                print(post_marked_df.tail(50))
-                # for index, row in post_marked_df.iterrows():
-                #     hist = object
-                #     if freq == 'D':
-                #         hist = StockHistoryDaily(pk=row['id'])
-                #     else:
-                #         pass
-                #     hist.dibu_b = row['dibu_b']
-                #     hist.dingbu_s = row['dingbu_s']
-                #     hist_list.append(hist)
-                # if freq == 'D':
-                #     StockHistoryDaily.objects.bulk_update(hist_list, ['slope','dibu_b','dingbu_s'])
-                # else:
-                #     pass
-                # log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['dingbu_s','dibu_b'])
-                # listed_company.is_marked_dingdi = True
-                # listed_company.save()
+                                 dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
+                # print(post_marked_df.tail(50))
+                for index, row in post_marked_df.iterrows():
+                    hist = object
+                    if freq == 'D':
+                        hist = StockHistoryDaily(pk=row['id'])
+                    else:
+                        pass
+                    hist.dibu_b = row['dibu_b']
+                    hist.dingbu_s = row['dingbu_s']
+                    hist.is_dingdi_end = row['is_dingdi_end']
+                    hist.dingdi_count = row['dingdi_count']
+                    hist.ding_max = row['ding_max']
+                    hist.di_min = row['di_min']
+                    hist.slope = row['slope']
+                    hist_list.append(hist)
+                if freq == 'D':
+                    StockHistoryDaily.objects.bulk_update(hist_list, ['slope','dibu_b','dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'])
+                else:
+                    pass
+                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['dingbu_s','dibu_b'])
+                listed_company.is_marked_dingdi = True
+                listed_company.save()
                 print(' marked dingdi on end code - ' + listed_company.ts_code +
                       ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                hist_list.clear() # 清空已经保存的记录列表
+    else:
+        print('dingdi for code - ' + str(ts_code_list) +
+                      ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)
 
 
@@ -93,12 +104,12 @@ def pre_mark_dingdi(ts_code, df):
     '''
     标记股票的顶底
     '''
-    print('pre mark dingdi on code - ' + ts_code + ',' +
+    print('pre mark dingdi started on code - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     # print(len(df))
     slope_deg3 = 0.05241
     slope_deg5 = 0.08749
-    slope = object
+    slope = float()
     day_offset = 2
     dingdi_count = 0
     is_dingdi = False
@@ -106,7 +117,7 @@ def pre_mark_dingdi(ts_code, df):
     slope_list = []
     dingdi_list = []
     dingdi_count_list = []
-    dingdi_last_list = []
+    dingdi_end_list = []
     try:
         for index, row in df.iterrows():
             # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
@@ -114,9 +125,9 @@ def pre_mark_dingdi(ts_code, df):
                 # print(ts_code + ' on ' +
                 #       row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
                 # dingdi_list.append(False)
-                slope = 'NaN'
+                slope = None
                 dingdi_count = 0
-                dingdi_last_list.append(0)
+                dingdi_end_list.append(0)
             else:
                 offset_df = df[['close']].iloc[index -
                                                day_offset: index + day_offset]
@@ -125,7 +136,7 @@ def pre_mark_dingdi(ts_code, df):
                 slope, intercept, r_value, p_value, std_err = stats.linregress(
                     offset_df.ds, offset_df.y)
                 # slope_list.append(slope)
-                slope = slope
+                slope = round(slope, 3)
                 if abs(slope) < slope_deg3:
                     # if dingdi_count == 0:
                     #     start = True
@@ -133,7 +144,7 @@ def pre_mark_dingdi(ts_code, df):
                     is_dingdi = True
                     # print(ts_code + ' on ' + row['trade_date'].strftime(
                     #     '%Y-%m-%d') + '/s ding/di num:' + str(dingdi_count) + ' slope is ' + str(round(slope, 3)))
-                    dingdi_last_list.append(0)
+                    dingdi_end_list.append(0)
 
                 # elif slope >=1:
                 #     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s zhang slope is ' + str(round(slope,5)))
@@ -141,11 +152,11 @@ def pre_mark_dingdi(ts_code, df):
                     if dingdi_count > 0:
                         # index - 1 # 顶底最后一个元素的index
                         # dingdi_count # 符合顶底要求的个数
-                        dingdi_last_list[len(dingdi_last_list)-1] = 1
+                        dingdi_end_list[len(dingdi_end_list)-1] = 1
                         # print(ts_code + ' on ' + row['trade_date'].strftime(
                         #     '%Y-%m-%d') + '/s ding/di index:' + str(index-1) + ' .num:' + str(dingdi_count) + ' slope is ' + str(round(slope, 3)))
 
-                    dingdi_last_list.append(0)
+                    dingdi_end_list.append(0)
                     dingdi_count = 0
                     # print(ts_code + ' on ' + row['trade_date'].strftime(
                     #     '%Y-%m-%d') + '/s normal slope is ' + str(round(slope, 3)))
@@ -161,7 +172,7 @@ def pre_mark_dingdi(ts_code, df):
         df['slope'] = slope_list
         # df['dingdi'] = dingdi_list
         df['dingdi_count'] = dingdi_count_list
-        df['is_dingdi_end'] = dingdi_last_list
+        df['is_dingdi_end'] = dingdi_end_list
         print('pre mark dingdi end on code - ' + ts_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
@@ -171,7 +182,7 @@ def pre_mark_dingdi(ts_code, df):
         return df
 
 
-def med_mark_dingdi(pre_marked_df, compare_offset):
+def med_mark_dingdi(pre_marked_df, compare_offset, ts_code):
     '''
     sample input
     000001.SZ on 2020-05-18/s ding/di num:1 slope is 0.015
@@ -186,7 +197,7 @@ def med_mark_dingdi(pre_marked_df, compare_offset):
     000001.SZ on 2020-05-28/s ding/di num:3 slope is -0.005
     000001.SZ on 2020-05-29/s ding/di index:6905 .num:3 slope is 0.089
     '''
-    print('med mark dingdi start ' +
+    print('med mark dingdi start  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     day_offset = 5
     slope_deg3 = 0.05241
@@ -199,7 +210,7 @@ def med_mark_dingdi(pre_marked_df, compare_offset):
     dingbu_s_list = []
     dingdi_index_list = []
     last_idx_list = pre_marked_df.loc[pre_marked_df['is_dingdi_end'] == 1].index
-    print(last_idx_list)
+    # print(last_idx_list)
     try:
         for idx in last_idx_list:
             count = int(pre_marked_df['dingdi_count'].iloc[idx])
@@ -232,17 +243,17 @@ def med_mark_dingdi(pre_marked_df, compare_offset):
                 # pass
     except Exception as e:
         print(e)
-    print('post mark dingdi end ' +
+    print('med mark dingdi end  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    print('ding max:')
-    print(ding_max_list)
-    print('di min:')
-    print(di_min_list)
+    # print('ding max:')
+    # print(ding_max_list)
+    # print('di min:')
+    # print(di_min_list)
     return dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list,
 
 
-def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max_idx_list, di_min_idx_list):
-    print('post mark dingdi start ' +
+def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max_idx_list, di_min_idx_list, ts_code):
+    print('post mark dingdi start  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     dingbu_s_list = []
     dibu_b_list = []
@@ -272,7 +283,7 @@ def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max
     med_marked_df['dibu_b'] = dibu_b_list
     med_marked_df['ding_max'] = ding_max_list
     med_marked_df['di_min'] = di_min_list
-    print('post mark dingdi end ' +
+    print('post mark dingdi end  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return med_marked_df
 
