@@ -37,7 +37,7 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
     '''
-    print(ts_code_list)
+    # print(ts_code_list)
     # end_date = date.today()
     periods = [10, 20, 30, 50, 80]
     compare_offset = 2
@@ -192,7 +192,9 @@ def med_mark_dingdi(pre_marked_df, compare_offset):
     slope_deg3 = 0.05241
     slope_deg5 = 0.08749
     ding_max_idx_list = []
+    ding_max_list = []
     di_min_idx_list = []
+    di_min_list = []
     dibu_b_list = []
     dingbu_s_list = []
     dingdi_index_list = []
@@ -200,32 +202,42 @@ def med_mark_dingdi(pre_marked_df, compare_offset):
     print(last_idx_list)
     try:
         for idx in last_idx_list:
-            count = pre_marked_df['dingdi_count'].iloc[idx]
+            count = int(pre_marked_df['dingdi_count'].iloc[idx])
             left_slope = round(
                 pre_marked_df['slope'].iloc[idx - count - compare_offset: idx - count].mean(), 3)
             right_slope = round(
                 pre_marked_df['slope'].iloc[idx + 1: idx + compare_offset].mean(), 3)
-            print('left slope is' + str(left_slope) + ', right slope is ' + str(right_slope))
+            # print('left slope is' + str(left_slope) + ', right slope is ' + str(right_slope))
+            # idx = 6878, count = 11
+            # dingdi_idx = [6867(6878 - 11), 6878]
             dingdi_idx = [id for id in range(
-                                idx - count, idx)]
+                                idx - count + 1, idx + 1)]
             if left_slope > 0 and right_slope < 0:
                 # ding
                 for i in dingdi_idx:
                     dingbu_s_list.append(i)
-                ding_max_idx = pre_marked_df.iloc[dingdi_idx]['slope'].astype('float64').idxmax(axis=0)
+                ding_max_idx = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').idxmax(axis=0)
+                ding_max = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').max(axis=0)
                 ding_max_idx_list.append(ding_max_idx)
+                ding_max_list.append(round(ding_max,3))
                 # pass
             elif left_slope < 0 and right_slope > 0:
                 # di
                 for i in dingdi_idx:
                     dibu_b_list.append(i)
-                di_min_idx = pre_marked_df.iloc[dingdi_idx]['slope'].astype('float64').idxmin(axis=0)
+                di_min_idx = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').idxmin(axis=0)
+                di_min = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').min(axis=0)
                 di_min_idx_list.append(di_min_idx)
+                di_min_list.append(round(di_min,3))
                 # pass
     except Exception as e:
         print(e)
     print('post mark dingdi end ' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    print('ding max:')
+    print(ding_max_list)
+    print('di min:')
+    print(di_min_list)
     return dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list,
 
 

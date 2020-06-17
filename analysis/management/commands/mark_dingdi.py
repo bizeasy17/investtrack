@@ -33,7 +33,7 @@ class Command(BaseCommand):
         if ts_code is not None and freq is not None:
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
-                print(ts_code_list)
+                # print(ts_code_list)
                 mark_dingdi_listed(freq, ts_code_list)
         elif freq is None:
             print('freq must be provided')
