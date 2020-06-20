@@ -2,7 +2,9 @@
 {% load static i18n %}
 {% load crispy_forms_tags thumbnail humanize %}
 
-{% block title %}{% endblock %}
+{% block title %}
+{% trans '投资策略分析' %}
+{% endblock %}
 
 {% block head %}
 {% endblock %}
@@ -14,6 +16,8 @@
         <div class="col-lg-3 grid-margin stretch-card">
             <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
             <input type="hidden"  id="hiddenTsCode"/>
+            <input type="hidden"  id="hiddenStockName"/>
+
         </div>
         {% comment %} 策略列表 {% endcomment %}
         <div class="col-lg-5">
@@ -53,9 +57,9 @@
         
     </div>
     <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_b"/>
-
-    <hr/>
-        
+    <input type="hidden"  id="hiddenStrategyName"/>
+    <input type="hidden"  id="hiddenStrategyBtnId"/>
+    <hr/>     
     {% comment %} 
     策略分析股票历史数据模拟 
     可选分析周期: 60日，120日，240日
@@ -66,16 +70,22 @@
     5. 买入/卖出成功率（历史记录）
 
     {% endcomment %}
+    <!-- <div><i class="fa fa-chart-line"></i>{% trans '当前分析策略为 - ' %} </div> -->
+    <hr/>
     <div class="row flex-grow">
         <div class="col-md-6 stretch-card mb-4">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> <span id="maxIncrTitle">{% trans '历史最大涨幅分布' %}</span><span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i> <span id="maxIncrTitle">{% trans '历史涨幅分布' %}</span><span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
                             <span class="text-muted small mr-1">{% trans '平均涨幅 - ' %}</span>
                             <span class="text-danger" id="avgIncr">-</span>
                         </p>
+                    </div>
+                    <div class="text-muted small">
+                        {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
+                        {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
                     </div>
                     <div>
                         <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
@@ -95,11 +105,15 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center
                         justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史最大跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="text-danger font-weight-medium" id="">
                             <span class="text-muted small mr-1">{% trans '平均跌幅 - ' %}</span>
                             <span class="text-success" id="avgDrop">-</span>
                         </p>
+                    </div>
+                    <div class="text-muted small" >
+                        {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
+                        {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
                     </div>
                     <div>
                         <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
@@ -120,11 +134,15 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '预期涨幅天数' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '达到预期涨幅天数' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
                         <p class="font-weight-medium">
                             <span class="text-muted small mr-1">{% trans '平均天数 - ' %}</span>
                             <span class="text-danger" id="avgExpPct">-</span>
                         </p>
+                    </div>
+                    <div class="text-muted small" >
+                        {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
+                        {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
                     </div>
                     <div>
                         <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
