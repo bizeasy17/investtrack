@@ -10,11 +10,26 @@ $(function () {
 
     var showAnalysisHist = function () {
         // var strategy = "jz_b";
-        // alert('clicked - ' + $(this).val())
+        console.log($('#hiddenStrategyBtnId').val());
+        $(this).removeClass("btn-info");
+        $(this).addClass("btn-danger");
+        if ($('#hiddenStrategyBtnId').val()) {
+            $("#" + $('#hiddenStrategyBtnId').val()).removeClass("btn-danger");
+            $("#" + $('#hiddenStrategyBtnId').val()).addClass("btn-info");
+        }
+
+        // var strategyAnalyzeBtns = document.getElementsByName("show-analysis-hist");
         var tsCode = $('#hiddenTsCode').val();
+        var stockName = $('#hiddenStockName').val();
         var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
+        var strategyCode = $(this).val().split(",")[0];
+        var strategyName = $(this).val().split(",")[1];
+        $('#hiddenStrategyCode').val(strategyCode);
+        $('#hiddenStrategyName').val(strategyName);
+        $('#hiddenStrategyBtnId').val($(this).attr("id"))
+        $(".cur-strategy").text(strategyName);
+        $(".cur-stock").text(stockName + ' - ' + tsCode);
         // var freq = "D";
         showExpectedPctChart(tsCode, strategyCode, pctPeriod);
         showHighPeriodChart(tsCode, strategyCode, period);
@@ -38,11 +53,11 @@ $(function () {
                             '</div>' +
                             '<div class="col">' +
                             '<div><span class="badge badge-info">' + obj.strategy_name + '</span></div>'
-                            // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';<span class="small"> 成功率-' + obj.success_rate + '%</span>
+                        // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';<span class="small"> 成功率-' + obj.success_rate + '%</span>
                         // '<div class="container">'+
                         //     '<div class="row">'+
                         //         '<div class="col-4 text-primary">总数</div>'+
-                        //         '<div class="col-4 text-primary">成功</div>'+
+                        //         '<div class="col-4 text-primary">成功</div>'+00000
                         //         '<div class="col-4 text-primary">失败</div>'+
                         //         '<div class="w-100"></div>'+
                         //         '<div class="col-4 text-primary">'+
@@ -61,7 +76,7 @@ $(function () {
                         // }else{
                         //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
                         // }
-                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + '"><small><i class="fa fa-eye">历史分析</i></small></button>';
+                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small><i class="fa fa-eye">历史分析</i></small></button>';
                         strategiesTag += '</div></div>';
                         strategyDiv.append(strategiesTag);
                         strategiesTag = "";
@@ -125,10 +140,14 @@ $(function () {
         var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
         var strategyCode = $('#hiddenStrategyCode').val();
+        var strategyName = $('#hiddenStrategyName').val();
         $('#hiddenTsCode').val(tsCode);
-        // showExpectedPctChart(tsCode, strategyCode, pctPeriod);
-        // showHighPeriodChart(tsCode, strategyCode, period);
-        // showLowPeriodDistChart(tsCode, strategyCode, period);
+        $('#hiddenStockName').val(showName);
+        $(".cur-strategy").text(strategyName);
+        $(".cur-stock").text(tsCode);
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
     // 涨幅分布

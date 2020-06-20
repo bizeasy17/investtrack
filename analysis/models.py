@@ -350,52 +350,44 @@ class BStrategyOnFixedPctTest(BaseModel):
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
-# class StrategyOnDaysTest(BaseModel):
-#     PERIOD_CHOICE = {
-#         ('M', _('月线')),
-#         ('W', _('周线')),
-#         ('D', _('日线')),
-#         ('60', _('60分钟')),
-#         ('30', _('30分钟')),
-#         ('15', _('15分钟')),
-#     }
-#     DURATION_CHOICE = {
-#         ('10', _('10')),
-#         ('20', _('20')),
-#         ('30', _('30')),
-#         ('50', _('50')),
-#         ('80', _('80')),
-#         ('130', _('130')),
-#     }
-#     name = models.CharField(_('策略名'), max_length=30)
-#     applied_period = models.CharField(
-#         _('应用周期'), choices=PERIOD_CHOICE, max_length=2, blank=True, null=False, default='D')
-#     duration = models.CharField(
-#         _('分析期间'), choices=DURATION_CHOICE, max_length=2, blank=True, null=False, default='20')
-#     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
-#                                 on_delete=models.CASCADE)
-#     ts_code = models.CharField(
-#         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
-#     b_max_increase = models.FloatField(
-#         _('+最大涨幅'), blank=True, null=True)
-#     b_max_increase_date = models.DateField(
-#         _('+最大涨幅日期'), blank=True, null=True)
-#     b_max_drop = models.FloatField(
-#         _('+最大跌幅'), blank=True, null=True)
-#     b_max_drop_date = models.DateField(
-#         _('+最大跌幅日期'), blank=True, null=True)
-#     b_mean_increase = models.FloatField(
-#         _('+平均涨幅'), blank=True, null=True)
-#     b_mean_drop = models.FloatField(
-#         _('+平均跌幅'), blank=True, null=True)
-#     s_max_increase = models.FloatField(
-#         _('-最大涨幅'), blank=True, null=True)
-#     s_max_increase_date = models.DateField(
-#         _('-最大涨幅日期'), blank=True, null=True)
-#     s_max_drop = models.FloatField(
-#         _('-最大跌幅'), blank=True, null=True)
-#     s_max_drop_date = models.DateField(
-#         _('-最大跌幅日期'), blank=True, null=True)
+class FocusAreaDuration(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    open	float	开盘价
+    high	float	最高价
+    low	float	最低价
+    close	float	收盘价
+    pre_close	float	昨收价
+    change	float	涨跌额
+    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    vol	float	成交量 （手）
+    amount	float	成交额 （千元）
+    '''
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    duration = models.BooleanField(
+        _('周期长度'), blank=True, null=True, default=False)
+    jiuzhuan_count = models.FloatField(
+        _('九转点'), blank=True, null=True, default=False)
+    freq = models.CharField(
+        _('分析周期'), max_length=5, blank=False, null=False, default='D')
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+
+    def __str__(self):
+        return self.ts_code
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('关注区周期长度')
+        verbose_name_plural = verbose_name
 
 
 class TradeStrategyStat(BaseModel):
