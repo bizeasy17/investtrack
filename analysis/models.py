@@ -74,25 +74,29 @@ class StockHistoryDaily(BaseModel):
     jiuzhuan_count_s = models.FloatField(
         _('九转序列S'),  blank=False, null=False, default=-1, db_index=True)
     ma25 = models.FloatField(
-        _('MA25'),  blank=True, null=True, default=-1, db_index=True)
+        _('MA25'),  blank=True, null=True, default=-1)
     slope = models.FloatField(
-        _('斜率'), blank=True, null=True, db_index=True)
+        _('斜率'), blank=True, null=True)
     dingdi_count = models.IntegerField(
-        _('顶底序列'),  blank=True, null=True, default=0, db_index=True)
+        _('顶底序列'),  blank=True, null=True, default=0)
     dibu_b = models.IntegerField(
-        _('底部B?'),  blank=True, null=True, default=0, db_index=True)
+        _('底部B?'),  blank=True, null=True, default=0)
     di_min = models.IntegerField(
-        _('底部最低价?'),  blank=True, null=True, default=0, db_index=True)
+        _('底部最低价?'),  blank=True, null=True, default=0)
     dingbu_s = models.IntegerField(
-        _('顶部S?'),  blank=True, null=True, default=0, db_index=True)
+        _('顶部S?'),  blank=True, null=True, default=0)
     ding_max = models.IntegerField(
-        _('顶部最高价?'),  blank=True, null=True, default=0, db_index=True)
+        _('顶部最高价?'),  blank=True, null=True, default=0)
     is_dingdi_end = models.IntegerField(
-        _('顶底结束点?'),  blank=True, null=True, default=0, db_index=True)
+        _('顶底结束点?'),  blank=True, null=True, default=0)
     tupo_b = models.IntegerField(
-        _('突破压力位B?'),  blank=True, null=True, default=0, db_index=True)   
-    junxian_zhicheng_b = models.IntegerField(
-        _('均线支撑B?'),  blank=True, null=True, default=0, db_index=True)        
+        _('突破压力位B?'),  blank=True, null=True, default=0)   
+    ma25_zhicheng_b = models.IntegerField(
+        _('均线支撑B?'),  blank=True, null=True, default=0)  
+    ma25_tupo_b = models.IntegerField(
+        _('均线突破B?'),  blank=True, null=True, default=0) 
+    ma25_diepo_s = models.IntegerField(
+        _('均线跌破S?'),  blank=True, null=True, default=0)      
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
 

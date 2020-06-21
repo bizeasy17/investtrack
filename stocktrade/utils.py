@@ -34,7 +34,7 @@ def get_stock_queryset_for_trade(user, account_id, stock_symbol='sh',):
     trade_accounts = TradeAccount.objects.filter(trader=user)
     position = Positions.objects.filter(
         trader=user, stock_code=stock_symbol, trade_account=account_id)
-    strategies = TradeStrategy.objects.all()
+    strategies = TradeStrategy.objects.exclude(parent_strategy=None)
     trade_type = 'b'  # default trade type is buy. self.kwargs['type']
     stock_info_list = get_stockinfo_for_chart(stock_symbol)
     queryset = {
