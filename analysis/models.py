@@ -87,16 +87,38 @@ class StockHistoryDaily(BaseModel):
         _('顶部S?'),  blank=True, null=True, default=0)
     ding_max = models.IntegerField(
         _('顶部最高价?'),  blank=True, null=True, default=0)
+    ding_die_1pct = models.FloatField(
+        _('顶部下跌1%'), blank=True, null=True)
+    ding_die_2pct = models.FloatField(
+        _('顶部下跌2%'), blank=True, null=True)
+    ding_die_3pct = models.FloatField(
+        _('顶部下跌3%'), blank=True, null=True)
+    ding_die_5pct = models.FloatField(
+        _('顶部下跌5%'), blank=True, null=True)
+    ding_die_8pct = models.FloatField(
+        _('顶部下跌8%'), blank=True, null=True)
+    ding_die_13pct = models.FloatField(
+        _('顶部下跌13%'), blank=True, null=True)
+    ding_die_21pct = models.FloatField(
+        _('顶部下跌21%'), blank=True, null=True)
+    ding_die_34pct = models.FloatField(
+        _('顶部下跌34%'), blank=True, null=True)
+    ding_die_56pct = models.FloatField(
+        _('顶部下跌56%'), blank=True, null=True)
+    ding_die_90pct = models.FloatField(
+        _('顶部下跌90%'), blank=True, null=True)
     is_dingdi_end = models.IntegerField(
-        _('顶底结束点?'),  blank=True, null=True, default=0)
+        _('顶底结束点?'),  blank=True, null=True)
     tupo_b = models.IntegerField(
-        _('突破压力位B?'),  blank=True, null=True, default=0)   
+        _('突破压力位B?'),  blank=True, null=True)   
     ma25_zhicheng_b = models.IntegerField(
-        _('均线支撑B?'),  blank=True, null=True, default=0)  
+        _('MA25均线支撑B?'),  blank=True, null=True)  
     ma25_tupo_b = models.IntegerField(
-        _('均线突破B?'),  blank=True, null=True, default=0) 
+        _('MA25均线突破B?'),  blank=True, null=True) 
     ma25_diepo_s = models.IntegerField(
-        _('均线跌破S?'),  blank=True, null=True, default=0)      
+        _('MA25均线跌破S?'),  blank=True, null=True)
+    ma25_yali_s = models.IntegerField(
+        _('MA25压力S?'),  blank=True, null=True)       
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
 
