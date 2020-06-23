@@ -70,9 +70,9 @@ class StockHistoryDaily(BaseModel):
     chg4 = models.FloatField(
         _('与4日前变化'), blank=True, null=True)
     jiuzhuan_count_b = models.FloatField(
-        _('九转序列B'),  blank=False, null=False, default=-1, db_index=True)
+        _('九转序列B'),  blank=False, null=False, default=-1)
     jiuzhuan_count_s = models.FloatField(
-        _('九转序列S'),  blank=False, null=False, default=-1, db_index=True)
+        _('九转序列S'),  blank=False, null=False, default=-1)
     ma25 = models.FloatField(
         _('MA25'),  blank=True, null=True, default=-1)
     slope = models.FloatField(
