@@ -18,6 +18,9 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      BStrategyTestResultOnDays, TradeStrategyStat)
 
+from analysis.analysis_tupo_b_cp import mark_tupo_yali_listed
+
+
 logger = logging.getLogger(__name__)
 
 # Create your views here.
@@ -202,3 +205,13 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
     用户需要授权可以使用策略
     '''
     pass
+
+def tp_test(request, stock_symbol, freq):
+    # end_date = date.today()
+    symbol_list = stock_symbol.split(',')
+    res = mark_tupo_yali_listed(freq, symbol_list)
+    if res:
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=500)
+

@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import time
+import math
 import logging
 from scipy import stats
 from datetime import date, datetime, timedelta
@@ -25,159 +26,91 @@ logger = logging.getLogger(__name__)
 #     # print(df.head())
 
 
-def recon_strategy_usage():
-    '''
-    同步策略在交易中的使用情况
-    '''
-    pass
-
-
-def mark_zhicheng_b_listed(freq, ts_code_list=[]):
+def mark_junxian_zhicheng_listed(freq, ts_code_list=[]):
     '''
     对于未标注支撑位买入的的上市股票标记，
     每次运行只是增量上市股票标记
     算法
-    1. 查询获得所有底部买点（低点？）index
-    2. 在给定的时间段periods = [10, 20, 30, 50, 80]内，向后搜索指定时间段内低点，
-        2.1 如果在选定周期内的前低，价格波动在某一范围内（3%，5%，8%？），则当前底部买点就可标记为支撑位
+    1. 查询获得所有顶部卖点（高点？）index
+    2. 循环所有高点，
+        2.1 先前取一个高点，获取两个高点之间的所有slope>0 & 价格高于前高的点，
+        2.2 如果在选定周期内的前低，价格高于前高一范围内（>3%，5%，8%？），则当前底部买点就可标记为突破点
     '''
     # print(ts_code_list)
     # end_date = date.today()
-    periods = [10, 20, 30, 50, 80]
+    # periods = [10, 20, 30, 50, 80]
+    price_chg_3pct = 0.03
+    price_chg_5pct = 0.05
     compare_offset = 2
     # end_date = date.today()
     if len(ts_code_list) == 0:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_dingdi=False)
+            is_hist_downloaded=True, is_marked_tupo=None)
     else:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_dingdi=False, ts_code__in=ts_code_list)
+            is_hist_downloaded=True, is_marked_tupo=None, ts_code__in=ts_code_list)
     # print(len(listed_companies))
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            print(' marked dingdi on start code - ' + listed_company.ts_code +
+            print(' marked junxian zhicheng on start code - ' + listed_company.ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             df = pd.DataFrame()
             if freq == 'D':
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                    'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'))
+                    'trade_date').values('id', 'trade_date', 'close', 'slope', 'ma25'))
             else:
                 pass
             if df is not None and len(df) > 0:
                 # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
-                pre_marked_df = pre_mark_dingdi(listed_company.ts_code, df)
-                # 记录顶部还是底部的index，顶部的最大值的index，底部的最小值的index
-                dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list = med_mark_dingdi(
-                    pre_marked_df, compare_offset, listed_company.ts_code,)
-                # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
-                post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
-                                 dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
+                pre_marked_df = mark_zhicheng(listed_company.ts_code, df, price_chg_3pct)
                 # print(post_marked_df.tail(50))
-                for index, row in post_marked_df.iterrows():
+                for index, row in pre_marked_df.iterrows():
                     hist = object
                     if freq == 'D':
                         hist = StockHistoryDaily(pk=row['id'])
                     else:
                         pass
-                    hist.dibu_b = row['dibu_b']
-                    hist.dingbu_s = row['dingbu_s']
-                    hist.is_dingdi_end = row['is_dingdi_end']
-                    hist.dingdi_count = row['dingdi_count']
-                    hist.ding_max = row['ding_max']
-                    hist.di_min = row['di_min']
-                    hist.slope = row['slope']
+                    # print(type(row['tupo_b']))
+                    hist.tupo_b = row['tupo_b'] if not math.isnan(row['tupo_b']) else None
                     hist_list.append(hist)
                 if freq == 'D':
-                    StockHistoryDaily.objects.bulk_update(hist_list, ['slope','dibu_b','dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'])
+                    StockHistoryDaily.objects.bulk_update(hist_list, ['tupo_b'])
                 else:
                     pass
-                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['dingbu_s','dibu_b'])
-                listed_company.is_marked_dingdi = True
+                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['tupo_b'])
+                listed_company.is_marked_wm = True
                 listed_company.save()
-                print(' marked dingdi on end code - ' + listed_company.ts_code +
+                print(' marked tupo b on end code - ' + listed_company.ts_code +
                       ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 hist_list.clear() # 清空已经保存的记录列表
     else:
-        print('dingdi for code - ' + str(ts_code_list) +
+        print('mark tupo b for code - ' + str(ts_code_list) +
                       ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)
 
 
-def pre_mark_dingdi(ts_code, df):
+def mark_zhicheng(ts_code, df, price_chg_pct):
     '''
     标记股票的顶底
     '''
-    print('pre mark dingdi started on code - ' + ts_code + ',' +
+    print('pre mark tupo b started on code - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    # print(len(df))
-    slope_deg3 = 0.05241
-    slope_deg5 = 0.08749
-    slope = float()
-    day_offset = 2
-    dingdi_count = 0
-    is_dingdi = False
-    is_end = False
-    slope_list = []
-    dingdi_list = []
-    dingdi_count_list = []
-    dingdi_end_list = []
     try:
-        for index, row in df.iterrows():
-            # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
-            if index - day_offset < 0 or index + day_offset + 1 > len(df):
-                # print(ts_code + ' on ' +
-                #       row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
-                # dingdi_list.append(False)
-                slope = None
-                dingdi_count = 0
-                dingdi_end_list.append(0)
-            else:
-                offset_df = df[['close']].iloc[index -
-                                               day_offset: index + day_offset]
-                offset_df.reset_index(level=0, inplace=True)
-                offset_df.columns = ['ds', 'y']
-                slope, intercept, r_value, p_value, std_err = stats.linregress(
-                    offset_df.ds, offset_df.y)
-                # slope_list.append(slope)
-                slope = round(slope, 3)
-                if abs(slope) < slope_deg3:
-                    # if dingdi_count == 0:
-                    #     start = True
-                    dingdi_count += 1
-                    is_dingdi = True
-                    # print(ts_code + ' on ' + row['trade_date'].strftime(
-                    #     '%Y-%m-%d') + '/s ding/di num:' + str(dingdi_count) + ' slope is ' + str(round(slope, 3)))
-                    dingdi_end_list.append(0)
+        idx_list = df.loc[df['ding_max'] == 1].index
+        idx_prev = -1
+        for id in idx_list:
+            if idx_prev != -1: # slope >0 means 上涨趋势
+                for idx_bwt in range(idx_prev, id):
+                    chg_pct = abs(df.loc[idx_bwt].close > df.loc[id].close) / df.loc[id].close
+                    if df.loc[idx_bwt].slope > 0 and chg_pct >= price_chg_pct:
+                        # pass
+                        # print(df.loc[idx_bwt].trade_date)
+                        # print(df.loc[idx_bwt].close)
 
-                # elif slope >=1:
-                #     print(ts_code + ' on ' + row['trade_date'].strftime('%Y-%m-%d') + '/s zhang slope is ' + str(round(slope,5)))
-                else:
-                    if dingdi_count > 0:
-                        # index - 1 # 顶底最后一个元素的index
-                        # dingdi_count # 符合顶底要求的个数
-                        dingdi_end_list[len(dingdi_end_list)-1] = 1
-                        # print(ts_code + ' on ' + row['trade_date'].strftime(
-                        #     '%Y-%m-%d') + '/s ding/di index:' + str(index-1) + ' .num:' + str(dingdi_count) + ' slope is ' + str(round(slope, 3)))
-
-                    dingdi_end_list.append(0)
-                    dingdi_count = 0
-                    # print(ts_code + ' on ' + row['trade_date'].strftime(
-                    #     '%Y-%m-%d') + '/s normal slope is ' + str(round(slope, 3)))
-                    # dingdi_list.append(False)
-            slope_list.append(slope)
-            dingdi_list.append(is_dingdi)
-            dingdi_count_list.append(dingdi_count)
-
-        # print(len(slope_list))
-        # print(len(dingdi_list))
-        # print(len(dingdi_count_list))
-        # print(len(end_dingdi_list))
-        df['slope'] = slope_list
-        # df['dingdi'] = dingdi_list
-        df['dingdi_count'] = dingdi_count_list
-        df['is_dingdi_end'] = dingdi_end_list
-        print('pre mark dingdi end on code - ' + ts_code +
+                        df.loc[idx_bwt, 'tupo_b'] = 1
+            idx_prev = id
+        print('pre tupo b end on code - ' + ts_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
         time.sleep(1)

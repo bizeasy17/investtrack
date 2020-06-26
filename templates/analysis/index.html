@@ -20,7 +20,7 @@
 
         </div>
         {% comment %} 策略列表 {% endcomment %}
-        <div class="col-lg-5">
+        <div class="col-lg-3">
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                 {% if analysis %}
                 {% for ctg in analysis.strategy_ctgs %}
@@ -31,8 +31,8 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+        <div class="col-lg-6">
+            <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
                 <span class="mt-1 mr-1 small">{% trans '持仓周期' %}</span>
                 <label class="btn btn-light active">
                     <input type="radio" name="period" id="p10" autocomplete="off" value="10" checked>{% trans '10天' %}
@@ -48,6 +48,18 @@
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="period" id="p80" autocomplete="off" value="80" >{% trans '80天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="130" >{% trans '130天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="210" >{% trans '210天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="350" >{% trans '350天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="560" >{% trans '560天' %} 
                 </label>
             </div>
         </div>

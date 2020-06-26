@@ -57,7 +57,11 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 idx_list = df.loc[df['di_min'] == 1].index
             elif strategy_code == 'dingbu_s':
                 idx_list = df.loc[df['ding_max'] == 1].index
-            elif strategy_code == 'tupo_b':
+            elif strategy_code == 'w_di':
+                idx_list = df.loc[df['w_di'] == 1].index
+            elif strategy_code == 'm_ding':
+                idx_list = df.loc[df['m_ding'] == 1].index
+            elif strategy_code == 'tupo_yali_b':
                 idx_list = df.loc[df['tupo_b'] == 1].index
             elif strategy_code == 'ma25_zhicheng_b':
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
@@ -68,10 +72,10 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 all_pct_list.append(pct_list)
                 # 买入点
                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date, open=b.open, high=b.high,
-                                                low=b.low, close=b.close, pre_close=b.pre_close, change=b.change, pct_chg=b.pct_chg, vol=b.vol,
-                                                amount=b.amount, pct10_period=pct_list[
-                                                    0], pct20_period=pct_list[1], pct30_period=pct_list[2],
+                b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date, 
+                                                # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close, 
+                                                # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount, 
+                                                pct10_period=pct_list[0], pct20_period=pct_list[1], pct30_period=pct_list[2],
                                                 pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
                                                 pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
                 strategy_test_list.append(b_tnx)
@@ -80,7 +84,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 post_exp_days_pct_test(all_pct_list)
                 log_test_status(listed_company.ts_code,
                                 'EXP_PCT_TEST', test_freq, [strategy_code])
-            print(' test on period end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
+            print(' test on pct end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
     
 def test_expected_pct(strategy_name, test_freq):
     log_list = []
