@@ -75,6 +75,8 @@ class StockHistoryDaily(BaseModel):
         _('九转序列S'),  blank=False, null=False, default=-1)
     ma25 = models.FloatField(
         _('MA25'),  blank=True, null=True)
+    ma60 = models.FloatField(
+        _('MA60'),  blank=True, null=True)
     slope = models.FloatField(
         _('斜率'), blank=True, null=True)
     dingdi_count = models.IntegerField(

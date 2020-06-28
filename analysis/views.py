@@ -18,7 +18,7 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      BStrategyTestResultOnDays, TradeStrategyStat)
 
-from analysis.analysis_tupo_b_cp import mark_tupo_yali_listed
+from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
 
 
 logger = logging.getLogger(__name__)
@@ -206,10 +206,10 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
     '''
     pass
 
-def tp_test(request, stock_symbol, freq):
+def ma_test(request, stock_symbol, freq):
     # end_date = date.today()
     symbol_list = stock_symbol.split(',')
-    res = mark_tupo_yali_listed(freq, symbol_list)
+    res = mark_junxian_bs_listed(freq, symbol_list)
     if res:
         return HttpResponse(status=200)
     else:
