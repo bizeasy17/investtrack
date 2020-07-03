@@ -45,10 +45,10 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
     # end_date = date.today()
     if len(ts_code_list) == 0:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_tupo=None)
+            is_hist_downloaded=True, is_marked_junxian=None)
     else:
         listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_tupo=None, ts_code__in=ts_code_list)
+            is_hist_downloaded=True, is_marked_junxian=None, ts_code__in=ts_code_list)
     # print(len(listed_companies))
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
@@ -67,22 +67,28 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
                 post_marked_df = post_mark(
                     listed_company.ts_code, pre_marked_df, price_chg_3pct)
                 # print(post_marked_df.tail(50))
-                # for index, row in post_marked_df.iterrows():
-                #     hist = object
-                #     if freq == 'D':
-                #         hist = StockHistoryDaily(pk=row['id'])
-                #     else:
-                #         pass
-                #     # print(type(row['tupo_b']))
-                #     hist.tupo_b = row['tupo_b'] if not math.isnan(row['tupo_b']) else None
-                #     hist_list.append(hist)
-                # if freq == 'D':
-                #     StockHistoryDaily.objects.bulk_update(hist_list, ['tupo_b'])
-                # else:
-                #     pass
-                # log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['junxian_bs'])
-                # listed_company.is_marked_junxian_bs = True
-                # listed_company.save()
+                for index, row in post_marked_df.iterrows():
+                    hist = object
+                    if freq == 'D':
+                        hist = StockHistoryDaily(pk=row['id'])
+                    else:
+                        pass
+                    # print(type(row['tupo_b']))
+                    hist.ma25 = round(row['ma25'],3) if not math.isnan(row['ma25']) else None
+                    hist.ma60 = round(row['ma60'],3) if not math.isnan(row['ma60']) else None
+                    hist.ma200 = round(row['ma200'],3) if not math.isnan(row['ma200']) else None
+                    hist.ma25_zhicheng_b = row['ma25_zhicheng_b'] if not math.isnan(row['ma25_zhicheng_b']) else None
+                    hist.ma25_tupo_b = row['ma25_tupo_b'] if not math.isnan(row['ma25_tupo_b']) else None
+                    hist.ma25_diepo_s = row['ma25_diepo_s'] if not math.isnan(row['ma25_diepo_s']) else None
+                    hist.ma25_yali_s = row['ma25_yali_s'] if not math.isnan(row['ma25_yali_s']) else None
+                    hist_list.append(hist)
+                if freq == 'D':
+                    StockHistoryDaily.objects.bulk_update(hist_list, ['ma25','ma60','ma200','ma25_zhicheng_b','ma25_tupo_b','ma25_diepo_s','ma25_yali_s'])
+                else:
+                    pass
+                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['junxian25_bs'])
+                listed_company.is_marked_junxian_bs = True
+                listed_company.save()
                 print(' marked junxian bs on end code - ' + listed_company.ts_code +
                       ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 hist_list.clear()  # 清空已经保存的记录列表
@@ -101,6 +107,7 @@ def mark_ma(ts_code, df):
     try:
         df['ma25'] = df['close'].rolling(window=25).mean()
         df['ma60'] = df['close'].rolling(window=60).mean()
+        df['ma200'] = df['close'].rolling(window=200).mean()
         print('pre ma25/60 end on code - ' + ts_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
@@ -131,37 +138,72 @@ def post_mark(ts_code, df, price_chg_pct):
         max_idx_list = df.loc[df['ding_max'] == 1].index
 
         # 计算支撑，股价底部趋势
+        print('zhicheng')
         for min_idx in min_idx_list:
             low_pct = (df.loc[min_idx].ma25 -
                        df.loc[min_idx].low) / df.loc[min_idx].low
             if abs(low_pct) <= price_chg_pct and df.loc[min_idx].close > df.loc[min_idx].ma25:
                 df.loc[min_idx, 'ma25_zhicheng_b'] = 1
-                # print('ma25_zhicheng_b')
+                print(df.loc[min_idx].trade_date)
+                print('ma:'+str(df.loc[min_idx].ma25)+',low:'+str(df.loc[min_idx].low)+',close:'+str(df.loc[min_idx].close))
+
 
         # 计算突破，股价需要在上升趋势
-        for up_idx in up_idx_list:
-            close_pct = (df.loc[up_idx].close -
-                         df.loc[up_idx].ma25) / df.loc[up_idx].ma25
-            if abs(close_pct) >= price_chg_pct and df.loc[up_idx].low < df.loc[up_idx].ma25:
-                df.loc[id, 'ma25_tupo_b'] = 1
-                print(df.loc[up_idx].trade_date)
+        print('tupo')
+        idx_prev = -1
+        for id in min_idx_list:
+            if idx_prev != -1: # slope >0 means 上涨趋势
+                for idx_bwt in range(idx_prev, id):
+                    close_pct = (df.loc[idx_prev].close -
+                         df.loc[idx_prev].ma25) / df.loc[idx_prev].ma25
+                    if df.loc[idx_bwt].slope > 0 and close_pct >= price_chg_pct and df.loc[idx_bwt].open < df.loc[idx_bwt].ma25:
+                        # pass
+                        df.loc[id, 'ma25_tupo_b'] = 1
+                        print(df.loc[idx_bwt].trade_date)
+                        print('ma:'+str(df.loc[idx_bwt].ma25)+',low:'+str(df.loc[idx_bwt].low)+',close:'+str(df.loc[idx_bwt].close))
+                        break
+            idx_prev = id
+        # for up_idx in up_idx_list:
+        #     close_pct = (df.loc[up_idx].close -
+        #                  df.loc[up_idx].ma25) / df.loc[up_idx].ma25
+        #     if abs(close_pct) >= price_chg_pct and df.loc[up_idx].low < df.loc[up_idx].ma25:
+        #         df.loc[id, 'ma25_tupo_b'] = 1
+        #         print(df.loc[up_idx].trade_date)
 
         # 计算跌破，股价下跌趋势
-        for down_idx in down_idx_list:
-            close_pct = (df.loc[down_idx].close -
-                         df.loc[down_idx].ma25) / df.loc[down_idx].ma25
-            if df.loc[down_idx].close < df.loc[down_idx].ma25 and df.loc[down_idx].open > df.loc[down_idx].ma25 and abs(close_pct) >= price_chg_pct:
-                df.loc[id, 'ma25_diepo_s'] = 1
-                print(df.loc[down_idx].trade_date)
+        print('diepo')
+        idx_prev = -1
+        for id in max_idx_list:
+            if idx_prev != -1: # slope >0 means 上涨趋势
+                for idx_bwt in range(idx_prev, id):
+                    close_pct = (df.loc[idx_bwt].close -
+                         df.loc[idx_bwt].ma25) / df.loc[idx_bwt].ma25
+                    if df.loc[idx_bwt].slope < 0 and df.loc[idx_bwt].close < df.loc[idx_bwt].ma25 and df.loc[idx_bwt].open > df.loc[idx_bwt].ma25 and close_pct <= -price_chg_pct:
+                        # pass
+                        df.loc[id, 'ma25_diepo_s'] = 1
+                        print(df.loc[idx_bwt].trade_date)
+                        print('ma:'+str(df.loc[idx_bwt].ma25)+',low:'+str(df.loc[idx_bwt].open)+',close:'+str(df.loc[idx_bwt].close))
+                        break
+            idx_prev = id
+        # for down_idx in down_idx_list:
+        #     close_pct = (df.loc[down_idx].close -
+        #                  df.loc[down_idx].ma25) / df.loc[down_idx].ma25
+        #     if df.loc[down_idx].close < df.loc[down_idx].ma25 and df.loc[down_idx].open > df.loc[down_idx].ma25 and abs(close_pct) >= price_chg_pct:
+        #         df.loc[id, 'ma25_diepo_s'] = 1
+        #         print(df.loc[down_idx].trade_date)
 
 
         # 计算MA压力，股价顶部趋势
+        print('MA yali')
         for max_idx in max_idx_list:
             high_pct = (df.loc[max_idx].ma25 -
                        df.loc[max_idx].high) / df.loc[max_idx].high
             if df.loc[max_idx].close < df.loc[max_idx].ma25 and abs(high_pct) <= price_chg_pct:
-                df.loc[id, 'ma25_yali_s'] = 1
                 # print('ma25_yali_s')
+                df.loc[id, 'ma25_yali_s'] = 1
+                print(df.loc[max_idx].trade_date)
+                print('ma:'+str(df.loc[max_idx].ma25)+',low:'+str(df.loc[max_idx].close)+',close:'+str(df.loc[max_idx].high))
+
 
         # print(len(slope_list))
         # print(len(dingdi_list))

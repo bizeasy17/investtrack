@@ -24,11 +24,9 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     '''
     # if strategy_code.startswith('jiuzhuan_'):
     if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=True)
+        listed_companies = StockNameCodeMap.objects.filter()
     else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
+        listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
     for listed_company in listed_companies:
         print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
@@ -49,6 +47,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
             else:
                 pass
             # 根据策略获取标注的关键点index
+
             if strategy_code == 'jiuzhuan_b':
                 idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
             elif strategy_code == 'jiuzhuan_s':
@@ -63,9 +62,15 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 idx_list = df.loc[df['m_ding'] == 1].index
             elif strategy_code == 'tupo_yali_b':
                 idx_list = df.loc[df['tupo_b'] == 1].index
+            elif strategy_code == 'diepo_zhicheng_s': 
+                idx_list = df.loc[df['diepo_s'] == 1].index
             elif strategy_code == 'ma25_zhicheng_b':
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
-                        
+            elif strategy_code == 'ma25_tupo_b':
+                idx_list = df.loc[df['ma25_tupo_b'] == 1].index
+            
+            print(len(idx_list))
+
             for idx in idx_list:
                 b = df.iloc[idx]
                 pct_list = get_fixed_pct_list(df, b, strategy_code)

@@ -102,7 +102,7 @@ def mark_tupo(ts_code, df, price_chg_pct):
         for id in idx_list:
             if idx_prev != -1: # slope >0 means 上涨趋势
                 for idx_bwt in range(idx_prev, id):
-                    chg_pct = abs(df.loc[idx_bwt+1].close > df.loc[id].close) / df.loc[id].close
+                    chg_pct = (df.loc[idx_bwt+1].close - df.loc[id].close) / df.loc[id].close
                     if df.loc[idx_bwt].slope > 0 and chg_pct >= price_chg_pct:
                         # pass
                         # print(df.loc[idx_bwt].trade_date)

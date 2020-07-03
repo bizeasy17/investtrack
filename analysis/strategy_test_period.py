@@ -29,11 +29,9 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
 
     # if strategy_code.startswith('jiuzhuan_'):
     if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=True)
+        listed_companies = StockNameCodeMap.objects.filter()
     else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
+        listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
     for listed_company in listed_companies:
         print(' test on period start - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
@@ -62,8 +60,12 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                 idx_list = df.loc[df['m_ding'] == 1].index
             elif strategy_code == 'tupo_yali_b':
                 idx_list = df.loc[df['tupo_b'] == 1].index
+            elif strategy_code == 'diepo_zhicheng_s':
+                idx_list = df.loc[df['diepo_s'] == 1].index
             elif strategy_code == 'ma25_zhicheng_b':
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
+            elif strategy_code == 'ma25_tupo_b':
+                idx_list = df.loc[df['ma25_tupo_b'] == 1].index
 
             for test_period in periods:
                 for idx in idx_list:

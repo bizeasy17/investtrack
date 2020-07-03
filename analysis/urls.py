@@ -18,6 +18,8 @@ urlpatterns = [
          views.low_pct_data),  # ??
     path('mark-ma-cp/<stock_symbol>/<freq>/',
          views.ma_test),
+    path('stock-hist/strategy/<strategy>/<stock_symbol>/<freq>/',
+         views.stock_history),  # ??
     #     path('feed/pct-period-data/',
     #          views.feed_pct_data),  # ??
     #     path('feed/expected-pct-data/',

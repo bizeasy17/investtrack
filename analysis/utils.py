@@ -25,7 +25,7 @@ def log_test_status(ts_code, event, freq, strategy_list=[]):
 def is_strategy_tested(ts_code, event, strategy_code, freq):
     try:
         mark_log = StockStrategyTestLog.objects.get(
-            ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq)
+            ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=True)
         return True
     except Exception as e:
         # print(e)
