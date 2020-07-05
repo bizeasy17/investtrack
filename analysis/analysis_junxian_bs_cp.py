@@ -151,18 +151,18 @@ def post_mark(ts_code, df, price_chg_pct):
         # 计算突破，股价需要在上升趋势
         print('tupo')
         idx_prev = -1
-        for id in min_idx_list:
+        for max_idx in min_idx_list:
             if idx_prev != -1: # slope >0 means 上涨趋势
-                for idx_bwt in range(idx_prev, id):
+                for idx_bwt in range(idx_prev, max_idx):
                     close_pct = (df.loc[idx_prev].close -
                          df.loc[idx_prev].ma25) / df.loc[idx_prev].ma25
                     if df.loc[idx_bwt].slope > 0 and close_pct >= price_chg_pct and df.loc[idx_bwt].open < df.loc[idx_bwt].ma25:
                         # pass
-                        df.loc[id, 'ma25_tupo_b'] = 1
+                        df.loc[max_idx, 'ma25_tupo_b'] = 1
                         print(df.loc[idx_bwt].trade_date)
                         print('ma:'+str(df.loc[idx_bwt].ma25)+',low:'+str(df.loc[idx_bwt].low)+',close:'+str(df.loc[idx_bwt].close))
                         break
-            idx_prev = id
+            idx_prev = max_idx
         # for up_idx in up_idx_list:
         #     close_pct = (df.loc[up_idx].close -
         #                  df.loc[up_idx].ma25) / df.loc[up_idx].ma25
@@ -173,18 +173,18 @@ def post_mark(ts_code, df, price_chg_pct):
         # 计算跌破，股价下跌趋势
         print('diepo')
         idx_prev = -1
-        for id in max_idx_list:
+        for max_idx in max_idx_list:
             if idx_prev != -1: # slope >0 means 上涨趋势
-                for idx_bwt in range(idx_prev, id):
+                for idx_bwt in range(idx_prev, max_idx):
                     close_pct = (df.loc[idx_bwt].close -
                          df.loc[idx_bwt].ma25) / df.loc[idx_bwt].ma25
                     if df.loc[idx_bwt].slope < 0 and df.loc[idx_bwt].close < df.loc[idx_bwt].ma25 and df.loc[idx_bwt].open > df.loc[idx_bwt].ma25 and close_pct <= -price_chg_pct:
                         # pass
-                        df.loc[id, 'ma25_diepo_s'] = 1
+                        df.loc[max_idx, 'ma25_diepo_s'] = 1
                         print(df.loc[idx_bwt].trade_date)
                         print('ma:'+str(df.loc[idx_bwt].ma25)+',low:'+str(df.loc[idx_bwt].open)+',close:'+str(df.loc[idx_bwt].close))
                         break
-            idx_prev = id
+            idx_prev = max_idx
         # for down_idx in down_idx_list:
         #     close_pct = (df.loc[down_idx].close -
         #                  df.loc[down_idx].ma25) / df.loc[down_idx].ma25
@@ -195,16 +195,30 @@ def post_mark(ts_code, df, price_chg_pct):
 
         # 计算MA压力，股价顶部趋势
         print('MA yali')
+        idx_prev = -1 
         for max_idx in max_idx_list:
-            high_pct = (df.loc[max_idx].ma25 -
-                       df.loc[max_idx].high) / df.loc[max_idx].high
-            if df.loc[max_idx].close < df.loc[max_idx].ma25 and abs(high_pct) <= price_chg_pct:
-                # print('ma25_yali_s')
-                df.loc[id, 'ma25_yali_s'] = 1
-                print(df.loc[max_idx].trade_date)
-                print('ma:'+str(df.loc[max_idx].ma25)+',low:'+str(df.loc[max_idx].close)+',close:'+str(df.loc[max_idx].high))
-
-
+            # option 1
+            # high_pct = (df.loc[max_idx].ma25 -
+            #            df.loc[max_idx].high) / df.loc[max_idx].high
+            # if df.loc[max_idx].close < df.loc[max_idx].ma25 and abs(high_pct) <= price_chg_pct:
+            #     # print('ma25_yali_s')
+            #     df.loc[max_idx, 'ma25_yali_s'] = 1
+            #     print(df.loc[max_idx].trade_date)
+            #     print('ma:'+str(df.loc[max_idx].ma25)+',low:'+str(df.loc[max_idx].close)+',close:'+str(df.loc[max_idx].high))
+            # option 1 (optimized)
+            if idx_prev != -1:  # slope >0 means 上涨趋势
+                for idx_bwt in range(idx_prev, max_idx-1):
+                    high_pct = (df.loc[idx_bwt].ma25 -
+                                df.loc[idx_bwt].high) / df.loc[idx_bwt].high
+                    if df.loc[idx_bwt].close < df.loc[idx_bwt].ma25 and df.loc[idx_bwt].slope < 0 and abs(high_pct) <= price_chg_pct:
+                        # pass
+                        # print(df.loc[idx_bwt].trade_date)
+                        # print(df.loc[idx_bwt].close)
+                        df.loc[idx_bwt, 'ma25_yali_s'] = 1
+                        print('ma:'+str(df.loc[idx_bwt].ma25)+',low:'+str(
+                            df.loc[idx_bwt].close)+',close:'+str(df.loc[idx_bwt].high))
+                        break
+            idx_prev = max_idx
         # print(len(slope_list))
         # print(len(dingdi_list))
         # print(len(dingdi_count_list))

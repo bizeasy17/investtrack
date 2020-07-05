@@ -66,6 +66,10 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
             elif strategy_code == 'ma25_tupo_b':
                 idx_list = df.loc[df['ma25_tupo_b'] == 1].index
+            elif strategy_code == 'ma25_diepo_s':
+                idx_list = df.loc[df['ma25_diepo_s'] == 1].index
+            elif strategy_code == 'ma25_yali_s':
+                idx_list = df.loc[df['ma25_yali_s'] == 1].index
 
             for test_period in periods:
                 for idx in idx_list:

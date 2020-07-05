@@ -23,10 +23,12 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     3. 测试结果存入表
     '''
     # if strategy_code.startswith('jiuzhuan_'):
+    # print(ts_code_list)
     if len(ts_code_list) == 0:
         listed_companies = StockNameCodeMap.objects.filter()
     else:
         listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
+    # print(len(listed_companies))
     for listed_company in listed_companies:
         print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
@@ -68,6 +70,10 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
             elif strategy_code == 'ma25_tupo_b':
                 idx_list = df.loc[df['ma25_tupo_b'] == 1].index
+            elif strategy_code == 'ma25_diepo_s':
+                idx_list = df.loc[df['ma25_diepo_s'] == 1].index
+            elif strategy_code == 'ma25_yali_s':
+                idx_list = df.loc[df['ma25_yali_s'] == 1].index
             
             print(len(idx_list))
 
@@ -90,7 +96,8 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 log_test_status(listed_company.ts_code,
                                 'EXP_PCT_TEST', test_freq, [strategy_code])
             print(' test on pct end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
-    
+        else:
+            print(listed_company.ts_code + ' for strategy ' + strategy_code + ' pct has tested already')
 def test_expected_pct(strategy_name, test_freq):
     log_list = []
     listed_companies = StockNameCodeMap.objects.filter
