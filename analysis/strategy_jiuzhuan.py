@@ -75,11 +75,10 @@ def mark_jiuzhuan_listed(freq, ts_code_list=[]):
         listed_companies = StockNameCodeMap.objects.filter(
             is_marked_jiuzhuan=False, is_hist_downloaded=True, ts_code__in=ts_code_list)
     print(len(listed_companies))
+    hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            hist_list = []
             print(' marked jiuzhuan on start code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
             # df = hist_since_listed(
             #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
             df = pd.DataFrame()
@@ -99,37 +98,6 @@ def mark_jiuzhuan_listed(freq, ts_code_list=[]):
                     hist.jiuzhuan_count_b = row['jiuzhuan_count_b']
                     hist.jiuzhuan_count_s = row['jiuzhuan_count_s']
                     hist_list.append(hist)
-                   
-                # for v in marked_df.values:
-                #     # hist_D = StockHistoryDaily(ts_code = v[0], trade_date=v[1], open=v[2], high=v[3],
-                #     #     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                #     #     amount=v[10], chg4=v[11], jiuzhuan_count_b=v[12], jiuzhuan_count_s=v[13])
-                #     # print(v[14])
-                #     # print(v[15])
-                #     # print(v[16])
-                #     # pass
-                #     hist = object
-                #     if freq == 'D':
-                #         hist = StockHistoryDaily(pk=v[0])
-                #     else:
-                #         pass
-                #     hist.chg4 = round(v[14], 3)
-                #     hist.jiuzhuan_count_b = v[15]
-                #     hist.jiuzhuan_count_s = v[16]
-                #     '''
-                #     ts_code	str	股票代码
-                #     trade_date	str	交易日期
-                #     open	float	开盘价
-                #     high	float	最高价
-                #     low	float	最低价
-                #     close	float	收盘价
-                #     pre_close	float	昨收价
-                #     change	float	涨跌额
-                #     pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-                #     vol	float	成交量 （手）
-                #     amount	float	成交额 （千元）
-                #     '''
-                #     hist_list.append(hist)
                 if freq == 'D':
                     StockHistoryDaily.objects.bulk_update(hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
                 else:
@@ -137,6 +105,7 @@ def mark_jiuzhuan_listed(freq, ts_code_list=[]):
                 log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['jiuzhuan_b', 'jiuzhuan_s'])
                 listed_company.is_marked_jiuzhuan = True
                 listed_company.save()
+                hist_list.clear()
                 print(' marked jiuzhuan on end code - ' + listed_company.ts_code + ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)  
 

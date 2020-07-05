@@ -2,6 +2,16 @@
 Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 Chart.defaults.global.defaultFontColor = '#858796';
 
+window.chartColors = {
+	red: 'rgb(255, 99, 132)',
+	orange: 'rgb(255, 159, 64)',
+	yellow: 'rgb(255, 205, 86)',
+	green: 'rgb(75, 192, 192)',
+	blue: 'rgb(54, 162, 235)',
+	purple: 'rgb(153, 102, 255)',
+	grey: 'rgb(201, 203, 207)'
+};
+
 $(function () {
     var chart;
     var analysisEndpoint = '/analysis/';
@@ -52,7 +62,7 @@ $(function () {
                             '<img src="' + imgRoot + obj.code + '.png" height="90" width="90" style="border-radius: 10%">' +
                             '</div>' +
                             '<div class="col">' +
-                            '<div><span class="badge badge-info">' + obj.strategy_name + '</span></div>'
+                            '<div><span class="small text-primary">' + obj.strategy_name + '</span></div>'
                         // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';<span class="small"> 成功率-' + obj.success_rate + '%</span>
                         // '<div class="container">'+
                         //     '<div class="row">'+
@@ -76,7 +86,7 @@ $(function () {
                         // }else{
                         //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
                         // }
-                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small><i class="fa fa-eye">历史分析</i></small></button>';
+                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small><i class="fa fa-eye">查看历史</i></small></button>';
                         strategiesTag += '</div></div>';
                         strategyDiv.append(strategiesTag);
                         strategiesTag = "";
@@ -137,6 +147,7 @@ $(function () {
         var tsCode = item.ts_code;
         var showName = item.text;
         var market = item.market;
+        var freq = 'D'
         var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
         var strategyCode = $('#hiddenStrategyCode').val();
@@ -148,7 +159,130 @@ $(function () {
         showExpectedPctChart(tsCode, strategyCode, pctPeriod);
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
+        // showStockHistChart(tsCode, strategyCode, freq);
     });
+
+    
+    // 股票历史收盘数据
+    var stockHistChart;
+    var showStockHistChart = function (tsCode, strategyCode, freq) {
+        if ($("#stockHistCanv").length) {
+            var stockHistChartCanvas = $("#stockHistCanv")
+                .get(0)
+                .getContext("2d");
+            // var strategy = "9";
+            // var stock_symbol = "600626.SH"
+            // var period = $('input:radio[name="period"]:checked').val();
+            $.ajax({
+                url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/',
+                // url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
+                // headers: { 'X-CSRFToken': csrftoken },
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    // $("#drop25ile").text(data.quantile[0] + '%');
+                    // $("#drop50ile").text(data.quantile[1] + '%');
+                    // $("#drop75ile").text(data.quantile[2] + '%');
+                    // $("#avgDrop").text(data.quantile[3] + '%');
+                    $("#stockHistCanv").removeClass("d-none");
+                    if (stockHistChart) {
+                        // update chart
+                        stockHistChart.data.labels = data.label;
+                        stockHistChart.data.datasets[0].data = data.ma25;
+                        stockHistChart.data.datasets[1].data = data.close;
+                        stockHistChart.update();
+                    } else {
+                        stockHistChart = new Chart(stockHistChartCanvas, {
+                            type: "line",
+                            data: {
+                                labels: data.label,
+                                datasets: [{
+                                    label: 'MA25',
+                                    backgroundColor: window.chartColors.red,
+                                    borderColor: window.chartColors.red,
+                                    data: data.ma25,
+                                    fill: false,
+                                }, {
+                                    label: '收盘价',
+                                    fill: false,
+                                    backgroundColor: window.chartColors.blue,
+                                    borderColor: window.chartColors.blue,
+                                    data: data.close,
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                layout: {
+                                    padding: {
+                                        left: 0,
+                                        right: 0,
+                                        top: 20,
+                                        bottom: 0
+                                    }
+                                },
+                                scales: {
+                                    yAxes: [
+                                        {
+                                            display: true,
+                                            gridLines: {
+                                                display: true,
+                                                drawBorder: false,
+                                                color: "#f8f8f8",
+                                                zeroLineColor: "#f8f8f8"
+                                            },
+                                            ticks: {
+                                                display: true,
+                                                // min: data.min_profit,
+                                                // max: data.max_profit,
+                                                // stepSize: data.max_profit / 10,
+                                                fontColor: "#b1b0b0",
+                                                fontSize: 10,
+                                                padding: 10
+                                                // callback: function (value) {
+                                                //     return value.toFixed(0) + '%'; // convert it to percentage
+                                                // },
+                                            }
+                                        }
+                                    ],
+                                    xAxes: [
+                                        {
+                                            stacked: false,
+                                            ticks: {
+                                                beginAtZero: true,
+                                                fontColor: "#b1b0b0",
+                                                fontSize: 10
+                                            },
+                                            gridLines: {
+                                                color: "rgba(0, 0, 0, 0)",
+                                                display: false
+                                            },
+                                        }
+                                    ]
+                                },
+                                elements: {
+                                    point: {
+                                        radius: 1,
+                                        backgroundColor: "#ff4c5b",
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                    }
+                },
+                statusCode: {
+                    403: function () {
+                    },
+                    404: function () {
+                    },
+                    500: function () {
+                    }
+                }
+            });
+        }
+    }
+
 
     // 涨幅分布
     var incrChart;

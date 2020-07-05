@@ -20,7 +20,7 @@
 
         </div>
         {% comment %} 策略列表 {% endcomment %}
-        <div class="col-lg-5">
+        <div class="col-lg-3">
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                 {% if analysis %}
                 {% for ctg in analysis.strategy_ctgs %}
@@ -31,9 +31,9 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                <span class="mt-1 mr-1 small">{% trans '测试周期' %}</span>
+        <div class="col-lg-6">
+            <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '持仓周期' %}</span>
                 <label class="btn btn-light active">
                     <input type="radio" name="period" id="p10" autocomplete="off" value="10" checked>{% trans '10天' %}
                 </label>
@@ -49,15 +49,26 @@
                 <label class="btn btn-light ">
                     <input type="radio" name="period" id="p80" autocomplete="off" value="80" >{% trans '80天' %} 
                 </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="130" >{% trans '130天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="210" >{% trans '210天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="350" >{% trans '350天' %} 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="560" >{% trans '560天' %} 
+                </label>
             </div>
         </div>
     </div>
     <hr/>
     <div class="container row stretch-card" id="strategyList">
-        
     </div>
     <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_b"/>
-    <input type="hidden"  id="hiddenStrategyName"/>
+    <input type="hidden"  id="hiddenStrategyName" value="{% trans '九转买点(默认)' %} "/>
     <input type="hidden"  id="hiddenStrategyBtnId"/>
     <hr/>     
     {% comment %} 
@@ -70,6 +81,10 @@
     5. 买入/卖出成功率（历史记录）
 
     {% endcomment %}
+    <div class="col-lg-12 d-none" id="stockHist">
+        <input type="button" class="btn btn-sm btn-primary" id="collapseHistCanv" value="{% trans '显示股票历史数据' %}"/>
+        <canvas class="d-none" id="stockHistCanv" height="100"></canvas> 
+    </div>
     <!-- <div><i class="fa fa-chart-line"></i>{% trans '当前分析策略为 - ' %} </div> -->
     <hr/>
     <div class="row flex-grow">

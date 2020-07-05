@@ -23,12 +23,12 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     3. 测试结果存入表
     '''
     # if strategy_code.startswith('jiuzhuan_'):
+    # print(ts_code_list)
     if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=True)
+        listed_companies = StockNameCodeMap.objects.filter()
     else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=True, ts_code__in=ts_code_list)
+        listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
+    # print(len(listed_companies))
     for listed_company in listed_companies:
         print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
@@ -49,6 +49,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
             else:
                 pass
             # 根据策略获取标注的关键点index
+
             if strategy_code == 'jiuzhuan_b':
                 idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
             elif strategy_code == 'jiuzhuan_s':
@@ -57,21 +58,35 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 idx_list = df.loc[df['di_min'] == 1].index
             elif strategy_code == 'dingbu_s':
                 idx_list = df.loc[df['ding_max'] == 1].index
-            elif strategy_code == 'tupo_b':
+            elif strategy_code == 'w_di':
+                idx_list = df.loc[df['w_di'] == 1].index
+            elif strategy_code == 'm_ding':
+                idx_list = df.loc[df['m_ding'] == 1].index
+            elif strategy_code == 'tupo_yali_b':
                 idx_list = df.loc[df['tupo_b'] == 1].index
+            elif strategy_code == 'diepo_zhicheng_s': 
+                idx_list = df.loc[df['diepo_s'] == 1].index
             elif strategy_code == 'ma25_zhicheng_b':
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
-                        
+            elif strategy_code == 'ma25_tupo_b':
+                idx_list = df.loc[df['ma25_tupo_b'] == 1].index
+            elif strategy_code == 'ma25_diepo_s':
+                idx_list = df.loc[df['ma25_diepo_s'] == 1].index
+            elif strategy_code == 'ma25_yali_s':
+                idx_list = df.loc[df['ma25_yali_s'] == 1].index
+            
+            print(len(idx_list))
+
             for idx in idx_list:
                 b = df.iloc[idx]
                 pct_list = get_fixed_pct_list(df, b, strategy_code)
                 all_pct_list.append(pct_list)
                 # 买入点
                 # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date, open=b.open, high=b.high,
-                                                low=b.low, close=b.close, pre_close=b.pre_close, change=b.change, pct_chg=b.pct_chg, vol=b.vol,
-                                                amount=b.amount, pct10_period=pct_list[
-                                                    0], pct20_period=pct_list[1], pct30_period=pct_list[2],
+                b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date, 
+                                                # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close, 
+                                                # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount, 
+                                                pct10_period=pct_list[0], pct20_period=pct_list[1], pct30_period=pct_list[2],
                                                 pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
                                                 pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
                 strategy_test_list.append(b_tnx)
@@ -80,8 +95,9 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 post_exp_days_pct_test(all_pct_list)
                 log_test_status(listed_company.ts_code,
                                 'EXP_PCT_TEST', test_freq, [strategy_code])
-            print(' test on period end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
-    
+            print(' test on pct end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
+        else:
+            print(listed_company.ts_code + ' for strategy ' + strategy_code + ' pct has tested already')
 def test_expected_pct(strategy_name, test_freq):
     log_list = []
     listed_companies = StockNameCodeMap.objects.filter

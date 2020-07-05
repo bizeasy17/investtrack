@@ -148,7 +148,7 @@ def get_profit_trend_by_period(request, period):
                             current_pnl.append(0)
                         # 上一周环比数据
                         relative_snapshots = TradeAccountSnapshot.objects.filter(
-                            trader=trader, snap_date=relative_snap_date).aggregate(sum_profit=Sum('profit'))
+                            trader=trader, snap_date=relative_snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))
                         if relative_snapshots['sum_profit'] is not None:
                             relative_pnl_data.append(
                                 int(relative_snapshots['sum_profit']))

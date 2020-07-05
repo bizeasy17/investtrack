@@ -53,8 +53,8 @@
                 <ul class="navbar-nav mr-auto">
                   <!-- <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">{% trans '首页' %} <span class="sr-only">(current)</span></a></li> -->
                   {% if request.user.is_authenticated %}
-                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
                   <li class="nav-item"><a class="nav-link" href="{% url 'analysis:home' %}">{% trans '交易策略分析 (测试)' %} </a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
                   {% comment %} <li class="nav-item"><a class="nav-link" href="{% url 'analysis:pick_stock' %}">{% trans 'AI选股（测试）' %}</a></li> {% endcomment %}
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                   {% endif %}
@@ -187,6 +187,7 @@
         {% trans '版权所有'%} &copy; {% trans '我爱投资'%} {% now "Y" %}      
          | <a class="text-white" href="/about/">{% trans '关于我们' %}</a>
          | <a class="text-white" href="https://www.linkedin.com/in/jay-han-48424138/">{% trans 'Linkedin'%}</a>
+         | {% trans '扫码入QQ群 ' %}<img src="{% static 'img/1593927687078.png' %}" height="75" width="75" style="border-radius: 1%;" class="mr-1">
       </p>
       <p class="m-0 text-center text-white">
         <a class="text-white" href="http://www.beian.miit.gov.cn/?spm=a2c4g.11186623.2.16.31bf7dc6aTLr4u">{% trans '苏ICP备20021061号-1' %}</a> 

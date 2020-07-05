@@ -16,7 +16,10 @@ from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     BStrategyTestResultOnDays, TradeStrategyStat)
+                     BStrategyTestResultOnDays, TradeStrategyStat, StockHistoryDaily)
+
+from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
+
 
 logger = logging.getLogger(__name__)
 
@@ -114,11 +117,11 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
                 strategy_code=strategy, ts_code=stock_symbol,
                 test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
             df = pd.DataFrame(results.values())
-            qtiles = df[exp_pct].quantile([0.25,0.5,0.75])
+            qtiles = df[exp_pct].quantile([0.25, 0.5, 0.75])
             # for qtile in qtiles.values():
             for index, value in qtiles.items():
                 quantile.append(value)
-            quantile.append(round(df[exp_pct].mean(),3))
+            quantile.append(round(df[exp_pct].mean(), 3))
             for rst in results:
                 if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
                     data_label.append(rst['trade_date'])
@@ -145,12 +148,12 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
             results = BStrategyTestResultOnDays.objects.filter(
                 strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
             df = pd.DataFrame(results.values('stage_high_pct'))
-            qtiles = df.stage_high_pct.quantile([0.25,0.5,0.75])
+            qtiles = df.stage_high_pct.quantile([0.25, 0.5, 0.75])
             for qtile in qtiles:
                 quantile.append(round(qtile, 3))
-            quantile.append(round(df.mean().stage_high_pct,3))
+            quantile.append(round(df.mean().stage_high_pct, 3))
             for result in results:
-                result_pct.append(round(result.stage_high_pct,2))
+                result_pct.append(round(result.stage_high_pct, 2))
                 result_label.append(result.trade_date)
             return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
@@ -174,14 +177,47 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
             results = BStrategyTestResultOnDays.objects.filter(
                 strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
             df = pd.DataFrame(results.values('stage_low_pct'))
-            qtiles = df.stage_low_pct.quantile([0.25,0.5,0.75])
+            qtiles = df.stage_low_pct.quantile([0.25, 0.5, 0.75])
             for qtile in qtiles:
                 quantile.append(round(qtile, 3))
-            quantile.append(round(df.mean().stage_low_pct,3))
+            quantile.append(round(df.mean().stage_low_pct, 3))
             for result in results:
-                result_pct.append(round(result.stage_low_pct,2))
+                result_pct.append(round(result.stage_low_pct, 2))
                 result_label.append(result.trade_date)
             return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
+        except IndexError as err:
+            logging.error(err)
+            return HttpResponse(status=404)
+    pass
+
+
+@login_required
+def stock_history(request, strategy, stock_symbol, freq):
+    '''
+    用户需要授权可以使用策略
+    '''
+    user = request.user
+    if request.method == 'GET':
+        try:
+            close_result = []
+            ma25_result = []
+            amount_result = []
+            lbl_trade_date = []
+            quantile = []
+
+            results = StockHistoryDaily.objects.filter(
+                ts_code=stock_symbol, freq=freq).order_by('trade_date')[:200]
+            # df = pd.DataFrame(results.values('stage_low_pct'))
+            # qtiles = df.stage_low_pct.quantile([0.25,0.5,0.75])
+            # for qtile in qtiles:
+            #     quantile.append(round(qtile, 3))
+            # quantile.append(round(df.mean().stage_low_pct,3))
+            for result in results:
+                ma25_result.append(result.ma25)
+                close_result.append(result.close)
+                amount_result.append(result.amount)
+                lbl_trade_date.append(result.trade_date)
+            return JsonResponse({'close': close_result, 'ma25': ma25_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except IndexError as err:
             logging.error(err)
             return HttpResponse(status=404)
@@ -202,3 +238,13 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
     用户需要授权可以使用策略
     '''
     pass
+
+
+def ma_test(request, stock_symbol, freq):
+    # end_date = date.today()
+    symbol_list = stock_symbol.split(',')
+    res = mark_junxian_bs_listed(freq, symbol_list)
+    if res:
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(status=500)

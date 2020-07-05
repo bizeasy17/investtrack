@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.analysis_tupo_b_cp import mark_tupo_yali_listed
+from analysis.analysis_die_pct_s_cp import mark_die_pct_listed
 
 
 class Command(BaseCommand):
@@ -17,13 +17,13 @@ class Command(BaseCommand):
         parser.add_argument(
             '--ts_code',
             type=str,
-            help='Which ts_code you want to apply the tupo',
+            help='Which ts_code you want to apply the diepo',
         )
         # Named (mandatory) arguments
         parser.add_argument(
             '--freq',
             type=str,
-            help='Which freq you want to apply the tupo',
+            help='Which freq you want to apply the diepo',
         )
         pass
 
@@ -34,9 +34,9 @@ class Command(BaseCommand):
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 # print(ts_code_list)
-                mark_tupo_yali_listed(freq, ts_code_list)
+                mark_die_pct_listed(freq, ts_code_list)
         elif freq is None:
             print('freq must be provided')
         else:
-            mark_tupo_yali_listed(freq)
+            mark_die_pct_listed(freq)
         

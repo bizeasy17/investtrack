@@ -70,47 +70,57 @@ class StockHistoryDaily(BaseModel):
     chg4 = models.FloatField(
         _('与4日前变化'), blank=True, null=True)
     jiuzhuan_count_b = models.FloatField(
-        _('九转序列B'),  blank=False, null=False, default=-1, db_index=True)
+        _('九转序列B'),  blank=False, null=False, default=-1)
     jiuzhuan_count_s = models.FloatField(
-        _('九转序列S'),  blank=False, null=False, default=-1, db_index=True)
+        _('九转序列S'),  blank=False, null=False, default=-1)
     ma25 = models.FloatField(
-        _('MA25'),  blank=True, null=True, default=-1)
+        _('MA25'),  blank=True, null=True)
+    ma60 = models.FloatField(
+        _('MA60'),  blank=True, null=True)
+    ma200 = models.FloatField(
+        _('MA200'),  blank=True, null=True)
     slope = models.FloatField(
         _('斜率'), blank=True, null=True)
     dingdi_count = models.IntegerField(
-        _('顶底序列'),  blank=True, null=True, default=0)
+        _('顶底序列'),  blank=True, null=True)
     dibu_b = models.IntegerField(
-        _('底部B?'),  blank=True, null=True, default=0)
+        _('底部B?'),  blank=True, null=True)
     di_min = models.IntegerField(
-        _('底部最低价?'),  blank=True, null=True, default=0)
+        _('底部最低价?'),  blank=True, null=True)
+    w_di = models.IntegerField(
+        _('W底部?'),  blank=True, null=True)
     dingbu_s = models.IntegerField(
-        _('顶部S?'),  blank=True, null=True, default=0)
+        _('顶部S?'),  blank=True, null=True)
     ding_max = models.IntegerField(
-        _('顶部最高价?'),  blank=True, null=True, default=0)
-    ding_die_1pct = models.FloatField(
-        _('顶部下跌1%'), blank=True, null=True)
-    ding_die_2pct = models.FloatField(
-        _('顶部下跌2%'), blank=True, null=True)
-    ding_die_3pct = models.FloatField(
-        _('顶部下跌3%'), blank=True, null=True)
-    ding_die_5pct = models.FloatField(
-        _('顶部下跌5%'), blank=True, null=True)
-    ding_die_8pct = models.FloatField(
-        _('顶部下跌8%'), blank=True, null=True)
-    ding_die_13pct = models.FloatField(
-        _('顶部下跌13%'), blank=True, null=True)
-    ding_die_21pct = models.FloatField(
-        _('顶部下跌21%'), blank=True, null=True)
-    ding_die_34pct = models.FloatField(
-        _('顶部下跌34%'), blank=True, null=True)
-    ding_die_56pct = models.FloatField(
-        _('顶部下跌56%'), blank=True, null=True)
-    ding_die_90pct = models.FloatField(
-        _('顶部下跌90%'), blank=True, null=True)
+        _('顶部最高价?'),  blank=True, null=True)
+    m_ding = models.IntegerField(
+        _('M顶部?'),  blank=True, null=True)
+    # ding_die_1pct = models.IntegerField(
+    #     _('顶部下跌1%'), blank=True, null=True)
+    # ding_die_2pct = models.IntegerField(
+    #     _('顶部下跌2%'), blank=True, null=True)
+    # ding_die_3pct = models.IntegerField(
+    #     _('顶部下跌3%'), blank=True, null=True)
+    # ding_die_5pct = models.IntegerField(
+    #     _('顶部下跌5%'), blank=True, null=True)
+    # ding_die_8pct = models.IntegerField(
+    #     _('顶部下跌8%'), blank=True, null=True)
+    # ding_die_13pct = models.IntegerField(
+    #     _('顶部下跌13%'), blank=True, null=True)
+    # ding_die_21pct = models.IntegerField(
+    #     _('顶部下跌21%'), blank=True, null=True)
+    # ding_die_34pct = models.IntegerField(
+    #     _('顶部下跌34%'), blank=True, null=True)
+    # ding_die_55pct = models.IntegerField(
+    #     _('顶部下跌55%'), blank=True, null=True)
+    # ding_die_89pct = models.IntegerField(
+    #     _('顶部下跌89%'), blank=True, null=True)
     is_dingdi_end = models.IntegerField(
         _('顶底结束点?'),  blank=True, null=True)
     tupo_b = models.IntegerField(
-        _('突破压力位B?'),  blank=True, null=True)   
+        _('突破压力位B?'),  blank=True, null=True)
+    diepo_s = models.IntegerField(
+        _('跌破支撑位S?'),  blank=True, null=True)   
     ma25_zhicheng_b = models.IntegerField(
         _('MA25均线支撑B?'),  blank=True, null=True)  
     ma25_tupo_b = models.IntegerField(
@@ -163,7 +173,7 @@ class StockStrategyTestLog(BaseModel):
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     analysis_code = models.CharField(
-        _('测试策略'), max_length=15, blank=True, null=True)
+        _('测试策略'), max_length=25, blank=True, null=True)
     event_type = models.CharField(
         _('日志类型'), choices=EVENT_TYPE, max_length=50, blank=False, null=False)  # e.g. 000001.SZ
     is_done = models.BooleanField(
@@ -220,23 +230,23 @@ class BStrategyTestResultOnDays(BaseModel):
     test_period = models.IntegerField(
         _('测试周期长度'), blank=True, null=False, default=10)
     # new fields
-    open = models.FloatField(
-        _('开盘价'), blank=True, null=True)
-    high = models.FloatField(
-        _('最高价'), blank=True, null=True)
-    low = models.FloatField(
-        _('最低价'), blank=True, null=True)
-    pre_close = models.FloatField(
-        _('前日收盘价'), blank=True, null=True)
-    close = models.FloatField(_('收盘价'), blank=True, null=True)
-    change = models.FloatField(
-        _('价格变化'), blank=True, null=True)
-    pct_chg = models.FloatField(
-        _('涨幅%'), blank=True, null=True)
-    vol = models.FloatField(
-        _('交易量'), blank=True, null=True)
-    amount = models.FloatField(
-        _('金额'), blank=True, null=True)
+    # open = models.FloatField(
+    #     _('开盘价'), blank=True, null=True)
+    # high = models.FloatField(
+    #     _('最高价'), blank=True, null=True)
+    # low = models.FloatField(
+    #     _('最低价'), blank=True, null=True)
+    # pre_close = models.FloatField(
+    #     _('前日收盘价'), blank=True, null=True)
+    # close = models.FloatField(_('收盘价'), blank=True, null=True)
+    # change = models.FloatField(
+    #     _('价格变化'), blank=True, null=True)
+    # pct_chg = models.FloatField(
+    #     _('涨幅%'), blank=True, null=True)
+    # vol = models.FloatField(
+    #     _('交易量'), blank=True, null=True)
+    # amount = models.FloatField(
+    #     _('金额'), blank=True, null=True)
     stage_low = models.BooleanField(
         _('低点?'), blank=True, null=True, default=False)
     stage_low_pct = models.FloatField(
@@ -334,23 +344,23 @@ class BStrategyOnFixedPctTest(BaseModel):
     trade_date = models.DateField(
         _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
     # new fields
-    open = models.FloatField(
-        _('开盘价'), blank=True, null=True)
-    high = models.FloatField(
-        _('最高价'), blank=True, null=True)
-    low = models.FloatField(
-        _('最低价'), blank=True, null=True)
-    pre_close = models.FloatField(
-        _('前日收盘价'), blank=True, null=True)
-    close = models.FloatField(_('收盘价'), blank=True, null=True)
-    change = models.FloatField(
-        _('价格变化'), blank=True, null=True)
-    pct_chg = models.FloatField(
-        _('涨幅%'), blank=True, null=True)
-    vol = models.FloatField(
-        _('交易量'), blank=True, null=True)
-    amount = models.FloatField(
-        _('金额'), blank=True, null=True)
+    # open = models.FloatField(
+    #     _('开盘价'), blank=True, null=True)
+    # high = models.FloatField(
+    #     _('最高价'), blank=True, null=True)
+    # low = models.FloatField(
+    #     _('最低价'), blank=True, null=True)
+    # pre_close = models.FloatField(
+    #     _('前日收盘价'), blank=True, null=True)
+    # close = models.FloatField(_('收盘价'), blank=True, null=True)
+    # change = models.FloatField(
+    #     _('价格变化'), blank=True, null=True)
+    # pct_chg = models.FloatField(
+    #     _('涨幅%'), blank=True, null=True)
+    # vol = models.FloatField(
+    #     _('交易量'), blank=True, null=True)
+    # amount = models.FloatField(
+    #     _('金额'), blank=True, null=True)
     pct10_period = models.FloatField(
         _('+10%最小周期'), blank=True, null=True, default=-1)
     pct20_period = models.FloatField(
