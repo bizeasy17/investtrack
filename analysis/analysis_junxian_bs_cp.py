@@ -58,7 +58,7 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
             df = pd.DataFrame()
             if freq == 'D':
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                    'trade_date').values('id', 'trade_date', 'open', 'close', 'low', 'high', 'slope', 'ma25', 'ma60', 'di_min', 'ding_max'))
+                    'trade_date').values('id', 'trade_date', 'open', 'close', 'low', 'high', 'slope', 'ma25', 'ma60', 'ma200', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s', 'di_min', 'ding_max'))
             else:
                 pass
             if df is not None and len(df) > 0:

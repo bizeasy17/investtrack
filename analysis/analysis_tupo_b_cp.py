@@ -65,25 +65,26 @@ def mark_tupo_yali_listed(freq, ts_code_list=[]):
                 # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
                 pre_marked_df = mark_tupo(listed_company.ts_code, df, price_chg_3pct)
                 # print(post_marked_df.tail(50))
-                for index, row in pre_marked_df.iterrows():
-                    hist = object
+                if 'tupo_b' in pre_marked_df.columns:
+                    for index, row in pre_marked_df.iterrows():
+                        hist = object
+                        if freq == 'D':
+                            hist = StockHistoryDaily(pk=row['id'])
+                        else:
+                            pass
+                        # print(type(row['tupo_b']))
+                        hist.tupo_b = row['tupo_b'] if not math.isnan(row['tupo_b']) else None
+                        hist_list.append(hist)
                     if freq == 'D':
-                        hist = StockHistoryDaily(pk=row['id'])
+                        StockHistoryDaily.objects.bulk_update(hist_list, ['tupo_b'])
                     else:
                         pass
-                    # print(type(row['tupo_b']))
-                    hist.tupo_b = row['tupo_b'] if not math.isnan(row['tupo_b']) else None
-                    hist_list.append(hist)
-                if freq == 'D':
-                    StockHistoryDaily.objects.bulk_update(hist_list, ['tupo_b'])
-                else:
-                    pass
-                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['tupo_yali_b'])
-                listed_company.is_marked_tupo = True
-                listed_company.save()
-                print(' marked tupo b on end code - ' + listed_company.ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                hist_list.clear() # 清空已经保存的记录列表
+                    log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['tupo_yali_b'])
+                    listed_company.is_marked_tupo = True
+                    listed_company.save()
+                    print(' marked tupo b on end code - ' + listed_company.ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    hist_list.clear() # 清空已经保存的记录列表
     else:
         print('mark tupo b for code - ' + str(ts_code_list) +
                       ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
