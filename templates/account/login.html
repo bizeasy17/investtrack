@@ -46,7 +46,7 @@
                     <h1 class="h4 text-gray-900 mb-4">{% trans '欢迎回来！' %}</h1>
                   </div>
                   <form class="login" id="loginForm" method="POST" action="{% url 'account:login' %}">{% csrf_token %}
-                    <input type="hidden" id="nextUrl" value="{% if request.GET.urlencode == '' %} {% url 'dashboard:index' %} {% else %}{{ request.GET.urlencode }}{% endif %}"/>
+                    <input type="hidden" id="nextUrl" value="{% if request.GET.urlencode == '' %} {% url 'analysis:home' %} {% else %}{{ request.GET.urlencode }}{% endif %}"/>
                     <div id="div_id_login" class="form-group"> <label for="id_login" class=" requiredField">
                         {% trans '用户名' %}<span class="asteriskField">*</span> </label>
                       <div class=""> 
