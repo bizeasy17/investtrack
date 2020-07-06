@@ -38,6 +38,13 @@
                 </div> -->
               </div>
               <div class="col-md-12 mb-3">
+                <label for="password">{% trans '密码' %}</label>
+                <input type="text" class="form-control" id="pass" name="pass" placeholder="{% trans '密码' %}" value="" required>
+                <!-- <div class="invalid-feedback">
+                  Valid first name is required.
+                </div> -->
+              </div>
+              <div class="col-md-12 mb-3">
               <label for="username">{% trans '电子邮件Email' %}</label>
               <div class="input-group">
                 <div class="input-group-prepend">
@@ -100,6 +107,7 @@ $(function () {
       event.preventDefault();
       var name = $('#name').val();
       var email = $('#email').val();
+      var password = $('#pass').val();
       var jobTitle = $('#jobTitle').val();
       var location = $('#location').val();
       var shortBio = $('#shortBio').val();
@@ -117,6 +125,13 @@ $(function () {
           return;
       } else {
           $('#email').removeClass("is-invalid");
+      }
+
+      if (password.length < 1) {
+          $('#pass').addClass("is-invalid");
+          return;
+      } else {
+          $('#pass').removeClass("is-invalid");
       }
 
       var form = $("#userForm");

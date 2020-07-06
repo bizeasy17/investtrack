@@ -19,6 +19,7 @@ from django.shortcuts import redirect, render, reverse
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
+from django.contrib.auth.password_validation import validate_password
 
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
@@ -110,7 +111,7 @@ def update_user_profile(request):
             data = request.POST.copy()
             username = data.get("username")
             email = data.get('email')
-            # firstname = data.get('firstName')
+            password = data.get('pass')
             # lastname = data.get('lastName')
             name = data.get('name')
             location = data.get('location')
@@ -125,6 +126,7 @@ def update_user_profile(request):
             trader.name = name
             trader.location = location
             trader.job_title = job_title
+            trader.set_password(password)
             # trader.bio = bio
             trader.short_bio = short_bio
             if picture_url is not None and picture_url != '': # 如果上传头像不为空，就更新
