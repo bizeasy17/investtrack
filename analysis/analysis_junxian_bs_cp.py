@@ -77,10 +77,14 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
                     hist.ma25 = round(row['ma25'],3) if not math.isnan(row['ma25']) else None
                     hist.ma60 = round(row['ma60'],3) if not math.isnan(row['ma60']) else None
                     hist.ma200 = round(row['ma200'],3) if not math.isnan(row['ma200']) else None
-                    hist.ma25_zhicheng_b = row['ma25_zhicheng_b'] if not math.isnan(row['ma25_zhicheng_b']) else None
-                    hist.ma25_tupo_b = row['ma25_tupo_b'] if not math.isnan(row['ma25_tupo_b']) else None
-                    hist.ma25_diepo_s = row['ma25_diepo_s'] if not math.isnan(row['ma25_diepo_s']) else None
-                    hist.ma25_yali_s = row['ma25_yali_s'] if not math.isnan(row['ma25_yali_s']) else None
+                    if row['ma25_zhicheng_b'] is not None:
+                        hist.ma25_zhicheng_b = row['ma25_zhicheng_b'] if not math.isnan(row['ma25_zhicheng_b']) else None
+                    if row['ma25_tupo_b'] is not None:
+                        hist.ma25_tupo_b = row['ma25_tupo_b'] if not math.isnan(row['ma25_tupo_b']) else None
+                    if row['ma25_diepo_s'] is not None:
+                        hist.ma25_diepo_s = row['ma25_diepo_s'] if not math.isnan(row['ma25_diepo_s']) else None
+                    if row['ma25_yali_s'] is not None:
+                        hist.ma25_yali_s = row['ma25_yali_s'] if not math.isnan(row['ma25_yali_s']) else None
                     hist_list.append(hist)
                 if freq == 'D':
                     StockHistoryDaily.objects.bulk_update(hist_list, ['ma25','ma60','ma200','ma25_zhicheng_b','ma25_tupo_b','ma25_diepo_s','ma25_yali_s'])
