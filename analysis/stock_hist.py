@@ -57,14 +57,15 @@ def hist_since_listed(stock_symbol, start_date, end_date, freq='D'):
     将每次的收盘历史数据按照10年分隔从tushare接口获取
     再按照时间先后顺序拼接
     '''
-    split_cal_list = split_trade_cal(start_date, end_date)
-    df_list = []
-    for trade_cal in split_cal_list:
-        df = ts.pro_bar(ts_code=stock_symbol, freq=freq,
-                        start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
-        # df = df.iloc[::-1]  # 将数据按照时间顺序排列
-        df_list.append(df)
-    return pd.concat(df_list)
+    if start_date is not None:
+        split_cal_list = split_trade_cal(start_date, end_date)
+        df_list = []
+        for trade_cal in split_cal_list:
+            df = ts.pro_bar(ts_code=stock_symbol, freq=freq,
+                            start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
+            # df = df.iloc[::-1]  # 将数据按照时间顺序排列
+            df_list.append(df)
+        return pd.concat(df_list)
 
 
 def download_stock_hist(freq, ts_code_list=[]):
@@ -77,42 +78,47 @@ def download_stock_hist(freq, ts_code_list=[]):
             is_hist_downloaded=False, ts_code__in=ts_code_list)
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            df = hist_since_listed(
-                listed_company.ts_code, listed_company.list_date, end_date, freq)
-            hist_list = []
-            for v in df.values:
-                hist = object
+            # print(listed_company.ts_code)
+            if listed_company.list_date is not None:
+                df = hist_since_listed(
+                    listed_company.ts_code, listed_company.list_date, end_date, freq)
+                hist_list = []
+                for v in df.values:
+                    hist = object
+                    if freq == 'D':
+                        hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                                                low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                                                amount=v[10], freq=freq)
+                    else:
+                        pass
+                    '''
+                    ts_code	str	股票代码
+                    trade_date	str	交易日期
+                    open	float	开盘价
+                    high	float	最高价
+                    low	float	最低价
+                    close	float	收盘价
+                    pre_close	float	昨收价
+                    change	float	涨跌额
+                    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+                    vol	float	成交量 （手）
+                    amount	float	成交额 （千元）
+                    '''
+                    hist_list.append(hist)
                 if freq == 'D':
-                    hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                            low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                            amount=v[10], freq=freq)
+                    StockHistoryDaily.objects.bulk_create(hist_list)
                 else:
                     pass
-                '''
-                ts_code	str	股票代码
-                trade_date	str	交易日期
-                open	float	开盘价
-                high	float	最高价
-                low	float	最低价
-                close	float	收盘价
-                pre_close	float	昨收价
-                change	float	涨跌额
-                pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-                vol	float	成交量 （手）
-                amount	float	成交额 （千元）
-                '''
-                hist_list.append(hist)
-            if freq == 'D':
-                StockHistoryDaily.objects.bulk_create(hist_list)
+                listed_company.is_hist_downloaded = True
+                listed_company.hist_update_date = end_date
+                listed_company.save()
+                now = datetime.now()
+                print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
+                    ' history trade info downloaded.')
             else:
-                pass
-            listed_company.is_hist_downloaded = True
-            listed_company.hist_update_date = end_date
-            listed_company.save()
-            now = datetime.now()
-            print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
-                  ' history trade info downloaded.')
-
+                now = datetime.now()
+                print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
+                    ' list date is empty.')
 
 def update_stock_hist():
     end_date = date.today()

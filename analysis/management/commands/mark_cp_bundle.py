@@ -57,7 +57,7 @@ class Command(BaseCommand):
         elif freq is None:
             print('freq must be provided')
         else:
-            download_stock_hist(freq, ts_code_list)
+            download_stock_hist(freq)
             time.sleep(1)
             mark_jiuzhuan_listed(freq)
             time.sleep(1)

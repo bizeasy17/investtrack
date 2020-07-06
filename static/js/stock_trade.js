@@ -626,6 +626,7 @@ $(function () {
         var price = $('#tradePrice').val();
         var quantity = $('#quantity').val();
         var cash = $('#refCashAmount').text();
+        var strategyFreq = $('input:radio[name="strategy-freq"]:checked').val();
         var strategy = $('#pickedStrategyID').val();
         var targetPosition = $('#targetPosition').val();
         var direction = $('#direction').val();
@@ -697,6 +698,7 @@ $(function () {
                 price: price,
                 quantity: quantity,
                 cash: cash,
+                strategyFreq: strategyFreq,
                 strategy: strategy,
                 targetPosition: targetPosition,
                 direction: direction,
