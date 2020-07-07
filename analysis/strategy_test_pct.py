@@ -25,9 +25,9 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
     # if strategy_code.startswith('jiuzhuan_'):
     # print(ts_code_list)
     if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter()
+        listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True)
     else:
-        listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
+        listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True, ts_code__in=ts_code_list)
     # print(len(listed_companies))
     for listed_company in listed_companies:
         print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

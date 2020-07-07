@@ -29,9 +29,9 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
 
     # if strategy_code.startswith('jiuzhuan_'):
     if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter()
+        listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True)
     else:
-        listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
+        listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True, ts_code__in=ts_code_list)
     for listed_company in listed_companies:
         print(' test on period start - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
