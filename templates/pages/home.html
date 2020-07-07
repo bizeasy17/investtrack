@@ -184,6 +184,29 @@
     </div>
   </div>
 </section>
+
+<section>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 order-lg-2">
+        <div>
+          <img class="img-fluid " src="{% static 'img/strategy_analysis1.png' %}" alt="" />
+          <img class="img-fluid " src="{% static 'img/strategy_analysis2.png' %}" alt="" />
+
+        </div>
+      </div>
+      <div class="col-lg-6 order-lg-1">
+        <div class="p-5">
+          <h4 class="display-4 text-primary">{% trans '更重要的是：您还可以查询一些广泛应用的交易策略，让您在投资前给自己一个合理的预期' %}</h4>
+          <h5>
+            {% trans '您可以了解股票在应用某一个策略买入/卖出后在历史上的涨幅和跌幅是多少' %}
+            {% trans '如果您的投资期望收益是10%，那么系统也会给出某一只股票达到您的预期期望需要多久' %}
+          </h5>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock content %} 
 {% block javascript %} {{ block.super }}
 <script src="{% static 'js/home.js' %}" type="text/javascript"></script>
