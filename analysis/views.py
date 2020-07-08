@@ -146,7 +146,7 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
             result_label = []
             quantile = []
             results = BStrategyTestResultOnDays.objects.filter(
-                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_high=True).order_by('trade_date')
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period).order_by('trade_date')
             df = pd.DataFrame(results.values('stage_high_pct'))
             qtiles = df.stage_high_pct.quantile([0.25, 0.5, 0.75])
             for qtile in qtiles:
@@ -175,7 +175,7 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
             quantile = []
 
             results = BStrategyTestResultOnDays.objects.filter(
-                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period, stage_low=True).order_by('trade_date')
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period).order_by('trade_date')
             df = pd.DataFrame(results.values('stage_low_pct'))
             qtiles = df.stage_low_pct.quantile([0.25, 0.5, 0.75])
             for qtile in qtiles:

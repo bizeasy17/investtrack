@@ -76,8 +76,8 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                     idx_list_period = [id for id in range(
                         idx, idx + int(test_period))]
                     if idx + int(test_period) <= len(df.index):
-                        b_close = df.iloc[idx]['close']
-                        b = df.iloc[idx]
+                        cp_close = df.iloc[idx]['close']
+                        critical_point = df.iloc[idx]
                         idx_max = df.iloc[idx_list_period]['close'].idxmax(
                             axis=0)
                         idx_min = df.iloc[idx_list_period]['close'].idxmin(
@@ -86,10 +86,10 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                             axis=0)
                         min_c = df.iloc[idx_list_period]['close'].min(
                             axis=0)
-                        pct_incr = round(
-                            (max_c - b_close) / b_close * 100, 3)
-                        pct_drop = round(
-                            (min_c - b_close) / b_close * 100, 3)
+                        pct_up = round(
+                            (max_c - cp_close) / cp_close * 100, 3)
+                        pct_down = round(
+                            (min_c - cp_close) / cp_close * 100, 3)
 
                         # print('Jiu zhuan buy...')
                         # print(b)
@@ -101,26 +101,24 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                         # 买入点
                         # for v in b.values:
                         # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                        b_tnx = BStrategyTestResultOnDays(ts_code=b.ts_code, trade_date=b.trade_date, test_period=test_period, 
-                                                            # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close, 
-                                                            # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount, 
-                                                            tnx_point=True, strategy_code=strategy_code)
+                        # b_tnx = BStrategyTestResultOnDays(ts_code=b.ts_code, trade_date=b.trade_date, test_period=test_period, 
+                        #                                     # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close, 
+                        #                                     # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount, 
+                        #                                     tnx_point=True, strategy_code=strategy_code)
                         # 查询周期内最高价
-                        max = df.iloc[idx_max]
-                        # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                        test_max = BStrategyTestResultOnDays(ts_code=max.ts_code, trade_date=max.trade_date, test_period=test_period, 
-                                                                # open=max.open, high=max.high, low=max.low, close=max.close, pre_close=max.pre_close, 
-                                                                # change=max.change, pct_chg=max.pct_chg, vol=max.vol, amount=max.amount, 
-                                                                stage_high=True, stage_high_pct=pct_incr, strategy_code=strategy_code)
+                        found_max = df.iloc[idx_max]
                         # 查询周期内最低价
-                        min = df.iloc[idx_min]
-                        test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period, 
-                                                                # open=min.open, high=min.high, low=min.low, close=min.close, pre_close=min.pre_close, 
-                                                                # change=min.change, pct_chg=min.pct_chg, vol=min.vol, amount=min.amount, 
-                                                                stage_low=True, stage_low_pct=pct_drop, strategy_code=strategy_code)
-                        strategy_test_list.append(b_tnx)
-                        strategy_test_list.append(test_min)
-                        strategy_test_list.append(test_max)
+                        found_min = df.iloc[idx_min]
+                        # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
+                        test_by_day = BStrategyTestResultOnDays(ts_code=critical_point.ts_code, trade_date=critical_point.trade_date, test_period=test_period,
+                                                             stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, stage_low_pct=pct_down, strategy_code=strategy_code)
+                        # test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period, 
+                        #                                         # open=min.open, high=min.high, low=min.low, close=min.close, pre_close=min.pre_close, 
+                        #                                         # change=min.change, pct_chg=min.pct_chg, vol=min.vol, amount=min.amount, 
+                        #                                         stage_low=True, stage_low_pct=pct_down, strategy_code=strategy_code)
+                        # strategy_test_list.append(b_tnx)
+                        # strategy_test_list.append(test_min)
+                        strategy_test_list.append(test_by_day)
         if len(strategy_test_list) > 0:
             log_test_status(listed_company.ts_code,
                             'PERIOD_TEST', freq, [strategy_code], )

@@ -19,12 +19,12 @@ class Command(BaseCommand):
             type=str,
             help='Which ts_code you want to apply the snapshot',
         )
-        # Named (optional) arguments
-        parser.add_argument(
-            '--strategy_code',
-            type=str,
-            help='Which strategy_code you want to apply the snapshot',
-        )
+        # # Named (optional) arguments
+        # parser.add_argument(
+        #     '--strategy_code',
+        #     type=str,
+        #     help='Which strategy_code you want to apply the snapshot',
+        # )
         # Named (mandatory) arguments
         parser.add_argument(
             '--freq',
@@ -35,7 +35,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         ts_code = options['ts_code']
-        strategy_code = options['strategy_code']
+        # strategy_code = options['strategy_code']
         freq = options['freq']
         strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
                           'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
