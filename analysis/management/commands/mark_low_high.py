@@ -37,15 +37,21 @@ class Command(BaseCommand):
         ts_code = options['ts_code']
         strategy_code = options['strategy_code']
         freq = options['freq']
-        if strategy_code is not None and freq is not None:
-            if ts_code is not None:
-                ts_code_list = ts_code.split(',')
-                if ts_code_list is not None and len(ts_code_list) >= 1:
-                    # print(ts_code_list)
-                    test_by_period(strategy_code, freq, ts_code_list)
+        strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
+                          'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
+        if ts_code is not None:
+            ts_code_list = ts_code.split(',')
+            if ts_code_list is not None and len(ts_code_list) >= 1:
+                # print(ts_code_list)
+                if freq is not None:
+                    for strategy_code in strategy_codes:
+                        test_by_period(strategy_code, freq, ts_code_list)
+                else:
+                    print('please input the mandatory freq')
             else:
-                test_by_period(strategy_code, freq)
-        else:
-            print('please input the mandatory strategy code')
-            pass
+                if freq is not None:
+                    test_by_period(strategy_code, freq)
+                else:
+                    print('please input the mandatory freq')
+        
         
