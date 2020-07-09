@@ -8,7 +8,7 @@ from investors.models import TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     BStrategyTestResultOnDays, StockHistoryDaily,
+                     StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
 from .utils import log_test_status, is_strategy_tested
 
@@ -33,7 +33,7 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
     else:
         listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True, ts_code__in=ts_code_list)
     for listed_company in listed_companies:
-        print(' test on period start - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        print(' test on low/high for ' + strategy_code + ' start - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
         idx_list = []
         idx_list_period = []
@@ -110,7 +110,7 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
                         # 查询周期内最低价
                         found_min = df.iloc[idx_min]
                         # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                        test_by_day = BStrategyTestResultOnDays(ts_code=critical_point.ts_code, trade_date=critical_point.trade_date, test_period=test_period,
+                        test_by_day = StrategyTestLowHigh(ts_code=critical_point.ts_code, trade_date=critical_point.trade_date, test_period=test_period,
                                                              stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, stage_low_pct=pct_down, strategy_code=strategy_code)
                         # test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period, 
                         #                                         # open=min.open, high=min.high, low=min.low, close=min.close, pre_close=min.pre_close, 
@@ -122,6 +122,6 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
         if len(strategy_test_list) > 0:
             log_test_status(listed_company.ts_code,
                             'PERIOD_TEST', freq, [strategy_code], )
-            BStrategyTestResultOnDays.objects.bulk_create(strategy_test_list)
-        print(' test on period end - ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            StrategyTestLowHigh.objects.bulk_create(strategy_test_list)
+        print(' test on low/high strategy ' + strategy_code + ' , for ' + listed_company.ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
    

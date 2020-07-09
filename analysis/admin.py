@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TradeStrategyStat, BStrategyTestResultOnDays, BStrategyOnPctTest
+from .models import TradeStrategyStat, StrategyTestLowHigh, BStrategyOnPctTest
 # Register your models here.
 
 class TradeStrategyStatAdmin(admin.ModelAdmin):
@@ -14,5 +14,5 @@ class BStrategyOnPctTestAdmin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(TradeStrategyStat, TradeStrategyStatAdmin)
-admin.site.register(BStrategyTestResultOnDays, BStrategyTestRstAdmin)
+admin.site.register(StrategyTestLowHigh, BStrategyTestRstAdmin)
 admin.site.register(BStrategyOnPctTest, BStrategyOnPctTestAdmin)

@@ -8,7 +8,7 @@ from investors.models import TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     BStrategyTestResultOnDays, StockHistoryDaily,
+                     StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
 from .utils import log_test_status, is_strategy_tested
 
@@ -30,7 +30,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
         listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True, ts_code__in=ts_code_list)
     # print(len(listed_companies))
     for listed_company in listed_companies:
-        print(' test on pct start - ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        print(' test on pct start strategy ' + strategy_code + ' for ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         df = pd.DataFrame()
         idx_list = []
         strategy_test_list = []
@@ -75,7 +75,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
             elif strategy_code == 'ma25_yali_s':
                 idx_list = df.loc[df['ma25_yali_s'] == 1].index
             
-            print(len(idx_list))
+            # print(len(idx_list))
 
             for idx in idx_list:
                 b = df.iloc[idx]
@@ -95,7 +95,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 post_exp_days_pct_test(all_pct_list)
                 log_test_status(listed_company.ts_code,
                                 'EXP_PCT_TEST', test_freq, [strategy_code])
-            print(' test on pct end - '  + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
+            print(' test on pct end strategy - ' + strategy_code + ' for ' +   + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
         else:
             print(listed_company.ts_code + ' for strategy ' + strategy_code + ' pct has tested already')
 def test_expected_pct(strategy_name, test_freq):

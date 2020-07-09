@@ -209,7 +209,7 @@ class StockStrategyTestLog(BaseModel):
         return self.ts_code
 
 
-class BStrategyTestResultOnDays(models.Model):
+class StrategyTestLowHigh(models.Model):
     '''
     ts_code	str	股票代码
     trade_date	str	交易日期
@@ -231,18 +231,18 @@ class BStrategyTestResultOnDays(models.Model):
         _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
     test_period = models.IntegerField(
         _('测试周期长度'), blank=True, null=False, default=10)
-    # stage_low_date = models.DateField(
-    #     _('低点日期'), blank=True, null=True)
+    stage_low_date = models.DateField(
+        _('低点日期'), blank=True, null=True)
     stage_low_pct = models.FloatField(
         _('低点/买点%?'), blank=True, null=True)
-    # stage_high_date = models.DateField(
-    #     _('高点日期'), blank=True, null=True)
+    stage_high_date = models.DateField(
+        _('高点日期'), blank=True, null=True)
     stage_high_pct = models.FloatField(
         _('高点/买点%?'), blank=True, null=True)
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
     #                                   on_delete=models.CASCADE)
     strategy_code = models.CharField(
-        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+        _('策略代码'), max_length=25, blank=True, null=True)
 
     def __str__(self):
         return self.ts_code

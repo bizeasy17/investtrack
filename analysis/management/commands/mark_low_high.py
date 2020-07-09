@@ -53,5 +53,9 @@ class Command(BaseCommand):
                     test_by_period(strategy_code, freq)
                 else:
                     print('please input the mandatory freq')
-        
-        
+        else:
+            if freq is not None:
+                for strategy_code in strategy_codes:
+                    test_by_period(strategy_code, freq)
+            else:
+                print('please input the mandatory freq')
