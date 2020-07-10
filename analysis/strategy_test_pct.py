@@ -52,28 +52,28 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
 
             if strategy_code == 'jiuzhuan_b':
                 idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
-            elif strategy_code == 'jiuzhuan_s':
-                idx_list = df.loc[df['jiuzhuan_count_s'] == 9].index
             elif strategy_code == 'dibu_b':
                 idx_list = df.loc[df['di_min'] == 1].index
-            elif strategy_code == 'dingbu_s':
-                idx_list = df.loc[df['ding_max'] == 1].index
             elif strategy_code == 'w_di':
                 idx_list = df.loc[df['w_di'] == 1].index
-            elif strategy_code == 'm_ding':
-                idx_list = df.loc[df['m_ding'] == 1].index
             elif strategy_code == 'tupo_yali_b':
                 idx_list = df.loc[df['tupo_b'] == 1].index
-            elif strategy_code == 'diepo_zhicheng_s': 
-                idx_list = df.loc[df['diepo_s'] == 1].index
             elif strategy_code == 'ma25_zhicheng_b':
                 idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
             elif strategy_code == 'ma25_tupo_b':
                 idx_list = df.loc[df['ma25_tupo_b'] == 1].index
-            elif strategy_code == 'ma25_diepo_s':
-                idx_list = df.loc[df['ma25_diepo_s'] == 1].index
-            elif strategy_code == 'ma25_yali_s':
-                idx_list = df.loc[df['ma25_yali_s'] == 1].index
+            # elif strategy_code == 'jiuzhuan_s':
+            #     idx_list = df.loc[df['jiuzhuan_count_s'] == 9].index
+            # elif strategy_code == 'dingbu_s':
+            #     idx_list = df.loc[df['ding_max'] == 1].index
+            # elif strategy_code == 'm_ding':
+            #     idx_list = df.loc[df['m_ding'] == 1].index
+            # elif strategy_code == 'diepo_zhicheng_s': 
+            #     idx_list = df.loc[df['diepo_s'] == 1].index
+            # elif strategy_code == 'ma25_diepo_s':
+            #     idx_list = df.loc[df['ma25_diepo_s'] == 1].index
+            # elif strategy_code == 'ma25_yali_s':
+            #     idx_list = df.loc[df['ma25_yali_s'] == 1].index
             
             # print(len(idx_list))
 
@@ -95,7 +95,7 @@ def test_exp_pct(strategy_code, ts_code_list=[], test_freq='D'):
                 post_exp_days_pct_test(all_pct_list)
                 log_test_status(listed_company.ts_code,
                                 'EXP_PCT_TEST', test_freq, [strategy_code])
-            print(' test on pct end strategy - ' + strategy_code + ' for ' +   + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
+            print(' test on pct end strategy - ' + strategy_code + ' for ' + listed_company.ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))        
         else:
             print(listed_company.ts_code + ' for strategy ' + strategy_code + ' pct has tested already')
 def test_expected_pct(strategy_name, test_freq):
