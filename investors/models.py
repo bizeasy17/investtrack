@@ -60,8 +60,11 @@ class StrategyAnalysisCode(BaseModel):
                             blank=False, null=False, default='')
     analysis_code = models.CharField(
         _('代码编号'), max_length=25, blank=False, null=False, default='')
+    category = models.CharField(
+        _('策略分类'), max_length=50, blank=True, null=True)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('创建者'), blank=False, null=False,
                                 on_delete=models.CASCADE)
+
     class Meta:
         ordering = ['analysis_code']
         verbose_name = _('策略分析代码')

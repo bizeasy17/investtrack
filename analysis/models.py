@@ -209,7 +209,7 @@ class StockStrategyTestLog(BaseModel):
         return self.ts_code
 
 
-class BStrategyTestResultOnDays(BaseModel):
+class StrategyTestLowHigh(models.Model):
     '''
     ts_code	str	股票代码
     trade_date	str	交易日期
@@ -223,44 +223,26 @@ class BStrategyTestResultOnDays(BaseModel):
     vol	float	成交量 （手）
     amount	float	成交额 （千元）
     '''
+    id = models.AutoField(primary_key=True)
+    created_time = models.DateTimeField(_('创建时间'), default=now)
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     trade_date = models.DateField(
         _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
     test_period = models.IntegerField(
         _('测试周期长度'), blank=True, null=False, default=10)
-    # new fields
-    # open = models.FloatField(
-    #     _('开盘价'), blank=True, null=True)
-    # high = models.FloatField(
-    #     _('最高价'), blank=True, null=True)
-    # low = models.FloatField(
-    #     _('最低价'), blank=True, null=True)
-    # pre_close = models.FloatField(
-    #     _('前日收盘价'), blank=True, null=True)
-    # close = models.FloatField(_('收盘价'), blank=True, null=True)
-    # change = models.FloatField(
-    #     _('价格变化'), blank=True, null=True)
-    # pct_chg = models.FloatField(
-    #     _('涨幅%'), blank=True, null=True)
-    # vol = models.FloatField(
-    #     _('交易量'), blank=True, null=True)
-    # amount = models.FloatField(
-    #     _('金额'), blank=True, null=True)
-    stage_low = models.BooleanField(
-        _('低点?'), blank=True, null=True, default=False)
+    stage_low_date = models.DateField(
+        _('低点日期'), blank=True, null=True)
     stage_low_pct = models.FloatField(
-        _('低点/买点%?'), blank=True, null=True, default=False)
-    stage_high = models.BooleanField(
-        _('高点?'), blank=True, null=True, default=False)
+        _('低点/买点%?'), blank=True, null=True)
+    stage_high_date = models.DateField(
+        _('高点日期'), blank=True, null=True)
     stage_high_pct = models.FloatField(
-        _('高点/买点%?'), blank=True, null=True, default=False)
-    tnx_point = models.BooleanField(
-        _('b点?'), blank=True, null=True, default=False)
+        _('高点/买点%?'), blank=True, null=True)
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
     #                                   on_delete=models.CASCADE)
     strategy_code = models.CharField(
-        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+        _('策略代码'), max_length=25, blank=True, null=True)
 
     def __str__(self):
         return self.ts_code
@@ -332,7 +314,6 @@ class BStrategyOnPctTest(BaseModel):
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
-
 class BStrategyOnFixedPctTest(BaseModel):
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
     #                                   on_delete=models.CASCADE)
@@ -384,6 +365,87 @@ class BStrategyOnFixedPctTest(BaseModel):
     class Meta:
         ordering = ['ts_code']
         verbose_name = _('达到固定涨幅周期')
+        verbose_name_plural = verbose_name
+
+
+class StrategyOnDownPctTest(BaseModel):
+    # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+    #                                   on_delete=models.CASCADE)
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    down_10pct_min = models.FloatField(
+        _('-10%最小周期'), blank=True, null=True)
+    down_10pct_max = models.FloatField(
+        _('-10%最大周期'), blank=True, null=True)
+    down_10pct_mean = models.FloatField(
+        _('-10%平均周期'), blank=True, null=True)
+    down_20pct_min = models.FloatField(
+        _('-20%最小周期'), blank=True, null=True)
+    down_20pct_max = models.FloatField(
+        _('-20%最大周期'), blank=True, null=True)
+    down_20pct_mean = models.FloatField(
+        _('-20%平均周期'), blank=True, null=True)
+    down_30pct_min = models.FloatField(
+        _('-30%最小周期'), blank=True, null=True)
+    down_30pct_max = models.FloatField(
+        _('-30%最大周期'), blank=True, null=True)
+    down_30pct_mean = models.FloatField(
+        _('-30%平均周期'), blank=True, null=True)
+    down_50pct_min = models.FloatField(
+        _('-50%最小周期'), blank=True, null=True)
+    down_50pct_max = models.FloatField(
+        _('-50%最大周期'), blank=True, null=True)
+    down_50pct_mean = models.FloatField(
+        _('-50%平均周期'), blank=True, null=True)
+    down_80pct_min = models.FloatField(
+        _('-80%最小周期'), blank=True, null=True)
+    down_80pct_max = models.FloatField(
+        _('-80%最大周期'), blank=True, null=True)
+    down_80pct_mean = models.FloatField(
+        _('-80%平均周期'), blank=True, null=True)
+    test_period = models.CharField(
+        _('测试周期'), max_length=5, blank=False, null=False, default='D')
+
+    def __str__(self):
+        return self.ts_code
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('跌幅天数统计')
+        verbose_name_plural = verbose_name
+
+class StrategyOnFixedDownPctTest(BaseModel):
+    # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
+    #                                   on_delete=models.CASCADE)
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
+    pct10_period = models.FloatField(
+        _('-10%最小周期'), blank=True, null=True)
+    pct20_period = models.FloatField(
+        _('-20%最小周期'), blank=True, null=True)
+    pct30_period = models.FloatField(
+        _('-30%最小周期'), blank=True, null=True)
+    pct50_period = models.FloatField(
+        _('-50%最小周期'), blank=True, null=True)
+    pct80_period = models.FloatField(
+        _('-80%最小周期'), blank=True, null=True)
+    test_freq = models.CharField(
+        _('测试周期'), max_length=5, blank=False, null=False, default='D')
+
+    def __str__(self):
+        return self.ts_code
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('跌幅天数')
         verbose_name_plural = verbose_name
 
 class FocusAreaDuration(BaseModel):
