@@ -57,9 +57,9 @@ $(function () {
                     strategyDiv.html("");
                     $(data).each(function (idx, obj) {
                         strategiesTag +=
-                            '<div class="row col-lg-4">' +
+                            '<div class="row">' +
                             '<div class="col">' +
-                            '<img src="' + imgRoot + obj.code + '.png" height="90" width="90" style="border-radius: 10%">' +
+                            '<img src="' + imgRoot + obj.code + '.png" height="75" width="75" style="border-radius: 10%">' +
                             '</div>' +
                             '<div class="col">' +
                             '<div><span class="small text-primary">' + obj.strategy_name + '</span></div>'
@@ -86,8 +86,8 @@ $(function () {
                         // }else{
                         //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
                         // }
-                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small><i class="fa fa-eye">查看历史</i></small></button>';
-                        strategiesTag += '</div></div>';
+                        strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small>分析</small></button>';
+                        strategiesTag += '</div></div><hr/>';
                         strategyDiv.append(strategiesTag);
                         strategiesTag = "";
                         var showAnalysisBtn = document.getElementById("showHistBtn" + obj.id);
@@ -159,13 +159,14 @@ $(function () {
         showExpectedPctChart(tsCode, strategyCode, pctPeriod);
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
-        // showStockHistChart(tsCode, strategyCode, freq);
+        showStockHistChart(tsCode, strategyCode, freq);
     });
 
     
     // 股票历史收盘数据
     var stockHistChart;
     var showStockHistChart = function (tsCode, strategyCode, freq) {
+        var period = 1;
         if ($("#stockHistCanv").length) {
             var stockHistChartCanvas = $("#stockHistCanv")
                 .get(0)
