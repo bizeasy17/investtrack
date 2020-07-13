@@ -2,7 +2,9 @@
 {% load static i18n %} 
 {% load crispy_forms_tags thumbnail humanize %} 
 
-{% block title %}{% endblock %} 
+{% block title %}
+{% trans '我爱投资分析' %}
+{% endblock %} 
 {% block head %} 
 {% block css %}{{ block.super }}
 <!-- <link href="{% static 'css/home.css' %}" rel="stylesheet"> -->
