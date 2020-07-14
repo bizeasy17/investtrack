@@ -192,7 +192,7 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
 
 
 @login_required
-def stock_history(request, strategy, stock_symbol, freq):
+def stock_history(request, strategy, stock_symbol, freq, type):
     '''
     用户需要授权可以使用策略
     '''
@@ -200,7 +200,10 @@ def stock_history(request, strategy, stock_symbol, freq):
     if request.method == 'GET':
         try:
             close_result = []
+            ticks_result = []
             ma25_result = []
+            ma60_result = []
+            ma200_result = []
             amount_result = []
             lbl_trade_date = []
             quantile = []
@@ -214,10 +217,21 @@ def stock_history(request, strategy, stock_symbol, freq):
             # quantile.append(round(df.mean().stage_low_pct,3))
             for result in results:
                 ma25_result.append(result.ma25)
+                ma60_result.append(result.ma60)
+                ma200_result.append(result.ma200)
                 close_result.append(result.close)
+                ticks_result.append(
+                    {
+                        't': result.trade_date, 'o': result.open, 'h': result.high,
+                        'l': result.low, 'c': result.close, 'd': '',
+                    }
+                )
                 amount_result.append(result.amount)
                 lbl_trade_date.append(result.trade_date)
-            return JsonResponse({'close': close_result, 'ma25': ma25_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            if type == 'ticks':
+                return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            else:
+                return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except IndexError as err:
             logging.error(err)
             return HttpResponse(status=404)
