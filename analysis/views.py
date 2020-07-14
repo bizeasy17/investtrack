@@ -223,7 +223,8 @@ def stock_history(request, strategy, stock_symbol, freq, type):
                 ticks_result.append(
                     {
                         't': result.trade_date, 'o': result.open, 'h': result.high,
-                        'l': result.low, 'c': result.close, 'd': '',
+                        'l': result.low, 'c': result.close, 'd': '', 
+                        'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
                     }
                 )
                 amount_result.append(result.amount)

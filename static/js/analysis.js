@@ -3,13 +3,13 @@ Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,Bli
 Chart.defaults.global.defaultFontColor = '#858796';
 
 window.chartColors = {
-	red: 'rgb(255, 99, 132)',
-	orange: 'rgb(255, 159, 64)',
-	yellow: 'rgb(255, 205, 86)',
-	green: 'rgb(75, 192, 192)',
-	blue: 'rgb(54, 162, 235)',
-	purple: 'rgb(153, 102, 255)',
-	grey: 'rgb(201, 203, 207)'
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
 };
 
 $(function () {
@@ -184,15 +184,30 @@ $(function () {
         return formatDate(priorDate, format);
     }
 
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="chart-type"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        var type = this.value;
+        var freq = 'D';
+        var tsCode = $('#hiddenTsCode').val();
+        var showName = $('#hiddenStockName').val();
+        var strategyCode = $('#hiddenStrategyCode').val();
+        drawStockChart(tsCode, tsCode, showName, strategyCode, type, freq);
+    });
+
     // 股票历史收盘数据
-    var stockHistChart;
-    var stockHistChartCanvas = $("#stockHistCanv")
-                .get(0)
-                .getContext("2d");
-    var drawStockChart = function(symbol, showCode, showName, strategyCode, type, freq) {
-        if(type == 'k'){
+    var stockHistChartK;
+    var stockHistChartC;
+    var stockHistChartCanvasK = $("#stockHistCanvK")
+        .get(0)
+        .getContext("2d");
+    var stockHistChartCanvasC = $("#stockHistCanvC")
+        .get(0)
+        .getContext("2d");
+    var drawStockChart = function (symbol, showCode, showName, strategyCode, type, freq) {
+        if (type == 'k') {
             drawStockKChart(symbol, showCode, showName, strategyCode, freq);
-        }else if(type == 'c'){
+        } else if (type == 'c') {
             drawStockHistCloseChart(symbol, strategyCode, freq)
         }
     }
@@ -204,42 +219,45 @@ $(function () {
             // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
             url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/ticks/',
             success: function (data) {
-                if (stockHistChart) {
+                if (stockHistChartK) {
                     // update chart
-                    stockHistChart.data.labels = data.label;
-                    stockHistChart.data.datasets[0].data = data.ticks;
-                    stockHistChart.data.datasets[1].data = data.ma25;
-                    stockHistChart.data.datasets[2].data = data.ma60;
-                    stockHistChart.data.datasets[3].data = data.ma200;
-                    stockHistChart.update();
+                    stockHistChartK.data.labels = data.label;
+                    stockHistChartK.data.datasets[0].data = data.ticks;
+                    stockHistChartK.data.datasets[1].data = data.ma25;
+                    stockHistChartK.data.datasets[2].data = data.ma60;
+                    stockHistChartK.data.datasets[3].data = data.ma200;
+                    stockHistChartK.update();
                 } else {
-                    stockHistChart = new Chart(stockHistChartCanvas, {
+                    stockHistChartK = new Chart(stockHistChartCanvasK, {
                         type: 'candlestick',
                         data: {
                             datasets: [{
                                 label: showName + '-' + showCode,
                                 data: data.ticks
                             }
-                            // , {
-                            //     label: 'MA25',
-                            //     backgroundColor: window.chartColors.red,
-                            //     borderColor: window.chartColors.red,
-                            //     data: data.ma25,
-                            //     fill: false,
-                            // }, {
-                            //     label: 'MA60',
-                            //     backgroundColor: window.chartColors.red,
-                            //     borderColor: window.chartColors.blue,
-                            //     data: data.ma60,
-                            //     fill: false,
-                            // },{
-                            //     label: 'MA200',
-                            //     backgroundColor: window.chartColors.red,
-                            //     borderColor: window.chartColors.green,
-                            //     data: data.ma200,
-                            //     fill: false,
-                            // }
-                        ]
+                                // , {
+                                //     label: 'MA25',
+                                //     backgroundColor: window.chartColors.red,
+                                //     borderColor: window.chartColors.red,
+                                //     data: data.ma25,
+                                //     type: 'line',
+                                //     fill: false,
+                                // }, {
+                                //     label: 'MA60',
+                                //     backgroundColor: window.chartColors.red,
+                                //     borderColor: window.chartColors.blue,
+                                //     data: data.ma60,
+                                //     type: 'line',
+                                //     fill: false,
+                                // },{
+                                //     label: 'MA200',
+                                //     backgroundColor: window.chartColors.red,
+                                //     borderColor: window.chartColors.green,
+                                //     data: data.ma200,
+                                //     type: 'line',
+                                //     fill: false,
+                                // }
+                            ]
                         },
                         options: {
                             scales: {
@@ -272,28 +290,28 @@ $(function () {
                                     }
                                 }]
                             },
-                            tooltips: {
-                                callbacks: {
-                                    label: function (tooltipItem, data) {
-                                        var dataset = data.datasets[tooltipItem.datasetIndex];
-                                        var point = dataset.data[tooltipItem.index];
-                                        var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                            // tooltips: {
+                            //     callbacks: {
+                            //         label: function (tooltipItem, data) {
+                            //             var dataset = data.datasets[tooltipItem.datasetIndex];
+                            //             var point = dataset.data[tooltipItem.index];
+                            //             var label = data.datasets[tooltipItem.datasetIndex].label || '';
 
-                                        var o = point.o;
-                                        var h = point.h;
-                                        var l = point.l;
-                                        var c = point.c;
+                            //             var o = point.o;
+                            //             var h = point.h;
+                            //             var l = point.l;
+                            //             var c = point.c;
 
-                                        var percentage = Math.floor((parseFloat(c) - parseFloat(o)) / parseFloat(o) * 100) + "%";
+                            //             var percentage = Math.floor((parseFloat(c) - parseFloat(o)) / parseFloat(o) * 100) + "%";
 
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c + ' 涨幅: ' + percentage;
-                                        return label;
-                                    }
-                                }
-                            }
+                            //             if (label) {
+                            //                 label += ': ';
+                            //             }
+                            //             label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c + ' 涨幅: ' + percentage;
+                            //             return label;
+                            //         }
+                            //     }
+                            // }
                         }
                     });
                 }
@@ -301,7 +319,7 @@ $(function () {
         });
     }
 
-    
+
     var drawStockHistCloseChart = function (tsCode, strategyCode, freq) {
         var period = 1;
         if ($("#stockHistCanv").length) {
@@ -320,14 +338,16 @@ $(function () {
                     // $("#drop75ile").text(data.quantile[2] + '%');
                     // $("#avgDrop").text(data.quantile[3] + '%');
                     // $("#stockHistCanv").removeClass("d-none");
-                    if (stockHistChart) {
+                    if (stockHistChartC) {
                         // update chart
-                        stockHistChart.data.labels = data.label;
-                        stockHistChart.data.datasets[0].data = data.ma25;
-                        stockHistChart.data.datasets[1].data = data.close;
-                        stockHistChart.update();
+                        stockHistChartC.data.labels = data.label;
+                        stockHistChartC.data.datasets[0].data = data.ma25;
+                        stockHistChartC.data.datasets[1].data = data.ma60;
+                        stockHistChartC.data.datasets[2].data = data.ma200;
+                        stockHistChartC.data.datasets[3].data = data.close;
+                        stockHistChartC.update();
                     } else {
-                        stockHistChart = new Chart(stockHistChartCanvas, {
+                        stockHistChartC = new Chart(stockHistChartCanvasC, {
                             type: "line",
                             data: {
                                 labels: data.label,
@@ -343,13 +363,13 @@ $(function () {
                                     borderColor: window.chartColors.blue,
                                     data: data.ma60,
                                     fill: false,
-                                },{
+                                }, {
                                     label: 'MA200',
                                     backgroundColor: window.chartColors.red,
                                     borderColor: window.chartColors.green,
                                     data: data.ma200,
                                     fill: false,
-                                },{
+                                }, {
                                     label: '收盘价',
                                     fill: false,
                                     backgroundColor: window.chartColors.blue,

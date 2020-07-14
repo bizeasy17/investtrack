@@ -190,6 +190,10 @@
             // JH, to get the buy/sell on this day - 2020-1-14
             // model.candleHasTradeRec = indexData.r;
             model.candleBuyOrSell = indexData.d;
+            model.ma25 = indexData.ma25;
+            model.ma60 = indexData.ma60;
+            model.ma200 = indexData.ma200;
+
         },
     
         draw: function() {
@@ -348,6 +352,10 @@
             // JH, get if buy/sell indicates, 2020-1-14
             // var hasRec = vm.candleHasTradeRec;
             var buyOrSell = vm.candleBuyOrSell;
+            // get moving avg data
+            var ma25 = vm.ma25;
+            var ma60 = vm.ma60;
+            var ma200 = vm.ma200;
     
             var borderColors = vm.borderColor;
             if (typeof borderColors === 'string') {
@@ -396,6 +404,18 @@
                     ctx.strokeText(buyOrSell,x-10,l+6)
                 }
             }   
+
+            if (ma25 != undefined & ma25 != 0){
+
+            }
+
+            if (ma60 != undefined & ma60 != 0) {
+
+            }
+
+            if (ma200 != undefined & ma200 != 0) {
+
+            }
         },
     });
     
