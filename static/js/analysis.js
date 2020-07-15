@@ -9,7 +9,8 @@ window.chartColors = {
     green: 'rgb(75, 192, 192)',
     blue: 'rgb(54, 162, 235)',
     purple: 'rgb(153, 102, 255)',
-    grey: 'rgb(201, 203, 207)'
+    grey: 'rgb(201, 203, 207)',
+    black: 'rgb(0, 0, 0)'
 };
 
 $(function () {
@@ -198,15 +199,15 @@ $(function () {
     // 股票历史收盘数据
     var stockHistChartK;
     var stockHistChartC;
-    var stockHistChartCanvasK = $("#stockHistCanvK")
-        .get(0)
-        .getContext("2d");
-    var stockHistChartCanvasC = $("#stockHistCanvC")
+    // var canvasKChart = $("#stockHistCanvK")
+    //     .get(0)
+    //     .getContext("2d");
+    var canvasCloseChart = $("#stockHistCanvC")
         .get(0)
         .getContext("2d");
     var drawStockChart = function (symbol, showCode, showName, strategyCode, type, freq) {
         if (type == 'k') {
-            drawStockKChart(symbol, showCode, showName, strategyCode, freq);
+            // drawStockKChart(symbol, showCode, showName, strategyCode, freq);
         } else if (type == 'c') {
             drawStockHistCloseChart(symbol, strategyCode, freq)
         }
@@ -228,7 +229,7 @@ $(function () {
                     stockHistChartK.data.datasets[3].data = data.ma200;
                     stockHistChartK.update();
                 } else {
-                    stockHistChartK = new Chart(stockHistChartCanvasK, {
+                    stockHistChartK = new Chart(canvasKChart, {
                         type: 'candlestick',
                         data: {
                             datasets: [{
@@ -322,7 +323,7 @@ $(function () {
 
     var drawStockHistCloseChart = function (tsCode, strategyCode, freq) {
         var period = 1;
-        if ($("#stockHistCanv").length) {
+        if ($("#stockHistCanvC").length) {
             // var strategy = "9";
             // var stock_symbol = "600626.SH"
             // var period = $('input:radio[name="period"]:checked').val();
@@ -347,14 +348,14 @@ $(function () {
                         stockHistChartC.data.datasets[3].data = data.close;
                         stockHistChartC.update();
                     } else {
-                        stockHistChartC = new Chart(stockHistChartCanvasC, {
+                        stockHistChartC = new Chart(canvasCloseChart, {
                             type: "line",
                             data: {
                                 labels: data.label,
                                 datasets: [{
                                     label: 'MA25',
                                     backgroundColor: window.chartColors.red,
-                                    borderColor: window.chartColors.red,
+                                    borderColor: window.chartColors.green,
                                     data: data.ma25,
                                     fill: false,
                                 }, {
@@ -366,14 +367,14 @@ $(function () {
                                 }, {
                                     label: 'MA200',
                                     backgroundColor: window.chartColors.red,
-                                    borderColor: window.chartColors.green,
+                                    borderColor: window.chartColors.orange,
                                     data: data.ma200,
                                     fill: false,
                                 }, {
                                     label: '收盘价',
                                     fill: false,
                                     backgroundColor: window.chartColors.blue,
-                                    borderColor: window.chartColors.grey,
+                                    borderColor: window.chartColors.black,
                                     data: data.close,
                                 }]
                             },

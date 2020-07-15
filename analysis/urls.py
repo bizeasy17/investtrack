@@ -20,6 +20,8 @@ urlpatterns = [
          views.ma_test),
     path('stock-hist/strategy/<strategy>/<stock_symbol>/<freq>/<type>/',
          views.stock_history),  # ??
+    path('kanpan/',
+         views.KanpanView.as_view(), name='kanpan'),  # ??
     #     path('feed/pct-period-data/',
     #          views.feed_pct_data),  # ??
     #     path('feed/expected-pct-data/',

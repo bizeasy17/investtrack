@@ -43,6 +43,22 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
             return render(request, self.template_name, {self.context_object_name: queryset})
 
 
+class KanpanView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'analysis/kanpan.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'kanpan'
+
+    def get(self, request, *args, **kwargs):
+        req_user = request.user
+        if req_user is not None:
+            stocks_following = StockFollowing.objects.filter(
+                trader=req_user.id,)
+            queryset = {
+                'followings': stocks_following,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+
 @login_required
 def strategies_by_category(request, parent_strategy):
     user = request.user
@@ -68,7 +84,7 @@ def strategies_by_category(request, parent_strategy):
             return JsonResponse(strategy_list, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
 
 
 # @login_required
@@ -130,7 +146,7 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
         except Exception as err:
             print(err)
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 
@@ -158,7 +174,7 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
             return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 
@@ -187,7 +203,7 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
             return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 
@@ -235,7 +251,7 @@ def stock_history(request, strategy, stock_symbol, freq, type):
                 return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 

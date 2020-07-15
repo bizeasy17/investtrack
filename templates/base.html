@@ -54,6 +54,7 @@
                   <!-- <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">{% trans '首页' %} <span class="sr-only">(current)</span></a></li> -->
                   {% if request.user.is_authenticated %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'analysis:home' %}">{% trans '交易策略分析 (测试)' %} </a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'analysis:kanpan' %}">{% trans '看盘小工具 (测试)' %} </a></li>
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '持仓一览' %} <span class="sr-only">(current)</span></a></li>
                   {% comment %} <li class="nav-item"><a class="nav-link" href="{% url 'analysis:pick_stock' %}">{% trans 'AI选股（测试）' %}</a></li> {% endcomment %}
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->

@@ -72,15 +72,15 @@
             <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
                 <span class="mt-1 mr-1 small">{% trans '图表类型' %}</span>
                 <label class="btn btn-light active">
-                    <input type="radio" name="chart-type" id="k" autocomplete="off" value="k" checked>{% trans 'K线图' %} 
+                    <input type="radio" name="chart-type" id="c" autocomplete="off" value="c"  checked>{% trans '收盘线' %}
                 </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="chart-type" id="c" autocomplete="off" value="c" >{% trans '收盘线' %}
+                <label class="btn btn-light">
+                    <input type="radio" name="chart-type" id="k" autocomplete="off" value="k">{% trans '分时图(即将推出)' %} 
                 </label>
             </div>
             <div class="" id="stockHist">
                 <!-- <input type="button" class="btn btn-sm btn-primary" id="collapseHistCanv" value="{% trans '显示股票历史数据' %}"/> -->
-                <canvas class="" id="stockHistCanvK" height="150"></canvas> 
+                <!-- <canvas class="" id="stockHistCanvK" height="150"></canvas>  -->
                 <canvas class="" id="stockHistCanvC" height="150"></canvas> 
             </div>
             <hr/>
@@ -218,13 +218,14 @@
 {% block javascript %}
 {{ block.super }}
 <script type="text/javascript" charset="utf-8">var imgRoot = "{% static 'img/' %}"</script>
-<script
-    src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
+{% comment %} 
+<script src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
-<script
-    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
 <script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}"type="text/javascript"></script>
+{% endcomment %}
+    
 <script src="{% static 'js/analysis.js' %}" type="text/javascript"></script>
 
 {% endblock javascript %}

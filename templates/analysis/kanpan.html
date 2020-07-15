@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<!-- /.container -->
+<div class="content-wrapper">
+    <div class="row flex-grow mb-4">
+        <div class="col-lg-3 grid-margin stretch-card">
+            <!-- <h5>{% trans '欢迎回来，'%}{{request.user.username}}</h5> -->
+            <input type="text"  id="searchForTrade" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search" {% if dashboard.trade_accounts.count == 0 %}readonly{% endif %}>
+            <input type="hidden"  id="defaultAccount" value="{% if dashboard.trade_accounts.count > 0 %}{{ dashboard.trade_accounts.0.id }}{% endif %}"/>
+                
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 grid-margin stretch-card">
+            <div class="row flex-grow">
+                <div class="col-md-4 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '上证指数 - 000001' %}</p>
+                                <p class="font-weight-medium small">
+                                    <!-- <span class="text-muted mr-1"></span> -->
+                                    <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
+                                </p>
+                                
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="shPreClose"></p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="shVolume"></p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="shAmount"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center
+                                justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '深圳成指 - 399001' %}</p>
+                                <p class="text-danger font-weight-medium small">
+                                    <!-- <span class="text-muted small mr-1"></span> -->
+                                    <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="szPreClose"></p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="szVolume"></p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="szAmount"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 stretch-card">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center
+                                justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '创业板 - 399006' %}</p>
+                                <p class="text-danger font-weight-medium small">
+                                    <!-- <span class="text-muted small mr-1"></span> -->
+                                    <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="cybPreClose"></p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="cybVolume"></p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                    <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                    <p class="text-primary mb-0" id="cybAmount"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr class="mt-4"/>
+    <div class="row mt-4">
+        <div class="col-lg-8 grid-margin stretch-card" id="stockFol">
+            <table class="table table-sm table-hover">
+                <thead>
+                <tr>
+                    <th class="width: 30%" scope="col">{% trans '股票名称/代码' %}</th>
+                    <th scope="col">{% trans '最新' %}</th>
+                    <th scope="col">{% trans '涨跌' %}</th>
+                    <th scope="col">{% trans '涨幅' %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% if kanpan %}
+                    {% for following in kanpan.followings %}
+                    <tr>
+                        <th scope="row">
+                            <div class="">
+                                <div class="card-title small">{{following.stock_name}}<span class="small text-muted" id="pos{{following.stock_code}}"></span></div>
+                                <div class="card-subtitle small text-muted"><a href="#" class="text-dark">{{following.stock_code}}</a></div>
+                            </div>
+                        </th>   
+                        <td><span id="real{{following.stock_code}}" class="small"></span></td>
+                        <td><span id="chg{{following.stock_code}}" class="small"></span></td>
+                        <td><span id="pct{{following.stock_code}}" class="small"></span></td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-lg-4 grid-margin stretch-card">
+            <div class="col-md-12 grid-margin stretch-card">
+                <div class="card shadow mb-4">
+                    <div class="card-body pb-0">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div>
+                                <p class="card-title mr-1">
+                                    <i class="fa fa-chart-bar" ></i> {% trans '我的仓位' %}
+                                    <span class="badge badge-info badge-pill" id="pTotalShares">{{ dashboard.total_shares }}</span>
+
+                                </p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-danger font-weight-medium" id="pTotalAvailPerTarget"></span>
+                            </div>
+                            
+                        </div>
+                        <div class="d-flex flex-wrap mb-2">
+                            <div class="regional-chart-legend d-flex align-items-center flex-wrap mb-1" id="positionLegend"></div>
+                            <div class="no-trans-data" id="noPosition"></div>
+                            <canvas height="280" id="positionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             
+        </div>
+    </div>
+    <div class="row">
+        
+    </div>
+</div>
+<!-- content-wrapper ends -->
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script
+    src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
+<script
+    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
+<script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}"type="text/javascript"></script>
+<!-- place project specific Javascript in this file -->
+<!-- <script src="{% static 'js/charts-utils.js' %}" type="text/javascript"></script> -->
+<!-- <script src="{% static 'js/dashboard.js' %}" type="text/javascript"></script> -->
+<script src="{% static 'js/home.js' %}" type="text/javascript"></script>
+{% endblock javascript %}

@@ -19,3 +19,20 @@ def follow_stock(request, symbol):
         new_follow.save()
         return JsonResponse({'code': 'ok', 'message': _('添加成功')}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('添加失败')}, safe=False)
+
+@login_required
+def stocks_following(request):
+    if request.method == 'GET':
+        try:
+            stock_list = []
+            investor = request.user
+            following = StockFollowing.objects.filter(trader=investor)
+            if following is not None and len(following) > 0:
+                for stock in following:
+                    stock_list.append(stock.stock_code)
+                return JsonResponse({'results':stock_list}, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as e:
+            print(e)
+            return HttpResponse(status=500)
