@@ -468,15 +468,24 @@ $(function () {
     updateStockChart();
 
     $(".view-hist").click(function(){
+        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
+        var period = $('input:radio[name="period"]:checked').val();
+        var strategyCode = $('#hiddenStrategyCode').val();
+        var strategyName = $('#hiddenStrategyName').val();
         var tsCode = $(this).attr("id");
         var mixed = $(this).text();
         var nameCode = mixed.split("-");
         if(tsCode.charAt(0)=="6") tsCode += ".SH";
         else tsCode += ".SZ";
+        $(".cur-strategy").text(strategyName);
+        $(".cur-stock").text(tsCode);
         $("#hiddenCode").val($(this).attr("id")); // 页面初始加载时 为上证指数 sh
         $("#hiddenTsCode").val(tsCode)
         $("#hiddenStockName").val(nameCode[0]);
         updateStockChart();
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
     // 刷新自选股
