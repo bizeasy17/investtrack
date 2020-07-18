@@ -42,9 +42,6 @@ class Command(BaseCommand):
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 # print(ts_code_list)
                 if asset is not None:
-                    print(freq + asset)
-                    print(ts_code_list)
-
                     download_stock_hist(freq, ts_code_list, asset)
                 else:
                     download_stock_hist(freq, ts_code_list)
