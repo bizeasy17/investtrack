@@ -37,8 +37,11 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
         if req_user is not None:
             strategie_ctgs = TradeStrategyStat.objects.all().order_by(
                 'category').distinct('category')
+            stocks_following = StockFollowing.objects.filter(
+                trader=req_user.id,)
             queryset = {
                 'strategy_ctgs': strategie_ctgs,
+                'followings': stocks_following,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
@@ -68,7 +71,7 @@ def strategies_by_category(request, parent_strategy):
             return JsonResponse(strategy_list, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
 
 
 # @login_required
@@ -130,7 +133,7 @@ def freq_expected_pct_data(request, strategy, stock_symbol, freq, exp_pct):
         except Exception as err:
             print(err)
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 
@@ -158,7 +161,7 @@ def high_pct_data(request, strategy, stock_symbol, test_period):
             return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 
@@ -187,40 +190,53 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
             return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
         except IndexError as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 
 @login_required
-def stock_history(request, strategy, stock_symbol, freq):
+def stock_history(request, strategy, stock_symbol, freq, type, period):
     '''
     用户需要授权可以使用策略
     '''
     user = request.user
+    # 从当前时间为获取历史的最后一天
+    end_date = date.today()
     if request.method == 'GET':
         try:
             close_result = []
+            ticks_result = []
             ma25_result = []
+            ma60_result = []
+            ma200_result = []
             amount_result = []
             lbl_trade_date = []
             quantile = []
-
+            start_date = end_date - timedelta(days=365 * period)
             results = StockHistoryDaily.objects.filter(
-                ts_code=stock_symbol, freq=freq).order_by('trade_date')[:200]
-            # df = pd.DataFrame(results.values('stage_low_pct'))
-            # qtiles = df.stage_low_pct.quantile([0.25,0.5,0.75])
-            # for qtile in qtiles:
-            #     quantile.append(round(qtile, 3))
-            # quantile.append(round(df.mean().stage_low_pct,3))
+                ts_code=stock_symbol, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')       
+                     # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
                 ma25_result.append(result.ma25)
+                ma60_result.append(result.ma60)
+                ma200_result.append(result.ma200)
                 close_result.append(result.close)
+                ticks_result.append(
+                    {
+                        't': result.trade_date, 'o': result.open, 'h': result.high,
+                        'l': result.low, 'c': result.close, 'd': '',
+                        'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
+                    }
+                )
                 amount_result.append(result.amount)
                 lbl_trade_date.append(result.trade_date)
-            return JsonResponse({'close': close_result, 'ma25': ma25_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-        except IndexError as err:
+            if type == 'ticks':
+                return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            else:
+                return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+        except Exception as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
     pass
 
 

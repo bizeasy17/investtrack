@@ -15,9 +15,9 @@
     <div class="row flex-grow mb-4">
         <div class="col-lg-3 grid-margin stretch-card">
             <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
-            <input type="hidden"  id="hiddenTsCode"/>
-            <input type="hidden"  id="hiddenStockName"/>
-
+            <input type="hidden" id="hiddenCode" value="000001.SH"><!--real code e.g. 000001 -->
+            <input type="hidden" id="hiddenStockName" value="{% trans '上证指数' %}"><!--e.g.平安保险-->
+            <input type="hidden" id="hiddenTsCode" value="000001.SH"><!--show code, 000001.SZ-->
         </div>
         {% comment %} 策略列表 {% endcomment %}
         <div class="col-lg-3">
@@ -65,12 +65,177 @@
         </div>
     </div>
     <hr/>
-    <div class="container row stretch-card" id="strategyList">
+    <div class="container row">
+        <div class="col-lg-2" id="strategyList">
+        </div>
+        <div class="col-lg-8" id="">
+            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                <!-- <span class="mt-1 mr-1 small">{% trans '' %}</span> -->
+                <label class="btn btn-light active">
+                    <input type="radio" name="chart-period" id="y1" autocomplete="off" value="1"  checked>{% trans '1年' %}
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="chart-period" id="y2" autocomplete="off" value="2">{% trans '2年' %} 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="chart-period" id="y5" autocomplete="off" value="3">{% trans '3年' %} 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="chart-period" id="y5" autocomplete="off" value="5">{% trans '5年' %} 
+                </label>
+            </div>
+            <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
+                <!-- <span class="mt-1 mr-1 small">{% trans '图表类型' %}</span> -->
+                <label class="btn btn-light active">
+                    <input type="radio" name="chart-type" id="c" autocomplete="off" value="c"  checked>{% trans '收盘线' %}
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="chart-type" id="k" autocomplete="off" value="k">{% trans '分时图(即将推出)' %} 
+                </label>
+            </div>
+            <div>
+                <span class="mt-1 mr-1 small" id="stockNameCodeLabel"></span>
+                
+            </div>
+            <div class="" id="stockHist">
+                <!-- <input type="button" class="btn btn-sm btn-primary" id="collapseHistCanv" value="{% trans '显示股票历史数据' %}"/> -->
+                <!-- <canvas class="" id="stockHistCanvK" height="150"></canvas>  -->
+                <canvas class="" id="stockHistCanvC" height="150"></canvas> 
+            </div>
+            <hr/>
+            <div class="row flex-grow">
+                <div class="col-md-12 stretch-card mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> <span id="maxIncrTitle">{% trans '历史涨幅分布' %}</span><span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                                <p class="font-weight-medium">
+                                    <span class="text-muted small mr-1">{% trans '平均涨幅 - ' %}</span>
+                                    <span class="text-danger" id="avgIncr">-</span>
+                                </p>
+                            </div>
+                            <div class="text-muted small">
+                                {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
+                                {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
+                            </div>
+                            <div>
+                                <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
+                                <span class="text-primary" id="incr25ile">-</span>
+                                <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
+                                <span class="text-primary" id="incr50ile">-</span>
+                                <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
+                                <span class="text-primary" id="incr75ile">-</span>
+                            </div>
+                            <div class="no-trans-data" id="noProfit"></div>
+                            <canvas id="incrDist" height="130"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 stretch-card  mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center
+                                justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
+                                <p class="text-danger font-weight-medium" id="">
+                                    <span class="text-muted small mr-1">{% trans '平均跌幅 - ' %}</span>
+                                    <span class="text-success" id="avgDrop">-</span>
+                                </p>
+                            </div>
+                            <div class="text-muted small" >
+                                {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
+                                {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
+                            </div>
+                            <div>
+                                <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
+                                <span class="text-primary" id="drop25ile">-</span>
+                                <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
+                                <span class="text-primary" id="drop50ile">-</span>
+                                <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
+                                <span class="text-primary" id="drop75ile">-</span>
+                            </div>
+                            <div class="no-trans-data" id="noAttempt"></div>
+                            <canvas id="dropDist" height="130"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12 stretch-card">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '达到预期涨幅天数' %}<span class="text-muted small"> {% trans '(仅作投资参考, 卖出策略不适用)' %}</span></p>
+                                <p class="font-weight-medium">
+                                    <span class="text-muted small mr-1">{% trans '平均天数 - ' %}</span>
+                                    <span class="text-danger" id="avgExpPct">-</span>
+                                </p>
+                            </div>
+                            <div class="text-muted small" >
+                                {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
+                                {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
+                            </div>
+                            <div>
+                                <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
+                                <span class="text-primary" id="expPct25ile">-</span>
+                                <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
+                                <span class="text-primary" id="expPct50ile">-</span>
+                                <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
+                                <span class="text-primary" id="expPct75ile">-</span>
+                            </div>
+                            <div class="btn-group btn-group-sm btn-group-toggle mt-2" data-toggle="buttons">
+                                <label class="btn btn-light ">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct10_period" >{% trans '10%' %}
+                                </label>
+                                <label class="btn btn-light active">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct20_period" checked>{% trans '20%' %} 
+                                </label>
+                                <label class="btn btn-light">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct30_period">{% trans '30%' %} 
+                                </label>
+                                <label class="btn btn-light">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct50_period">{% trans '50%' %} 
+                                </label>
+                                <label class="btn btn-light">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct80_period">{% trans '80%' %} 
+                                </label>
+                                <label class="btn btn-light">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct100_period">{% trans '100%' %} 
+                                </label>
+                                <label class="btn btn-light">
+                                    <input type="radio" name="pct_period" autocomplete="off" value="pct130_period">{% trans '130%' %} 
+                                </label>
+                            </div>
+                        
+                            <div class="no-trans-data" id="noProfit"></div>
+                            <canvas id="expIncrPct" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2" id="stockFollowing">
+            {% if analysis %}
+            {% for following in analysis.followings %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-title small"><a href="#viewHist" class="text-dark view-hist" id="{{following.stock_code}}">{{following.stock_name}} - {{following.stock_code}}</a><span class="small text-muted" id="pos{{following.stock_code}}"></span></div>
+                    <!-- <div class="card-subtitle small text-muted"><a href="#" class="text-dark"></a></div> -->
+                </div> 
+                <div class="col-md-12 small">
+                    <div>{% trans '现价:' %}<span class="ml-1" id="real{{following.stock_code}}" class="small"></span>
+                    <span class="ml-1">{% trans '涨跌:' %}</span><span class="ml-1" id="chg{{following.stock_code}}" class="small"></span></div>
+                    <div>{% trans '涨幅:' %}<span class="ml-1" id="pct{{following.stock_code}}" class="small"></span></div>
+                </div>
+                <!-- -->
+            </div>
+            <hr/>
+            {% endfor %}
+            {% endif %}
+        </div>
     </div>
     <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_b"/>
     <input type="hidden"  id="hiddenStrategyName" value="{% trans '九转买点(默认)' %} "/>
-    <input type="hidden"  id="hiddenStrategyBtnId"/>
-    <hr/>     
+    <input type="hidden"  id="hiddenStrategyBtnId"/>   
+    
     {% comment %} 
     策略分析股票历史数据模拟 
     可选分析周期: 60日，120日，240日
@@ -81,123 +246,8 @@
     5. 买入/卖出成功率（历史记录）
 
     {% endcomment %}
-    <div class="col-lg-12 d-none" id="stockHist">
-        <input type="button" class="btn btn-sm btn-primary" id="collapseHistCanv" value="{% trans '显示股票历史数据' %}"/>
-        <canvas class="d-none" id="stockHistCanv" height="100"></canvas> 
-    </div>
+    
     <!-- <div><i class="fa fa-chart-line"></i>{% trans '当前分析策略为 - ' %} </div> -->
-    <hr/>
-    <div class="row flex-grow">
-        <div class="col-md-6 stretch-card mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> <span id="maxIncrTitle">{% trans '历史涨幅分布' %}</span><span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
-                        <p class="font-weight-medium">
-                            <span class="text-muted small mr-1">{% trans '平均涨幅 - ' %}</span>
-                            <span class="text-danger" id="avgIncr">-</span>
-                        </p>
-                    </div>
-                    <div class="text-muted small">
-                        {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
-                        {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
-                    </div>
-                    <div>
-                        <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
-                        <span class="text-primary" id="incr25ile">-</span>
-                        <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
-                        <span class="text-primary" id="incr50ile">-</span>
-                        <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
-                        <span class="text-primary" id="incr75ile">-</span>
-                    </div>
-                    <div class="no-trans-data" id="noProfit"></div>
-                    <canvas id="incrDist" height="130"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 stretch-card  mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center
-                        justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i>{% trans '历史跌幅分布' %}<span class="text-muted small"> {% trans '(仅作投资参考)' %}</span></p>
-                        <p class="text-danger font-weight-medium" id="">
-                            <span class="text-muted small mr-1">{% trans '平均跌幅 - ' %}</span>
-                            <span class="text-success" id="avgDrop">-</span>
-                        </p>
-                    </div>
-                    <div class="text-muted small" >
-                        {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
-                        {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
-                    </div>
-                    <div>
-                        <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
-                        <span class="text-primary" id="drop25ile">-</span>
-                        <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
-                        <span class="text-primary" id="drop50ile">-</span>
-                        <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
-                        <span class="text-primary" id="drop75ile">-</span>
-                    </div>
-                    <div class="no-trans-data" id="noAttempt"></div>
-                    <canvas id="dropDist" height="130"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row flex-grow">
-        <div class="col-md-12 stretch-card">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap">
-                        <p class="card-title"><i class="fa fa-chart-line"></i> {% trans '达到预期涨幅天数' %}<span class="text-muted small"> {% trans '(仅作投资参考, 卖出策略不适用)' %}</span></p>
-                        <p class="font-weight-medium">
-                            <span class="text-muted small mr-1">{% trans '平均天数 - ' %}</span>
-                            <span class="text-danger" id="avgExpPct">-</span>
-                        </p>
-                    </div>
-                    <div class="text-muted small" >
-                        {% trans '[策略] ' %}<span class="mr-1 cur-strategy">{% trans '未选择' %}</span>
-                        {% trans '[股票] ' %}<span class="mr-1 cur-stock">{% trans '未选择' %}</span>
-                    </div>
-                    <div>
-                        <span class="text-muted small mr-1">{% trans '25ile - ' %}</span>
-                        <span class="text-primary" id="expPct25ile">-</span>
-                        <span class="text-muted small mr-1">{% trans '50ile - ' %}</span>
-                        <span class="text-primary" id="expPct50ile">-</span>
-                        <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
-                        <span class="text-primary" id="expPct75ile">-</span>
-                    </div>
-                    <div class="btn-group btn-group-sm btn-group-toggle mt-2" data-toggle="buttons">
-                        <label class="btn btn-light ">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct10_period" >{% trans '10%' %}
-                        </label>
-                        <label class="btn btn-light active">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct20_period" checked>{% trans '20%' %} 
-                        </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct30_period">{% trans '30%' %} 
-                        </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct50_period">{% trans '50%' %} 
-                        </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct80_period">{% trans '80%' %} 
-                        </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct100_period">{% trans '100%' %} 
-                        </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="pct_period" autocomplete="off" value="pct130_period">{% trans '130%' %} 
-                        </label>
-                    </div>
-                   
-                    <div class="no-trans-data" id="noProfit"></div>
-                    <canvas id="expIncrPct" height="150"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 <!-- content-wrapper ends -->
 {% endblock content %}
@@ -205,13 +255,14 @@
 {% block javascript %}
 {{ block.super }}
 <script type="text/javascript" charset="utf-8">var imgRoot = "{% static 'img/' %}"</script>
-<script
-    src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
+{% comment %} 
+<script src="https://cdn.bootcss.com/babel-polyfill/7.8.7/polyfill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@1.19.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.0"></script>
-<script
-    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
 <script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}"type="text/javascript"></script>
+{% endcomment %}
+    
 <script src="{% static 'js/analysis.js' %}" type="text/javascript"></script>
 
 {% endblock javascript %}

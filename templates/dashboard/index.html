@@ -39,13 +39,13 @@
                                 </div>
                                 <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                                     <label class="btn btn-light active">
-                                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="w" checked>{% trans '周' %} 
+                                        <input type="radio" name="period" id="optWeek" autocomplete="off" value="w" checked>{% trans '日' %} 
                                     </label>
                                     <label class="btn btn-light">
-                                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="m">{% trans '月' %} 
+                                        <input type="radio" name="period" id="optMonth" autocomplete="off" value="m">{% trans '周' %} 
                                     </label>
                                     <label class="btn btn-light">
-                                        <input type="radio" name="period" id="optYear" autocomplete="off" value="y">{% trans '年' %} 
+                                        <input type="radio" name="period" id="optYear" autocomplete="off" value="y">{% trans '月' %} 
                                     </label>
                                 </div>
                             </div>
@@ -107,7 +107,7 @@
                                     <div class='d-flex align-items-center justify-content-between flex-wrap small'>
                                         <div class="">
                                             <h6 class="card-title">{{ p.stock_name }}({% trans '账户:' %}{{ p.trade_account.account_name }}) - <span class="small text-muted">{% if p.lots != 0 %}{% trans '已持仓' %}{{ p.ftd }}{% trans '天' %}{% else %}<span class="text-danger">{% trans '已清仓，共持仓' %}{{ p.ltd }}{% trans '天' %}</span>{% endif %}</span></h6>
-                                            <h7 class="card-subtitle mb-2 text-muted"><a href="#"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
+                                            <h7 class="card-subtitle mb-2 text-muted"><a href="#" class="text-dark">{{ p.stock_code }}</a></h7>
                                         </div>
                                         
                                         <div class="">

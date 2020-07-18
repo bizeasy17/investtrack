@@ -3,24 +3,26 @@ Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,Bli
 Chart.defaults.global.defaultFontColor = '#858796';
 
 window.chartColors = {
-	red: 'rgb(255, 99, 132)',
-	orange: 'rgb(255, 159, 64)',
-	yellow: 'rgb(255, 205, 86)',
-	green: 'rgb(75, 192, 192)',
-	blue: 'rgb(54, 162, 235)',
-	purple: 'rgb(153, 102, 255)',
-	grey: 'rgb(201, 203, 207)'
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)',
+    black: 'rgb(0, 0, 0)'
 };
 
 $(function () {
     var chart;
     var analysisEndpoint = '/analysis/';
+    var investorBaseEndpoint = '/investors/';
     var stockmarketEndpoint = '/stockmarket/';
     var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
 
     var showAnalysisHist = function () {
         // var strategy = "jz_b";
-        console.log($('#hiddenStrategyBtnId').val());
+        // console.log($('#hiddenStrategyBtnId').val());
         $(this).removeClass("btn-info");
         $(this).addClass("btn-danger");
         if ($('#hiddenStrategyBtnId').val()) {
@@ -57,9 +59,9 @@ $(function () {
                     strategyDiv.html("");
                     $(data).each(function (idx, obj) {
                         strategiesTag +=
-                            '<div class="row col-lg-4">' +
+                            '<div class="row">' +
                             '<div class="col">' +
-                            '<img src="' + imgRoot + obj.code + '.png" height="90" width="90" style="border-radius: 10%">' +
+                            '<img src="' + imgRoot + obj.code + '.png" height="75" width="75" style="border-radius: 10%">' +
                             '</div>' +
                             '<div class="col">' +
                             '<div><span class="small text-primary">' + obj.strategy_name + '</span></div>'
@@ -86,8 +88,8 @@ $(function () {
                         // }else{
                         //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
                         // }
-                        strategiesTag += '<button class="btn btn-sm btn-info mt-2" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small><i class="fa fa-eye">查看历史</i></small></button>';
-                        strategiesTag += '</div></div>';
+                        strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small>分析</small></button>';
+                        strategiesTag += '</div></div><hr/>';
                         strategyDiv.append(strategiesTag);
                         strategiesTag = "";
                         var showAnalysisBtn = document.getElementById("showHistBtn" + obj.id);
@@ -150,6 +152,8 @@ $(function () {
         var freq = 'D'
         var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
+        var chartType = $('input:radio[name="chart-type"]:checked').val();
+        var chartPeriod = $('input:radio[name="chart-period"]:checked').val();
         var strategyCode = $('#hiddenStrategyCode').val();
         var strategyName = $('#hiddenStrategyName').val();
         $('#hiddenTsCode').val(tsCode);
@@ -159,22 +163,174 @@ $(function () {
         showExpectedPctChart(tsCode, strategyCode, pctPeriod);
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
-        // showStockHistChart(tsCode, strategyCode, freq);
+        drawStockChart(tsCode, code, showName, strategyCode, chartType, freq, chartPeriod);
     });
 
-    
+    // 更新当前所选股票信息
+    var chartShowDays60 = 30
+    var chartShowDays = 60
+    var chartShowDaysW = 180
+    var chartShowDaysM = 720
+    var dt = new Date();
+    var endDate = formatDate(dt, '-');
+    var getStartDate = function (period, format) {
+        var priorDate;
+        if (period == '60')
+            priorDate = new Date(dt.getTime() - (chartShowDays60 * 24 * 60 * 60 * 1000));
+        else if (period == 'D')
+            priorDate = new Date(dt.getTime() - (chartShowDays * 24 * 60 * 60 * 1000));
+        else if (period == 'W')
+            priorDate = new Date(dt.getTime() - (chartShowDaysW * 24 * 60 * 60 * 1000));
+        else if (period == 'M')
+            priorDate = new Date(dt.getTime() - (chartShowDaysM * 24 * 60 * 60 * 1000));
+
+        return formatDate(priorDate, format);
+    }
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="chart-type"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        updateStockChart();
+    });
+
+    $('input:radio[name="chart-period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        updateStockChart();
+    });
+
     // 股票历史收盘数据
-    var stockHistChart;
-    var showStockHistChart = function (tsCode, strategyCode, freq) {
-        if ($("#stockHistCanv").length) {
-            var stockHistChartCanvas = $("#stockHistCanv")
-                .get(0)
-                .getContext("2d");
+    var stockHistChartK;
+    var stockHistChartC;
+    // var canvasKChart = $("#stockHistCanvK")
+    //     .get(0)
+    //     .getContext("2d");
+    var canvasCloseChart = $("#stockHistCanvC")
+        .get(0)
+        .getContext("2d");
+    var drawStockChart = function (symbol, showCode, showName, strategyCode, type, freq, period) {
+        $("#stockNameCodeLabel").text(showName + " - " + showCode);
+        if (type == "k") {
+            // drawStockKChart(symbol, showCode, showName, strategyCode, freq);
+        } else if (type == "c") {
+            drawStockHistCloseChart(symbol, strategyCode, freq, period)
+        }
+    }
+
+    var drawStockKChart = function (tsCode, showCode, showName, strategyCode, freq) {
+        var startDate = getStartDate(freq, '-');
+        // var accountId = $("#hiddenAccount").val();
+        $.ajax({
+            // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/ticks/',
+            success: function (data) {
+                if (stockHistChartK) {
+                    // update chart
+                    stockHistChartK.data.labels = data.label;
+                    stockHistChartK.data.datasets[0].data = data.ticks;
+                    stockHistChartK.data.datasets[1].data = data.ma25;
+                    stockHistChartK.data.datasets[2].data = data.ma60;
+                    stockHistChartK.data.datasets[3].data = data.ma200;
+                    stockHistChartK.update();
+                } else {
+                    stockHistChartK = new Chart(canvasKChart, {
+                        type: 'candlestick',
+                        data: {
+                            datasets: [{
+                                label: showName + '-' + showCode,
+                                data: data.ticks
+                            }
+                                // , {
+                                //     label: 'MA25',
+                                //     backgroundColor: window.chartColors.red,
+                                //     borderColor: window.chartColors.red,
+                                //     data: data.ma25,
+                                //     type: 'line',
+                                //     fill: false,
+                                // }, {
+                                //     label: 'MA60',
+                                //     backgroundColor: window.chartColors.red,
+                                //     borderColor: window.chartColors.blue,
+                                //     data: data.ma60,
+                                //     type: 'line',
+                                //     fill: false,
+                                // },{
+                                //     label: 'MA200',
+                                //     backgroundColor: window.chartColors.red,
+                                //     borderColor: window.chartColors.green,
+                                //     data: data.ma200,
+                                //     type: 'line',
+                                //     fill: false,
+                                // }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    afterBuildTicks: function (scale, ticks) {
+                                        var majorUnit = scale._majorUnit;
+                                        var firstTick = ticks[0];
+                                        var i, ilen, val, tick, currMajor, lastMajor;
+
+                                        val = luxon.DateTime.fromMillis(ticks[0].value);
+                                        if ((majorUnit === 'minute' && val.second === 0)
+                                            || (majorUnit === 'hour' && val.minute === 0)
+                                            || (majorUnit === 'day' && val.hour === 9)
+                                            || (majorUnit === 'month' && val.day <= 3 && val.weekday === 1)
+                                            || (majorUnit === 'year' && val.month === 0)) {
+                                            firstTick.major = true;
+                                        } else {
+                                            firstTick.major = false;
+                                        }
+                                        lastMajor = val.get(majorUnit);
+
+                                        for (i = 1, ilen = ticks.length; i < ilen; i++) {
+                                            tick = ticks[i];
+                                            val = luxon.DateTime.fromMillis(tick.value);
+                                            currMajor = val.get(majorUnit);
+                                            tick.major = currMajor !== lastMajor;
+                                            lastMajor = currMajor;
+                                        }
+                                        return ticks;
+                                    }
+                                }]
+                            },
+                            // tooltips: {
+                            //     callbacks: {
+                            //         label: function (tooltipItem, data) {
+                            //             var dataset = data.datasets[tooltipItem.datasetIndex];
+                            //             var point = dataset.data[tooltipItem.index];
+                            //             var label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+                            //             var o = point.o;
+                            //             var h = point.h;
+                            //             var l = point.l;
+                            //             var c = point.c;
+
+                            //             var percentage = Math.floor((parseFloat(c) - parseFloat(o)) / parseFloat(o) * 100) + "%";
+
+                            //             if (label) {
+                            //                 label += ': ';
+                            //             }
+                            //             label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c + ' 涨幅: ' + percentage;
+                            //             return label;
+                            //         }
+                            //     }
+                            // }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+
+    var drawStockHistCloseChart = function (tsCode, strategyCode, freq, period) {
+        if ($("#stockHistCanvC").length) {
             // var strategy = "9";
             // var stock_symbol = "600626.SH"
             // var period = $('input:radio[name="period"]:checked').val();
             $.ajax({
-                url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/',
+                url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/close/' + period + "/",
                 // url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
@@ -184,30 +340,45 @@ $(function () {
                     // $("#drop50ile").text(data.quantile[1] + '%');
                     // $("#drop75ile").text(data.quantile[2] + '%');
                     // $("#avgDrop").text(data.quantile[3] + '%');
-                    $("#stockHistCanv").removeClass("d-none");
-                    if (stockHistChart) {
+                    // $("#stockHistCanv").removeClass("d-none");
+                    if (stockHistChartC) {
                         // update chart
-                        stockHistChart.data.labels = data.label;
-                        stockHistChart.data.datasets[0].data = data.ma25;
-                        stockHistChart.data.datasets[1].data = data.close;
-                        stockHistChart.update();
+                        stockHistChartC.data.labels = data.label;
+                        stockHistChartC.data.datasets[0].data = data.ma25;
+                        stockHistChartC.data.datasets[1].data = data.ma60;
+                        stockHistChartC.data.datasets[2].data = data.ma200;
+                        stockHistChartC.data.datasets[3].data = data.close;
+                        stockHistChartC.update();
                     } else {
-                        stockHistChart = new Chart(stockHistChartCanvas, {
+                        stockHistChartC = new Chart(canvasCloseChart, {
                             type: "line",
                             data: {
                                 labels: data.label,
                                 datasets: [{
                                     label: 'MA25',
                                     backgroundColor: window.chartColors.red,
-                                    borderColor: window.chartColors.red,
+                                    borderColor: window.chartColors.green,
                                     data: data.ma25,
+                                    fill: false,
+                                }, {
+                                    label: 'MA60',
+                                    backgroundColor: window.chartColors.red,
+                                    borderColor: window.chartColors.blue,
+                                    data: data.ma60,
+                                    fill: false,
+                                }, {
+                                    label: 'MA200',
+                                    backgroundColor: window.chartColors.red,
+                                    borderColor: window.chartColors.orange,
+                                    data: data.ma200,
                                     fill: false,
                                 }, {
                                     label: '收盘价',
                                     fill: false,
                                     backgroundColor: window.chartColors.blue,
-                                    borderColor: window.chartColors.blue,
-                                    data: data.close,
+                                    borderColor: window.chartColors.black,
+                                    data: data.close
+                                    // borderWidth: 2
                                 }]
                             },
                             options: {
@@ -282,6 +453,85 @@ $(function () {
             });
         }
     }
+
+    // 页面加载时 初始显示的收盘线为上证
+    var updateStockChart = function(){
+        var period = $('input:radio[name="chart-period"]:checked').val();
+        var type = $('input:radio[name="chart-type"]:checked').val();
+        var freq = "D";
+        var code = $("#hiddenCode").val(); // 页面初始加载时 为上证指数 sh
+        var tsCode = $("#hiddenTsCode").val()
+        var showName = $("#hiddenStockName").val();
+        var strategyCode = $("#hiddenStrategyCode").val();
+        drawStockChart(tsCode, code, showName, strategyCode, type, freq, period);
+    }
+    updateStockChart();
+
+    $(".view-hist").click(function(){
+        var tsCode = $(this).attr("id");
+        var mixed = $(this).text();
+        var nameCode = mixed.split("-");
+        if(tsCode.charAt(0)=="6") tsCode += ".SH";
+        else tsCode += ".SZ";
+        $("#hiddenCode").val($(this).attr("id")); // 页面初始加载时 为上证指数 sh
+        $("#hiddenTsCode").val(tsCode)
+        $("#hiddenStockName").val(nameCode[0]);
+        updateStockChart();
+    });
+
+    // 刷新自选股
+    var refreshFollowing = function () {
+        var stocks = "";
+        $.ajax({
+            url: investorBaseEndpoint + "stocks-following/",
+            success: function (data) {
+                $(data.results).each(function (idx, code) {
+                    // alert(idx);   
+                    stocks += code + ",";
+                });
+
+                $.ajax({
+                    url: stockmarketEndpoint + 'realtime-quotes/' + stocks + '/',
+                    success: function (data) {
+                        var index = "sh"
+                        $(data).each(function (idx, stock) {
+                            var change = parseFloat(stock.price) - parseFloat(stock.pre_close);
+                            var pct = Math.round((parseFloat(stock.price) - parseFloat(stock.pre_close)) / parseFloat(stock.pre_close) * 10000) / 100;
+                            if (pct < 0) {
+                                $("#real" + stock.code).removeClass("text-danger");
+                                $("#chg" + stock.code).removeClass("text-danger");
+                                $("#pct" + stock.code).removeClass("text-danger");
+
+                                $("#real" + stock.code).addClass("text-success");
+                                $("#chg" + stock.code).addClass("text-success");
+                                $("#pct" + stock.code).addClass("text-success");
+                            } else {
+                                $("#real" + stock.code).removeClass("text-success");
+                                $("#chg" + stock.code).removeClass("text-success");
+                                $("#pct" + stock.code).removeClass("text-success");
+
+                                $("#real" + stock.code).addClass("text-danger");
+                                $("#chg" + stock.code).addClass("text-danger");
+                                $("#pct" + stock.code).addClass("text-danger");
+                            }
+                            $("#real" + stock.code).text(stock.price);
+                            $("#chg" + stock.code).text(change.toFixed(2));
+                            $("#pct" + stock.code).text(pct.toString() + "%");
+                        });
+                    }
+                });
+            }
+        });
+    }
+    refreshFollowing();
+
+    // 每隔5min刷新一次
+    var refreshRealtimeQ = setInterval(function () {
+        var d = new Date();
+        if (isOpenForTrade(d)) {
+            refreshFollowing();
+        }
+    }, refreshInterval * 60 * 1000);
 
 
     // 涨幅分布

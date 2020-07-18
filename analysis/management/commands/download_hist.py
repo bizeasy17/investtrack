@@ -18,23 +18,39 @@ class Command(BaseCommand):
         parser.add_argument(
             '--ts_code',
             type=str,
-            help='Which ts_code you want to apply the snapshot',
+            help='Which ts_code you want to apply the download',
         )
         parser.add_argument(
             '--freq',
             type=str,
-            help='Which period you want to apply the snapshot',
+            help='Which freq you want to apply the download',
+        )
+        parser.add_argument(
+            '--asset',
+            type=str,
+            help='Which asset you want to apply the download',
         )
         pass
 
     def handle(self, *args, **options):
         freq = options['freq']
         ts_code = options['ts_code']
+        asset = options['asset']
+
         if ts_code is not None and freq is not None:
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 # print(ts_code_list)
-                download_stock_hist(freq, ts_code_list)
+                if asset is not None:
+                    print(freq + asset)
+                    print(ts_code_list)
+
+                    download_stock_hist(freq, ts_code_list, asset)
+                else:
+                    download_stock_hist(freq, ts_code_list)
         else:
-            download_stock_hist(freq)
+            if asset is not None:
+                download_stock_hist(freq, asset)
+            else:
+                download_stock_hist(freq)
         
