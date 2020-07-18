@@ -32,16 +32,26 @@ class Command(BaseCommand):
             type=str,
             help='Which freq you want to apply the diepo',
         )
+        parser.add_argument(
+            '--asset',
+            type=str,
+            help='Which asset you want to apply the download',
+        )
         pass
 
     def handle(self, *args, **options):
         ts_code = options['ts_code']
         freq = options['freq']
+        asset = options['asset']
         if ts_code is not None and freq is not None:
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 # print(ts_code_list)
-                download_stock_hist(freq, ts_code_list)
+                if asset is not None:
+                    download_stock_hist(freq, ts_code_list, asset)
+                else:
+                    download_stock_hist(freq, ts_code_list)
+                # download_stock_hist(freq, ts_code_list)
                 time.sleep(1)
                 mark_jiuzhuan_listed(freq, ts_code_list)
                 time.sleep(1)
@@ -57,7 +67,11 @@ class Command(BaseCommand):
         elif freq is None:
             print('freq must be provided')
         else:
-            download_stock_hist(freq)
+            if asset is not None:
+                download_stock_hist(freq, asset)
+            else:
+                download_stock_hist(freq)
+            # download_stock_hist(freq)
             time.sleep(1)
             mark_jiuzhuan_listed(freq)
             time.sleep(1)

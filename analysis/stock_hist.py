@@ -59,9 +59,15 @@ def hist_since_listed(stock_symbol, start_date, end_date, freq='D', asset='E'):
     '''
     if start_date is not None:
         split_cal_list = split_trade_cal(start_date, end_date)
+        print(split_cal_list)
         df_list = []
         for trade_cal in split_cal_list:
             # 增加指数数据
+            # print(stock_symbol)
+            # print(asset)
+            # print(freq)
+            # print(trade_cal[0].strftime('%Y%m%d'))
+            # print(trade_cal[1].strftime('%Y%m%d'))
             df = ts.pro_bar(ts_code=stock_symbol, asset=asset, freq=freq,
                             start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
             # df = df.iloc[::-1]  # 将数据按照时间顺序排列
