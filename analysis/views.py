@@ -37,27 +37,14 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
         if req_user is not None:
             strategie_ctgs = TradeStrategyStat.objects.all().order_by(
                 'category').distinct('category')
-            queryset = {
-                'strategy_ctgs': strategie_ctgs,
-            }
-            return render(request, self.template_name, {self.context_object_name: queryset})
-
-
-class KanpanView(LoginRequiredMixin, TemplateView):
-    # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'analysis/kanpan.html'
-    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'kanpan'
-
-    def get(self, request, *args, **kwargs):
-        req_user = request.user
-        if req_user is not None:
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)
             queryset = {
+                'strategy_ctgs': strategie_ctgs,
                 'followings': stocks_following,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
+
 
 @login_required
 def strategies_by_category(request, parent_strategy):
@@ -208,11 +195,13 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
 
 
 @login_required
-def stock_history(request, strategy, stock_symbol, freq, type):
+def stock_history(request, strategy, stock_symbol, freq, type, period):
     '''
     用户需要授权可以使用策略
     '''
     user = request.user
+    # 从当前时间为获取历史的最后一天
+    end_date = date.today()
     if request.method == 'GET':
         try:
             close_result = []
@@ -223,14 +212,10 @@ def stock_history(request, strategy, stock_symbol, freq, type):
             amount_result = []
             lbl_trade_date = []
             quantile = []
-
+            start_date = end_date - timedelta(days=365 * period)
             results = StockHistoryDaily.objects.filter(
-                ts_code=stock_symbol, freq=freq).order_by('trade_date')[:200]
-            # df = pd.DataFrame(results.values('stage_low_pct'))
-            # qtiles = df.stage_low_pct.quantile([0.25,0.5,0.75])
-            # for qtile in qtiles:
-            #     quantile.append(round(qtile, 3))
-            # quantile.append(round(df.mean().stage_low_pct,3))
+                ts_code=stock_symbol, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')       
+                     # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
                 ma25_result.append(result.ma25)
                 ma60_result.append(result.ma60)
@@ -239,7 +224,7 @@ def stock_history(request, strategy, stock_symbol, freq, type):
                 ticks_result.append(
                     {
                         't': result.trade_date, 'o': result.open, 'h': result.high,
-                        'l': result.low, 'c': result.close, 'd': '', 
+                        'l': result.low, 'c': result.close, 'd': '',
                         'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
                     }
                 )
@@ -249,7 +234,7 @@ def stock_history(request, strategy, stock_symbol, freq, type):
                 return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
             else:
                 return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-        except IndexError as err:
+        except Exception as err:
             logging.error(err)
             return HttpResponse(status=500)
     pass

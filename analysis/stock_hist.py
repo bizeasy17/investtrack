@@ -52,7 +52,7 @@ def split_trade_cal(start_date, end_date):
     return split_date_list
 
 
-def hist_since_listed(stock_symbol, start_date, end_date, freq='D'):
+def hist_since_listed(stock_symbol, start_date, end_date, freq='D', asset='E'):
     '''
     将每次的收盘历史数据按照10年分隔从tushare接口获取
     再按照时间先后顺序拼接
@@ -61,14 +61,15 @@ def hist_since_listed(stock_symbol, start_date, end_date, freq='D'):
         split_cal_list = split_trade_cal(start_date, end_date)
         df_list = []
         for trade_cal in split_cal_list:
-            df = ts.pro_bar(ts_code=stock_symbol, freq=freq,
+            # 增加指数数据
+            df = ts.pro_bar(ts_code=stock_symbol, asset=asset, freq=freq,
                             start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
             # df = df.iloc[::-1]  # 将数据按照时间顺序排列
             df_list.append(df)
         return pd.concat(df_list)
 
 
-def download_stock_hist(freq, ts_code_list=[]):
+def download_stock_hist(freq, ts_code_list=[], asset='E',):
     end_date = date.today()
     if len(ts_code_list) == 0:
         listed_companies = StockNameCodeMap.objects.filter(
@@ -81,7 +82,7 @@ def download_stock_hist(freq, ts_code_list=[]):
             # print(listed_company.ts_code)
             if listed_company.list_date is not None:
                 df = hist_since_listed(
-                    listed_company.ts_code, listed_company.list_date, end_date, freq)
+                    listed_company.ts_code, listed_company.list_date, end_date, freq, asset,)
                 hist_list = []
                 for v in df.values:
                     hist = object

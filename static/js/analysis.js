@@ -16,12 +16,13 @@ window.chartColors = {
 $(function () {
     var chart;
     var analysisEndpoint = '/analysis/';
+    var investorBaseEndpoint = '/investors/';
     var stockmarketEndpoint = '/stockmarket/';
     var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
 
     var showAnalysisHist = function () {
         // var strategy = "jz_b";
-        console.log($('#hiddenStrategyBtnId').val());
+        // console.log($('#hiddenStrategyBtnId').val());
         $(this).removeClass("btn-info");
         $(this).addClass("btn-danger");
         if ($('#hiddenStrategyBtnId').val()) {
@@ -152,6 +153,7 @@ $(function () {
         var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
         var period = $('input:radio[name="period"]:checked').val();
         var chartType = $('input:radio[name="chart-type"]:checked').val();
+        var chartPeriod = $('input:radio[name="chart-period"]:checked').val();
         var strategyCode = $('#hiddenStrategyCode').val();
         var strategyName = $('#hiddenStrategyName').val();
         $('#hiddenTsCode').val(tsCode);
@@ -161,7 +163,7 @@ $(function () {
         showExpectedPctChart(tsCode, strategyCode, pctPeriod);
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
-        drawStockChart(tsCode, code, showName, strategyCode, chartType, freq);
+        drawStockChart(tsCode, code, showName, strategyCode, chartType, freq, chartPeriod);
     });
 
     // 更新当前所选股票信息
@@ -188,12 +190,12 @@ $(function () {
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="chart-type"]').change(function () {
         // 页面默认加载上证指数日K（D)
-        var type = this.value;
-        var freq = 'D';
-        var tsCode = $('#hiddenTsCode').val();
-        var showName = $('#hiddenStockName').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
-        drawStockChart(tsCode, tsCode, showName, strategyCode, type, freq);
+        updateStockChart();
+    });
+
+    $('input:radio[name="chart-period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        updateStockChart();
     });
 
     // 股票历史收盘数据
@@ -205,11 +207,12 @@ $(function () {
     var canvasCloseChart = $("#stockHistCanvC")
         .get(0)
         .getContext("2d");
-    var drawStockChart = function (symbol, showCode, showName, strategyCode, type, freq) {
-        if (type == 'k') {
+    var drawStockChart = function (symbol, showCode, showName, strategyCode, type, freq, period) {
+        $("#stockNameCodeLabel").text(showName + " - " + showCode);
+        if (type == "k") {
             // drawStockKChart(symbol, showCode, showName, strategyCode, freq);
-        } else if (type == 'c') {
-            drawStockHistCloseChart(symbol, strategyCode, freq)
+        } else if (type == "c") {
+            drawStockHistCloseChart(symbol, strategyCode, freq, period)
         }
     }
 
@@ -321,14 +324,13 @@ $(function () {
     }
 
 
-    var drawStockHistCloseChart = function (tsCode, strategyCode, freq) {
-        var period = 1;
+    var drawStockHistCloseChart = function (tsCode, strategyCode, freq, period) {
         if ($("#stockHistCanvC").length) {
             // var strategy = "9";
             // var stock_symbol = "600626.SH"
             // var period = $('input:radio[name="period"]:checked').val();
             $.ajax({
-                url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/close/',
+                url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/close/' + period + "/",
                 // url: analysisEndpoint + "b-test-result-drop/strategy/" + strategy + "/" + stock_symbol + "/" + period + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
@@ -375,7 +377,8 @@ $(function () {
                                     fill: false,
                                     backgroundColor: window.chartColors.blue,
                                     borderColor: window.chartColors.black,
-                                    data: data.close,
+                                    data: data.close
+                                    // borderWidth: 2
                                 }]
                             },
                             options: {
@@ -450,6 +453,85 @@ $(function () {
             });
         }
     }
+
+    // 页面加载时 初始显示的收盘线为上证
+    var updateStockChart = function(){
+        var period = $('input:radio[name="chart-period"]:checked').val();
+        var type = $('input:radio[name="chart-type"]:checked').val();
+        var freq = "D";
+        var code = $("#hiddenCode").val(); // 页面初始加载时 为上证指数 sh
+        var tsCode = $("#hiddenTsCode").val()
+        var showName = $("#hiddenStockName").val();
+        var strategyCode = $("#hiddenStrategyCode").val();
+        drawStockChart(tsCode, code, showName, strategyCode, type, freq, period);
+    }
+    updateStockChart();
+
+    $(".view-hist").click(function(){
+        var tsCode = $(this).attr("id");
+        var mixed = $(this).text();
+        var nameCode = mixed.split("-");
+        if(tsCode.charAt(0)=="6") tsCode += ".SH";
+        else tsCode += ".SZ";
+        $("#hiddenCode").val($(this).attr("id")); // 页面初始加载时 为上证指数 sh
+        $("#hiddenTsCode").val(tsCode)
+        $("#hiddenStockName").val(nameCode[0]);
+        updateStockChart();
+    });
+
+    // 刷新自选股
+    var refreshFollowing = function () {
+        var stocks = "";
+        $.ajax({
+            url: investorBaseEndpoint + "stocks-following/",
+            success: function (data) {
+                $(data.results).each(function (idx, code) {
+                    // alert(idx);   
+                    stocks += code + ",";
+                });
+
+                $.ajax({
+                    url: stockmarketEndpoint + 'realtime-quotes/' + stocks + '/',
+                    success: function (data) {
+                        var index = "sh"
+                        $(data).each(function (idx, stock) {
+                            var change = parseFloat(stock.price) - parseFloat(stock.pre_close);
+                            var pct = Math.round((parseFloat(stock.price) - parseFloat(stock.pre_close)) / parseFloat(stock.pre_close) * 10000) / 100;
+                            if (pct < 0) {
+                                $("#real" + stock.code).removeClass("text-danger");
+                                $("#chg" + stock.code).removeClass("text-danger");
+                                $("#pct" + stock.code).removeClass("text-danger");
+
+                                $("#real" + stock.code).addClass("text-success");
+                                $("#chg" + stock.code).addClass("text-success");
+                                $("#pct" + stock.code).addClass("text-success");
+                            } else {
+                                $("#real" + stock.code).removeClass("text-success");
+                                $("#chg" + stock.code).removeClass("text-success");
+                                $("#pct" + stock.code).removeClass("text-success");
+
+                                $("#real" + stock.code).addClass("text-danger");
+                                $("#chg" + stock.code).addClass("text-danger");
+                                $("#pct" + stock.code).addClass("text-danger");
+                            }
+                            $("#real" + stock.code).text(stock.price);
+                            $("#chg" + stock.code).text(change.toFixed(2));
+                            $("#pct" + stock.code).text(pct.toString() + "%");
+                        });
+                    }
+                });
+            }
+        });
+    }
+    refreshFollowing();
+
+    // 每隔5min刷新一次
+    var refreshRealtimeQ = setInterval(function () {
+        var d = new Date();
+        if (isOpenForTrade(d)) {
+            refreshFollowing();
+        }
+    }, refreshInterval * 60 * 1000);
 
 
     // 涨幅分布
