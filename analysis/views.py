@@ -45,6 +45,62 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
+class XuanGuHomeView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'analysis/xuangu.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'xuangu'
+
+    def get(self, request, *args, **kwargs):
+        req_user = request.user
+        if req_user is not None:
+            strategie_ctgs = TradeStrategyStat.objects.all().order_by(
+                'category').distinct('category')
+            stocks_following = StockFollowing.objects.filter(
+                trader=req_user.id,)
+            queryset = {
+                'strategy_ctgs': strategie_ctgs,
+                'followings': stocks_following,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+
+class YuCeHomeView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'analysis/yuce.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'yuce'
+
+    def get(self, request, *args, **kwargs):
+        req_user = request.user
+        if req_user is not None:
+            strategie_ctgs = TradeStrategyStat.objects.all().order_by(
+                'category').distinct('category')
+            stocks_following = StockFollowing.objects.filter(
+                trader=req_user.id,)
+            queryset = {
+                'strategy_ctgs': strategie_ctgs,
+                'followings': stocks_following,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
+
+class ZhenGuHomeView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'analysis/zhengu.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'zhengu'
+
+    def get(self, request, *args, **kwargs):
+        req_user = request.user
+        if req_user is not None:
+            strategie_ctgs = TradeStrategyStat.objects.all().order_by(
+                'category').distinct('category')
+            stocks_following = StockFollowing.objects.filter(
+                trader=req_user.id,)
+            queryset = {
+                'strategy_ctgs': strategie_ctgs,
+                'followings': stocks_following,
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
 
 @login_required
 def strategies_by_category(request, parent_strategy):

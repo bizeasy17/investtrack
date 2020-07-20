@@ -63,11 +63,11 @@ def hist_since_listed(stock_symbol, start_date, end_date, freq='D', asset='E'):
         df_list = []
         for trade_cal in split_cal_list:
             # 增加指数数据
-            # print(stock_symbol)
-            # print(asset)
-            # print(freq)
-            # print(trade_cal[0].strftime('%Y%m%d'))
-            # print(trade_cal[1].strftime('%Y%m%d'))
+            print(stock_symbol)
+            print(asset)
+            print(freq)
+            print(trade_cal[0].strftime('%Y%m%d'))
+            print(trade_cal[1].strftime('%Y%m%d'))
             df = ts.pro_bar(ts_code=stock_symbol, asset=asset, freq=freq,
                             start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
             # df = df.iloc[::-1]  # 将数据按照时间顺序排列
@@ -127,14 +127,20 @@ def download_stock_hist(freq, ts_code_list=[], asset='E',):
                 print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
                     ' list date is empty.')
 
-def update_stock_hist():
+def update_stock_hist(freq, ts_code_list=[], asset='E',):
     end_date = date.today()
-    listed_companies = StockNameCodeMap.objects.filter(
-        is_hist_downloaded=True).filter(Q(is_hist_updated=False) | Q(hist_update_date__lt=date.today()))
+    if len(ts_code_list) == 0:
+        listed_companies = StockNameCodeMap.objects.filter(
+            is_hist_downloaded=True)
+    else:
+        listed_companies = StockNameCodeMap.objects.filter(
+            is_hist_downloaded=True, ts_code__in=ts_code_list)
+    # listed_companies = StockNameCodeMap.objects.filter(
+    #     is_hist_downloaded=True).filter(Q(is_hist_updated=False) | Q(hist_update_date__lt=date.today()))
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
             df = hist_since_listed(
-                listed_company.ts_code, listed_company.hist_update_date, end_date)
+                listed_company.ts_code, listed_company.hist_update_date + timedelta(days=1), end_date, freq, asset)
             hist_list = []
             for v in df.values:
                 hist_D = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
@@ -161,3 +167,8 @@ def update_stock_hist():
             now = datetime.now()
             print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
                   ' history trade info updated.')
+    else:
+        now = datetime.now()
+        print(now.strftime("%Y-%m-%d %H:%M:%S") + ': can not find the give ts_code.')
+        print(ts_code_list)
+        
