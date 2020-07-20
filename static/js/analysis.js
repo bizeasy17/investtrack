@@ -60,10 +60,10 @@ $(function () {
                     $(data).each(function (idx, obj) {
                         strategiesTag +=
                             '<div class="row">' +
-                            '<div class="col">' +
-                            '<img src="' + imgRoot + obj.code + '.png" height="75" width="75" style="border-radius: 10%">' +
+                            '<div class="col-lg-6">' +
+                            '<img src="' + imgRoot + obj.code + '.png" height="65" width="65">' +
                             '</div>' +
-                            '<div class="col">' +
+                            '<div class="col-lg-6">' +
                             '<div><span class="small text-primary">' + obj.strategy_name + '</span></div>'
                         // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';<span class="small"> 成功率-' + obj.success_rate + '%</span>
                         // '<div class="container">'+
