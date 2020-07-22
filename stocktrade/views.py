@@ -61,8 +61,12 @@ def make_transaction(request):
             target_position = data.get('targetPosition')
             direction = data.get('direction')
             cn_tz = pytz.timezone('Asia/Shanghai')
-            trade_time = cn_tz.localize(datetime.strptime(
-                data.get('tradeTime'), '%Y-%m-%dT%H:%M:%S'))
+            try:
+                trade_time = cn_tz.localize(datetime.strptime(
+                    data.get('tradeTime'), '%Y-%m-%dT%H:%M:%S'))
+            except Exception as e:
+                trade_time = cn_tz.localize(datetime.strptime(
+                    data.get('tradeTime'), '%Y-%m-%dT%H:%M'))
             # trade_time = data.get('tradeTime').split('T')
             trade_account = TradeAccount.objects.get(id=data.get('tradeAcc'))
             force_calculate = data.get('forceCalculate')
