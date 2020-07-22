@@ -111,7 +111,7 @@
     </div>
     <hr class="mt-4"/>
     <div class="row mt-4">
-        <div class="col-lg-8 grid-margin stretch-card" id="stockFol">
+        <div class="col-lg-7 grid-margin stretch-card" id="stockFol">
             <input type="hidden" id="hiddenCode" value="sh"><!--real code e.g. 000001 -->
             <input type="hidden" id="hiddenName" value="{% trans '上证指数' %}"><!--e.g.平安保险-->
             <input type="hidden" id="hiddenTscode" value="000001"><!--show code, 000001.SZ-->
@@ -140,6 +140,7 @@
                             <td><span id="chg{{following.stock_code}}" class="small"></span></td>
                             <td><span id="pct{{following.stock_code}}" class="small"></span></td>
                             <td>
+                                <!-- <a class="btn btn-sm btn-danger mr-1" href="{% url 'stocktrade:home' account_id=0 symbol=following.stock_code %}"><i class="fa fa-plus"></i>{% trans '记录交易' %}</a> -->
                                 <input type="button" class="btn btn-sm btn-danger mt-1 btn-unfollow" id="{{following.stock_code}}" value="{% trans '-删自选' %}"/>
                             </td>
                         </tr>
@@ -147,21 +148,22 @@
                         {% endif %}
                     </tbody>
                 </table>
-            </div>
-            <hr/>
+            </div>         
+        </div>
+        <div class="col-lg-5">
+            <!-- <hr/> -->
             <div class="col-md-12">
-                <input type="button" class="btn btn-sm btn-secondary mt-1" id="followStock" value="{% trans '+加自选' %}"/>
+                <input type="button" class="btn btn-sm btn-secondary" id="followStock" value="{% trans '+加自选' %}"/>
             </div>
             <div class="col-md-12">
                 <div class="card-body">
                     <div class="chart-bar">
                         <i class="fas fa-spinner fa-pulse fa-spin fa-4x" id="spBsChart"></i>
-                        <canvas id="stockChart"></canvas>
+                        <canvas id="stockChart" height="200"></canvas>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-4 grid-margin stretch-card">
+            <hr/>
             <div class="col-md-12 grid-margin stretch-card">
                 <div class="card shadow mb-4">
                     <div class="card-body pb-0">

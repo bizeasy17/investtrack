@@ -20,6 +20,13 @@ urlpatterns = [
          views.ma_test),
     path('stock-hist/strategy/<strategy>/<stock_symbol>/<freq>/<type>/<int:period>/',
          views.stock_history),  # ??
+    # 选股page
+    path('xuangu/', views.XuanGuHomeView.as_view(), name="xuangu"),
+    #     走势预测
+    path('yuce/', views.YuCeHomeView.as_view(), name="yuce"),
+    #     走势预测
+    path('zhengu/', views.ZhenGuHomeView.as_view(), name="zhengu"),
+
     #     path('feed/pct-period-data/',
     #          views.feed_pct_data),  # ??
     #     path('feed/expected-pct-data/',
