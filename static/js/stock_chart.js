@@ -220,12 +220,12 @@ $(function () {
                                         var l = point.l;
                                         var c = point.c;
 
-                                        var percentage = Math.floor((parseFloat(c) - parseFloat(o)) / parseFloat(o) * 100) + "%";
+                                        var percentage = ((parseFloat(c) - parseFloat(o)) / parseFloat(o) * 100).toFixed(2);
 
                                         if (label) {
-                                            label += ': ';
+                                            label += ':';
                                         }
-                                        label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c + ' 涨幅: ' + percentage;
+                                        label = showName + ' - 收:' + c + ' 涨:' + percentage.toString() + "%";
                                         return label;
                                     }
                                 }
