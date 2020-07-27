@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status
+from .utils import log_test_status, has_analysis_task
 from .stock_hist import hist_since_listed
 
 logger = logging.getLogger(__name__)
@@ -52,48 +52,49 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            print(' marked dingdi on start code - ' + listed_company.ts_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            df = pd.DataFrame()
-            if freq == 'D':
-                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                    'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'))
-            else:
-                pass
-            if df is not None and len(df) > 0:
-                # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
-                pre_marked_df = pre_mark_dingdi(listed_company.ts_code, df)
-                # 记录顶部还是底部的index，顶部的最大值的index，底部的最小值的index
-                dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list = med_mark_dingdi(
-                    pre_marked_df, compare_offset, listed_company.ts_code,)
-                # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
-                post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
-                                 dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
-                # print(post_marked_df.tail(50))
-                for index, row in post_marked_df.iterrows():
-                    hist = object
-                    if freq == 'D':
-                        hist = StockHistoryDaily(pk=row['id'])
-                    else:
-                        pass
-                    hist.dibu_b = row['dibu_b']
-                    hist.dingbu_s = row['dingbu_s']
-                    hist.is_dingdi_end = row['is_dingdi_end']
-                    hist.dingdi_count = row['dingdi_count']
-                    hist.ding_max = row['ding_max']
-                    hist.di_min = row['di_min']
-                    hist.slope = row['slope']
-                    hist_list.append(hist)
+            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'dingdi', freq):
+                print(' marked dingdi on start code - ' + listed_company.ts_code +
+                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                df = pd.DataFrame()
                 if freq == 'D':
-                    StockHistoryDaily.objects.bulk_update(hist_list, ['slope','dibu_b','dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'])
+                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
+                        'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'))
                 else:
                     pass
-                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['dingbu_s','dibu_b'])
-                listed_company.is_marked_dingdi = True
-                listed_company.save()
-                print(' marked dingdi on end code - ' + listed_company.ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                hist_list.clear() # 清空已经保存的记录列表
+                if df is not None and len(df) > 0:
+                    # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
+                    pre_marked_df = pre_mark_dingdi(listed_company.ts_code, df)
+                    # 记录顶部还是底部的index，顶部的最大值的index，底部的最小值的index
+                    dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list = med_mark_dingdi(
+                        pre_marked_df, compare_offset, listed_company.ts_code,)
+                    # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
+                    post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
+                                    dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
+                    # print(post_marked_df.tail(50))
+                    for index, row in post_marked_df.iterrows():
+                        hist = object
+                        if freq == 'D':
+                            hist = StockHistoryDaily(pk=row['id'])
+                        else:
+                            pass
+                        hist.dibu_b = row['dibu_b']
+                        hist.dingbu_s = row['dingbu_s']
+                        hist.is_dingdi_end = row['is_dingdi_end']
+                        hist.dingdi_count = row['dingdi_count']
+                        hist.ding_max = row['ding_max']
+                        hist.di_min = row['di_min']
+                        hist.slope = row['slope']
+                        hist_list.append(hist)
+                    if freq == 'D':
+                        StockHistoryDaily.objects.bulk_update(hist_list, ['slope','dibu_b','dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'])
+                    else:
+                        pass
+                    log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['dingdi'])
+                    listed_company.is_marked_dingdi = True
+                    listed_company.save()
+                    print(' marked dingdi on end code - ' + listed_company.ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    hist_list.clear() # 清空已经保存的记录列表
     else:
         print('dingdi for code - ' + str(ts_code_list) +
                       ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

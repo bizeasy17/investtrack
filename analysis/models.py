@@ -29,6 +29,20 @@ class BaseModel(models.Model):
     def get_absolute_url(self):
         pass
 
+class BaseModel1(models.Model):
+    id = models.AutoField(primary_key=True)
+    created_date = models.DateField(_('创建日期'), default=now)
+    last_mod_date = models.DateField(_('最后更新日期'), default=now)
+
+    class Meta:
+        abstract = True
+
+    @abstractmethod
+    def get_absolute_url(self):
+        pass
+
+class MarkCriticalPointTask(models.Model):
+    pass
 
 class StockHistoryDaily(BaseModel):
     '''
@@ -176,8 +190,14 @@ class StockStrategyTestLog(BaseModel):
         _('测试策略'), max_length=25, blank=True, null=True)
     event_type = models.CharField(
         _('日志类型'), choices=EVENT_TYPE, max_length=50, blank=False, null=False)  # e.g. 000001.SZ
+    # 用于新下载的交易记录的标记start
+    start_date = models.DateField(
+        _('开始日期'),  blank=True, null=True)
+    end_date = models.DateField(
+        _('结束日期'),  blank=True, null=True)
+    # 用于新下载的交易记录的标记end
     is_done = models.BooleanField(
-        _('已完成'),  blank=False, null=False, default=True)
+        _('已完成'),  blank=False, null=False, default=False)
     freq = models.CharField(
         _('测试频率'), max_length=5, blank=False, null=False, default='D')
     # hist_downloaded = models.BooleanField(

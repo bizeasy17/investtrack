@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status
+from .utils import log_test_status, has_analysis_task
 from .stock_hist import hist_since_listed
 
 logger = logging.getLogger(__name__)
@@ -58,37 +58,38 @@ def mark_wm_listed(freq, ts_code_list=[]):
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            print(' marked w, m on start code - ' + listed_company.ts_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            df = pd.DataFrame()
-            if freq == 'D':
-                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                    'trade_date').values('id', 'trade_date', 'close', 'w_di', 'm_ding','ding_max','di_min'))
-            else:
-                pass
-            if df is not None and len(df) > 0:
-                # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
-                pre_marked_df = mark_wm(listed_company.ts_code, df, price_chg_3pct)
-                # print(post_marked_df.tail(50))
-                for index, row in pre_marked_df.iterrows():
-                    hist = object
-                    if freq == 'D':
-                        hist = StockHistoryDaily(pk=row['id'])
-                    else:
-                        pass
-                    hist.m_ding = row['m_ding']
-                    hist.w_di = row['w_di']
-                    hist_list.append(hist)
+            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'wm_dingdi_bs', freq):
+                print(' marked w, m on start code - ' + listed_company.ts_code +
+                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                df = pd.DataFrame()
                 if freq == 'D':
-                    StockHistoryDaily.objects.bulk_update(hist_list, ['w_di', 'm_ding'])
+                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
+                        'trade_date').values('id', 'trade_date', 'close', 'w_di', 'm_ding','ding_max','di_min'))
                 else:
                     pass
-                log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['m_ding','w_di'])
-                listed_company.is_marked_wm = True
-                listed_company.save()
-                print(' marked w or m on end code - ' + listed_company.ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                hist_list.clear() # 清空已经保存的记录列表
+                if df is not None and len(df) > 0:
+                    # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
+                    pre_marked_df = mark_wm(listed_company.ts_code, df, price_chg_3pct)
+                    # print(post_marked_df.tail(50))
+                    for index, row in pre_marked_df.iterrows():
+                        hist = object
+                        if freq == 'D':
+                            hist = StockHistoryDaily(pk=row['id'])
+                        else:
+                            pass
+                        hist.m_ding = row['m_ding']
+                        hist.w_di = row['w_di']
+                        hist_list.append(hist)
+                    if freq == 'D':
+                        StockHistoryDaily.objects.bulk_update(hist_list, ['w_di', 'm_ding'])
+                    else:
+                        pass
+                    log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['wm_dingdi_bs'])
+                    listed_company.is_marked_wm = True
+                    listed_company.save()
+                    print(' marked w or m on end code - ' + listed_company.ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    hist_list.clear() # 清空已经保存的记录列表
     else:
         print('w or m for code - ' + str(ts_code_list) +
                       ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

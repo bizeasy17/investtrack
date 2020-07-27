@@ -7,7 +7,7 @@ from django.db.models import Q
 from stockmarket.models import StockNameCodeMap
 
 from .models import StockHistoryDaily, StockStrategyTestLog
-
+from .utils import gen_cp_task
 '''
 check the missing history sql query
 SELECT ts_code 
@@ -119,6 +119,7 @@ def download_stock_hist(freq, ts_code_list=[], asset='E',):
                 listed_company.is_hist_downloaded = True
                 listed_company.hist_update_date = end_date
                 listed_company.save()
+                gen_cp_task(listed_company.ts_code, freq, listed_company.list_date, end_date)
                 now = datetime.now()
                 print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
                     ' history trade info downloaded.')
@@ -164,6 +165,7 @@ def update_stock_hist(freq, ts_code_list=[], asset='E',):
             listed_company.is_hist_updated = True
             listed_company.hist_update_date = end_date
             listed_company.save()
+            gen_cp_task(listed_company.ts_code, freq, listed_company.hist_update_date + timedelta(days=1), end_date)
             now = datetime.now()
             print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
                   ' history trade info updated.')

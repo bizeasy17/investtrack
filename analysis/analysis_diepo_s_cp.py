@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status,is_strategy_tested
+from .utils import log_test_status,has_analysis_task
 from .stock_hist import hist_since_listed
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def mark_diepo_s_listed(freq, ts_code_list=[]):
         for listed_company in listed_companies:
             print(' marked diepo s on start code - ' + listed_company.ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            if not is_strategy_tested(listed_company.ts_code, 'MARK_CP', 'diepo_zhicheng_s', freq):
+            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'diepo_zhicheng_s', freq):
                 df = pd.DataFrame()
                 if freq == 'D':
                     df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
