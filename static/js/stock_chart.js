@@ -47,7 +47,7 @@ $(function () {
         else accountId = 0;
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + showCode + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 chart.data.datasets.forEach(function (dataset) {
                     dataset.data = data;
@@ -164,7 +164,7 @@ $(function () {
         if (chartCanvas) {
             $.ajax({
                 // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
-                url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+                url: txnvisEndpoint + 'hist/' + accountId + "/" + showCode + '/' + startDate + '/' + endDate + '/' + period + '/',
                 success: function (data) {
                     // ctx1.canvas.width = 1000;
                     // ctx1.canvas.height = 250;
