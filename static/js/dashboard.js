@@ -156,11 +156,11 @@ $(function () {
       url: dashboardEndpoint + 'profit-trend/period/' + period + '/',
       success: function (data) {
         // 亏损的字体颜色为绿
-        if (data.avg_profit < 0) {
-          $("#prfAvgProfit").removeClass("text-danger");
-          $("#prfAvgProfit").addClass("text-success");
+        if (data.max_profit < 0) {
+          $("#prfMaxProfit").removeClass("text-danger");
+          $("#prfMaxProfit").addClass("text-success");
         }
-        $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+        $("#prfMaxProfit").text(data.max_profit.toLocaleString());
         // 亏损的字体颜色为绿
         if (data.profit_ratio < 0) {
           $("#prfProfitRatio").removeClass("text-danger");
@@ -205,11 +205,11 @@ $(function () {
           $("#noProfit").append("<span class='text-muted'>无交易信息</span>");
         } else {
           // 亏损的字体颜色为绿
-          if (data.avg_profit < 0) {
-            $("#prfAvgProfit").removeClass("text-danger");
-            $("#prfAvgProfit").addClass("text-success");
+          if (data.max_profit < 0) {
+            $("#prfMaxProfit").removeClass("text-danger");
+            $("#prfMaxProfit").addClass("text-success");
           }
-          $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+          $("#prfMaxProfit").text(data.max_profit.toLocaleString());
           // 亏损的字体颜色为绿
           if (data.profit_ratio < 0) {
             $("#prfProfitRatio").removeClass("text-danger");

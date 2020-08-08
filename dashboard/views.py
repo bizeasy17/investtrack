@@ -40,29 +40,39 @@ class DashboardHomeView(LoginRequiredMixin, View):
         # username = self.kwargs['username']
         req_user = request.user
         if req_user is not None:
+            today = date.today()
             today_pnl = 0
+            total_shares = 0
+            # today_mv = 0
+            # 计算当日实时收益
+            today_mv_rt = 0
             tradedetails = Transactions.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
-            # today = date.today()
-            # if today.weekday() == calendar.SATURDAY:
-            #     snap_date = today - timedelta(days=1)
-            # elif today.weekday() == calendar.SUNDAY:
-            #     snap_date = today - timedelta(days=2)
-            # else:
-            #     snap_date = today
-            # today_snapshots = TradeAccountSnapshot.objects.filter(
-            #     trader=req_user.id, snap_date=snap_date, applied_period='d').aggregate(profit_change=Sum('profit_change'))  # , sum_change=Sum('profit_change'))
-            # if today_snapshots['profit_change'] is not None:
-            #     today_pnl = today_snapshots['profit_change']
-            # update the position based on the realtime price
+            if today.weekday() == 6:  # 周日推2天
+                last_snap_date = today - timedelta(days=2)
+            elif today.weekday() == 0:  # 周一
+                last_snap_date = today - timedelta(days=3)
+            else:  # 周二到周六其他的往前推一天
+                last_snap_date = today - timedelta(days=1)
+            trade_snapshots = TradeAccountSnapshot.objects.filter(
+                trader=req_user.id, snap_date=last_snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))
             trade_positions = sync_stock_positions(req_user)
+            if trade_positions is not None and len(trade_positions) > 0:
+                for p in trade_positions:
+                    if p.is_liquidated is not True:
+                        today_mv_rt += p.profit
+            if trade_snapshots['sum_profit'] is not None:
+                today_pnl = today_mv_rt - int(trade_snapshots['sum_profit'])
+            else:
+                today_pnl = today_mv_rt
             # trade_positions = Positions.objects.filter(
             #     trader=req_user.id).order_by('is_liquidated')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
             capital = 0
             profit_loss = 0
             total_accounts = 0
-            total_shares = len(trade_positions)
+            if trade_positions is not None:
+                total_shares = len(trade_positions)
             for acc in accounts:
                 capital += acc.account_capital
                 profit_loss += acc.account_balance
@@ -73,6 +83,7 @@ class DashboardHomeView(LoginRequiredMixin, View):
                 trader=req_user.id,)[:10]
             queryset = {
                 'today_pnl': today_pnl,
+                'total_market_value': today_mv_rt,
                 'capital': capital,
                 'profit_loss': profit_loss,
                 'total_shares': total_shares,
