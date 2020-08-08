@@ -60,7 +60,7 @@ class DashboardHomeView(LoginRequiredMixin, View):
             if trade_positions is not None and len(trade_positions) > 0:
                 for p in trade_positions:
                     if p.is_liquidated is not True:
-                        today_mv_rt += p.profit
+                        today_mv_rt += p.cash + p.profit
             if trade_snapshots['sum_profit'] is not None:
                 today_pnl = today_mv_rt - int(trade_snapshots['sum_profit'])
             else:
