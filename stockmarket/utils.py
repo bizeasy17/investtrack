@@ -5,6 +5,9 @@ import tushare as ts
 
 
 def get_single_realtime_quote(symbol):
+    # 保持向前兼容
+    code = symbol.split('.')
+    symbol = code[0]
     # 获得实时报价
     realtime_df = ts.get_realtime_quotes(symbol)  # 需要再判断一下ts_code
     realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',

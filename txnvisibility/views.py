@@ -21,14 +21,23 @@ logger = logging.getLogger(__name__)
 @login_required
 def stock_transaction_history(request, account_id, symbol, start_date, end_date, type):
     if request.method == 'GET':
+        asset = 'E'
         hist_df = []
         stock_hist_list = []
-        index_list = ['sh', 'sz', 'hs300', 'sz50', 'zxb', 'cyb', 'kcb']
+        index_dict = {'sh':'000001.SH', 'sz':'399001.SZ', 'hs300':'000300.SZ', 'sz50':'000016.SH', 'zxb':'399005.SZ', 'cyb':'399006.SZ', 'kcb':'000688.SH'}
+        index_list = []
         try:
+            for key in index_dict.keys():
+                index_list.append(key)
+            if symbol in index_list:
+                asset = 'I'
             # if code in index_list:
             # get_hist_date depreciated
-            hist_df = ts.pro_bar(ts_code=symbol, adj=None, freq=type,
-                                 start_date=start_date, end_date=end_date)
+                hist_df = ts.pro_bar(ts_code=index_dict[symbol], asset=asset, adj=None, freq=type,
+                                    start_date=start_date, end_date=end_date)
+            else:
+                hist_df = ts.pro_bar(ts_code=symbol, asset=asset, adj=None, freq=type,
+                                     start_date=start_date, end_date=end_date)
 
             # hist_df = ts.get_hist_data(symbol, start=start_date,
             #                            end=end_date, ktype=type)
@@ -42,38 +51,23 @@ def stock_transaction_history(request, account_id, symbol, start_date, end_date,
                 else:
                     time = datetime.strptime(
                         v['trade_date'] + ' 15:00:00', "%Y%m%d %H:%M:%S")
-                open = v['open']
-                high = v['high']
-                close = v['close']
-                low = v['low']
-                # date = str(k).split(' ')
-                # if len(date) > 1:
-                #     time = datetime.strptime(k, "%Y-%m-%d %H:%M:%S")
-                # else:
-                #     time = datetime.strptime(
-                #         k + ' 15:00:00', "%Y-%m-%d %H:%M:%S")
-                # for kk, vv in v.items():
-                #     if kk == 'open':
-                #         open = vv
-                #     elif kk == 'high':
-                #         high = vv
-                #     elif kk == 'close':
-                #         close = vv
-                #     elif kk == 'low':
-                #         low = vv
                 transaction_hist = ''
-                if symbol not in index_list:
+                if symbol not in index_dict.values():
                     transaction_hist = retrieve_transaction_hist(
                         request, symbol, time, type, account_id)
                 stock_hist_list.append(
                     {
-                        't': time, 'o': open, 'h': high,
-                        'l': low, 'c': close, 'd': transaction_hist,
+                        't': time, 'o': v['open'], 'h': v['high'],
+                        'l': v['low'], 'c': v['close'], 'd': transaction_hist,
                     }
                 )
             # 是否需要加入当天的k线数据
             if start_date != end_date:
-                realtime_price = get_single_realtime_quote(symbol)
+                code = symbol.split('.')
+                if len(code) > 1:
+                    realtime_price = get_single_realtime_quote(code[0])
+                else:
+                    realtime_price = get_single_realtime_quote(symbol)
                 # 如果实时行情数据和当前history行情数据比较，两者的时间不同，则需要将实时行情append到返回dataset
                 if len(realtime_price) > 0 and realtime_price['t'].date() == stock_hist_list[0]['t'].date():
                     # if realtime_price['t'].date() < date.today():

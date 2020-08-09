@@ -371,5 +371,5 @@ $(function () {
         chart.update();
     };
 
-    initStockChart($('#hiddenCode').val(), $('#hiddenTscode').val(), $('#hiddenName').val());
+    initStockChart($('#hiddenCode').val(), $('#hiddenCode').val(), $('#hiddenName').val());
 });
