@@ -65,7 +65,11 @@ class DashboardHomeView(LoginRequiredMixin, View):
                         today_pnl_rt += p.profit
             if trade_snapshots['sum_profit'] is None:
                 trade_snapshots['sum_profit'] = 0
-            profit_chg = today_pnl_rt - int(trade_snapshots['sum_profit'])
+            
+            if today.weekday() in  [5, 6]:  # 周日推2天
+                profit_chg = 0
+            else:  # 周二到周六其他的往前推一天
+                profit_chg = today_pnl_rt - int(trade_snapshots['sum_profit'])
             # trade_positions = Positions.objects.filter(
             #     trader=req_user.id).order_by('is_liquidated')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
