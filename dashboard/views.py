@@ -41,7 +41,8 @@ class DashboardHomeView(LoginRequiredMixin, View):
         req_user = request.user
         if req_user is not None:
             today = date.today()
-            today_pnl = 0
+            today_pnl_rt = 0
+            profit_chg = 0
             total_shares = 0
             # today_mv = 0
             # 计算当日实时收益
@@ -61,10 +62,10 @@ class DashboardHomeView(LoginRequiredMixin, View):
                 for p in trade_positions:
                     if p.is_liquidated is not True:
                         today_mv_rt += p.cash + p.profit
-            if trade_snapshots['sum_profit'] is not None:
-                today_pnl = today_mv_rt - int(trade_snapshots['sum_profit'])
-            else:
-                today_pnl = today_mv_rt
+                        today_pnl_rt += p.profit
+            if trade_snapshots['sum_profit'] is None:
+                trade_snapshots['sum_profit'] = 0
+            profit_chg = today_pnl_rt - int(trade_snapshots['sum_profit'])
             # trade_positions = Positions.objects.filter(
             #     trader=req_user.id).order_by('is_liquidated')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
@@ -82,7 +83,7 @@ class DashboardHomeView(LoginRequiredMixin, View):
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
             queryset = {
-                'today_pnl': today_pnl,
+                'today_pnl': profit_chg,
                 'total_market_value': today_mv_rt,
                 'capital': capital,
                 'profit_loss': profit_loss,
