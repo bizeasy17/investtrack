@@ -56,15 +56,25 @@ def mark_tupo_yali_listed(freq, ts_code_list=[]):
             if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'tupo_yanli_b', freq):
                 print(' marked tupo b on start code - ' + listed_company.ts_code +
                     ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                task = get_analysis_task(
+                    listed_company.ts_code, 'MARK_CP', 'tupo_yanli_b', freq)
                 df = pd.DataFrame()
-                if freq == 'D':
-                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                        'trade_date').values('id', 'trade_date', 'close', 'slope', 'm_ding', 'ding_max'))
-                else:
-                    pass
+                if task.start_date == listed_company.list_date: #第一次下载历史数据
+                    if freq == 'D':
+                        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
+                            'trade_date').values('id', 'trade_date', 'close', 'slope', 'm_ding', 'ding_max'))
+                else: # 历史数据更新
+                    if freq == 'D':
+                        last_ding_max = StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code, ding_max=1).order_by(
+                            'trade_date')[0]
+                        if last_ding_max is not None:
+                            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code, trade_date__gte=last_ding_max.trade_date, trade_date__lte=task.end_date).order_by(
+                                'trade_date').values('id', 'trade_date', 'close', 'slope', 'm_ding', 'ding_max'))
                 if df is not None and len(df) > 0:
                     # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
                     pre_marked_df = mark_tupo(listed_company.ts_code, df, price_chg_3pct)
+                    if task.start_date != listed_company.list_date: #更新历史数据
+                        pre_marked_df = update_tupo_mark(listed_company.ts_code, df, price_chg_3pct)
                     # print(post_marked_df.tail(50))
                     if 'tupo_b' in pre_marked_df.columns:
                         for index, row in pre_marked_df.iterrows():
@@ -102,10 +112,10 @@ def mark_tupo(ts_code, df, price_chg_pct):
         idx_list = df.loc[df['ding_max'] == 1].index
         idx_prev = -1
         for id in idx_list:
-            if idx_prev != -1: # slope >0 means 上涨趋势
+            if idx_prev != -1: # 跳过第一个顶的索引
                 for idx_bwt in range(idx_prev, id):
                     chg_pct = (df.loc[idx_bwt+1].close - df.loc[id].close) / df.loc[id].close
-                    if df.loc[idx_bwt].slope > 0 and chg_pct >= price_chg_pct:
+                    if df.loc[idx_bwt].slope > 0 and chg_pct >= price_chg_pct:# slope >0 means 上涨趋势
                         # pass
                         # print(df.loc[idx_bwt].trade_date)
                         # print(df.loc[idx_bwt].close)
@@ -121,3 +131,25 @@ def mark_tupo(ts_code, df, price_chg_pct):
     else:
         return df
 
+def update_tupo_mark(ts_code, df, price_chg_pct):
+    '''
+    标记股票的顶底
+    '''
+    print('update pre mark tupo b started on code - ' + ts_code + ',' +
+          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    try:
+        idx_list = df.loc[df['ding_max'] == 1].index
+        last_index = idx_list[-1]
+        max_prev = df.loc[last_index].close
+        # 跳过第一个顶的索引
+        for index, row in df.loc[last_index:].iterrows():
+            chg_pct = (max_prev - row['close']) / row['close']
+            if row['slope'] > 0 and row['open'] < max_prev and chg_pct >= price_chg_pct:# slope >0 means 上涨趋势
+                df.loc[index, 'tupo_b'] = 1
+        print('update pre tupo b end on code - ' + ts_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as e:
+        time.sleep(1)
+        print(e)
+    else:
+        return df
