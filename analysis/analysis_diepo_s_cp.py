@@ -57,14 +57,25 @@ def mark_diepo_s_listed(freq, ts_code_list=[]):
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'diepo_zhicheng_s', freq):
                 df = pd.DataFrame()
-                if freq == 'D':
-                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                        'trade_date').values('id','trade_date','close','slope','di_min','open','high'))
-                else:
-                    pass
+                task = get_analysis_task(
+                    listed_company.ts_code, 'MARK_CP', 'diepo_zhicheng_s', freq)
+                if task.start_date == listed_company.list_date: #第一次下载历史数据
+                    if freq == 'D':
+                        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
+                            'trade_date').values('id','trade_date','close','slope','di_min','open','high'))
+                else: # 历史数据更新
+                    if freq == 'D':
+                        last_di_min = StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code, di_min=1).order_by(
+                            'trade_date')[0]
+                        if last_di_min is not None:
+                            df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code, trade_date__gte=last_di_min.trade_date, trade_date__lte=task.end_date).order_by(
+                                'trade_date').values('id', 'trade_date', 'close', 'slope', 'di_min', 'open', 'close', 'high'))
                 if df is not None and len(df) > 0:
                     # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
                     pre_marked_df = mark_diepo(listed_company.ts_code, df, price_chg_3pct)
+                    #更新历史数据
+                    if task.start_date != listed_company.list_date: 
+                        pre_marked_df = update_diepo_mark(listed_company.ts_code, df, price_chg_3pct)
                     # print(post_marked_df.tail(50))
                     if 'diepo_s' in pre_marked_df.columns:
                         for index, row in pre_marked_df.iterrows():
@@ -136,3 +147,26 @@ def mark_diepo(ts_code, df, price_chg_pct):
     else:
         return df
 
+
+def update_diepo_mark(ts_code, df, price_chg_pct):
+    '''
+    标记股票的顶底
+    '''
+    print('update pre mark tupo b started on code - ' + ts_code + ',' +
+          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    try:
+        idx_list = df.loc[df['di_min'] == 1].index
+        last_index = idx_list[-1]
+        min_prev = df.loc[last_index].close
+        # 跳过第一个顶的索引
+        for index, row in df.loc[last_index:].iterrows():
+            chg_pct = (min_prev - row['close']) / min_prev
+            if row['slope'] < 0 and row['open'] > min_prev and chg_pct >= price_chg_pct:# slope <0 means 下跌趋势
+                df.loc[index, 'diepo_s'] = 1
+        print('update pre tupo b end on code - ' + ts_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as e:
+        time.sleep(1)
+        print(e)
+    else:
+        return df

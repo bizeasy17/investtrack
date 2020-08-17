@@ -88,7 +88,7 @@ def mark_jiuzhuan_listed(freq, ts_code_list=[]):
                 # df = hist_since_listed(
                 #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
-                    ts_code=listed_company.ts_code, trade_date__lt=task.start_date, trade_date__gt=task.end_date).order_by(
+                    ts_code=listed_company.ts_code, trade_date__gt=task.start_date - timedelta(days=4), trade_date__lt=task.end_date).order_by(
                     'trade_date').values('id', 'close', 'chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'))
 
                 df = pd.DataFrame()
@@ -97,6 +97,8 @@ def mark_jiuzhuan_listed(freq, ts_code_list=[]):
                 #     pass
                 if df is not None and len(df) > 0:
                     marked_df = pre_mark_jiuzhuan(df)
+                    # 确保处理后的数据只是更新需要更新的开始日期
+                    marked_df = marked_df[df['trade_date'] >= task.start_date]
                     for index, row in marked_df.iterrows():
                         hist = object
                         if freq == 'D':

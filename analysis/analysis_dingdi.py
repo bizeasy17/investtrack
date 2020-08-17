@@ -54,11 +54,13 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
         for listed_company in listed_companies:
             if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'dingdi', freq):
                 print(' marked dingdi on start code - ' + listed_company.ts_code +
-                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                task = get_analysis_task(
+                    listed_company.ts_code, 'MARK_CP', 'dingdi', freq)
                 df = pd.DataFrame()
                 if freq == 'D':
-                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                        'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'))
+                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code, trade_date__gt=task.start_date - timedelta(days=2), trade_date__lt=task.end_date).order_by(
+                        'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s', 'is_dingdi_end', 'dingdi_count', 'ding_max', 'di_min'))
                 else:
                     pass
                 if df is not None and len(df) > 0:
@@ -69,7 +71,12 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
                         pre_marked_df, compare_offset, listed_company.ts_code,)
                     # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
                     post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
-                                    dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
+                                                      dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
+                    # 截取从task需要执行的时间对数据切片更新
+                    if post_marked_df is not None and len(post_marked_df) > 0:
+                        post_marked_df = post_marked_df[df['trade_date'] >= task.start_date]
+                    else:
+                        return                                 
                     # print(post_marked_df.tail(50))
                     for index, row in post_marked_df.iterrows():
                         hist = object
@@ -86,18 +93,20 @@ def mark_dingdi_listed(freq, ts_code_list=[]):
                         hist.slope = row['slope']
                         hist_list.append(hist)
                     if freq == 'D':
-                        StockHistoryDaily.objects.bulk_update(hist_list, ['slope','dibu_b','dingbu_s','is_dingdi_end','dingdi_count','ding_max','di_min'])
+                        StockHistoryDaily.objects.bulk_update(hist_list, [
+                                                              'slope', 'dibu_b', 'dingbu_s', 'is_dingdi_end', 'dingdi_count', 'ding_max', 'di_min'])
                     else:
                         pass
-                    log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['dingdi'])
+                    log_test_status(listed_company.ts_code,
+                                    'MARK_CP', freq, ['dingdi'])
                     listed_company.is_marked_dingdi = True
                     listed_company.save()
                     print(' marked dingdi on end code - ' + listed_company.ts_code +
-                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                    hist_list.clear() # 清空已经保存的记录列表
+                          ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    hist_list.clear()  # 清空已经保存的记录列表
     else:
         print('dingdi for code - ' + str(ts_code_list) +
-                      ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+              ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)
 
 
@@ -223,24 +232,28 @@ def med_mark_dingdi(pre_marked_df, compare_offset, ts_code):
             # idx = 6878, count = 11
             # dingdi_idx = [6867(6878 - 11), 6878]
             dingdi_idx = [id for id in range(
-                                idx - count + 1, idx + 1)]
+                idx - count + 1, idx + 1)]
             if left_slope > 0 and right_slope < 0:
                 # ding
                 for i in dingdi_idx:
                     dingbu_s_list.append(i)
-                ding_max_idx = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').idxmax(axis=0)
-                ding_max = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').max(axis=0)
+                ding_max_idx = pre_marked_df.iloc[dingdi_idx]['close'].astype(
+                    'float').idxmax(axis=0)
+                ding_max = pre_marked_df.iloc[dingdi_idx]['close'].astype(
+                    'float').max(axis=0)
                 ding_max_idx_list.append(ding_max_idx)
-                ding_max_list.append(round(ding_max,3))
+                ding_max_list.append(round(ding_max, 3))
                 # pass
             elif left_slope < 0 and right_slope > 0:
                 # di
                 for i in dingdi_idx:
                     dibu_b_list.append(i)
-                di_min_idx = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').idxmin(axis=0)
-                di_min = pre_marked_df.iloc[dingdi_idx]['close'].astype('float').min(axis=0)
+                di_min_idx = pre_marked_df.iloc[dingdi_idx]['close'].astype(
+                    'float').idxmin(axis=0)
+                di_min = pre_marked_df.iloc[dingdi_idx]['close'].astype(
+                    'float').min(axis=0)
                 di_min_idx_list.append(di_min_idx)
-                di_min_list.append(round(di_min,3))
+                di_min_list.append(round(di_min, 3))
                 # pass
     except Exception as e:
         print(e)
@@ -270,12 +283,12 @@ def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max
             dibu_b_list.append(1)
         else:
             dibu_b_list.append(0)
-        
+
         if index in ding_max_idx_list:
             ding_max_list.append(1)
         else:
             ding_max_list.append(0)
-        
+
         if index in di_min_idx_list:
             di_min_list.append(1)
         else:
@@ -287,5 +300,3 @@ def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max
     print('post mark dingdi end  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return med_marked_df
-
-

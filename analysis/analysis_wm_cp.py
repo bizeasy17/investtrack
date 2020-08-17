@@ -137,3 +137,26 @@ def mark_wm(ts_code, df, price_chg_pct):
         print(e)
     else:
         return df
+
+def update_wm_mark(ts_code, df, price_chg_pct):
+    '''
+    更新股票的w/m顶底
+    '''
+    print('update pre mark tupo b started on code - ' + ts_code + ',' +
+          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    try:
+        idx_list = df.loc[df['ding_max'] == 1].index
+        last_index = idx_list[-1]
+        max_prev = df.loc[last_index].close
+        # 跳过第一个顶的索引
+        for index, row in df.loc[last_index:].iterrows():
+            chg_pct = (max_prev - row['close']) / row['close']
+            if row['slope'] > 0 and row['open'] < max_prev and chg_pct >= price_chg_pct:# slope >0 means 上涨趋势
+                df.loc[index, 'tupo_b'] = 1
+        print('update pre tupo b end on code - ' + ts_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as e:
+        time.sleep(1)
+        print(e)
+    else:
+        return df
