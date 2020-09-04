@@ -142,9 +142,13 @@
                                             <div>{{ p.cash|add:p.profit }}</div>
                                             {% endifequal %}
                                         </div>
-
                                     </div>
                                     <hr>
+                                    <div class="row small">
+                                        <canvas id="chart{{p.stock_code}}" height="150"></canvas>
+                                    </div>
+                                    <hr>
+
                                     <div class="mb-2 mt-2 d-none" id="pId{{p.id}}">
                                     </div>
                                     <div class="row">
