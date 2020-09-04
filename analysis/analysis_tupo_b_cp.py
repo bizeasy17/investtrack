@@ -83,7 +83,7 @@ def mark_tupo_yali_listed(freq, ts_code_list=[]):
                                 hist = StockHistoryDaily(pk=row['id'])
                             else:
                                 pass
-                            # print(type(row['tupo_b']))
+                            # print(type(row['tupo_b']))calibrate_realtime_position
                             hist.tupo_b = row['tupo_b'] if not math.isnan(row['tupo_b']) else None
                             hist_list.append(hist)
                         if freq == 'D':

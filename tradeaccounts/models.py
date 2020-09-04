@@ -146,6 +146,9 @@ class Positions(BaseModel):
     # last transaction datetime
     ltd = models.DateTimeField(
         '清仓时间', blank=True, null=True)
+    # last transaction datetime
+    target_chg_pct = models.DecimalField(
+        '目标涨幅%', max_digits=2, decimal_places=2, blank=True, null=True, default=20)
     # realtime_objects = PositionManager() # The position-specific manager.
 
     def __str__(self):

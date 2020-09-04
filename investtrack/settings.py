@@ -159,6 +159,19 @@ DATABASES = {
         'OPTIONS': {'client_encoding': 'UTF8'},
     }
 }
+# PROD
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'investtrack_prod',
+#         'USER': 'db_user1',
+#         'PASSWORD': 'password1!',
+#         'HOST': '39.100.215.105',
+#         'PORT': 5432,
+#         'OPTIONS': {'client_encoding': 'UTF8'},
+#     }
+# }
+
 # Logging configuration
 LOGGING = {
     'version': 1,
