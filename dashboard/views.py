@@ -20,7 +20,7 @@ from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from stockmarket.utils import get_realtime_quote
 from stocktrade.models import Transactions
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot, StockPositionSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 
 # Create your views here.
@@ -446,6 +446,28 @@ def get_position_status(request, account, symbol):
         except Exception as e:
             logger.error(e)
 
+@login_required
+def get_stock_chg_seq(request, stock_code):
+    trader = request.user
+    stock_chg_seq = []
+    stock_chg_target = []
+    stock_chg_lbl = []
+    if request.method == 'GET':
+        try:
+            stock_chg_list = StockPositionSnapshot.objects.filter(trader=trader,  stock_code__in=stock_code).order_by('trade_date')
+            if stock_chg_list is not None and len(stock_chg_list) > 0:
+                for stock_chg in stock_chg_list:
+                    stock_chg_lbl.append(stock_chg.snap_date)
+                    stock_chg_seq.append(stock_chg.profit_chg)
+                    stock_chg_target.append(stock_chg.target_chg_pct)
+                return JsonResponse(
+                    {
+                        'label': stock_chg_lbl,
+                        'chg_seq': stock_chg_seq,
+                        'chg_target_seq': stock_chg_target,
+                    }, safe=False)
+        except Exception as e:
+            logger.error(e)
 
 @login_required
 def get_stock_for_trade(request, account, stock_code):

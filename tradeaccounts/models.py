@@ -403,6 +403,8 @@ class StockPositionSnapshot(models.Model):
         _('利润变化'), max_digits=10, decimal_places=2, blank=False, null=False, default=0)
     profit_ratio = models.DecimalField(
         _('利润率'), max_digits=10, decimal_places=5, blank=False, null=False, default=0)
+    target_chg_pct = models.DecimalField(
+        _('利润率'), max_digits=10, decimal_places=5, blank=False, null=False, default=0)
     snap_date = models.DateField(
         _('快照时间'), blank=False, null=False, default=now)
     applied_period = models.CharField(
@@ -430,6 +432,7 @@ class StockPositionSnapshot(models.Model):
         self.stock_code = stock_position.stock_code
         self.profit = stock_position.profit
         self.profit_ratio = stock_position.profit_ratio
+        self.target_chg_pct = stock_position.target_chg_pct
         # 与上一snapshot day环比的变化
         last_snapshot = StockPositionSnapshot.objects.filter(trader=stock_position.trader,
             trade_account=stock_position.trade_account, snap_date=last_snap_date, applied_period='d')
