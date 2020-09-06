@@ -447,27 +447,31 @@ def get_position_status(request, account, symbol):
             logger.error(e)
 
 @login_required
-def get_stock_chg_seq(request, stock_code):
+def get_stock_chg_seq(request, pid, symbol):
+    freq = 'd'
     trader = request.user
     stock_chg_seq = []
     stock_chg_target = []
     stock_chg_lbl = []
     if request.method == 'GET':
         try:
-            stock_chg_list = StockPositionSnapshot.objects.filter(trader=trader,  stock_code__in=stock_code).order_by('trade_date')
+            stock_chg_list = StockPositionSnapshot.objects.filter(p_id=pid, trader=trader,  stock_code=symbol, applied_period=freq).order_by('snap_date')
             if stock_chg_list is not None and len(stock_chg_list) > 0:
                 for stock_chg in stock_chg_list:
                     stock_chg_lbl.append(stock_chg.snap_date)
-                    stock_chg_seq.append(stock_chg.profit_chg)
-                    stock_chg_target.append(stock_chg.target_chg_pct)
+                    stock_chg_seq.append(round(stock_chg.profit_ratio,2))
+                    stock_chg_target.append(round(stock_chg.target_chg_pct,2))
                 return JsonResponse(
                     {
                         'label': stock_chg_lbl,
                         'chg_seq': stock_chg_seq,
                         'chg_target_seq': stock_chg_target,
                     }, safe=False)
+            else:
+                return HttpResponse(status=404)
         except Exception as e:
             logger.error(e)
+            return HttpResponse(status=500)
 
 @login_required
 def get_stock_for_trade(request, account, stock_code):

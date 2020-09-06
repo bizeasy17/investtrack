@@ -16,4 +16,6 @@ urlpatterns = [
          views.get_profit_trend_by_period),
     path('invest-attempt-trend/period/<period>/',
          views.get_trans_success_rate_by_period),
+    path('stock-profit-chg/<int:pid>/<symbol>/',
+         views.get_stock_chg_seq),
 ]

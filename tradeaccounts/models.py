@@ -1,4 +1,5 @@
 import logging
+import decimal
 import random
 import string
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -148,7 +149,7 @@ class Positions(BaseModel):
         '清仓时间', blank=True, null=True)
     # last transaction datetime
     target_chg_pct = models.DecimalField(
-        '目标涨幅%', max_digits=2, decimal_places=2, blank=True, null=True, default=20)
+        '目标涨幅%', max_digits=5, decimal_places=2, blank=True, null=True, default=20)
     # realtime_objects = PositionManager() # The position-specific manager.
 
     def __str__(self):
@@ -393,6 +394,8 @@ class StockPositionSnapshot(models.Model):
                                on_delete=models.CASCADE)
     trade_account = models.ForeignKey('TradeAccount', verbose_name=_('股票账户'), blank=False, null=False,
                                       on_delete=models.CASCADE)
+    p_id = models.CharField(
+        _('持仓编号'), max_length=50, blank=True, null=True)
     stock_name = models.CharField(
         _('股票名称'), max_length=50, blank=False, null=False)
     stock_code = models.CharField(
@@ -404,7 +407,7 @@ class StockPositionSnapshot(models.Model):
     profit_ratio = models.DecimalField(
         _('利润率'), max_digits=10, decimal_places=5, blank=False, null=False, default=0)
     target_chg_pct = models.DecimalField(
-        _('利润率'), max_digits=10, decimal_places=5, blank=False, null=False, default=0)
+        _('目标利润率'), max_digits=10, decimal_places=5, blank=False, null=False, default=0)
     snap_date = models.DateField(
         _('快照时间'), blank=False, null=False, default=now)
     applied_period = models.CharField(
@@ -412,6 +415,12 @@ class StockPositionSnapshot(models.Model):
 
     def __str__(self):
         return str(self.trade_account)
+    
+    class Meta:
+        ordering = ['-snap_date']
+        verbose_name = _('股票收益快照')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
 
     def take_snapshot(self, stock_position):
         '''
@@ -426,12 +435,13 @@ class StockPositionSnapshot(models.Model):
         else:  # 周二到周六，前一snapshot day往前推一天
             last_snap_date = snap_date - timedelta(days=1)
         # 更新
+        self.p_id = stock_position.id
         self.trader = stock_position.trader
         self.trade_account = stock_position.trade_account
         self.stock_name = stock_position.stock_name
         self.stock_code = stock_position.stock_code
         self.profit = stock_position.profit
-        self.profit_ratio = stock_position.profit_ratio
+        self.profit_ratio = decimal.Decimal(stock_position.profit_ratio[:-1])
         self.target_chg_pct = stock_position.target_chg_pct
         # 与上一snapshot day环比的变化
         last_snapshot = StockPositionSnapshot.objects.filter(trader=stock_position.trader,
@@ -444,19 +454,24 @@ class StockPositionSnapshot(models.Model):
         self.applied_period = 'd'
         self.save()
         # 如果是周五，需要多生成一条周'w'快照
+        # print("gen week data")
+        profit_chg = stock_position.profit
         if snap_date.weekday() == calendar.FRIDAY:
+            print("gen week data")
             last_friday = snap_date - timedelta(days=7)  # 前一周周五
-            relative_snapshot = StockPositionSnapshot.objects.filter(trader=stock_position.trader,
-                trade_account=stock_position.trade_account, snap_date=last_friday, applied_period='w')
+            relative_snapshot = StockPositionSnapshot.objects.filter(p_id=stock_position.id, 
+                trader=stock_position.trader,trade_account=stock_position.trade_account, 
+                snap_date=last_friday, applied_period='w')
             if relative_snapshot is not None and len(relative_snapshot) >= 1:
-                profit_change = stock_position.profit - \
+                profit_chg = stock_position.profit - \
                     relative_snapshot[0].profit
             else:
-                profit_change = stock_position.profit
-            week_snapshot = StockPositionSnapshot(
+                profit_chg = stock_position.profit
+            week_snapshot = StockPositionSnapshot(p_id=stock_position.id,
                 trader=stock_position.trader, trade_account=stock_position.trade_account,
                 stock_name=stock_position.stock_name, stock_code=stock_position.stock_code,
-                profit=stock_position.profit, profit_chg=profit_change, profit_ratio=stock_position.profit_ratio,
+                profit=stock_position.profit, profit_chg=profit_chg, profit_ratio=decimal.Decimal(
+                    stock_position.profit_ratio[:-1]), target_chg_pct=stock_position.target_chg_pct,
                 applied_period='w')
             week_snapshot.save()
         # 如果每月最后一天，需要多生成一条月'm'快照
@@ -465,6 +480,7 @@ class StockPositionSnapshot(models.Model):
         last_day = date(snap_date.year,
                         snap_date.month, mon_range[1])
         if snap_date == last_day:
+            print("gen mon data")
             year = snap_date.year
             month = snap_date.month
             if month == 1:
@@ -473,17 +489,18 @@ class StockPositionSnapshot(models.Model):
             else:
                 last_year = year
                 last_mon = month - 1
-            relative_snapshot = StockPositionSnapshot.objects.filter(
+            relative_snapshot = StockPositionSnapshot.objects.filter(p_id=stock_position.id,
                 trader=stock_position.trader, trade_account=stock_position.trade_account,
                 snap_date__year=last_year, snap_date__month=last_mon, applied_period='m')
             if relative_snapshot is not None and len(relative_snapshot) >= 1:
-                profit_change = stock_position.profit - relative_snapshot[0].profit
+                profit_chg = stock_position.profit - relative_snapshot[0].profit
             else:
-                profit_change = stock_position.profit
+                profit_chg = stock_position.profit
             # last_day = snap_date - timedelta(days=7)  # 前一周周五
-            mon_snapshot = StockPositionSnapshot(
+            mon_snapshot = StockPositionSnapshot(p_id=stock_position.id,
                 trader=stock_position.trader, trade_account=stock_position.trade_account,
                 stock_name=stock_position.stock_name, stock_code=stock_position.stock_code,
-                profit=stock_position.profit, profit_chg=profit_change, profit_ratio=stock_position.profit_ratio,
+                profit=stock_position.profit, profit_chg=profit_chg, profit_ratio=decimal.Decimal(
+                    stock_position.profit_ratio[:-1]), target_chg_pct=stock_position.target_chg_pct,
                 applied_period='m')
             mon_snapshot.save()

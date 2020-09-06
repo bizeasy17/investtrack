@@ -11,23 +11,7 @@ from users.models import User
 class Command(BaseCommand):
     help = 'Taking snapshot for investors stock position'
 
-    def add_arguments(self, parser):
-        # Named (optional) arguments
-        parser.add_argument(
-            '--period',
-            type=str,
-            help='Which period you want to apply the snapshot',
-        )
-        pass
-
     def handle(self, *args, **options):
-        period = options['period']
-        if period == 'daily':
-            pass
-        elif period == 'weekly':
-            pass
-        elif period == 'monthly':
-            pass
         investors = User.objects.filter(
             is_active=True).exclude(is_superuser=True)
         if investors is not None and len(investors):
@@ -37,9 +21,9 @@ class Command(BaseCommand):
                 self.sync_stock_position_for_investor(
                     investor)
                 # 4. 根据最新持仓信息更新交易账户余额
-                stock_positions = Positions.objects.filter(trader=investor)
+                stock_positions = Positions.objects.filter(trader=investor).exclude(is_liquidated=True)
                 for position in stock_positions:
-                    position.update_account_balance()
+                    # position.update_account_balance()
                     # 5. 生成账户快照
                     self.take_position_snapshot(position)
 
@@ -72,8 +56,7 @@ class Command(BaseCommand):
     def take_position_snapshot(self, position):
         today = date.today()
         # 判断是否存在snapshot
-        snapshots = StockPositionSnapshot.objects.filter(
-            trade_account=position.trade_account, snap_date=today)
+        snapshots = StockPositionSnapshot.objects.filter(p_id=position.id, snap_date=today)
         if snapshots is not None and not snapshots.exists():
             snapshot = StockPositionSnapshot()
             snapshot.take_snapshot(position)
