@@ -8,7 +8,7 @@ from investors.models import TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
 from .models import FocusAreaDuration, StockHistoryDaily
-from .utils import is_strategy_tested, log_test_status
+from .utils import has_analysis_task, log_test_status
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def test_duration(strategy_code, ts_code_list=[], freq='D'):
         # 循环所有九转序列（时间顺序）
         # 获取当前买点往后所有交易记录（日）
         # 和当前买点比较，
-        if not is_strategy_tested(listed_company.ts_code, 'DURATION_TEST', strategy_code, freq):
+        if not has_analysis_task(listed_company.ts_code, 'DURATION_TEST', strategy_code, freq):
             all_pct_list = []
             log_list = []
 

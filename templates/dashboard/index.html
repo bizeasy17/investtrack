@@ -34,8 +34,8 @@
                             </div>
                             <div class="d-flex align-items-center justify-content-between  flex-wrapper mb-3">
                                 <div class="d-flex align-items-center justify-content-between  flex-wrapper small">
-                                    <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '￥' %}<span id="prfAvgProfit"></span></h5>
-                                    <p class="text-muted mb-0">{% trans '平均收益' %}</p>
+                                    <h5 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '￥' %}<span id="prfMaxProfit"></span></h5>
+                                    <p class="text-muted mb-0">{% trans '最大收益' %}</p>
                                 </div>
                                 <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                                     <label class="btn btn-light active">
@@ -91,8 +91,8 @@
                                     <div><span id="pnl">{{ dashboard.profit_loss }}</span></div>
                                 </div>
                                 <div class="text-primary"> 
-                                    <div>{% trans '持仓股票数' %}</div>
-                                    <div><span id="shares">{{ dashboard.total_shares }}</span></div>
+                                    <div>{% trans '持仓股票 (市值)' %}</div>
+                                    <div><span id="shares">{{ dashboard.total_shares }} ({{ dashboard.total_market_value }})</span></div>
                                 </div>
                                 <div class="text-primary"> 
                                     <div>{% trans '管理账户数' %}</div>
@@ -142,7 +142,13 @@
                                             <div>{{ p.cash|add:p.profit }}</div>
                                             {% endifequal %}
                                         </div>
-
+                                    </div>
+                                    <hr>
+                                    <div class="row small">
+                                        <div class="col-lg-12">
+                                            <div id="noChg{{p.stock_code}}_{{p.id}}" class="small"></div>
+                                            <canvas id="chart{{p.stock_code}}_{{p.id}}" name="profit-chg-canvas" height="150"></canvas>
+                                        </div>
                                     </div>
                                     <hr>
                                     <div class="mb-2 mt-2 d-none" id="pId{{p.id}}">
@@ -152,7 +158,7 @@
                                             <a class="btn btn-sm btn-outline-info mr-1" href="{% url 'stocktrade:home' account_id=p.trade_account.id symbol=p.stock_code %}"><i class="fa fa-plus"></i>{% ifequal p.lots 0  %}{% trans '再次买入' %}{% else %}{% trans '记录交易' %}{% endifequal %}</a>
                                             <!-- <a class="btn btn-sm btn-outline-primary" href="#">{% trans '卖出-' %}</a> -->
                                             <button class="btn btn-sm btn-outline-info" name="show-trade-record"  id="{{p.id}}" ><i class="fa fa-eye"></i>{% trans '交易明细' %}</button>
-
+                                            <!-- <button class="btn btn-sm btn-outline-info" name="show-stock-profit-chg"  id="{{p.stock_code}}" ><i class="fa fa-chart"></i>{% trans '收益趋势' %}</button> -->
                                         </div>
                                     
                                     </div>

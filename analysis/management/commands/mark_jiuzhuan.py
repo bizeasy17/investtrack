@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.strategy_jiuzhuan import mark_jiuzhuan_listed
+from analysis.analysis_jiuzhuan_cp import mark_jiuzhuan_listed
 
 
 class Command(BaseCommand):

@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, is_strategy_tested
+from .utils import log_test_status, has_analysis_task
 from .stock_hist import hist_since_listed
 
 logger = logging.getLogger(__name__)
@@ -53,12 +53,14 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            if not is_strategy_tested(listed_company.ts_code, 'MARK_CP', 'junxian25_bs', freq):
+            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'junxian25_bs', freq):
                 print(' marked junxian zhicheng on start code - ' + listed_company.ts_code +
                     ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                task = get_analysis_task(
+                    listed_company.ts_code, 'MARK_CP', 'junxian25_bs', freq)
                 df = pd.DataFrame()
                 if freq == 'D':
-                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
+                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code,trade_date__gt=task.start_date - timedelta(days=200), trade_date__lt=task.end_date).order_by(
                         'trade_date').values('id', 'trade_date', 'open', 'close', 'low', 'high', 'slope', 'ma25', 'ma60', 'ma200', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s', 'di_min', 'ding_max'))
                 else:
                     pass
@@ -67,6 +69,8 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
                     pre_marked_df = mark_ma(listed_company.ts_code, df)
                     post_marked_df = post_mark(
                         listed_company.ts_code, pre_marked_df, price_chg_3pct)
+                    # 截取从task需要执行的时间对数据切片更新
+                    post_marked_df = post_marked_df[df['trade_date'] >= task.start_date]
                     # print(post_marked_df.tail(50))
                     for index, row in post_marked_df.iterrows():
                         hist = object

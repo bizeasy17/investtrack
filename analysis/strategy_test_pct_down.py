@@ -9,7 +9,7 @@ from stockmarket.models import StockNameCodeMap
 
 from .models import (StrategyOnFixedDownPctTest, StrategyOnDownPctTest, StockHistoryDaily,
                      TradeStrategyStat)
-from .utils import log_test_status, is_strategy_tested
+from .utils import log_test_status, has_analysis_task
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def test_exp_down_pct(strategy_code, ts_code_list=[], test_freq='D'):
         # 循环所有九转序列（时间顺序）
         # 获取当前买点往后所有交易记录（日）
         # 和当前买点比较，
-        if not is_strategy_tested(listed_company.ts_code, 'EXP_DOWN_PCT_TEST', strategy_code, test_freq):
+        if not has_analysis_task(listed_company.ts_code, 'EXP_DOWN_PCT_TEST', strategy_code, test_freq):
             all_pct_list = []
             log_list = []
 

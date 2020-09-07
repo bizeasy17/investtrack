@@ -156,7 +156,7 @@ $(function () {
         var accountId = $("#hiddenAccount").val();
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + tsCode + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + showCode + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 chart.data.datasets.forEach(function (dataset) {
                     dataset.data = data;
@@ -262,7 +262,7 @@ $(function () {
     }
 
     $("#tradeDatetime").change(function () {
-        var symbol = $("#hiddenCode").val();
+        var symbol = $("#hiddenTscode").val();
         getHistoricPrice(symbol, $(this).val(), "D");
     });
 
@@ -365,7 +365,7 @@ $(function () {
 
         $.ajax({
             // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: txnvisEndpoint + 'hist/' + accountId + "/" + symbol + '/' + startDate + '/' + endDate + '/' + period + '/',
+            url: txnvisEndpoint + 'hist/' + accountId + "/" + showCode + '/' + startDate + '/' + endDate + '/' + period + '/',
             success: function (data) {
                 // ctx1.canvas.width = 1000;
                 // ctx1.canvas.height = 250;

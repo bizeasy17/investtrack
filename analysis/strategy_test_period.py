@@ -10,7 +10,7 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
-from .utils import log_test_status, is_strategy_tested
+from .utils import log_test_status, has_analysis_task
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def test_by_period(strategy_code, freq, ts_code_list=[]):
         idx_list_period = []
         strategy_test_list = []
         # if strategy_code.endswith('_b'): not needed, 20200617
-        if not is_strategy_tested(listed_company.ts_code, 'PERIOD_TEST', strategy_code, freq):
+        if not has_analysis_task(listed_company.ts_code, 'PERIOD_TEST', strategy_code, freq):
             if freq == 'D':
                 df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
                     ts_code=listed_company.ts_code).order_by('trade_date').values())

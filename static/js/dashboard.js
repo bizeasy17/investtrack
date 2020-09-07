@@ -156,11 +156,11 @@ $(function () {
       url: dashboardEndpoint + 'profit-trend/period/' + period + '/',
       success: function (data) {
         // 亏损的字体颜色为绿
-        if (data.avg_profit < 0) {
-          $("#prfAvgProfit").removeClass("text-danger");
-          $("#prfAvgProfit").addClass("text-success");
+        if (data.max_profit < 0) {
+          $("#prfMaxProfit").removeClass("text-danger");
+          $("#prfMaxProfit").addClass("text-success");
         }
-        $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+        $("#prfMaxProfit").text(data.max_profit.toLocaleString());
         // 亏损的字体颜色为绿
         if (data.profit_ratio < 0) {
           $("#prfProfitRatio").removeClass("text-danger");
@@ -205,11 +205,11 @@ $(function () {
           $("#noProfit").append("<span class='text-muted'>无交易信息</span>");
         } else {
           // 亏损的字体颜色为绿
-          if (data.avg_profit < 0) {
-            $("#prfAvgProfit").removeClass("text-danger");
-            $("#prfAvgProfit").addClass("text-success");
+          if (data.max_profit < 0) {
+            $("#prfMaxProfit").removeClass("text-danger");
+            $("#prfMaxProfit").addClass("text-success");
           }
-          $("#prfAvgProfit").text(data.avg_profit.toLocaleString());
+          $("#prfMaxProfit").text(data.max_profit.toLocaleString());
           // 亏损的字体颜色为绿
           if (data.profit_ratio < 0) {
             $("#prfProfitRatio").removeClass("text-danger");
@@ -555,6 +555,142 @@ $(function () {
   //   }
   //   return false;
   // }
+  var renderStockProfitChangeChart = function (chartId) {
+    var arrId = chartId.split("_");
+    var stock_code = arrId[0].substring(5);
+    var pId = arrId[1];
+    if ($("#" + chartId).length) {
+      var profitChgCanvas = $("#" + chartId)
+        .get(0)
+        .getContext("2d");
+      $.ajax({
+        url: dashboardEndpoint + 'stock-profit-chg/' + pId + "/" + stock_code + '/',
+        // headers: { 'X-CSRFToken': csrftoken },
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+          $("#" + chartId).removeClass("d-none");
+          var profitChgChart = new Chart(profitChgCanvas, {
+            type: "line",
+            data: {
+              labels: data.label,
+              datasets: [
+                {
+                  type: "line",
+                  fill: false,
+                  label: "当前收益",
+                  data: data.chg_seq,
+                  borderColor: "#1cbccd",
+                  barPercentage: 0.9,
+                  categoryPercentage: 0.7
+                },
+                {
+                  type: "line",
+                  label: "目标收益",
+                  fill: false,
+                  data: data.chg_target_seq,
+                  backgroundColor: "#ffbf36",
+                  barPercentage: 0.9,
+                  categoryPercentage: 0.7
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              layout: {
+                padding: {
+                  left: 0,
+                  right: 0,
+                  top: 20,
+                  bottom: 0
+                }
+              },
+              scales: {
+                yAxes: [
+                  {
+                    display: true,
+                    gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color: "#f8f8f8",
+                      zeroLineColor: "#f8f8f8"
+                    },
+                    ticks: {
+                      display: true,
+                      // min: data.min_profit,
+                      max: 100,
+                      // stepSize: data.max_profit / 10,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10,
+                      padding: 10
+                    }
+                  }
+                ],
+                xAxes: [
+                  {
+                    stacked: false,
+                    ticks: {
+                      beginAtZero: true,
+                      fontColor: "#b1b0b0",
+                      fontSize: 10
+                    },
+                    gridLines: {
+                      color: "rgba(0, 0, 0, 0)",
+                      display: false
+                    },
+                  }
+                ]
+              },
+              tooltips: {
+                callbacks: {
+                  label: function (tooltipItem, data) {
+                    var dataset = data.datasets[tooltipItem.datasetIndex];
+                    var point = dataset.data[tooltipItem.index];
+                    var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    if (!isNaN(point)) {
+                      label += point + "%";
+                    }
+                    return label;
+                  }
+                }
+              },
+              legend: {
+                display: false
+              },
+              elements: {
+                point: {
+                  radius: 3,
+                  backgroundColor: "#ff4c5b"
+                }
+              }
+            }
+          });
+        },
+        statusCode: {
+          404: function () {
+            $("#noChg" + stock_code + "_" + pId).append("<span class='text-muted'>无收益分布信息</span>");
+            $("#" + chartId).addClass("d-none");
+          },
+          500: function () {
+            $("#noChg" + stock_code + "_" + pId).append("<span class='text-muted'>系统错误，请稍后再试</span>");
+            $("#" + chartId).addClass("d-none");
+          }
+        }
+      });
+    }
+  }
+
+  // 获取收益增长曲线数据
+  var showProfitChgCanvas = document.getElementsByName("profit-chg-canvas");
+  if (showProfitChgCanvas) {
+    $(showProfitChgCanvas).each(function (id, obj) {
+      renderStockProfitChangeChart(obj.id);
+    });
+  }
 
   var refreshRealtimeQuote = function () {
     $.ajax({

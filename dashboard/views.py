@@ -20,7 +20,7 @@ from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from stockmarket.utils import get_realtime_quote
 from stocktrade.models import Transactions
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot, StockPositionSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 
 # Create your views here.
@@ -40,29 +40,44 @@ class DashboardHomeView(LoginRequiredMixin, View):
         # username = self.kwargs['username']
         req_user = request.user
         if req_user is not None:
-            today_pnl = 0
+            today = date.today()
+            today_pnl_rt = 0
+            profit_chg = 0
+            total_shares = 0
+            # today_mv = 0
+            # 计算当日实时收益
+            today_mv_rt = 0
             tradedetails = Transactions.objects.filter(
                 trader=req_user.id, )[:3]  # 前台需要添加view more...
-            # today = date.today()
-            # if today.weekday() == calendar.SATURDAY:
-            #     snap_date = today - timedelta(days=1)
-            # elif today.weekday() == calendar.SUNDAY:
-            #     snap_date = today - timedelta(days=2)
-            # else:
-            #     snap_date = today
-            # today_snapshots = TradeAccountSnapshot.objects.filter(
-            #     trader=req_user.id, snap_date=snap_date, applied_period='d').aggregate(profit_change=Sum('profit_change'))  # , sum_change=Sum('profit_change'))
-            # if today_snapshots['profit_change'] is not None:
-            #     today_pnl = today_snapshots['profit_change']
-            # update the position based on the realtime price
+            if today.weekday() == 6:  # 周日推2天
+                last_snap_date = today - timedelta(days=2)
+            elif today.weekday() == 0:  # 周一
+                last_snap_date = today - timedelta(days=3)
+            else:  # 周二到周六其他的往前推一天
+                last_snap_date = today - timedelta(days=1)
+            trade_snapshots = TradeAccountSnapshot.objects.filter(
+                trader=req_user.id, snap_date=last_snap_date, applied_period='d').aggregate(sum_profit=Sum('profit'))
             trade_positions = sync_stock_positions(req_user)
+            if trade_positions is not None and len(trade_positions) > 0:
+                for p in trade_positions:
+                    today_pnl_rt += p.profit
+                    if p.is_liquidated is not True:
+                        today_mv_rt += p.cash + p.profit
+            if trade_snapshots['sum_profit'] is None:
+                trade_snapshots['sum_profit'] = 0
+            
+            if today.weekday() in  [5, 6]:  # 周日推2天
+                profit_chg = 0
+            else:  # 周二到周六其他的往前推一天
+                profit_chg = today_pnl_rt - int(trade_snapshots['sum_profit'])
             # trade_positions = Positions.objects.filter(
             #     trader=req_user.id).order_by('is_liquidated')
             accounts = TradeAccount.objects.filter(trader=req_user.id)
             capital = 0
             profit_loss = 0
             total_accounts = 0
-            total_shares = len(trade_positions)
+            if trade_positions is not None:
+                total_shares = len(trade_positions)
             for acc in accounts:
                 capital += acc.account_capital
                 profit_loss += acc.account_balance
@@ -72,7 +87,8 @@ class DashboardHomeView(LoginRequiredMixin, View):
             stocks_following = StockFollowing.objects.filter(
                 trader=req_user.id,)[:10]
             queryset = {
-                'today_pnl': today_pnl,
+                'today_pnl': profit_chg,
+                'total_market_value': today_mv_rt,
                 'capital': capital,
                 'profit_loss': profit_loss,
                 'total_shares': total_shares,
@@ -430,6 +446,32 @@ def get_position_status(request, account, symbol):
         except Exception as e:
             logger.error(e)
 
+@login_required
+def get_stock_chg_seq(request, pid, symbol):
+    freq = 'd'
+    trader = request.user
+    stock_chg_seq = []
+    stock_chg_target = []
+    stock_chg_lbl = []
+    if request.method == 'GET':
+        try:
+            stock_chg_list = StockPositionSnapshot.objects.filter(p_id=pid, trader=trader,  stock_code=symbol, applied_period=freq).order_by('snap_date')
+            if stock_chg_list is not None and len(stock_chg_list) > 0:
+                for stock_chg in stock_chg_list:
+                    stock_chg_lbl.append(stock_chg.snap_date)
+                    stock_chg_seq.append(round(stock_chg.profit_ratio,2))
+                    stock_chg_target.append(round(stock_chg.target_chg_pct,2))
+                return JsonResponse(
+                    {
+                        'label': stock_chg_lbl,
+                        'chg_seq': stock_chg_seq,
+                        'chg_target_seq': stock_chg_target,
+                    }, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as e:
+            logger.error(e)
+            return HttpResponse(status=500)
 
 @login_required
 def get_stock_for_trade(request, account, stock_code):

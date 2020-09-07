@@ -1,4 +1,3 @@
-from stockmarket import views
 from . import views
 from django.urls import path, re_path
 

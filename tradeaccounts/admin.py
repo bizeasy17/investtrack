@@ -2,7 +2,7 @@
 # Register your models here.
 from django.contrib import admin
 
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot, StockPositionSnapshot
 
 # Register your models here.
 
@@ -29,7 +29,14 @@ class TradeAccountSnapshotAdmin(admin.ModelAdmin):
         'trader', 'trade_account', 'profit', 'profit_ratio', 'snap_date')
 
 
+class StockPositionSnapshotAdmin(admin.ModelAdmin):
+    exclude = ('last_mod_time', 'created_time')
+    list_display = (
+        'trader', 'trade_account', 'profit', 'profit_ratio', 'target_chg_pct', 'snap_date')
+
+
 # Register your models here.
 admin.site.register(Positions, PositionsAdmin)
 admin.site.register(TradeAccount, TradeAccountAdmin)
 admin.site.register(TradeAccountSnapshot, TradeAccountSnapshotAdmin)
+admin.site.register(StockPositionSnapshot, StockPositionSnapshotAdmin)
