@@ -387,6 +387,56 @@ class BStrategyOnFixedPctTest(BaseModel):
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
+class StrategyUpDownTestQuantiles(BaseModel):
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    qt_pct10 = models.FloatField(
+        _('10%分位数'), blank=True, null=True,)
+    qt_pct25 = models.FloatField(
+        _('25%分位数'), blank=True, null=True,)
+    qt_pct50 = models.FloatField(
+        _('50%分位数'), blank=True, null=True,)
+    qt_pct75 = models.FloatField(
+        _('75%分位数'), blank=True, null=True,)
+    qt_pct90 = models.FloatField(
+        _('90%分位数'), blank=True, null=True,)
+    mean_val = models.FloatField(
+        _('平均数'), blank=True, null=True,)
+    test_period = models.IntegerField(
+        _('测试周期'), blank=False, null=False)
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('涨跌四分位数统计')
+        verbose_name_plural = verbose_name
+
+
+class StrategyTargetPctTestQuantiles(BaseModel):
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    qt_pct10 = models.FloatField(
+        _('10%分位数'), blank=True, null=True,)
+    qt_pct25 = models.FloatField(
+        _('25%分位数'), blank=True, null=True,)
+    qt_pct50 = models.FloatField(
+        _('50%分位数'), blank=True, null=True,)
+    qt_pct75 = models.FloatField(
+        _('75%分位数'), blank=True, null=True,)
+    qt_pct90 = models.FloatField(
+        _('90%分位数'), blank=True, null=True,)
+    mean_val = models.FloatField(
+        _('平均数'), blank=True, null=True,)
+    target_pct = models.IntegerField(
+        _('目标涨幅'), blank=False, null=False)
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('目标涨幅四分位数统计')
+        verbose_name_plural = verbose_name
 
 class StrategyOnDownPctTest(BaseModel):
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
