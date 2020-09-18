@@ -12,14 +12,14 @@ from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 
+from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
+from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
+                                               StrategyUpDownTestRanking)
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     StrategyTestLowHigh, TradeStrategyStat, StockHistoryDaily)
-
-from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
-
+                     StockHistoryDaily, StrategyTestLowHigh, TradeStrategyStat)
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +45,12 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
-class XuanGuHomeView(LoginRequiredMixin, TemplateView):
+
+class PaimingHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'analysis/xuangu.html'
+    template_name = 'analysis/paiming.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'xuangu'
+    context_object_name = 'paiming'
 
     def get(self, request, *args, **kwargs):
         req_user = request.user
@@ -63,6 +64,7 @@ class XuanGuHomeView(LoginRequiredMixin, TemplateView):
                 'followings': stocks_following,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
+
 
 class YuCeHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
@@ -83,6 +85,7 @@ class YuCeHomeView(LoginRequiredMixin, TemplateView):
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
+
 class ZhenGuHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'analysis/zhengu.html'
@@ -101,6 +104,7 @@ class ZhenGuHomeView(LoginRequiredMixin, TemplateView):
                 'followings': stocks_following,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
+
 
 @login_required
 def strategies_by_category(request, parent_strategy):
@@ -270,8 +274,8 @@ def stock_history(request, strategy, stock_symbol, freq, type, period):
             quantile = []
             start_date = end_date - timedelta(days=365 * period)
             results = StockHistoryDaily.objects.filter(
-                ts_code=stock_symbol, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')       
-                     # df = pd.DataFrame(results.values('stage_low_pct'))
+                ts_code=stock_symbol, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+            # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
                 ma25_result.append(result.ma25)
                 ma60_result.append(result.ma60)
@@ -297,12 +301,163 @@ def stock_history(request, strategy, stock_symbol, freq, type, period):
 
 
 @login_required
-def sstrategy_test_result_incr(request, strategy, stock_symbol, test_period):
+def strategy_test_ranking(request, strategy_code, test_type, qt_pct, input_param, start_idx, end_idx):
     '''
     用户需要授权可以使用策略
     '''
+    ranked_list = []
+    if request.method == 'GET':
+        try:
+            if test_type == 'up_pct' or test_type == 'down_pct':
+                rankings = StrategyUpDownTestRanking.objects.filter(
+                    test_type=test_type, strategy_code=strategy_code, qt_pct=qt_pct, test_period=int(input_param)).order_by('ranking')[start_idx:end_idx]
+            elif test_type == 'target_pct':
+                rankings = StrategyTargetPctTestRanking.objects.filter(
+                    qt_pct=qt_pct, strategy_code=strategy_code, target_pct=input_param).order_by('ranking')[start_idx:end_idx]
+            if rankings is not None and len(rankings) > 0:
+                for ranking in rankings:
+                    ranked_list.append(
+                        {
+                            'qt_pct_val': ranking.qt_pct_val, 'rank': ranking.ranking, 'ts_code': ranking.ts_code, 'stock_name': ranking.stock_name,
+                        })
+                return JsonResponse(ranked_list, safe=False)
+            else:
+                return HttpResponse(status=400)
+        except Exception as err:
+            logger.error(err)
+            return HttpResponse(status=500)
     pass
 
+@login_required
+def stock_ranking_updown_pct(request, stock_symbol, test_period, strategy_ctg, test_type):
+    rtn_ranking_list = []
+    ranking_label_list = []
+    mean_list = []
+    strategy_label = []
+    chart_label = ['10ile','25ile','50ile','75ile','90ile']
+    qt_pct_list = ['qt_10pct', 'qt_25pct', 'qt_50pct',
+                     'qt_75pct', 'qt_90pct',]#, 'mean_val', 'min_val', 'max_val']
+    buy_strategy_list = ['jiuzhuan_b', 'dibu_b', 'w_di', 'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
+    buy_strategy_label = ['九转买', '底部', 'W底', '突破MA25', 'MA25支撑', '突破压力']
+    sell_strategy_list = ['jiuzhuan_s', 'dingbu_s', 'm_ding', 'ma25_diepo_s', 'ma25_yali_s', 'diepo_zhicheng_s']
+    sell_strategy_label = ['九转卖', '顶部', 'M顶', '跌破MA25', 'MA25压力', '跌破支撑']
+
+    try:
+        # rankings = StrategyUpDownTestRanking.objects.filter(ts_code=stock_symbol, test_period=test_period, test_type=test_type, qt_pct__in=qt_pct_list).order_by('qt_pct')
+        rankings = StrategyUpDownTestRanking.objects.filter(ts_code=stock_symbol, test_period=test_period, qt_pct__in=qt_pct_list).order_by('qt_pct')
+        # for qt_pct in qt_pct_list:
+        if strategy_ctg == 'b':
+            strategy_label = buy_strategy_label
+            for buy_strategy in buy_strategy_list:
+                strategy_ranking_list = []
+                rankings_by_strategy = rankings.filter(strategy_code=buy_strategy, test_type=test_type)
+                for ranking_by_strategy in rankings_by_strategy:
+                    strategy_ranking_list.append(ranking_by_strategy.qt_pct_val)
+                rtn_ranking_list.append(strategy_ranking_list)
+                # pass
+        else:
+            strategy_label = sell_strategy_label
+            for sell_strategy in sell_strategy_list:
+                strategy_ranking_list = []
+                rankings_by_strategy = rankings.filter(strategy_code=sell_strategy, test_type=test_type)
+                for ranking_by_strategy in rankings_by_strategy:
+                    strategy_ranking_list.append(ranking_by_strategy.qt_pct_val)
+                rtn_ranking_list.append(strategy_ranking_list)
+                strategy_ranking_list.clear()
+        
+        df = pd.DataFrame(rtn_ranking_list, columns=chart_label)
+        for qt_pct in chart_label:
+            mean_list.append(round(df[qt_pct].mean(),3))
+        return JsonResponse(
+        {
+            'code': 'OK',
+            'label': chart_label,
+            'mean': mean_list,
+            'strategy_label': strategy_label,
+            'rankings': rtn_ranking_list,
+        }, safe=False)
+                # pass
+    except Exception as err:
+        logger.error(err)
+        return HttpResponse(status=500)
+
+    # ds0 = [32,43,23,54,23]
+    # # ds_label = ['jiuzhuan_b', 'dibu_b', 'w_di', 'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
+    # ds1 = [11,23,12,34,45]
+    # ds2 = [23,54,23,14,25]
+    # ds3 = [32,21,32,44,21]
+    # ds4 = [18,21,56,34,80]
+    # ds5 = [36,90,89,77,177]
+
+    # rtn_ranking_list.append(ds1)
+    # rtn_ranking_list.append(ds2)
+    # rtn_ranking_list.append(ds3)
+    # rtn_ranking_list.append(ds4)
+    # rtn_ranking_list.append(ds5)
+
+@login_required
+def stock_ranking_target_pct(request, stock_symbol, target_pct):
+    rtn_ranking_list = []
+    ranking_label_list = []
+    mean_list = []
+    strategy_label = []
+    chart_label = ['10ile','25ile','50ile','75ile','90ile']
+    qt_pct_list = ['qt_10pct', 'qt_25pct', 'qt_50pct',
+                     'qt_75pct', 'qt_90pct',]#, 'mean_val', 'min_val', 'max_val']
+    buy_strategy_list = ['jiuzhuan_b', 'dibu_b', 'w_di', 'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
+    buy_strategy_label = ['九转买', '底部', 'W底', '突破MA25', 'MA25支撑', '突破压力']
+    sell_strategy_list = ['jiuzhuan_s', 'dingbu_s', 'm_ding', 'ma25_diepo_s', 'ma25_yali_s', 'diepo_zhicheng_s']
+    sell_strategy_label = ['九转卖', '顶部', 'M顶', '跌破MA25', 'MA25压力', '跌破支撑']
+
+    try:
+        rankings = StrategyTargetPctTestRanking.objects.filter(ts_code=stock_symbol, target_pct=target_pct, qt_pct__in=qt_pct_list).order_by('qt_pct')
+        # for qt_pct in qt_pct_list:
+        strategy_label = buy_strategy_label
+        for buy_strategy in buy_strategy_list:
+            strategy_ranking_list = []
+            rankings_by_strategy = rankings.filter(strategy_code=buy_strategy)
+            for ranking_by_strategy in rankings_by_strategy:
+                strategy_ranking_list.append(ranking_by_strategy.qt_pct_val)
+            rtn_ranking_list.append(strategy_ranking_list)
+        
+        df = pd.DataFrame(rtn_ranking_list, columns=chart_label)
+        for qt_pct in chart_label:
+            mean_list.append(round(df[qt_pct].mean(),3))
+        return JsonResponse(
+        {
+            'code': 'OK',
+            'label': chart_label,
+            'mean': mean_list,
+            'strategy_label': strategy_label,
+            'rankings': rtn_ranking_list,
+        }, safe=False)
+                # pass
+    except Exception as err:
+        logger.error(err)
+        return HttpResponse(status=500)
+
+    # chart_label = ['10ile','25ile','50ile','75ile','90ile']
+    # ds0 = [32,43,23,54,23]
+    # ds1 = [11,23,12,34,45]
+    # ds2 = [23,54,23,14,25]
+    # ds3 = [32,21,32,44,21]
+    # ds4 = [18,21,56,34,80]
+    # ds5 = [36,90,89,77,177]
+
+    # ranking_list = []
+    # ranking_list.append(ds1)
+    # ranking_list.append(ds2)
+    # ranking_list.append(ds3)
+    # ranking_list.append(ds4)
+    # ranking_list.append(ds5)
+
+    # return JsonResponse(
+    #     {
+    #         'code': 'OK',
+    #         'label': chart_label,
+    #         'mean': ds0,
+    #         'rankings': ranking_list,
+    #     }, safe=False)
 
 @login_required
 def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):

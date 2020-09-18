@@ -390,26 +390,38 @@ class BStrategyOnFixedPctTest(BaseModel):
 class StrategyUpDownTestQuantiles(BaseModel):
     strategy_code = models.CharField(
         _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+    test_type = models.CharField(
+        _('测试类型'), max_length=25, blank=True, null=True)    
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
-    qt_pct10 = models.FloatField(
+    stock_name = models.CharField(
+        _('股票名称'), max_length=15, blank=True, null=True)  # e.g. 000001.SZ
+    qt_10pct = models.FloatField(
         _('10%分位数'), blank=True, null=True,)
-    qt_pct25 = models.FloatField(
+    qt_25pct = models.FloatField(
         _('25%分位数'), blank=True, null=True,)
-    qt_pct50 = models.FloatField(
+    qt_50pct = models.FloatField(
         _('50%分位数'), blank=True, null=True,)
-    qt_pct75 = models.FloatField(
+    qt_75pct = models.FloatField(
         _('75%分位数'), blank=True, null=True,)
-    qt_pct90 = models.FloatField(
+    qt_90pct = models.FloatField(
         _('90%分位数'), blank=True, null=True,)
     mean_val = models.FloatField(
         _('平均数'), blank=True, null=True,)
+    min_val = models.FloatField(
+        _('最小值'), blank=True, null=True,)
+    max_val = models.FloatField(
+        _('最大值'), blank=True, null=True,)
     test_period = models.IntegerField(
         _('测试周期'), blank=False, null=False)
+    # ranking = models.IntegerField(
+    #     _('排名'), blank=True, null=True, db_index=True)
+    test_freq = models.CharField(
+        _('K线周期'), max_length=5, blank=False, null=False, default='D')
 
     class Meta:
         ordering = ['ts_code']
-        verbose_name = _('涨跌四分位数统计')
+        verbose_name = _('涨跌四分位统计')
         verbose_name_plural = verbose_name
 
 
@@ -418,24 +430,82 @@ class StrategyTargetPctTestQuantiles(BaseModel):
         _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
-    qt_pct10 = models.FloatField(
+    stock_name = models.CharField(
+        _('股票名称'), max_length=15, blank=True, null=True)  # e.g. 000001.SZ
+    qt_10pct = models.FloatField(
         _('10%分位数'), blank=True, null=True,)
-    qt_pct25 = models.FloatField(
+    qt_25pct = models.FloatField(
         _('25%分位数'), blank=True, null=True,)
-    qt_pct50 = models.FloatField(
+    qt_50pct = models.FloatField(
         _('50%分位数'), blank=True, null=True,)
-    qt_pct75 = models.FloatField(
+    qt_75pct = models.FloatField(
         _('75%分位数'), blank=True, null=True,)
-    qt_pct90 = models.FloatField(
+    qt_90pct = models.FloatField(
         _('90%分位数'), blank=True, null=True,)
     mean_val = models.FloatField(
         _('平均数'), blank=True, null=True,)
-    target_pct = models.IntegerField(
-        _('目标涨幅'), blank=False, null=False)
+    min_val = models.FloatField(
+        _('最小值'), blank=True, null=True,)
+    max_val = models.FloatField(
+        _('最大值'), blank=True, null=True,)
+    target_pct = models.CharField(
+        _('目标涨幅'), max_length=25, blank=False, null=False, )
+    # ranking = models.IntegerField(
+    #     _('排名'), blank=True, null=True, db_index=True)
+    test_freq = models.CharField(
+        _('K线周期'), max_length=5, blank=False, null=False, default='D')
 
     class Meta:
         ordering = ['ts_code']
-        verbose_name = _('目标涨幅四分位数统计')
+        verbose_name = _('目标涨幅四分位统计')
+        verbose_name_plural = verbose_name
+
+class StrategyUpDownTestRanking(BaseModel):
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
+    test_type = models.CharField(
+        _('测试类型'), max_length=25, blank=True, null=True)    
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    stock_name = models.CharField(
+        _('股票名称'), max_length=15, blank=True, null=True)  # e.g. 000001.SZ
+    qt_pct = models.CharField(
+        _('分位数'), max_length=15, blank=False, null=False,)
+    qt_pct_val = models.FloatField(
+        _('四分位值'), blank=False, null=False,)
+    test_period = models.IntegerField(
+        _('测试周期'), blank=False, null=False)
+    ranking = models.IntegerField(
+        _('排名'), blank=True, null=True, db_index=True)
+    test_freq = models.CharField(
+        _('K线周期'), max_length=5, blank=False, null=False, default='D')
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('涨跌四分位统计')
+        verbose_name_plural = verbose_name
+
+class StrategyTargetPctTestRanking(BaseModel):
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)   
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    stock_name = models.CharField(
+        _('股票名称'), max_length=15, blank=True, null=True)  # e.g. 000001.SZ
+    qt_pct = models.CharField(
+        _('分位数'), max_length=15, blank=False, null=False,)
+    qt_pct_val = models.FloatField(
+        _('四分位值'), blank=False, null=False,)
+    target_pct = models.CharField(
+        _('目标涨幅'), max_length=25, blank=False, null=False)
+    ranking = models.IntegerField(
+        _('排名'), blank=True, null=True, db_index=True)
+    test_freq = models.CharField(
+        _('K线周期'), max_length=5, blank=False, null=False, default='D')
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('涨跌四分位统计')
         verbose_name_plural = verbose_name
 
 class StrategyOnDownPctTest(BaseModel):
@@ -556,7 +626,6 @@ class FocusAreaDuration(BaseModel):
         ordering = ['ts_code']
         verbose_name = _('关注区周期长度')
         verbose_name_plural = verbose_name
-
 
 class TradeStrategyStat(BaseModel):
     PERIOD_CHOICE = {
