@@ -942,6 +942,8 @@ $(function () {
         showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
+    
+
     // showHighPeriodChart();
     // showLowPeriodDistChart();
     // showExpectedPctChart();
