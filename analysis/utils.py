@@ -56,6 +56,15 @@ def has_analysis_task(ts_code, event, strategy_code, freq):
         # print(e)
         return False
 
+def has_analysis_task1(ts_code, event, strategy_code, freq):
+    try:
+        mark_log = StockStrategyTestLog.objects.get(
+            ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq)
+        return True
+    except Exception as e:
+        # print(e)
+        return False
+
 def get_analysis_task(ts_code, event, strategy_code, freq):
     try:
         mark_log = StockStrategyTestLog.objects.get(
