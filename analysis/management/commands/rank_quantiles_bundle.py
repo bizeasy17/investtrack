@@ -62,8 +62,8 @@ class Command(BaseCommand):
         
         if strategy_code is not None:
             rank_updown_test(strategy_code, freq)
-            # rank_t    arget_pct_test(strategy_code, freq)
+            rank_target_pct_test(strategy_code, freq)
         else:
             for scode in strategy_codes:
                 rank_updown_test(scode, freq)
-                # rank_target_pct_test(scode, freq)
+                rank_target_pct_test(scode, freq)
