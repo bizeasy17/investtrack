@@ -157,6 +157,8 @@ def rank_updown_test(strategy_code, freq='D'):
                             by=quantile, ascending=False, ignore_index=True)
                         for idx in sorted_df.index:
                             if not has_analysis_task1(sorted_df.iloc[idx][1], 'UPDN_PCT_RK', strategy_code, freq):
+                                print('analyzing ' + sorted_df.iloc[idx][1] + ' qt is ' +
+                                      quantile + ' period is, ' + str(test_period) + ' ranking is ' + str(idx))
                                 ranking = StrategyUpDownTestRanking(strategy_code=strategy_code, test_type=test_type, ts_code=sorted_df.iloc[idx][1], stock_name=sorted_df.iloc[idx][2],
                                                                     test_period=test_period, qt_pct=quantile, qt_pct_val=sorted_df.iloc[idx][0], test_freq=freq, ranking=idx)
                                 ranking_list.append(ranking)
@@ -166,18 +168,23 @@ def rank_updown_test(strategy_code, freq='D'):
                             else:
                                 print('already exist updown pct ranking on - ' + strategy_code +
                                       ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        if len(ranking_list) > 0:
-            StrategyUpDownTestRanking.objects.bulk_create(ranking_list)
-            for ts_code in ranking_tscode_list:
-                log_test_status(ts_code,
-                                'UPDN_PCT_RK', freq, [strategy_code])
-            print('updown pct ranking on end - ' + strategy_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        else:
-            print('no record for updown pct ranking on end - ' + strategy_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                        if len(ranking_list) > 0:
+                            StrategyUpDownTestRanking.objects.bulk_create(
+                                ranking_list)
+                            ranking_list.clear()
+                            print('updown pct ranking saving end - ' + strategy_code + ' ,quantile ' + quantile +
+                                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                        else:
+                            print('no record for updown pct ranking on end - ' + strategy_code + ' ,quantile ' + quantile +
+                                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        for ts_code in ranking_tscode_list:
+            log_test_status(ts_code,
+                            'UPDN_PCT_RK', freq, [strategy_code])
+        print('updown pct ranking on end - ' + strategy_code + ' ,quantile ' + quantile +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         logger.error(err)
+        print(err)
 
 
 def rank_target_pct_test(strategy_code, freq='D'):
@@ -204,6 +211,9 @@ def rank_target_pct_test(strategy_code, freq='D'):
                     for idx, row in sorted_df.iterrows():
                         # print(idx)
                         if not has_analysis_task1(row['ts_code'], 'TGT_PCT_RK', strategy_code, freq):
+                            print('analyzing ' + row['ts_code'] + ' qt is ' + quantile +
+                                  ' target pct is, ' + target_pct + ' ranking is ' + str(idx))
+
                             ranking = StrategyTargetPctTestRanking(strategy_code=strategy_code, ts_code=row['ts_code'], stock_name=row['stock_name'],
                                                                    target_pct=target_pct, qt_pct=quantile, qt_pct_val=row[quantile], test_freq=freq, ranking=idx)
                             ranking_list.append(ranking)
@@ -220,20 +230,25 @@ def rank_target_pct_test(strategy_code, freq='D'):
                                                                    target_pct=target_pct, qt_pct=quantile, qt_pct_val=row[quantile], test_freq=freq, ranking=99999)
                             ranking_list.append(ranking)
                             ranking_tscode_list.append(row['ts_code'])
+                            print('target pct ranking saving end - ' + strategy_code + ' ,quantile ' + quantile +
+                                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                         else:
-                            print('already exist target pct ranking on - ' + strategy_code +
-                                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                            print('already exist target pct ranking on - ' + strategy_code + ' ,quantile ' + quantile +
+                                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             # 先获取所有能找到预期收益的记录，即target pct <> -1的记录
-        # print(ranking_list)
-        if len(ranking_list) > 0:
-            StrategyTargetPctTestRanking.objects.bulk_create(ranking_list)
-            for ts_code in ranking_tscode_list:
-                log_test_status(ts_code,
-                                'TGT_PCT_RK', freq, [strategy_code])
-            print('target pct ranking on end - ' + strategy_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        else:
-            print('no record for target pct ranking on end - ' + strategy_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    # print(ranking_list)
+                    if len(ranking_list) > 0:
+                        StrategyTargetPctTestRanking.objects.bulk_create(
+                            ranking_list)
+                        ranking_list.clear()
+                    else:
+                        print('no record for target pct ranking on end - ' + strategy_code + ' ,quantile ' + quantile +
+                              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        for ts_code in ranking_tscode_list:
+            log_test_status(ts_code,
+                            'TGT_PCT_RK', freq, [strategy_code])
+        print('target pct ranking on end - ' + strategy_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         logger.error(err)
+        print(err)
