@@ -81,6 +81,6 @@ class Command(BaseCommand):
                     updown_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
                     target_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
                 else:
-                    for strategy_code in strategy_codes:
-                        updown_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
-                        target_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
+                    for scode in strategy_codes:
+                        updown_pct_quantiles_stat(scode, listed_company.ts_code, listed_company.stock_name, freq)
+                        target_pct_quantiles_stat(scode, listed_company.ts_code, listed_company.stock_name, freq)
