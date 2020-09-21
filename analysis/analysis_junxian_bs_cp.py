@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task
+from .utils import log_test_status, has_analysis_task, get_analysis_task
 from .stock_hist import hist_since_listed
 
 logger = logging.getLogger(__name__)

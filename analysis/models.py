@@ -466,7 +466,7 @@ class StrategyUpDownTestRanking(BaseModel):
     test_type = models.CharField(
         _('测试类型'), max_length=25, blank=True, null=True)    
     ts_code = models.CharField(
-        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+        _('股票代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     stock_name = models.CharField(
         _('股票名称'), max_length=15, blank=True, null=True)  # e.g. 000001.SZ
     qt_pct = models.CharField(
@@ -476,7 +476,7 @@ class StrategyUpDownTestRanking(BaseModel):
     test_period = models.IntegerField(
         _('测试周期'), blank=False, null=False)
     ranking = models.IntegerField(
-        _('排名'), blank=True, null=True, db_index=True)
+        _('排名'), blank=True, null=True)
     test_freq = models.CharField(
         _('K线周期'), max_length=5, blank=False, null=False, default='D')
 
@@ -489,7 +489,7 @@ class StrategyTargetPctTestRanking(BaseModel):
     strategy_code = models.CharField(
         _('策略代码'), max_length=25, blank=True, null=True, db_index=True)   
     ts_code = models.CharField(
-        _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+        _('股票代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     stock_name = models.CharField(
         _('股票名称'), max_length=15, blank=True, null=True)  # e.g. 000001.SZ
     qt_pct = models.CharField(
@@ -499,7 +499,7 @@ class StrategyTargetPctTestRanking(BaseModel):
     target_pct = models.CharField(
         _('目标涨幅'), max_length=25, blank=False, null=False)
     ranking = models.IntegerField(
-        _('排名'), blank=True, null=True, db_index=True)
+        _('排名'), blank=True, null=True)
     test_freq = models.CharField(
         _('K线周期'), max_length=5, blank=False, null=False, default='D')
 
