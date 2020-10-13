@@ -84,22 +84,22 @@ class StockNameCodeMap(BaseModel):
         _('退市日期'), blank=True, null=True)
     is_hs = models.CharField(
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
-    is_marked_jiuzhuan = models.BooleanField(
-        _('是否标注九转'), blank=False, null=False, default=False)
-    is_marked_dingdi = models.BooleanField(
-        _('是否标注顶底'), blank=False, null=False, default=False)
-    is_marked_wm = models.BooleanField(
-        _('是否标注Wd底/M顶？'), blank=True, null=True)
-    is_marked_tupo = models.BooleanField(
-        _('是否标注突破？'), blank=True, null=True)
-    is_marked_junxian = models.BooleanField(
-        _('是否标注均线买卖点？'), blank=True, null=True)
-    is_hist_downloaded = models.BooleanField(
-        _('交易历史已下载？'), blank=False, null=False, default=False)
-    is_hist_updated = models.BooleanField(
-        _('交易历史已更新？'), blank=False, null=False, default=False)
-    hist_update_date = models.DateField(
-        _('更新日期？'), blank=True, null=True)
+    # is_marked_jiuzhuan = models.BooleanField(
+    #     _('是否标注九转'), blank=False, null=False, default=False)
+    # is_marked_dingdi = models.BooleanField(
+    #     _('是否标注顶底'), blank=False, null=False, default=False)
+    # is_marked_wm = models.BooleanField(
+    #     _('是否标注Wd底/M顶？'), blank=True, null=True)
+    # is_marked_tupo = models.BooleanField(
+    #     _('是否标注突破？'), blank=True, null=True)
+    # is_marked_junxian = models.BooleanField(
+    #     _('是否标注均线买卖点？'), blank=True, null=True)
+    # is_hist_downloaded = models.BooleanField(
+    #     _('交易历史已下载？'), blank=False, null=False, default=False)
+    # is_hist_updated = models.BooleanField(
+    #     _('交易历史已更新？'), blank=False, null=False, default=False)
+    # hist_update_date = models.DateField(
+    #     _('更新日期？'), blank=True, null=True)
     
     def __str__(self):
         return self.stock_name

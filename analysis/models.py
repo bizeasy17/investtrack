@@ -84,15 +84,21 @@ class StockHistoryDaily(BaseModel):
     chg4 = models.FloatField(
         _('与4日前变化'), blank=True, null=True)
     jiuzhuan_count_b = models.FloatField(
-        _('九转序列B'),  blank=False, null=False, default=-1)
+        _('九转序列B'),  blank=True, null=True)
     jiuzhuan_count_s = models.FloatField(
-        _('九转序列S'),  blank=False, null=False, default=-1)
+        _('九转序列S'),  blank=True, null=True)
     ma25 = models.FloatField(
         _('MA25'),  blank=True, null=True)
+    ma25_slope = models.FloatField(
+        _('MA25斜率'),  blank=True, null=True)
     ma60 = models.FloatField(
         _('MA60'),  blank=True, null=True)
+    ma60_slope = models.FloatField(
+        _('MA60斜率'),  blank=True, null=True)
     ma200 = models.FloatField(
         _('MA200'),  blank=True, null=True)
+    ma200_slope = models.FloatField(
+        _('MA200斜率'),  blank=True, null=True)
     slope = models.FloatField(
         _('斜率'), blank=True, null=True)
     dingdi_count = models.IntegerField(
@@ -109,26 +115,6 @@ class StockHistoryDaily(BaseModel):
         _('顶部最高价?'),  blank=True, null=True)
     m_ding = models.IntegerField(
         _('M顶部?'),  blank=True, null=True)
-    # ding_die_1pct = models.IntegerField(
-    #     _('顶部下跌1%'), blank=True, null=True)
-    # ding_die_2pct = models.IntegerField(
-    #     _('顶部下跌2%'), blank=True, null=True)
-    # ding_die_3pct = models.IntegerField(
-    #     _('顶部下跌3%'), blank=True, null=True)
-    # ding_die_5pct = models.IntegerField(
-    #     _('顶部下跌5%'), blank=True, null=True)
-    # ding_die_8pct = models.IntegerField(
-    #     _('顶部下跌8%'), blank=True, null=True)
-    # ding_die_13pct = models.IntegerField(
-    #     _('顶部下跌13%'), blank=True, null=True)
-    # ding_die_21pct = models.IntegerField(
-    #     _('顶部下跌21%'), blank=True, null=True)
-    # ding_die_34pct = models.IntegerField(
-    #     _('顶部下跌34%'), blank=True, null=True)
-    # ding_die_55pct = models.IntegerField(
-    #     _('顶部下跌55%'), blank=True, null=True)
-    # ding_die_89pct = models.IntegerField(
-    #     _('顶部下跌89%'), blank=True, null=True)
     is_dingdi_end = models.IntegerField(
         _('顶底结束点?'),  blank=True, null=True)
     tupo_b = models.IntegerField(
@@ -136,13 +122,40 @@ class StockHistoryDaily(BaseModel):
     diepo_s = models.IntegerField(
         _('跌破支撑位S?'),  blank=True, null=True)   
     ma25_zhicheng_b = models.IntegerField(
-        _('MA25均线支撑B?'),  blank=True, null=True)  
+        _('MA25均线支撑B?'),  blank=True, null=True)
+    ma25_zhicheng_v2 = models.IntegerField(
+        _('MA25均线支撑V2'),  blank=True, null=True)  
     ma25_tupo_b = models.IntegerField(
         _('MA25均线突破B?'),  blank=True, null=True) 
+    ma25_tupo_v2 = models.IntegerField(
+        _('MA25均线突破V2'),  blank=True, null=True)
     ma25_diepo_s = models.IntegerField(
         _('MA25均线跌破S?'),  blank=True, null=True)
+    ma25_diepo_v2 = models.IntegerField(
+        _('MA25均线跌破V2'),  blank=True, null=True)
     ma25_yali_s = models.IntegerField(
-        _('MA25压力S?'),  blank=True, null=True)       
+        _('MA25压力S?'),  blank=True, null=True)
+    ma25_yali_v2 = models.IntegerField(
+        _('MA25压力v2'),  blank=True, null=True) 
+    # MA60
+    ma60_zhicheng_v1 = models.IntegerField(
+        _('MA60均线支撑B?'),  blank=True, null=True)
+    ma60_tupo_v1 = models.IntegerField(
+        _('MA60均线突破B?'),  blank=True, null=True) 
+    ma60_diepo_v1 = models.IntegerField(
+        _('MA60均线跌破S?'),  blank=True, null=True)
+    ma60_yali_v1 = models.IntegerField(
+        _('MA60压力S?'),  blank=True, null=True) 
+    # MA200
+    ma200_zhicheng_v1 = models.IntegerField(
+        _('MA200均线支撑B?'),  blank=True, null=True)
+    ma200_tupo_v1 = models.IntegerField(
+        _('MA200均线突破B?'),  blank=True, null=True) 
+    ma200_diepo_v1 = models.IntegerField(
+        _('MA200均线跌破S?'),  blank=True, null=True)
+    ma200_yali_v1 = models.IntegerField(
+        _('MA200压力S?'),  blank=True, null=True) 
+
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
 
