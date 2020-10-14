@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-from .models import StockStrategyTestLog, TradeStrategyStat
+from .models import StockStrategyTestLog, TradeStrategyStat,  StockHistoryDaily
 # from investors.models import TradeStrategy
 import tushare as ts
 
@@ -117,17 +117,22 @@ def get_analysis_task(ts_code, event, strategy_code, freq='D'):
         return None
 
 
-def get_trade_cal_diff(last_trade, exchange='SSE', period=4):
+def get_trade_cal_diff(ts_code, last_trade, exchange='SSE', period=4):
     count = 0
     offset = 0
-    pro = ts.pro_api()
+    # pro = ts.pro_api()
     while count < period:
-        df = pro.trade_cal(exchange=exchange, start_date=(last_trade -
-                                                          timedelta(days=offset+1)).strftime('%Y%m%d'), end_date=(last_trade-timedelta(days=offset+1)).strftime('%Y%m%d'))
-        if df['is_open'].iloc[0] == 1:
+        # df = pro.trade_cal(exchange=exchange, start_date=(last_trade -
+        #                                                   timedelta(days=offset+1)).strftime('%Y%m%d'), end_date=(last_trade-timedelta(days=offset+1)).strftime('%Y%m%d'))
+        # if df['is_open'].iloc[0] == 1:
+        #     count += 1
+        try:
+            StockHistoryDaily.objects.get(ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
             count += 1
+        except Exception as e:
+            print(e)
         offset += 1
-    print(last_trade-timedelta(days=offset))
+    # print(last_trade-timedelta(days=offset))
     return offset
 
 

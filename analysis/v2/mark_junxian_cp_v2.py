@@ -7,23 +7,83 @@ import math
 import logging
 from scipy import stats
 from datetime import date, datetime, timedelta
+from stockmarket.models import StockNameCodeMap
 from investors.models import StockFollowing, TradeStrategy
 from analysis.models import StockHistoryDaily, StockStrategyTestLog
 from analysis.utils import log_test_status, is_analyzed, get_analysis_task
 from analysis.stock_hist import download_hist_data
-from .utils import mark_mv_avg, mark_slope
+from .utils import mark_mov_avg, mark_slope
+from analysis.utils import is_analyzed, get_analysis_task, get_trade_cal_diff,set_task_completed
 
 logger = logging.getLogger(__name__)
 version = 'v2'
-# def trade_calendar(exchange, start_date, end_date):
+# def trade_calendar(exchange, stadf_slc_date, end_date):
 #     # 获取20200101～20200401之间所有有交易的日期
 #     pro = ts.pro_api()
 #     df = pro.trade_cal(exchange=exchange, is_open='1',
 #                        start_date=start_date,
-#                        end_date=end_date,
-#                        fields='cal_date')
+#                        end_date=edf_slc_date,
+#                        fidf_slcds='cal_date')
 #     return df
 #     # print(df.head())
+
+def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1'):    
+    if ts_code is not None and freq is not None:
+        start_date = None
+        end_date = None
+        today = date.today()
+        ts_code_list = ts_code.split(',')
+
+        if ts_code_list is not None and len(ts_code_list) >= 1:
+            for ts_code in ts_code_list:
+                try:
+                    listed_company = StockNameCodeMap.objects.get(
+                        ts_code=ts_code)
+                    task = get_analysis_task(
+                        ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs', freq)
+                    if task is not None:
+                        atype = '1'  # 标记更新的股票历史记录
+                        # 如何差额取之前的历史记录？9
+                        if task.start_date == listed_company.list_date:
+                            print('第一次处理，从上市日开始。。。')
+                            atype = '0'  # 从上市日开始标记
+                            start_date = task.start_date
+                        else:
+                            #q更新交易记录开始时间需要往前获取日期为MA周期的时间
+                            print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
+                            start_date = task.start_date - timedelta(days=get_trade_cal_diff(ts_code, task.start_date, period=int(ma_freq)))
+
+                        mark_junxian_cp(ts_code, start_date, task.end_date, ma_freq=ma_freq, atype=atype)
+
+                        # print(task.start_date)
+                        # # print(task.end_date)
+                        # set_task_completed(ts_code, 'MARK_CP',
+                        #                    freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
+                    else:
+                        print('no jiuzhuan mark cp task')
+                except Exception as e:
+                    print(e)
+
+        # if not is_analyzed(ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs_'+version, freq):
+        #     pass
+                
+        # if ts_code is not None and freq is not None:
+        #     ts_code_list = ts_code.split(',')
+        #     if len(ts_code_list) == 0:
+        #         listed_companies = StockNameCodeMap.objects.filter(
+        #             is_hist_downloaded=True)
+        #     else:
+        #         listed_companies = StockNameCodeMap.objects.filter(
+        #             is_hist_downloaded=True, ts_code__in=ts_code_list)
+        #     print(len(listed_companies))
+        #     if listed_companies is not None and len(listed_companies) > 0:
+        #         for list_company in listed_companies:
+        #             if list_company.hist_update_date is None:
+        #                 mark_junxian_cp(list_company.ts_code, list_company.list_date, ma_freq=ma_freq, version=version)
+
+        #             if list_company.list_date != start_date: #q更新交易记录开始时间需要往前获取日期为MA周期的时间
+        #                 start_date = start_date - timedelta(days=int(ma_freq))
+        #                 mark_junxian_cp(list_company.ts_code, list_company.list_date, ma_freq=ma_freq, version=version)
 
 
 def mark_junxian_since_listed(ts_code, list_date, freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', atype='system'):
@@ -47,7 +107,7 @@ def mark_junxian_since_listed(ts_code, list_date, freq='D', ma_freq='25', price_
             pass
         if df is not None and len(df) > 0:
             # 标记均线
-            mark_mv_avg(ts_code, df, ma_freq)
+            mark_mov_avg(ts_code, df, ma_freq)
             # 标记均线关键点
             mark_ma_cp(price_chg_pct, df, ma_freq, version)
             # 计算斜率
@@ -107,7 +167,7 @@ def mark_junxian_since_listed(ts_code, list_date, freq='D', ma_freq='25', price_
     return len(hist_list)
 
 
-def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', atype='system'):
+def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', atype='1', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', done_by='system'):
     '''
     目标：
     参数化分析均线，可能对结果有影响的参数
@@ -128,7 +188,7 @@ def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', price_chg_
             pass
         if df is not None and len(df) > 0:
             # 标记均线
-            mark_mv_avg(ts_code, df, ma_freq)
+            mark_mov_avg(ts_code, df, ma_freq)
             # 标记均线关键点
             mark_ma_cp(price_chg_pct, df, ma_freq, version)
             # 计算斜率
@@ -141,7 +201,7 @@ def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', price_chg_
             for index, row in df.iterrows():
                 hist = object
                 if freq == 'D':
-                    if atype == 'system':
+                    if done_by == 'system':
                         hist = StockHistoryDaily(pk=row['id'])
                     else:
                         pass
@@ -162,7 +222,7 @@ def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', price_chg_
                     row['ma'+ma_freq+'_yali_'+version]) else None)
                 hist_list.append(hist)
             if freq == 'D':
-                if atype == 'system':
+                if done_by == 'system':
                     StockHistoryDaily.objects.bulk_update(hist_list, ['ma'+ma_freq,
                                                                       'ma'+ma_freq+'_slope',
                                                                       'ma'+ma_freq+'_zhicheng_'+version,
@@ -188,7 +248,7 @@ def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', price_chg_
     return len(hist_list)
 
 
-def mark_junxian_cp(ts_code, start_date, end_date, freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', atype='system'):
+def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', done_by='system'):
     '''
     目标：
     参数化分析均线，可能对结果有影响的参数
@@ -196,11 +256,9 @@ def mark_junxian_cp(ts_code, start_date, end_date, freq='D', ma_freq='25', price
     - 斜率
     - 计算斜率所要考虑的连续的天数（前几天，后几天）
     '''
-    print('marked junxian zhicheng on start code - ' + ts_code +
+    print('marked junxian on start code - ' + ts_code +
           ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    if list_date != start_date: #q更新交易记录开始时间需要往前获取日期为MA周期的时间
-        start_date = start_date - timedelta(days=int(ma_freq))
-    if not is_analyzed(ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs_'+version, freq):
+    try:
         df = None
         hist_list = []
         if freq == 'D':
@@ -211,21 +269,25 @@ def mark_junxian_cp(ts_code, start_date, end_date, freq='D', ma_freq='25', price
             pass
         if df is not None and len(df) > 0:
             # 标记均线
-            mark_mv_avg(ts_code, df, ma_freq)
+            mark_mov_avg(ts_code, df, ma_freq)
+            # 存储结果
+            start_index = 0
+            if atype != '0': #更新标记
+                start_index = int(ma_freq)
+            # 计算斜率,需要朝前取一个offset记录
+            mark_slope(df, df[start_index-day_offset:], ts_code, ma_freq=ma_freq)
+            # print(start_index)
+            # q只对更新交易记录做切片处理
+            df = df[start_index:]
             # 标记均线关键点
             mark_ma_cp(price_chg_pct, df, ma_freq, version)
-            # 计算斜率
-            df.loc[:int(ma_freq)-1, 'ma'+ma_freq+"_slope"] = np.nan
-            offset_df = df[int(ma_freq):]
-            mark_slope(df, offset_df, ts_code, col='ma' +
-                       ma_freq, slope_col='ma'+ma_freq+'_slope')
-            # 存储结果
-            if list_date != start_date: #q只对更新交易记录做切片处理
-                df = df[int(ma_freq)-1:] 
+            # print(df.head(10))
+            # print(df['trade_date'].iloc[start_index])
+            # print(len(df))
             for index, row in df.iterrows():
                 hist = object
                 if freq == 'D':
-                    if atype == 'system':
+                    if done_by == 'system':
                         hist = StockHistoryDaily(pk=row['id'])
                     else:
                         pass
@@ -236,96 +298,93 @@ def mark_junxian_cp(ts_code, start_date, end_date, freq='D', ma_freq='25', price
                     row['ma'+ma_freq]) else None)
                 setattr(hist, 'ma'+ma_freq+'_slope', round(row['ma'+ma_freq+'_slope'], 3) if not math.isnan(
                     row['ma'+ma_freq+'_slope']) else None)
-                setattr(hist, 'ma'+ma_freq+'_zhicheng_'+version, round(row['ma'+ma_freq+'_zhicheng_'+version], 3) if not math.isnan(
-                    row['ma'+ma_freq+'_zhicheng_'+version]) else None)
-                setattr(hist, 'ma'+ma_freq+'_tupo_'+version, round(row['ma'+ma_freq+'_tupo_'+version], 3) if not math.isnan(
-                    row['ma'+ma_freq+'_tupo_'+version]) else None)
-                setattr(hist, 'ma'+ma_freq+'_diepo_'+version, round(row['ma'+ma_freq+'_diepo_'+version], 3) if not math.isnan(
-                    row['ma'+ma_freq+'_diepo_'+version]) else None)
-                setattr(hist, 'ma'+ma_freq+'_yali_'+version, round(row['ma'+ma_freq+'_yali_'+version], 3) if not math.isnan(
-                    row['ma'+ma_freq+'_yali_'+version]) else None)
+                setattr(hist, 'ma'+ma_freq+'_zhicheng', round(row['ma'+ma_freq+'_zhicheng'], 3) if not math.isnan(
+                    row['ma'+ma_freq+'_zhicheng']) else None)
+                setattr(hist, 'ma'+ma_freq+'_tupo', round(row['ma'+ma_freq+'_tupo'], 3) if not math.isnan(
+                    row['ma'+ma_freq+'_tupo']) else None)
+                setattr(hist, 'ma'+ma_freq+'_diepo', round(row['ma'+ma_freq+'_diepo'], 3) if not math.isnan(
+                    row['ma'+ma_freq+'_diepo']) else None)
+                setattr(hist, 'ma'+ma_freq+'_yali', round(row['ma'+ma_freq+'_yali'], 3) if not math.isnan(
+                    row['ma'+ma_freq+'_yali']) else None)
                 hist_list.append(hist)
             if freq == 'D':
-                if atype == 'system':
+                if done_by == 'system':
                     StockHistoryDaily.objects.bulk_update(hist_list, ['ma'+ma_freq,
-                                                                      'ma'+ma_freq+'_slope',
-                                                                      'ma'+ma_freq+'_zhicheng_'+version,
-                                                                      'ma'+ma_freq+'_tupo_'+version,
-                                                                      'ma'+ma_freq+'_diepo_'+version,
-                                                                      'ma'+ma_freq+'_yali_'+version])
+                                                                    'ma'+ma_freq+'_slope',
+                                                                    'ma'+ma_freq+'_zhicheng',
+                                                                    'ma'+ma_freq+'_tupo',
+                                                                    'ma'+ma_freq+'_diepo',
+                                                                    'ma'+ma_freq+'_yali'])
                 else:
                     pass
             else:
                 pass
-            log_test_status(ts_code,
-                            'MARK_CP', freq, ['junxian'+ma_freq+'_bs_'+version])
             # listed_company.is_marked_junxian_bs = True
             # listed_company.save()
             print(' marked junxian bs on end code - ' + ts_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            hist_list.clear()  # 清空已经保存的记录列表
-    else:
-        print('no junxian cp task')
-    # else:
-    #     print('mark junxian bs for code - ' + str(ts_code_list) +
-        #   ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    return len(hist_list)
+                ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            # hist_list.clear()  # 清空已经保存的记录列表
+    except Exception as e:
+        print(e)
 
 
-def mark_ma_cp(price_chg_pct, df, ma_freq, version):
-    mark_zhicheng(price_chg_pct, df, ma_freq, version)
-    mark_tupo(price_chg_pct, df, ma_freq, version)
-    mark_diepo(price_chg_pct, df, ma_freq, version)
-    mark_yali(price_chg_pct, df, ma_freq, version)
-    return df
+def mark_ma_cp(price_chg_pct, df_slc, ma_freq, version):
+    print('mark cp start')
+    mark_zhicheng(price_chg_pct, df_slc, ma_freq,version)
+    mark_tupo(price_chg_pct, df_slc, ma_freq,version )
+    mark_diepo(price_chg_pct, df_slc, ma_freq, version)
+    mark_yali(price_chg_pct, df_slc, ma_freq, version)
+    # return df
+    print('mark cp end')
 
 
-def mark_zhicheng(price_chg_pct, df, ma_freq, version):
+
+def mark_zhicheng(price_chg_pct, df_slc, ma_freq, version):
     '''
     1. 收盘 > MA && 开盘 > MA
     2. |最低价 - MA| < delta
     '''
     # cond = (df['close'] > df['ma'+freq]) & (df['open'] >
     #                  df['ma'+freq]) & ((abs(df['low'] - df['ma'+freq]) / df['ma'+freq]) < delta)
-    df['ma'+ma_freq+'_zhicheng_'+version] = np.where((df['close'] > df['ma'+ma_freq]) & (df['open'] >
-                                                                                         df['ma'+ma_freq]) & (abs(df['low'] - df['ma'+ma_freq]) / df['ma'+ma_freq] <= price_chg_pct), 1, np.nan)
+    df_slc['ma'+ma_freq+'_zhicheng'] = np.where((df_slc['close'] > df_slc['ma'+ma_freq]) & (df_slc['open'] >
+                                                                                df_slc['ma'+ma_freq]) & (abs(df_slc['low'] - df_slc['ma'+ma_freq]) / df_slc['ma'+ma_freq] <= price_chg_pct), 1, np.nan)
     # print(df.head(100))
-    return df
+    return df_slc
     # for index, row in zhicheng_df.iterrows():
     #     zhicheng_df.loc[index, 'ma25_zhicheng_'+version] = 1
 
 
-def mark_tupo(price_chg_pct, df, ma_freq, version):
+def mark_tupo(price_chg_pct, df_slc, ma_freq, version):
     '''
     1. 收盘 > MA && 开盘 < MA
     2. 收盘 - MA / MA >= delta
     '''
-    df['ma'+ma_freq+'_tupo_'+version] = np.where((df['close'] > df['ma'+ma_freq]) & (df['open'] <
-                                                                                     df['ma'+ma_freq]) & ((df['close'] - df['ma'+ma_freq]) / df['ma'+ma_freq] >= price_chg_pct), 1, np.nan)
+    df_slc['ma'+ma_freq+'_tupo'] = np.where((df_slc['close'] > df_slc['ma'+ma_freq]) & (df_slc['open'] <
+                                                                            df_slc['ma'+ma_freq]) & ((df_slc['close'] - df_slc['ma'+ma_freq]) / df_slc['ma'+ma_freq] >= price_chg_pct), 1, np.nan)
     # print(df.head(100))
-    return df
+    return df_slc
 
 
-def mark_diepo(price_chg_pct, df, ma_freq, version):
+def mark_diepo(price_chg_pct, df_slc, ma_freq, version):
     '''
     1. 收盘 < MA && 开盘 > MA
     2. MA - 收盘 / MA >= delta
     '''
-    df['ma'+ma_freq+'_diepo_'+version] = np.where((df['close'] < df['ma'+ma_freq]) & (df['open'] >
-                                                                                      df['ma'+ma_freq]) & ((df['ma'+ma_freq] - df['close']) / df['ma'+ma_freq] >= price_chg_pct), 1, np.nan)
+    df_slc['ma'+ma_freq+'_diepo'] = np.where((df_slc['close'] < df_slc['ma'+ma_freq]) & (df_slc['open'] >
+                                                                             df_slc['ma'+ma_freq]) & ((df_slc['ma'+ma_freq] - df_slc['close']) / df_slc['ma'+ma_freq] >= price_chg_pct), 1, np.nan)
     # print(df.head(100))
-    return df
+    return df_slc
 
 
-def mark_yali(price_chg_pct, df, ma_freq, version):
+def mark_yali(price_chg_pct, df_slc, ma_freq, version):
     '''
     1. 收盘 < MA && 开盘 < MA 
     2. && (MA - 最高价 / MA < delta or MA - 收盘价 / MA < delta)
     '''
-    df['ma'+ma_freq+'_yali_'+version] = np.where((df['close'] < df['ma'+ma_freq]) & (df['open'] <
-                                                                                     df['ma'+ma_freq]) & (((df['ma'+ma_freq] - df['high']) / df['ma'+ma_freq] <= price_chg_pct) | ((df['ma'+ma_freq] - df['close']) / df['ma'+ma_freq] <= price_chg_pct)), 1, np.nan)
+    df_slc['ma'+ma_freq+'_yali'] = np.where((df_slc['close'] < df_slc['ma'+ma_freq]) & (df_slc['open'] <
+                                                                            df_slc['ma'+ma_freq]) & (((df_slc['ma'+ma_freq] - df_slc['high']) / df_slc['ma'+ma_freq] <= price_chg_pct) | ((df_slc['ma'+ma_freq] - df_slc['close']) / df_slc['ma'+ma_freq] <= price_chg_pct)), 1, np.nan)
     # print(df.head(100))
-    return df
+    return df_slc
 
 
 def post_mark(ts_code, df, price_chg_pct):

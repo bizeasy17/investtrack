@@ -59,14 +59,14 @@ class Command(BaseCommand):
                                 start_date = task.start_date
                             else:
                                 print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
-                                start_date = task.start_date - timedelta(days=get_trade_cal_diff(task.start_date))
+                                start_date = task.start_date - timedelta(days=get_trade_cal_diff(ts_code, task.start_date))
 
                             mark_jiuzhuan(ts_code, freq, start_date,
                                           task.end_date, atype)
                             # print(task.start_date)
                             # print(task.end_date)
-                            # set_task_completed(listed_company.ts_code, 'MARK_CP',
-                            #                    freq, 'jiuzhuan_bs', task.start_date, task.end_date)
+                            set_task_completed(listed_company.ts_code, 'MARK_CP',
+                                               freq, 'jiuzhuan_bs', task.start_date, task.end_date)
                         else:
                             print('no jiuzhuan mark cp task')
                     except Exception as e:

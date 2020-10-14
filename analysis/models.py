@@ -121,39 +121,39 @@ class StockHistoryDaily(BaseModel):
         _('突破压力位B?'),  blank=True, null=True)
     diepo_s = models.IntegerField(
         _('跌破支撑位S?'),  blank=True, null=True)   
-    ma25_zhicheng_b = models.IntegerField(
-        _('MA25均线支撑B?'),  blank=True, null=True)
-    ma25_zhicheng_v2 = models.IntegerField(
-        _('MA25均线支撑V2'),  blank=True, null=True)  
-    ma25_tupo_b = models.IntegerField(
-        _('MA25均线突破B?'),  blank=True, null=True) 
-    ma25_tupo_v2 = models.IntegerField(
-        _('MA25均线突破V2'),  blank=True, null=True)
-    ma25_diepo_s = models.IntegerField(
-        _('MA25均线跌破S?'),  blank=True, null=True)
-    ma25_diepo_v2 = models.IntegerField(
-        _('MA25均线跌破V2'),  blank=True, null=True)
-    ma25_yali_s = models.IntegerField(
-        _('MA25压力S?'),  blank=True, null=True)
-    ma25_yali_v2 = models.IntegerField(
-        _('MA25压力v2'),  blank=True, null=True) 
+    # ma25_zhicheng_b = models.IntegerField(
+    #     _('MA25均线支撑B?'),  blank=True, null=True)
+    ma25_zhicheng = models.IntegerField(
+        _('MA25均线支撑'),  blank=True, null=True)  
+    # ma25_tupo_b = models.IntegerField(
+    #     _('MA25均线突破B?'),  blank=True, null=True) 
+    ma25_tupo = models.IntegerField(
+        _('MA25均线突破'),  blank=True, null=True)
+    # ma25_diepo_s = models.IntegerField(
+    #     _('MA25均线跌破S?'),  blank=True, null=True)
+    ma25_diepo = models.IntegerField(
+        _('MA25均线跌破'),  blank=True, null=True)
+    # ma25_yali_s = models.IntegerField(
+    #     _('MA25压力S?'),  blank=True, null=True)
+    ma25_yali = models.IntegerField(
+        _('MA25压力'),  blank=True, null=True) 
     # MA60
-    ma60_zhicheng_v1 = models.IntegerField(
+    ma60_zhicheng = models.IntegerField(
         _('MA60均线支撑B?'),  blank=True, null=True)
-    ma60_tupo_v1 = models.IntegerField(
+    ma60_tupo = models.IntegerField(
         _('MA60均线突破B?'),  blank=True, null=True) 
-    ma60_diepo_v1 = models.IntegerField(
+    ma60_diepo = models.IntegerField(
         _('MA60均线跌破S?'),  blank=True, null=True)
-    ma60_yali_v1 = models.IntegerField(
+    ma60_yali = models.IntegerField(
         _('MA60压力S?'),  blank=True, null=True) 
     # MA200
-    ma200_zhicheng_v1 = models.IntegerField(
+    ma200_zhicheng = models.IntegerField(
         _('MA200均线支撑B?'),  blank=True, null=True)
-    ma200_tupo_v1 = models.IntegerField(
+    ma200_tupo = models.IntegerField(
         _('MA200均线突破B?'),  blank=True, null=True) 
-    ma200_diepo_v1 = models.IntegerField(
+    ma200_diepo = models.IntegerField(
         _('MA200均线跌破S?'),  blank=True, null=True)
-    ma200_yali_v1 = models.IntegerField(
+    ma200_yali = models.IntegerField(
         _('MA200压力S?'),  blank=True, null=True) 
 
     freq = models.CharField(
