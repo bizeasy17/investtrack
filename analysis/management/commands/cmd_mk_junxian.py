@@ -54,9 +54,6 @@ class Command(BaseCommand):
         if ma_freq is None:
             ma_freq = '25'
         
-        if freq is None:
-            freq = 'D'
-        
         handle_junxian_cp(ts_code, freq, ma_freq, version)
 
     
