@@ -12,7 +12,7 @@ from investors.models import StockFollowing, TradeStrategy
 from analysis.models import StockHistoryDaily, StockStrategyTestLog
 from analysis.utils import log_test_status, is_analyzed, get_analysis_task
 from analysis.stock_hist import download_hist_data
-from .utils import mark_mov_avg, mark_slope
+from .utils import mark_mov_avg, calculate_slope
 from analysis.utils import is_analyzed, get_analysis_task, get_trade_cal_diff,set_task_completed
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ version = 'v2'
 #     return df
 #     # print(df.head())
 
-def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1'):    
+def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset=2):    
     if ts_code is not None and freq is not None:
         start_date = None
         end_date = None
@@ -51,7 +51,7 @@ def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1'):
                         else:
                             #q更新交易记录开始时间需要往前获取日期为MA周期的时间
                             print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
-                            start_date = task.start_date - timedelta(days=get_trade_cal_diff(ts_code, task.start_date, period=int(ma_freq)))
+                            start_date = task.start_date - timedelta(days=get_trade_cal_diff(ts_code, task.start_date, period=int(ma_freq)+days_offset))
 
                         mark_junxian_cp(ts_code, start_date, task.end_date, ma_freq=ma_freq, atype=atype)
 
@@ -63,28 +63,6 @@ def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1'):
                         print('no jiuzhuan mark cp task')
                 except Exception as e:
                     print(e)
-
-        # if not is_analyzed(ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs_'+version, freq):
-        #     pass
-                
-        # if ts_code is not None and freq is not None:
-        #     ts_code_list = ts_code.split(',')
-        #     if len(ts_code_list) == 0:
-        #         listed_companies = StockNameCodeMap.objects.filter(
-        #             is_hist_downloaded=True)
-        #     else:
-        #         listed_companies = StockNameCodeMap.objects.filter(
-        #             is_hist_downloaded=True, ts_code__in=ts_code_list)
-        #     print(len(listed_companies))
-        #     if listed_companies is not None and len(listed_companies) > 0:
-        #         for list_company in listed_companies:
-        #             if list_company.hist_update_date is None:
-        #                 mark_junxian_cp(list_company.ts_code, list_company.list_date, ma_freq=ma_freq, version=version)
-
-        #             if list_company.list_date != start_date: #q更新交易记录开始时间需要往前获取日期为MA周期的时间
-        #                 start_date = start_date - timedelta(days=int(ma_freq))
-        #                 mark_junxian_cp(list_company.ts_code, list_company.list_date, ma_freq=ma_freq, version=version)
-
 
 def mark_junxian_since_listed(ts_code, list_date, freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', atype='system'):
     '''
@@ -113,7 +91,7 @@ def mark_junxian_since_listed(ts_code, list_date, freq='D', ma_freq='25', price_
             # 计算斜率
             df.loc[:int(ma_freq)-1, 'ma'+ma_freq+"_slope"] = np.nan
             offset_df = df[int(ma_freq):]
-            mark_slope(df, offset_df, ts_code, col='ma' +
+            calculate_slope(df, offset_df, ts_code, col='ma' +
                        ma_freq, slope_col='ma'+ma_freq+'_slope')
             # 存储结果
             # df = df[int(ma_freq)-1:] #q只对
@@ -194,7 +172,7 @@ def update_junxian_cp(ts_code, last_upd_date, freq='D', ma_freq='25', atype='1',
             # 计算斜率
             df.loc[:int(ma_freq)-1, 'ma'+ma_freq+"_slope"] = np.nan
             offset_df = df[int(ma_freq):]
-            mark_slope(df, offset_df, ts_code, col='ma' +
+            calculate_slope(df, offset_df, ts_code, col='ma' +
                        ma_freq, slope_col='ma'+ma_freq+'_slope')
             # 存储结果
             df = df[int(ma_freq)-1:]  # q只对
@@ -263,7 +241,7 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
         hist_list = []
         if freq == 'D':
             df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code,
-                                                                            trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date').values('id', 'trade_date', 'open', 'close', 'low', 'high', 'slope'))
+                                                                            trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date').values('id', 'ma'+ma_freq, 'trade_date', 'open', 'close', 'low', 'high', 'slope'))
             # print(df.head())
         else:
             pass
@@ -273,9 +251,9 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
             # 存储结果
             start_index = 0
             if atype != '0': #更新标记
-                start_index = int(ma_freq)
+                start_index = int(ma_freq) + day_offset# - day_offset
             # 计算斜率,需要朝前取一个offset记录
-            mark_slope(df, df[start_index-day_offset:], ts_code, ma_freq=ma_freq)
+            calculate_slope(df, ts_code, ma_freq=ma_freq)
             # print(start_index)
             # q只对更新交易记录做切片处理
             df = df[start_index:]

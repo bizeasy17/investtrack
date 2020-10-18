@@ -106,7 +106,7 @@ def mark_dingdi_listed(freq, ts_code, start_date, end_date, slope_offset=2, slop
         #     return
         start_index = 0
         if atype != '0':  # 更新标记
-            start_index = slope_offset
+            start_index = slope_offset + 1
         if post_marked_df is not None and len(post_marked_df) > 0:
             post_marked_df = post_marked_df[start_index:]
             # print(post_marked_df.tail(50))
