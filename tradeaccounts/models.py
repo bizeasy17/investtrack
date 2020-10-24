@@ -504,3 +504,36 @@ class StockPositionSnapshot(models.Model):
                     stock_position.profit_ratio[:-1]), target_chg_pct=stock_position.target_chg_pct,
                 applied_period='m')
             mon_snapshot.save()
+
+
+class PositionComments(BaseModel):
+    """
+    should run every day after 3:30pm, on trade date
+    """
+    trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
+                               on_delete=models.CASCADE)
+    position = models.ForeignKey(Positions, verbose_name=_('持仓编号'), blank=False, null=False,
+                                      on_delete=models.DO_NOTHING)
+    stock_name = models.CharField(
+        _('股票名称'), max_length=50, blank=False, null=False)
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False)
+    current_price = models.DecimalField(
+        _('当前价格'), max_digits=10, decimal_places=2, blank=False, null=False)
+    pct_chg = models.DecimalField(
+        _('当前涨幅'), max_digits=10, decimal_places=2, blank=False, null=False)
+    position_pct_chg = models.DecimalField(
+        _('持仓涨幅'), max_digits=10, decimal_places=2, blank=False, null=False)
+    position_period = models.DecimalField(
+        _('持仓周期'), max_digits=10, decimal_places=0, blank=False, null=False)
+    comments = models.CharField(
+        _('评论内容'), max_length=5000, blank=False, null=False)
+
+    class Meta:
+        unique_together = ('stock_code', 'trader', 'position', 'comments')
+        ordering = ['created_time']
+        verbose_name = _('持仓评论')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.stock_code

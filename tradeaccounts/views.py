@@ -10,8 +10,10 @@ from django.views.generic import View
 
 # from rest_framework import serializers
 from users.models import User
+from dashboard.utils import days_to_now
+from stockmarket.utils import get_single_realtime_quote
 
-from .models import TradeAccount
+from .models import TradeAccount, PositionComments, Positions
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,67 @@ def create_tradeaccount(request):
             # return JsonResponse(trade_account, safe=False)
             # now still can not serialize the object
             return JsonResponse({'code': 'success', 'id': acc_id, 'message': _('保存成功')}, safe=False)
+        except Exception as e:
+            logger.error(e)
+            return HttpResponse(status=500)
+
+@login_required
+def position_comments(request, ts_code, position_id):
+    if request.method == 'GET':
+        try:
+            comment_list = []
+            position_comments = PositionComments.objects.filter(stock_code=ts_code, position=position_id)
+            # return JsonResponse(trade_account, safe=False)
+            # now still can not serialize the object
+            if position_comments is not None and len(position_comments) > 0:
+                for comment in position_comments:
+                    comment_list.append(
+                        {
+                            'created_time': comment.created_time,
+                            'stock_name': comment.stock_name,
+                            'stock_code': comment.stock_code,
+                            'pct_chg': comment.pct_chg,
+                            'current_price': comment.current_price,
+                            'position_pct_chg': comment.position_pct_chg,
+                            'period': comment.position_period,
+                            'comment': comment.comments,
+                        }
+                    )
+            return JsonResponse({'status': 200, 'comments': comment_list}, safe=False)
+        except Exception as e:
+            logger.error(e)
+            return HttpResponse(status=500)
+    elif request.method == 'POST':
+        try:
+            comment_list = []
+            data = request.POST.copy()
+            trader = request.user
+            stock_code = ts_code
+            rt_dict = get_single_realtime_quote(ts_code)
+
+            position = Positions.objects.get(id=position_id)
+            stock_name = position.stock_name
+            pct_chg = round((rt_dict['c'] - rt_dict['p'])/rt_dict['p'] * 100,2)
+            current_price = rt_dict['c']
+            position_pct_chg = float(position.profit_ratio[:-1])
+            period = days_to_now(position.ftd)
+            comment_body = data.get('comment')
+            # 新建交易账户
+            comment = PositionComments(trader=trader, position=position,
+                                        stock_name=stock_name, stock_code=stock_code,
+                                        pct_chg=pct_chg, position_pct_chg=position_pct_chg, current_price=current_price,
+                                        position_period=period, comments=comment_body)
+            comment.save()
+
+            comment_list.append({
+                'created_time': comment.created_time,
+                'pct_chg': comment.pct_chg,
+                'current_price': comment.current_price,
+                'position_pct_chg': comment.position_pct_chg,
+                'period': comment.position_period,
+                'content': comment.comments,
+            })
+            return JsonResponse({'status': 200, 'comment': comment_list}, safe=False)
         except Exception as e:
             logger.error(e)
             return HttpResponse(status=500)
