@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 
 from stockmarket.models import StockNameCodeMap
-from .utils import has_analysis_task1, log_test_status
+from .utils import is_analyzed, log_test_status
 from .models import (BStrategyOnFixedPctTest, StrategyTargetPctTestQuantiles,
                      StrategyTestLowHigh, StrategyUpDownTestQuantiles, StrategyUpDownTestRanking, StrategyTargetPctTestRanking)
 
@@ -17,7 +17,7 @@ def target_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     target_pct_list = ['pct10_period', 'pct20_period', 'pct30_period',
                        'pct50_period', 'pct80_period', 'pct100_period', 'pct130_period']
     try:
-        if not has_analysis_task1(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
+        if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
             print('target pct on start - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             quantile_list = []
@@ -73,7 +73,7 @@ def updown_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     test_type = ['up_pct', 'down_pct']
 
     try:
-        if not has_analysis_task1(ts_code, 'UPDN_PCT_QTN', strategy_code, freq):
+        if not is_analyzed(ts_code, 'UPDN_PCT_QTN', strategy_code, freq):
             print('updown pct on start - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             updown_qtiles_list = []
@@ -156,7 +156,7 @@ def rank_updown_test(strategy_code, freq='D'):
                         sorted_df = df.sort_values(
                             by=quantile, ascending=False, ignore_index=True)
                         for idx in sorted_df.index:
-                            if not has_analysis_task1(sorted_df.iloc[idx][1], 'UPDN_PCT_RK', strategy_code, freq):
+                            if not is_analyzed(sorted_df.iloc[idx][1], 'UPDN_PCT_RK', strategy_code, freq):
                                 print('analyzing ' + sorted_df.iloc[idx][1] + ' qt is ' +
                                       quantile + ' period is, ' + str(test_period) + ' ranking is ' + str(idx))
                                 ranking = StrategyUpDownTestRanking(strategy_code=strategy_code, test_type=test_type, ts_code=sorted_df.iloc[idx][1], stock_name=sorted_df.iloc[idx][2],
@@ -210,7 +210,7 @@ def rank_target_pct_test(strategy_code, freq='D'):
                         by=quantile, ignore_index=True)
                     for idx, row in sorted_df.iterrows():
                         # print(idx)
-                        if not has_analysis_task1(row['ts_code'], 'TGT_PCT_RK', strategy_code, freq):
+                        if not is_analyzed(row['ts_code'], 'TGT_PCT_RK', strategy_code, freq):
                             print('analyzing ' + row['ts_code'] + ' qt is ' + quantile +
                                   ' target pct is, ' + target_pct + ' ranking is ' + str(idx))
 
@@ -225,7 +225,7 @@ def rank_target_pct_test(strategy_code, freq='D'):
                     for idx, row in invalid_df.iterrows():
                         # print(quantile)
                         # print(row['ts_code'])
-                        if not has_analysis_task1(row['ts_code'], 'TGT_PCT_RK', strategy_code, freq):
+                        if not is_analyzed(row['ts_code'], 'TGT_PCT_RK', strategy_code, freq):
                             ranking = StrategyTargetPctTestRanking(strategy_code=strategy_code, ts_code=row['ts_code'], stock_name=row['stock_name'],
                                                                    target_pct=target_pct, qt_pct=quantile, qt_pct_val=row[quantile], test_freq=freq, ranking=99999)
                             ranking_list.append(ranking)

@@ -25,7 +25,7 @@ def get_single_realtime_quote(symbol):
         realtime_price_dict = {
             't': t, 'o': realtime_df['open'].mean(), 'h': realtime_df['high'].mean(),
             'l': realtime_df['low'].mean(),
-            'c': realtime_quote,
+            'c': realtime_quote,'p':realtime_df['pre_close'].mean(),
         }
     return realtime_price_dict
 

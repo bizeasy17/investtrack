@@ -10,7 +10,7 @@ from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
 from analysis.analysis_tupo_b_cp import mark_tupo_yali_listed
 from analysis.analysis_wm_cp import mark_wm_listed
 from analysis.stock_hist import download_stock_hist
-from analysis.analysis_jiuzhuan_cp import mark_jiuzhuan_listed
+from analysis.analysis_jiuzhuan_cp import mark_jiuzhuan
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
@@ -53,7 +53,7 @@ class Command(BaseCommand):
                     download_stock_hist(freq, ts_code_list)
                 # download_stock_hist(freq, ts_code_list)
                 time.sleep(1)
-                mark_jiuzhuan_listed(freq, ts_code_list)
+                mark_jiuzhuan(freq, ts_code_list)
                 time.sleep(1)
                 mark_dingdi_listed(freq, ts_code_list)
                 time.sleep(1)
@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 download_stock_hist(freq)
             # download_stock_hist(freq)
             time.sleep(1)
-            mark_jiuzhuan_listed(freq)
+            mark_jiuzhuan(freq)
             time.sleep(1)
             mark_dingdi_listed(freq)
             time.sleep(1)

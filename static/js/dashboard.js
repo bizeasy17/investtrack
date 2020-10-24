@@ -11,6 +11,8 @@ $(function () {
   var stockmarketEndpoint = '/stockmarket/';
   var dashboardEndpoint = '/dashboard/';
   var stocktradeEndpoint = '/stocktrade/';
+  var tradeAccEndpoint = '/tradeaccounts/';
+
 
   var chartShowDays15 = 5
   var chartShowDays30 = 10
@@ -682,6 +684,88 @@ $(function () {
         }
       });
     }
+  }
+
+  var leavePositionComments = function (event) {
+    // event.preventDefault();
+    var id = $(this).attr("id");
+    var arr = id.split("_");
+    if (event.ctrlKey && event.keyCode == 13 && $(this).val() != "") {
+      $.ajax(
+        {
+          url: tradeAccEndpoint + 'comments/' + arr[1] + "/" + arr[2] + "/",
+          headers: { 'X-CSRFToken': csrftoken },
+          method: 'POST',
+          data: {
+            comment: $(this).val()
+          },
+          success: function (data) {
+            var cmtPanel = $("#cp_" + arr[1] + "_" + arr[2]);
+            var html = "";
+            html = "<div class='row col-lg-12'>"+
+                      "<p class='col-lg-12'><span class='small'>"+data.comment[0].content+"</span></p>"+
+                      "<p class='col-lg-12'><span class='small'>股价-"+data.comment[0].current_price+", 涨幅-"+data.comment[0].pct_chg+"%, 当前收益率-"+data.comment[0].position_pct_chg+"% (记录于 "+data.comment[0].created_time+")</span></p>"+
+                    "</div>";
+            cmtPanel.append(html);
+            $("#messages").removeClass('d-none');
+            $("#messageText").html("<strong>添加成功.</strong>");
+          },
+          statusCode: {
+            403: function () {
+              alert("403 forbidden");
+            },
+            404: function () {
+              alert("404 page not found");
+            },
+            500: function () {
+              alert("500 internal server error");
+            }
+          }
+        }
+      );
+    }
+  }
+
+
+  var inputCmt = document.getElementsByName("input-comment");
+  if (inputCmt.length > 0) {
+    $(inputCmt).each(function (id, obj) {
+      obj.addEventListener("keydown", leavePositionComments)
+    });
+  }
+
+  var commentPanel = document.getElementsByName("comments-panel");
+  if (commentPanel.length > 0) {
+    $(commentPanel).each(function (id, obj) {
+      var arr = $(obj).attr("id").split("_");
+      $.ajax(
+        {
+          url: tradeAccEndpoint + 'comments/' + arr[1] + "/" + arr[2] + "/",
+          success: function (data) {
+            $(data.comments).each(function (iid, iobj) {
+              var html = "";
+              html = "<div class='row col-lg-12'>"+
+                        "<p class='col-lg-12'><span class='small'>"+iobj.comment+"</span></p>"+
+                        "<p class='col-lg-12'><span class='small'>股价-"+iobj.current_price+", 涨幅-"+iobj.pct_chg+"%, 当前收益率-"+iobj.position_pct_chg+"% (记录于 "+iobj.created_time+")</span></p>"+
+                      "</div>";
+              $(obj).append(html);
+              // html = "";
+            });
+          },
+          statusCode: {
+            403: function () {
+              alert("403 forbidden");
+            },
+            404: function () {
+              alert("404 page not found");
+            },
+            500: function () {
+              alert("500 internal server error");
+            }
+          }
+        }
+      );
+    });
   }
 
   // 获取收益增长曲线数据

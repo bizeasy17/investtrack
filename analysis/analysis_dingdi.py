@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import math
 import time
 import logging
 from scipy import stats
@@ -9,8 +10,8 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task
-from .stock_hist import hist_since_listed
+from .utils import log_test_status, has_analysis_task, get_analysis_task, get_trade_cal_diff
+from .stock_hist import download_hist_data
 
 logger = logging.getLogger(__name__)
 
@@ -25,102 +26,133 @@ logger = logging.getLogger(__name__)
 #     # print(df.head())
 
 
-def recon_strategy_usage():
+def handle_dingdi_cp(ts_code, freq, slope_offset=2, slope_deg=0.05241, version='v1'):
     '''
     同步策略在交易中的使用情况
     '''
-    pass
+    if ts_code is not None and freq is not None:
+        start_date = None
+        end_date = None
+        today = date.today()
+        ts_code_list = ts_code.split(',')
+
+        if ts_code_list is not None and len(ts_code_list) >= 1:
+            for ts_code in ts_code_list:
+                try:
+                    listed_company = StockNameCodeMap.objects.get(
+                        ts_code=ts_code)
+                    task = get_analysis_task(
+                        ts_code, 'MARK_CP', 'dingdi', freq)
+                    if task is not None:
+                        # 如何差额取之前的历史记录？9
+                        atype = 1
+                        if task.start_date == listed_company.list_date:
+                            print('第一次处理，从上市日开始。。。')
+                            atype = '0'  # 从上市日开始标记
+                            start_date = task.start_date
+                        else:
+                            # q更新交易记录开始时间需要往前获取日期为MA周期的时间
+                            print('更新处理，从上一次更新时间-2d offset day - 开盘日 开始...')
+                            start_date = task.start_date - \
+                                timedelta(days=get_trade_cal_diff(
+                                    ts_code, task.start_date, period=int(slope_offset * 2))) #取2倍于计算slope的偏差的交易日数量，保证最后几个slope_offset的slope有值
+
+                        mark_dingdi_listed(
+                            freq, ts_code, start_date, task.end_date, slope_deg=slope_deg, atype=atype)
+
+                        # print(task.start_date)
+                        # # print(task.end_date)
+                        # set_task_completed(ts_code, 'MARK_CP',
+                        #                    freq, 'dingdi', task.start_date, task.end_date)
+                    else:
+                        print('no mark dingdi cp task')
+                except Exception as e:
+                    print(e)
 
 
-def mark_dingdi_listed(freq, ts_code_list=[]):
+def mark_dingdi_listed(freq, ts_code, start_date, end_date, slope_offset=2, slope_deg=0.05241, atype='1'):
     '''
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
     '''
     # print(ts_code_list)
     # end_date = date.today()
-    periods = [10, 20, 30, 50, 80]
-    compare_offset = 2
-    # end_date = date.today()
-    if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_dingdi=False)
-    else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_dingdi=False, ts_code__in=ts_code_list)
+    # periods = [10, 20, 30, 50, 80]
+
     # print(len(listed_companies))
     hist_list = []
-    if listed_companies is not None and len(listed_companies) > 0:
-        for listed_company in listed_companies:
-            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'dingdi', freq):
-                print(' marked dingdi on start code - ' + listed_company.ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                task = get_analysis_task(
-                    listed_company.ts_code, 'MARK_CP', 'dingdi', freq)
-                df = pd.DataFrame()
+    print(' marked dingdi on start code - ' + ts_code +
+          ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    df = pd.DataFrame()
+    if freq == 'D':
+        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by(
+            'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s', 'is_dingdi_end', 'dingdi_count', 'ding_max', 'di_min'))
+    else:
+        pass
+    if df is not None and len(df) > 0:
+        # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
+        pre_marked_df = pre_mark_dingdi(ts_code, df, day_offset=int(
+            slope_offset), slope_deg=float(slope_deg))
+        # 记录顶部还是底部的index，顶部的最大值的index，底部的最小值的index
+        dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list = med_mark_dingdi(
+            pre_marked_df, int(slope_offset), ts_code,)
+        # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
+        post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
+                                          dibu_b_list, ding_max_idx_list, di_min_idx_list, ts_code,)
+        # 截取从task需要执行的时间对数据切片更新
+        # if post_marked_df is not None and len(post_marked_df) > 0:
+        #     post_marked_df = post_marked_df[df['trade_date'] >= start_date]
+        # else:
+        #     return
+        start_index = 0
+        if atype != '0':  # 更新标记
+            start_index = slope_offset + 1
+        if post_marked_df is not None and len(post_marked_df) > 0:
+            post_marked_df = post_marked_df[start_index:]
+            # print(post_marked_df.tail(50))
+            for index, row in post_marked_df.iterrows():
+                hist = object
                 if freq == 'D':
-                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code, trade_date__gt=task.start_date - timedelta(days=2), trade_date__lt=task.end_date).order_by(
-                        'trade_date').values('id', 'trade_date', 'close', 'slope', 'dibu_b', 'dingbu_s', 'is_dingdi_end', 'dingdi_count', 'ding_max', 'di_min'))
+                    hist = StockHistoryDaily(pk=row['id'])
                 else:
                     pass
-                if df is not None and len(df) > 0:
-                    # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
-                    pre_marked_df = pre_mark_dingdi(listed_company.ts_code, df)
-                    # 记录顶部还是底部的index，顶部的最大值的index，底部的最小值的index
-                    dingbu_s_list, dibu_b_list, ding_max_idx_list, di_min_idx_list = med_mark_dingdi(
-                        pre_marked_df, compare_offset, listed_company.ts_code,)
-                    # 根据记录的index，生成完整的顶底，最大最小值生成相应的列数据
-                    post_marked_df = post_mark_dingdi(pre_marked_df, dingbu_s_list,
-                                                      dibu_b_list, ding_max_idx_list, di_min_idx_list, listed_company.ts_code,)
-                    # 截取从task需要执行的时间对数据切片更新
-                    if post_marked_df is not None and len(post_marked_df) > 0:
-                        post_marked_df = post_marked_df[df['trade_date'] >= task.start_date]
-                    else:
-                        return                                 
-                    # print(post_marked_df.tail(50))
-                    for index, row in post_marked_df.iterrows():
-                        hist = object
-                        if freq == 'D':
-                            hist = StockHistoryDaily(pk=row['id'])
-                        else:
-                            pass
-                        hist.dibu_b = row['dibu_b']
-                        hist.dingbu_s = row['dingbu_s']
-                        hist.is_dingdi_end = row['is_dingdi_end']
-                        hist.dingdi_count = row['dingdi_count']
-                        hist.ding_max = row['ding_max']
-                        hist.di_min = row['di_min']
-                        hist.slope = row['slope']
-                        hist_list.append(hist)
-                    if freq == 'D':
-                        StockHistoryDaily.objects.bulk_update(hist_list, [
-                                                              'slope', 'dibu_b', 'dingbu_s', 'is_dingdi_end', 'dingdi_count', 'ding_max', 'di_min'])
-                    else:
-                        pass
-                    log_test_status(listed_company.ts_code,
-                                    'MARK_CP', freq, ['dingdi'])
-                    listed_company.is_marked_dingdi = True
-                    listed_company.save()
-                    print(' marked dingdi on end code - ' + listed_company.ts_code +
-                          ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                    hist_list.clear()  # 清空已经保存的记录列表
+                hist.dibu_b = row['dibu_b'] if row['dibu_b'] != 0 else None
+                hist.dingbu_s = row['dingbu_s'] if row['dingbu_s'] != 0 else None
+                hist.is_dingdi_end = row['is_dingdi_end'] if row['is_dingdi_end'] != 0 else None
+                hist.dingdi_count = row['dingdi_count']
+                hist.ding_max = row['ding_max'] if row['ding_max'] != 0 else None
+                hist.di_min = row['di_min'] if row['di_min'] != 0 else None
+                hist.slope = row['slope'] if row['slope'] != 0 else None
+                hist_list.append(hist)
+            if freq == 'D':
+                StockHistoryDaily.objects.bulk_update(hist_list, [
+                    'slope', 'dibu_b', 'dingbu_s', 'is_dingdi_end', 'dingdi_count', 'ding_max', 'di_min'])
+            else:
+                pass
+            print(' marked dingdi on end code - ' + ts_code +
+                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            hist_list.clear()  # 清空已经保存的记录列表
     else:
-        print('dingdi for code - ' + str(ts_code_list) +
+        print('dingdi for code - ' + ts_code +
               ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return len(hist_list)
 
 
-def pre_mark_dingdi(ts_code, df):
+def pre_mark_dingdi(ts_code, df, day_offset=2, slope_deg=0.05241):
     '''
     标记股票的顶底
+    如果day_offset=2的话，会导致最后的2个交易日的slope为空，怎么解决？
+    情况
+    1. 上市开始
+    2. 非上市日
+        - 
     '''
     print('pre mark dingdi started on code - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     # print(len(df))
-    slope_deg3 = 0.05241
-    slope_deg5 = 0.08749
+    # slope_deg5 = 0.08749
     slope = float()
-    day_offset = 2
+    # day_offset = 2
     dingdi_count = 0
     is_dingdi = False
     is_end = False
@@ -131,23 +163,27 @@ def pre_mark_dingdi(ts_code, df):
     try:
         for index, row in df.iterrows():
             # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
-            if index - day_offset < 0 or index + day_offset + 1 > len(df):
-                # print(ts_code + ' on ' +
-                #       row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
-                # dingdi_list.append(False)
+            if index - day_offset < 0: #前几个交易日
                 slope = None
                 dingdi_count = 0
                 dingdi_end_list.append(0)
-            else:
-                offset_df = df[['close']].iloc[index -
-                                               day_offset: index + day_offset]
+            else: #其他交易日
+                if index + day_offset + 1 > len(df):#最后几个交易日，需要用来做选股用
+                    # print(ts_code + ' on ' +
+                    #       row['trade_date'].strftime('%Y-%m-%d') + '/s slope is NaN')
+                    # dingdi_list.append(False)
+                    offset_df = df[['close']].iloc[index -
+                                                day_offset: index] #这些点在在之后会被重新修复计算
+                else:
+                    offset_df = df[['close']].iloc[index -
+                                                day_offset: index + day_offset]
                 offset_df.reset_index(level=0, inplace=True)
                 offset_df.columns = ['ds', 'y']
                 slope, intercept, r_value, p_value, std_err = stats.linregress(
                     offset_df.ds, offset_df.y)
                 # slope_list.append(slope)
                 slope = round(slope, 3)
-                if abs(slope) < slope_deg3:
+                if abs(slope) < slope_deg:
                     # if dingdi_count == 0:
                     #     start = True
                     dingdi_count += 1

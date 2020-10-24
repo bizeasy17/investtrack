@@ -4,10 +4,9 @@ import pandas as pd
 import tushare as ts
 from django.db.models import Q
 
-from stockmarket.models import StockNameCodeMap
 
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import gen_cp_task
+from .utils import generate_systask
 '''
 check the missing history sql query
 SELECT ts_code 
@@ -18,6 +17,8 @@ WHERE  NOT EXISTS (
    WHERE  ts_code = code.ts_code
    );
 '''
+
+
 def split_trade_cal(start_date, end_date):
     '''
     如果取数的时间跨度大于10年，就需要对时间进行拆分
@@ -52,7 +53,7 @@ def split_trade_cal(start_date, end_date):
     return split_date_list
 
 
-def hist_since_listed(stock_symbol, start_date, end_date, freq='D', asset='E'):
+def download_hist_data(stock_symbol, start_date, end_date, freq='D', asset='E'):
     '''
     将每次的收盘历史数据按照10年分隔从tushare接口获取
     再按照时间先后顺序拼接
@@ -75,102 +76,38 @@ def hist_since_listed(stock_symbol, start_date, end_date, freq='D', asset='E'):
         return pd.concat(df_list)
 
 
-def download_stock_hist(freq, ts_code_list=[], asset='E',):
+def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
+    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
+          ' history trade info started.')
     end_date = date.today()
-    if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=False)
+    # print(listed_company.ts_code)
+    df = download_hist_data(ts_code, start_date, end_date, freq, asset,)
+    hist_list = []
+    for v in df.values:
+        hist = object
+        if freq == 'D':
+            hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                                     amount=v[10], freq=freq)
+        else:
+            pass
+        '''
+        ts_code	str	股票代码
+        trade_date	str	交易日期
+        open	float	开盘价
+        high	float	最高价
+        low	float	最低价
+        close	float	收盘价
+        pre_close	float	昨收价
+        change	float	涨跌额
+        pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+        vol	float	成交量 （手）
+        amount	float	成交额 （千元）
+        '''
+        hist_list.append(hist)
+    if freq == 'D':
+        StockHistoryDaily.objects.bulk_create(hist_list)
     else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=False, ts_code__in=ts_code_list)
-    if listed_companies is not None and len(listed_companies) > 0:
-        for listed_company in listed_companies:
-            # print(listed_company.ts_code)
-            if listed_company.list_date is not None:
-                df = hist_since_listed(
-                    listed_company.ts_code, listed_company.list_date, end_date, freq, asset,)
-                hist_list = []
-                for v in df.values:
-                    hist = object
-                    if freq == 'D':
-                        hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                                low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                                amount=v[10], freq=freq)
-                    else:
-                        pass
-                    '''
-                    ts_code	str	股票代码
-                    trade_date	str	交易日期
-                    open	float	开盘价
-                    high	float	最高价
-                    low	float	最低价
-                    close	float	收盘价
-                    pre_close	float	昨收价
-                    change	float	涨跌额
-                    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-                    vol	float	成交量 （手）
-                    amount	float	成交额 （千元）
-                    '''
-                    hist_list.append(hist)
-                if freq == 'D':
-                    StockHistoryDaily.objects.bulk_create(hist_list)
-                else:
-                    pass
-                listed_company.is_hist_downloaded = True
-                listed_company.hist_update_date = end_date
-                listed_company.save()
-                gen_cp_task(listed_company.ts_code, freq, listed_company.list_date, end_date)
-                now = datetime.now()
-                print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
-                    ' history trade info downloaded.')
-            else:
-                now = datetime.now()
-                print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
-                    ' list date is empty.')
-
-def update_stock_hist(freq, ts_code_list=[], asset='E',):
-    end_date = date.today()
-    if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True)
-    else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, ts_code__in=ts_code_list)
-    # listed_companies = StockNameCodeMap.objects.filter(
-    #     is_hist_downloaded=True).filter(Q(is_hist_updated=False) | Q(hist_update_date__lt=date.today()))
-    if listed_companies is not None and len(listed_companies) > 0:
-        for listed_company in listed_companies:
-            df = hist_since_listed(
-                listed_company.ts_code, listed_company.hist_update_date + timedelta(days=1), end_date, freq, asset)
-            hist_list = []
-            for v in df.values:
-                hist_D = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                           low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                           amount=v[10], freq='D')
-                '''
-                ts_code	str	股票代码
-                trade_date	str	交易日期
-                open	float	开盘价
-                high	float	最高价
-                low	float	最低价
-                close	float	收盘价
-                pre_close	float	昨收价
-                change	float	涨跌额
-                pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-                vol	float	成交量 （手）
-                amount	float	成交额 （千元）
-                '''
-                hist_list.append(hist_D)
-            StockHistoryDaily.objects.bulk_create(hist_list)
-            listed_company.is_hist_updated = True
-            listed_company.hist_update_date = end_date
-            listed_company.save()
-            gen_cp_task(listed_company.ts_code, freq, listed_company.hist_update_date + timedelta(days=1), end_date)
-            now = datetime.now()
-            print(now.strftime("%Y-%m-%d %H:%M:%S") + ':' + listed_company.ts_code +
-                  ' history trade info updated.')
-    else:
-        now = datetime.now()
-        print(now.strftime("%Y-%m-%d %H:%M:%S") + ': can not find the give ts_code.')
-        print(ts_code_list)
-        
+        pass
+    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
+          ' history trade info downloaded.')

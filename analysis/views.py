@@ -475,3 +475,9 @@ def ma_test(request, stock_symbol, freq):
         return HttpResponse(status=200)
     else:
         return HttpResponse(status=500)
+
+from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
+def analysis_command(request, cmd, params):
+    plist = params.split(',')
+    if cmd == 'mark_junxian_cp':
+        handle_junxian_cp(plist[0],plist[1],plist[2],plist[3])

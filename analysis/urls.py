@@ -33,6 +33,9 @@ urlpatterns = [
     #     走势预测
     path('zhengu/', views.ZhenGuHomeView.as_view(), name="zhengu"),
 
+    path('cmd/<cmd>/<params>/', views.analysis_command),
+
+
     #     path('feed/pct-period-data/',
     #          views.feed_pct_data),  # ??
     #     path('feed/expected-pct-data/',

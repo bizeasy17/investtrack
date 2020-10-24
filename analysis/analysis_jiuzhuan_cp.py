@@ -1,6 +1,7 @@
 
 
 import pandas as pd
+import numpy as np
 import time
 import logging
 from datetime import date, datetime, timedelta
@@ -8,7 +9,8 @@ from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
 from .utils import log_test_status, has_analysis_task, get_analysis_task
-from .stock_hist import hist_since_listed
+from .stock_hist import download_hist_data
+from analysis.utils import get_analysis_task, set_task_completed, get_trade_cal_diff
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +25,46 @@ logger = logging.getLogger(__name__)
 #     # print(df.head())
 
 
-def recon_strategy_usage():
+def handle_jiuzhuan_cp(ts_code, freq='D'):
     '''
     同步策略在交易中的使用情况
     '''
+    if ts_code is not None and freq is not None:
+        start_date = None
+        end_date = None
+        today = date.today()
+        ts_code_list = ts_code.split(',')
+
+        if ts_code_list is not None and len(ts_code_list) >= 1:
+            for ts_code in ts_code_list:
+                try:
+                    listed_company = StockNameCodeMap.objects.get(
+                        ts_code=ts_code)
+                    task = get_analysis_task(
+                        ts_code, 'MARK_CP', 'jiuzhuan_bs', freq)
+                    if task is not None:
+                        atype = '1'  # 标记更新的股票历史记录
+                        # 如何差额取之前的历史记录？9
+                        if task.start_date == listed_company.list_date:
+                            print('第一次处理，从上市日开始。。。')
+                            atype = '0'  # 从上市日开始标记
+                            start_date = task.start_date
+                        else:
+                            print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
+                            start_date = task.start_date - \
+                                timedelta(days=get_trade_cal_diff(
+                                    ts_code, task.start_date))
+
+                        mark_jiuzhuan(ts_code, freq, start_date,
+                                      task.end_date, atype)
+                        # print(task.start_date)
+                        # print(task.end_date)
+                        set_task_completed(listed_company.ts_code, 'MARK_CP',
+                                           freq, 'jiuzhuan_bs', task.start_date, task.end_date)
+                    else:
+                        print('no jiuzhuan mark cp task')
+                except Exception as e:
+                    print(e)
     pass
 
 
@@ -34,7 +72,7 @@ def test_mark(ts_code, start_date, end_date):
     try:
         hist_list = []
         end_date = date.today()
-        df = hist_since_listed(ts_code, start_date, end_date)
+        df = download_hist_data(ts_code, start_date, end_date)
         marked_df = pre_mark_jiuzhuan(df)
         for v in marked_df.values:
             hist_D = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
@@ -63,83 +101,94 @@ def test_mark(ts_code, start_date, end_date):
         return True
 
 
-def mark_jiuzhuan_listed(freq, ts_code_list=[]):
+def mark_jiuzhuan(ts_code, freq, start_date, end_date, atype):
     '''
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
     '''
-    print(ts_code_list)
     run_date = date.today()
-    if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=False, is_hist_downloaded=True)
-    else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_marked_jiuzhuan=False, is_hist_downloaded=True, ts_code__in=ts_code_list)
-    print(len(listed_companies))
     hist_list = []
-    if listed_companies is not None and len(listed_companies) > 0:
-        for listed_company in listed_companies:
-            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'jiuzhuan_bs', freq):
-                print(' marked jiuzhuan on start code - ' + listed_company.ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                task = get_analysis_task(
-                    listed_company.ts_code, 'MARK_CP', 'jiiuzhuan_bs', freq)
-                # df = hist_since_listed(
-                #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
-                df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
-                    ts_code=listed_company.ts_code, trade_date__gt=task.start_date - timedelta(days=4), trade_date__lt=task.end_date).order_by(
-                    'trade_date').values('id', 'close', 'chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'))
 
-                df = pd.DataFrame()
-                # if freq == 'D':
-                # else:
-                #     pass
-                if df is not None and len(df) > 0:
-                    marked_df = pre_mark_jiuzhuan(df)
-                    # 确保处理后的数据只是更新需要更新的开始日期
-                    marked_df = marked_df[df['trade_date'] >= task.start_date]
-                    for index, row in marked_df.iterrows():
-                        hist = object
-                        if freq == 'D':
-                            hist = StockHistoryDaily(pk=row['id'])
-                        else:
-                            pass
-                        hist.chg4 = round(row['chg4'], 3)
-                        hist.jiuzhuan_count_b = row['jiuzhuan_count_b']
-                        hist.jiuzhuan_count_s = row['jiuzhuan_count_s']
-                        hist_list.append(hist)
-                    if freq == 'D':
-                        StockHistoryDaily.objects.bulk_update(
-                            hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
-                    else:
-                        pass
-                    log_test_status(listed_company.ts_code, 'MARK_CP',
-                                    freq, ['jiuzhuan_bs'])
-                    listed_company.is_marked_jiuzhuan = True
-                    listed_company.save()
-                    hist_list.clear()
-                    print(' marked jiuzhuan on end code - ' + listed_company.ts_code +
-                          ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    return len(hist_list)
+    print(' marked jiuzhuan on start code - ' + ts_code +
+          ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    # df = hist_since_listed(
+    #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
+    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by(
+        'trade_date').values('id', 'close', 'chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'))
+    # print(len(df))
+    if df is not None and len(df) > 0:
+        # df_close_diff4 = df['close'].diff(periods=4)
+        # if df_close_diff4 is not None and len(df_close_diff4) > 0:
+        #     pre_mark_b(df, df_close_diff4)
+        #     pre_mark_s(df, df_close_diff4)
+        #     df['chg4'] = df_close_diff4
+        pre_mark_jiuzhuan(df, atype)
+        # 确保处理后的数据只是更新需要更新的开始日期
+        start_index = 0
+        if atype != '0':
+            start_index = 4
+        df = df[start_index:]
+        for index, row in df.iterrows():
+            hist = None
+            if freq == 'D':
+                hist = StockHistoryDaily(pk=row['id'])
+            else:
+                pass
+            # print(row['chg4'])
+            hist.chg4 = round(
+                row['chg4'], 3) if row['chg4'] is not None else None
+            hist.jiuzhuan_count_b = row['jiuzhuan_count_b'] if row['jiuzhuan_count_b'] != 0 else None
+            hist.jiuzhuan_count_s = row['jiuzhuan_count_s'] if row['jiuzhuan_count_s'] != 0 else None
+            hist_list.append(hist)
+        if freq == 'D':
+            StockHistoryDaily.objects.bulk_update(
+                hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
+        else:
+            pass
+        hist_list.clear()
+        print(' marked jiuzhuan on end code - ' + ts_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    # return len(hist_list)
 
 
-def pre_mark_jiuzhuan(df):
+def pre_mark_jiuzhuan(df, atype=1):
     '''
     标记股票的九转序列
     '''
-    count_b = 0  # 九转买点
-    count_s = 0  # 九转卖点
     jiuzhuan_diff_list = []
     jiuzhuan_diff_s_list = []
+    # print(atype)
+    # print(df['jiuzhuan_count_b'].iloc[3])
+    # print(df['jiuzhuan_count_s'].iloc[3])
+    # print(df['trade_date'].iloc[3])
+    periods = 4 if atype == '1' else 0
+    if atype == '1':  # 更新
+        # print(df['jiuzhuan_count_b'].iloc[3])
+        # print(df['jiuzhuan_count_s'].iloc[3])
+        # 九转买点计数器
+        count_b = df['jiuzhuan_count_b'].iloc[3] if df['jiuzhuan_count_b'].iloc[3] is not np.nan else 0
+        # 九转卖点计数器
+        count_s = df['jiuzhuan_count_s'].iloc[3] if df['jiuzhuan_count_s'].iloc[3] is not np.nan else 0
+        print(count_b)
+        print(count_s)
+        for i in range(0, periods):
+            jiuzhuan_diff_list.append(np.nan)
+            jiuzhuan_diff_s_list.append(np.nan)
+    else:  # 首次标记
+        count_b = 0
+        count_s = 0
     try:
         # df = pro.daily(ts_code=stock_symbol, trade_date=trade_date)
         # 与4天前的收盘价比较
         df_close_diff4 = df['close'].diff(periods=4)
+        # print(len(df_close_diff4))
+        # df_close_diff4_p = df_close_diff4[periods:]
+        # print(df_close_diff4.head(10))
         if df_close_diff4 is not None and len(df_close_diff4) > 0:
-            for stock_hist in df_close_diff4.values:
-                if stock_hist is not None:
-                    if stock_hist < 0:  # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
+            for close_chg4 in df_close_diff4[periods:].values:
+                if close_chg4 is not np.nan:
+                    # print(close_chg4)
+                    if close_chg4 < 0:  # 股价与往前第四个交易日比较，如果<前值，那么开始计算九转买点，
                         # 同时九转卖点设置为0
                         if count_b < 9:
                             count_b += 1
@@ -153,18 +202,22 @@ def pre_mark_jiuzhuan(df):
                         else:
                             count_s = 1
                         count_b = 0
+                    # print(count_b)
+                    # print(count_s)
                     jiuzhuan_diff_list.append(count_b)
                     jiuzhuan_diff_s_list.append(count_s)
                 else:
                     jiuzhuan_diff_list.append(0)
                     jiuzhuan_diff_s_list.append(0)
+        # print(jiuzhuan_diff_list)
+        # print(jiuzhuan_diff_s_list)
         # df['diff'] = df_close_diff4
         # df['diff_count'] = jiuzhuan_diff_list
         # df['diff_count_s'] = jiuzhuan_diff_s_list
         df['chg4'] = df_close_diff4
         df['jiuzhuan_count_b'] = jiuzhuan_diff_list
         df['jiuzhuan_count_s'] = jiuzhuan_diff_s_list
-    except:
-        time.sleep(1)
-    else:
-        return df
+    except Exception as e:
+        print(e)
+    # else:
+    #     return df
