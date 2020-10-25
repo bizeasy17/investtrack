@@ -131,10 +131,29 @@ def get_trade_cal_diff(ts_code, last_trade, exchange='SSE', period=4):
             count += 1
         except Exception as e:
             print(e)
-        offset += 1
+        offset += 1 
     # print(last_trade-timedelta(days=offset))
     return offset
 
+def get_trade_cal_by_attr(ts_code, last_trade, attr='jiuzhuan_count_b'):
+    hist = None
+    it_is = False
+    offset = 0
+    # pro = ts.pro_api()
+    while it_is:
+        # df = pro.trade_cal(exchange=exchange, start_date=(last_trade -
+        #                                                   timedelta(days=offset+1)).strftime('%Y%m%d'), end_date=(last_trade-timedelta(days=offset+1)).strftime('%Y%m%d'))
+        # if df['is_open'].iloc[0] == 1:
+        #     count += 1
+        try:
+            hist = StockHistoryDaily.objects.get(ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
+            if getattr(hist, attr) == 1:
+                it_is = True
+        except Exception as e:
+            print(e)
+        offset += 1 
+    # print(last_trade-timedelta(days=offset))
+    return hist
 
 def pre_mark_b(df, df_close_diff4):
     pre_mark(df, df_close_diff4, 'b')

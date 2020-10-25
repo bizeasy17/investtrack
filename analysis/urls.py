@@ -16,8 +16,6 @@ urlpatterns = [
          views.high_pct_data),  # ??
     path('low-pct-data/strategy/<strategy>/<stock_symbol>/<test_period>/',
          views.low_pct_data),  # ??
-    path('mark-ma-cp/<stock_symbol>/<freq>/',
-         views.ma_test),
     path('stock-hist/strategy/<strategy>/<stock_symbol>/<freq>/<type>/<int:period>/',
          views.stock_history),  # ??
     # 选股page

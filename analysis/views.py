@@ -467,17 +467,21 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
     pass
 
 
-def ma_test(request, stock_symbol, freq):
-    # end_date = date.today()
-    symbol_list = stock_symbol.split(',')
-    res = mark_junxian_bs_listed(freq, symbol_list)
-    if res:
-        return HttpResponse(status=200)
-    else:
-        return HttpResponse(status=500)
-
 from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
+from analysis.analysis_dingdi import handle_dingdi_cp
+from analysis.analysis_tupo_b_cp import handle_tupo_cp
+
+
 def analysis_command(request, cmd, params):
-    plist = params.split(',')
-    if cmd == 'mark_junxian_cp':
-        handle_junxian_cp(plist[0],plist[1],plist[2],plist[3])
+    try:
+        plist = params.split(',')
+        if cmd == 'mark_junxian_cp':
+            handle_junxian_cp(plist[0],plist[1],plist[2],plist[3])
+        elif cmd == 'dingdi':
+            handle_dingdi_cp(plist[0],plist[1],plist[2],plist[3],plist[4])
+        elif cmd == 'tupo':
+            handle_tupo_cp(plist[0], plist[1],plist[3],plist[4])
+        return HttpResponse(status=200)
+    except Exception as e:
+        return HttpResponse(status=500)
+    

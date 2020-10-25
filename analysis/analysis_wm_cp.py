@@ -1,16 +1,18 @@
 
 
-import pandas as pd
-import numpy as np
-import time
 import logging
-from scipy import stats
+import time
 from datetime import date, datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
+from scipy import stats
 from stockmarket.models import StockNameCodeMap
+
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task
 from .stock_hist import download_hist_data
+from .utils import get_analysis_task, get_trade_cal_by_attr, set_task_completed
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +27,48 @@ logger = logging.getLogger(__name__)
 #     # print(df.head())
 
 
-def recon_strategy_usage():
+def handle_wm_cp(ts_code, freq, version):
     '''
     同步策略在交易中的使用情况
     '''
+    if ts_code is not None and freq is not None:
+        ts_code_list = ts_code.split(',')
+        if ts_code_list is not None and len(ts_code_list) >= 1:
+            # print(ts_code_list)
+            for ts_code in ts_code_list:
+                try:
+                    listed_company = StockNameCodeMap.objects.get(
+                        ts_code=ts_code)
+                    task = get_analysis_task(
+                        ts_code, 'MARK_CP', 'wm_dingdi_bs', freq)
+                    if task is not None:
+                        atype = '1'  # 标记更新的股票历史记录
+                        # 如何差额取之前的历史记录？9
+                        if task.start_date == listed_company.list_date:
+                            print('第一次处理，从上市日开始。。。')
+                            atype = '0'  # 从上市日开始标记
+                            start_date = task.start_date
+                        else:
+                            print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
+                            start_date = task.start_date - \
+                                timedelta(days=get_trade_cal_by_attr(
+                                    ts_code, task.start_date, ))
+
+                        mark_wm_listed(ts_code, freq, start_date,
+                                       task.end_date, atype)
+
+                        # print(task.start_date)
+                        # print(task.end_date)
+                        set_task_completed(listed_company.ts_code, 'MARK_CP',
+                                           freq, 'wm_dingdi_bs', task.start_date, task.end_date, atype)
+                    else:
+                        print('no wm_dingdi_bs mark cp task')
+                except Exception as e:
+                    print(e)
     pass
 
 
-def mark_wm_listed(freq, ts_code_list=[]):
+def mark_wm_listed(ts_code, freq, start_date, end_date, price_chg_pct=0.03, atype='1'):
     '''
     对于未标注支撑位买入的的上市股票标记，
     每次运行只是增量上市股票标记
@@ -44,56 +80,43 @@ def mark_wm_listed(freq, ts_code_list=[]):
     # print(ts_code_list)
     # end_date = date.today()
     # periods = [10, 20, 30, 50, 80]
-    price_chg_3pct = 0.03
-    price_chg_5pct = 0.05
-    compare_offset = 2
-    # end_date = date.today()
-    if len(ts_code_list) == 0:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_wm=None)
-    else:
-        listed_companies = StockNameCodeMap.objects.filter(
-            is_hist_downloaded=True, is_marked_wm=None, ts_code__in=ts_code_list)
-    # print(len(listed_companies))
+    # price_chg_3pct = 0.03
+    # price_chg_5pct = 0.05
     hist_list = []
-    if listed_companies is not None and len(listed_companies) > 0:
-        for listed_company in listed_companies:
-            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'wm_dingdi_bs', freq):
-                print(' marked w, m on start code - ' + listed_company.ts_code +
-                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                df = pd.DataFrame()
-                if freq == 'D':
-                    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=listed_company.ts_code).order_by(
-                        'trade_date').values('id', 'trade_date', 'close', 'w_di', 'm_ding','ding_max','di_min'))
-                else:
-                    pass
-                if df is not None and len(df) > 0:
-                    # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
-                    pre_marked_df = mark_wm(listed_company.ts_code, df, price_chg_3pct)
-                    # print(post_marked_df.tail(50))
-                    for index, row in pre_marked_df.iterrows():
-                        hist = object
-                        if freq == 'D':
-                            hist = StockHistoryDaily(pk=row['id'])
-                        else:
-                            pass
-                        hist.m_ding = row['m_ding']
-                        hist.w_di = row['w_di']
-                        hist_list.append(hist)
-                    if freq == 'D':
-                        StockHistoryDaily.objects.bulk_update(hist_list, ['w_di', 'm_ding'])
-                    else:
-                        pass
-                    log_test_status(listed_company.ts_code, 'MARK_CP', freq, ['wm_dingdi_bs'])
-                    listed_company.is_marked_wm = True
-                    listed_company.save()
-                    print(' marked w or m on end code - ' + listed_company.ts_code +
-                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                    hist_list.clear() # 清空已经保存的记录列表
+
+    # end_date = date.today()
+    print(' marked w, m on start code - ' + ts_code +
+          ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    df = pd.DataFrame()
+    if freq == 'D':
+        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by(
+            'trade_date').values('id', 'trade_date', 'close', 'w_di', 'm_ding', 'ding_max', 'di_min'))
     else:
-        print('w or m for code - ' + str(ts_code_list) +
-                      ' marked already or not exist,' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    return len(hist_list)
+        pass
+    start_index = 0
+    if atype != 0:
+        start_index = 0
+    if df is not None and len(df) > 0:
+        # 标注顶底，未区分顶还是底，但顶底最后一个元素已标记
+        pre_marked_df = mark_wm(ts_code, df, price_chg_pct)
+        # print(post_marked_df.tail(50))
+        for index, row in pre_marked_df.iterrows():
+            hist = object
+            if freq == 'D':
+                hist = StockHistoryDaily(pk=row['id'])
+            else:
+                pass
+            hist.m_ding = row['m_ding']
+            hist.w_di = row['w_di']
+            hist_list.append(hist)
+        if freq == 'D':
+            StockHistoryDaily.objects.bulk_update(
+                hist_list, ['w_di', 'm_ding'])
+        else:
+            pass
+        print(' marked w or m on end code - ' + ts_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        hist_list.clear()  # 清空已经保存的记录列表
 
 
 def mark_wm(ts_code, df, price_chg_pct):
@@ -109,7 +132,8 @@ def mark_wm(ts_code, df, price_chg_pct):
         idx_prev = -1
         for id in idx_list:
             if idx_prev != -1:
-                chg_pct = abs(df.loc[id].close - df.loc[idx_prev].close) / df.loc[id].close
+                chg_pct = abs(df.loc[id].close -
+                              df.loc[idx_prev].close) / df.loc[id].close
                 if chg_pct <= price_chg_pct:
                     # print('w di found')
                     df.loc[id, 'w_di'] = 1
@@ -118,7 +142,8 @@ def mark_wm(ts_code, df, price_chg_pct):
         idx_prev = -1
         for id in idx_list:
             if idx_prev != -1:
-                chg_pct = abs(df.loc[id].close - df.loc[idx_prev].close) / df.loc[id].close
+                chg_pct = abs(df.loc[id].close -
+                              df.loc[idx_prev].close) / df.loc[id].close
                 if chg_pct <= price_chg_pct:
                     # print('m ding found')
                     df.loc[id, 'm_ding'] = 1
@@ -138,6 +163,7 @@ def mark_wm(ts_code, df, price_chg_pct):
     else:
         return df
 
+
 def update_wm_mark(ts_code, df, price_chg_pct):
     '''
     更新股票的w/m顶底
@@ -151,7 +177,8 @@ def update_wm_mark(ts_code, df, price_chg_pct):
         # 跳过第一个顶的索引
         for index, row in df.loc[last_index:].iterrows():
             chg_pct = (max_prev - row['close']) / row['close']
-            if row['slope'] > 0 and row['open'] < max_prev and chg_pct >= price_chg_pct:# slope >0 means 上涨趋势
+            # slope >0 means 上涨趋势
+            if row['slope'] > 0 and row['open'] < max_prev and chg_pct >= price_chg_pct:
                 df.loc[index, 'tupo_b'] = 1
         print('update pre tupo b end on code - ' + ts_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
