@@ -9,7 +9,6 @@ from analysis.utils import (generate_systask, hist_downloaded,
                             last_download_date, log_download_hist)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
-
 '''
 check the missing history sql query
 SELECT ts_code 

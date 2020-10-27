@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.strategy_test_period import test_by_period
+from analysis.strategy_test_period import handle_updown_pct_test
 
 
 class Command(BaseCommand):
@@ -39,23 +39,34 @@ class Command(BaseCommand):
         freq = options['freq']
         strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
                           'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
-        if ts_code is not None:
-            ts_code_list = ts_code.split(',')
-            if ts_code_list is not None and len(ts_code_list) >= 1:
-                # print(ts_code_list)
-                if freq is not None:
-                    for strategy_code in strategy_codes:
-                        test_by_period(strategy_code, freq, ts_code_list)
-                else:
-                    print('please input the mandatory freq')
-            else:
-                if freq is not None:
-                    test_by_period(strategy_code, freq)
-                else:
-                    print('please input the mandatory freq')
-        else:
-            if freq is not None:
-                for strategy_code in strategy_codes:
-                    test_by_period(strategy_code, freq)
-            else:
-                print('please input the mandatory freq')
+        
+        if freq is None:
+            freq = 'D'
+
+        if ts_code is None:
+            print('ts_code is mandatory')
+            return
+        
+        for strategy_code in strategy_codes:
+            handle_updown_pct_test(strategy_code, ts_code, freq)
+        
+        # if ts_code is not None:
+        #     ts_code_list = ts_code.split(',')
+        #     if ts_code_list is not None and len(ts_code_list) >= 1:
+        #         # print(ts_code_list)
+        #         if freq is not None:
+        #             for strategy_code in strategy_codes:
+        #                 test_by_period(strategy_code, freq, ts_code_list)
+        #         else:
+        #             print('please input the mandatory freq')
+        #     else:
+        #         if freq is not None:
+        #             test_by_period(strategy_code, freq)
+        #         else:
+        #             print('please input the mandatory freq')
+        # else:
+        #     if freq is not None:
+        #         for strategy_code in strategy_codes:
+        #             test_by_period(strategy_code, freq)
+        #     else:
+        #         print('please input the mandatory freq')

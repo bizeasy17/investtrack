@@ -35,9 +35,8 @@ def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date
     task.save()
 
 
-def generate_systask(ts_code, freq, start_date, end_date, event_list=[]):
-    strategy_list = ['jiuzhuan_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
-                     'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']
+def generate_task(ts_code, freq, start_date, end_date, event_list=[],strategy_list = ['jiuzhuan_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
+                     'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']):
     # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
     for event in event_list:
         for strategy in strategy_list:
