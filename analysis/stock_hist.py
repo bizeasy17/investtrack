@@ -6,7 +6,7 @@ from django.db.models import Q
 
 
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import generate_systask
+from .utils import generate_task
 '''
 check the missing history sql query
 SELECT ts_code 

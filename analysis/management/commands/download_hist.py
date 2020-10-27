@@ -8,7 +8,7 @@ from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 from analysis.stock_hist import download_stock_hist
 from stockmarket.models import StockNameCodeMap
-from analysis.utils import hist_downloaded, last_download_date, generate_systask, log_download_hist
+from analysis.utils import hist_downloaded, last_download_date, generate_task, log_download_hist
 
 
 class Command(BaseCommand):
@@ -64,11 +64,11 @@ class Command(BaseCommand):
 
         try:
             if ts_code is None:
-                listed_companies = StockNameCodeMap.objects.get()
+                listed_companies = StockNameCodeMap.objects.filter()
             else:
                 ts_code_list = ts_code.split(',')
                 if ts_code_list is not None and len(ts_code_list) >= 1:
-                    listed_companies = StockNameCodeMap.objects.get(
+                    listed_companies = StockNameCodeMap.objects.filter(
                         ts_code__in=ts_code_list)
 
             for listed_company in listed_companies:
@@ -97,7 +97,7 @@ class Command(BaseCommand):
                 if start_date is not None and end_date is not None:
                     log_download_hist(listed_company.ts_code,
                                       'HIST_DOWNLOAD', start_date, end_date, freq)
-                    generate_systask(listed_company.ts_code,
+                    generate_task(listed_company.ts_code,
                                      freq, start_date, end_date, sys_event_list)
                 else:
                     print('no history to be downloaded for give period')
