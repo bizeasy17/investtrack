@@ -1,16 +1,19 @@
 
 
-import pandas as pd
-import numpy as np
-import time
 import logging
+import time
 from datetime import date, datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
+
+from analysis.utils import (generate_task, get_analysis_task,
+                            get_trade_cal_diff, set_task_completed)
+
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task, get_analysis_task
 from .stock_hist import download_hist_data
-from analysis.utils import get_analysis_task, set_task_completed, get_trade_cal_diff, generate_task
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,7 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
     同步策略在交易中的使用情况
     '''
     btest_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST']
-    strategy_list = ['jiuzhuan_bs']
+    strategy_list = ['jiuzhuan_b', 'jiuzhuan_s']
     start_date = None
     end_date = None
     today = date.today()
@@ -43,30 +46,31 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
-        for listed_company in listed_companies:
-            task = get_analysis_task(
+        for listed_company in listed_companies: #需要优化
+            tasks = get_analysis_task( 
                 listed_company.ts_code, 'MARK_CP', 'jiuzhuan_bs', freq)
-            if task is not None:
+            if tasks is not None and len(tasks) > 0:
                 atype = '1'  # 标记更新的股票历史记录
                 # 如何差额取之前的历史记录？9
-                if task.start_date == listed_company.list_date:
-                    print('第一次处理，从上市日开始。。。')
-                    atype = '0'  # 从上市日开始标记
-                    start_date = task.start_date
-                else:
-                    print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
-                    start_date = task.start_date - \
-                        timedelta(days=get_trade_cal_diff(
-                            ts_code, task.start_date))
+                for task in tasks:
+                    if task.start_date == listed_company.list_date:
+                        print('第一次处理，从上市日开始。。。')
+                        atype = '0'  # 从上市日开始标记
+                        start_date = task.start_date
+                    else:
+                        print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
+                        start_date = task.start_date - \
+                            timedelta(days=get_trade_cal_diff(
+                                ts_code, task.start_date))
 
-                mark_jiuzhuan(ts_code, freq, start_date,
-                              task.end_date, atype)
-                # print(task.start_date)
-                # print(task.end_date)
-                set_task_completed(listed_company.ts_code, 'MARK_CP',
-                                   freq, 'jiuzhuan_bs', task.start_date, task.end_date)
-                generate_task(listed_company.ts_code,
-                                     freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                    mark_jiuzhuan(ts_code, freq, start_date,
+                                task.end_date, atype)
+                    # print(task.start_date)
+                    # print(task.end_date)
+                    set_task_completed(listed_company.ts_code, 'MARK_CP',
+                                    freq, 'jiuzhuan_bs', task.start_date, task.end_date)
+                    generate_task(listed_company.ts_code,
+                                        freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print('no jiuzhuan mark cp task')
     except Exception as e:

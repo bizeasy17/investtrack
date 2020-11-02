@@ -690,6 +690,8 @@ class TradeStrategyStat(BaseModel):
 
 
 class PickedStocksMeetStrategy(BaseModel):
+    done_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('操作者'), blank=False, null=False,
+                                on_delete=models.SET_NULL)
     strategy_code = models.CharField(
         _('策略代码'), max_length=25, blank=False, null=False, db_index=True)
     ts_code = models.CharField(

@@ -15,7 +15,7 @@ from .utils import get_analysis_task, set_task_completed
 logger = logging.getLogger(__name__)
 
 
-def handle_updown_pct_test(strategy_code, ts_code, test_freq):
+def handle_updown_pct_test(ts_code, test_freq, strategy_code, ):
     try:
         if ts_code is None:
             listed_companies = StockNameCodeMap.objects.filter()
@@ -25,13 +25,14 @@ def handle_updown_pct_test(strategy_code, ts_code, test_freq):
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
         for listed_company in listed_companies:
-            task = get_analysis_task(
+            tasks = get_analysis_task(
                 listed_company.ts_code, 'PERIOD_TEST', strategy_code, test_freq)
-            if task is not None:
-                test_by_period(strategy_code, listed_company.ts_code,
-                               task.start_date, task.end_date, test_freq)
-                set_task_completed(listed_company.ts_code, 'PERIOD_TEST',
-                                   test_freq, strategy_code, task.start_date, task.end_date)
+            if tasks is not None:
+                for task in tasks:
+                    test_by_period(strategy_code, listed_company.ts_code,
+                                   task.start_date, task.end_date, test_freq)
+                    set_task_completed(listed_company.ts_code, 'PERIOD_TEST',
+                                       test_freq, strategy_code, task.start_date, task.end_date)
             else:
                 print(listed_company.ts_code + ' for strategy ' +
                       strategy_code + ' pct has tested already / no task')
@@ -65,30 +66,36 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq):
     else:
         pass
     # 根据策略获取标注的关键点index
-    if strategy_code == 'jiuzhuan_b':
-        idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
-    elif strategy_code == 'jiuzhuan_s':
-        idx_list = df.loc[df['jiuzhuan_count_s'] == 9].index
-    elif strategy_code == 'dibu_b':
-        idx_list = df.loc[df['di_min'] == 1].index
-    elif strategy_code == 'dingbu_s':
-        idx_list = df.loc[df['ding_max'] == 1].index
-    elif strategy_code == 'w_di':
-        idx_list = df.loc[df['w_di'] == 1].index
-    elif strategy_code == 'm_ding':
-        idx_list = df.loc[df['m_ding'] == 1].index
-    elif strategy_code == 'tupo_yali_b':
-        idx_list = df.loc[df['tupo_b'] == 1].index
-    elif strategy_code == 'diepo_zhicheng_s':
-        idx_list = df.loc[df['diepo_s'] == 1].index
-    elif strategy_code == 'ma25_zhicheng_b':
-        idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
-    elif strategy_code == 'ma25_tupo_b':
-        idx_list = df.loc[df['ma25_tupo_b'] == 1].index
-    elif strategy_code == 'ma25_diepo_s':
-        idx_list = df.loc[df['ma25_diepo_s'] == 1].index
-    elif strategy_code == 'ma25_yali_s':
-        idx_list = df.loc[df['ma25_yali_s'] == 1].index
+    if strategy_code.startswith('jiuzhuan_'):
+        split = strategy_code.split('_')
+        idx_list = df.loc[df['jiuzhuan_count_'+ split[1]] == 9].index
+    else:
+        idx_list = df.loc[df[strategy_code] == 1].index
+
+    # if strategy_code == 'jiuzhuan_b':
+    #     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
+    # elif strategy_code == 'jiuzhuan_s':
+    #     idx_list = df.loc[df['jiuzhuan_count_s'] == 9].index
+    # elif strategy_code == 'dibu_b':
+    #     idx_list = df.loc[df['di_min'] == 1].index
+    # elif strategy_code == 'dingbu_s':
+    #     idx_list = df.loc[df['ding_max'] == 1].index
+    # elif strategy_code == 'w_di':
+    #     idx_list = df.loc[df['w_di'] == 1].index
+    # elif strategy_code == 'm_ding':
+    #     idx_list = df.loc[df['m_ding'] == 1].index
+    # elif strategy_code == 'tupo_yali_b':
+    #     idx_list = df.loc[df['tupo_b'] == 1].index
+    # elif strategy_code == 'diepo_zhicheng_s':
+    #     idx_list = df.loc[df['diepo_s'] == 1].index
+    # elif strategy_code == 'ma25_zhicheng_b':
+    #     idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
+    # elif strategy_code == 'ma25_tupo_b':
+    #     idx_list = df.loc[df['ma25_tupo_b'] == 1].index
+    # elif strategy_code == 'ma25_diepo_s':
+    #     idx_list = df.loc[df['ma25_diepo_s'] == 1].index
+    # elif strategy_code == 'ma25_yali_s':
+    #     idx_list = df.loc[df['ma25_yali_s'] == 1].index
 
     for test_period in periods:
         for idx in idx_list:
@@ -140,5 +147,5 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq):
                 strategy_test_list.append(test_by_day)
     if len(strategy_test_list) > 0:
         StrategyTestLowHigh.objects.bulk_create(strategy_test_list)
-    print(' test on low/high strategy ' + strategy_code + ' , for ' +
+    print(' test end on low/high strategy ' + strategy_code + ' , for ' +
           ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

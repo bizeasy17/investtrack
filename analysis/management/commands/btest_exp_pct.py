@@ -31,14 +31,20 @@ class Command(BaseCommand):
             type=str,
             help='Which freq you want to apply the snapshot',
         )
+        parser.add_argument(
+            '--strategy_code',
+            type=str,
+            help='Which strategy you want to apply the snapshot',
+        )
         pass
 
     def handle(self, *args, **options):
         ts_code = options['ts_code']
         # strategy_code = options['strategy_code']
         freq = options['freq']
-        strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
-                          'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
+        s_code = options['strategy_code']
+        # strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
+        #                   'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
         
         if freq is None:
             freq = 'D'
@@ -47,8 +53,8 @@ class Command(BaseCommand):
             print('ts_code is mandatory')
             return
         
-        for strategy_code in strategy_codes:
-            handle_exp_pct_test(strategy_code, ts_code, freq)
+        # for strategy_code in strategy_codes:
+        handle_exp_pct_test(s_code, ts_code, freq)
         
         # if ts_code is not None:
         #     ts_code_list = ts_code.split(',')
@@ -72,11 +78,10 @@ class Command(BaseCommand):
         #     else:
         #         print('please input the mandatory freq')
         
-        if freq is not None:
-            freq = 'D'
+        
 
         # print(ts_code_list)
-        target_pct_backtesting(ts_code, freq, )
+        # target_pct_backtesting(ts_code, freq, )
 
         # if ts_code is not None:
         #     ts_code_list = ts_code.split(',')
