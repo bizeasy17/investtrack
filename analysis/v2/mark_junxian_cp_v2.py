@@ -10,7 +10,10 @@ from datetime import date, datetime, timedelta
 from stockmarket.models import StockNameCodeMap
 from investors.models import StockFollowing, TradeStrategy
 from analysis.models import StockHistoryDaily, StockStrategyTestLog
-from analysis.utils import log_test_status, is_analyzed, get_analysis_task
+from analysis.utils import (generate_task, get_analysis_task,
+                            get_trade_cal_diff, init_eventlog,
+                            is_event_completed, set_event_completed,
+                            set_task_completed)
 from analysis.stock_hist import download_hist_data
 from .utils import mark_mov_avg, calculate_slope
 from analysis.utils import is_analyzed, get_analysis_task, get_trade_cal_diff, set_task_completed, generate_task
@@ -29,11 +32,28 @@ version = 'v2'
 
 
 def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset=2):
+    exec_date = date.today()
+    is_marking = is_event_completed(
+        'MARK_CP', 'jiuzhuan'+ma_freq+'_bs', freq=freq)
+    is_downloading = is_event_completed('HIST_DOWNLOAD', freq=freq)
+
+    if not is_downloading and not is_marking:
+        init_eventlog('MARK_CP', 'jiuzhuan'+ma_freq +
+                      '_bs', exec_date, freq=freq)
+        process_junxian_cp(ts_code, freq, ma_freq, version, days_offset)
+        set_event_completed('MARK_CP', 'jiuzhuan'+ma_freq +
+                            '_bs', exec_date, freq=freq)
+    else:
+        print("is still marking cp or has marked today")
+
+
+def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset=2):
     start_date = None
     end_date = None
     today = date.today()
     btest_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST']
-    strategy_list = ['junxian'+ma_freq+'_zhicheng','junxian'+ma_freq+'_tupo','junxian'+ma_freq+'_diepo','junxian'+ma_freq+'_yali']
+    strategy_list = ['junxian'+ma_freq+'_zhicheng', 'junxian'+ma_freq +
+                     '_tupo', 'junxian'+ma_freq+'_diepo', 'junxian'+ma_freq+'_yali']
 
     try:
         if ts_code is None:
@@ -68,7 +88,7 @@ def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset
                 set_task_completed(ts_code, 'MARK_CP',
                                    freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
                 generate_task(listed_company.ts_code,
-                                     freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                              freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print('no jiuzhuan mark cp task')
     except Exception as e:

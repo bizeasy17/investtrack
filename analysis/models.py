@@ -43,8 +43,22 @@ class BaseModel1(models.Model):
         pass
 
 
-class MarkCriticalPointTask(models.Model):
-    pass
+class AnalysisEventLog(models.Model):
+    analysis_code = models.CharField(
+        _('测试策略'), max_length=25, blank=True, null=True)
+    event_type = models.CharField(
+        _('日志类型'), max_length=50, blank=False, null=False)  # e.g. 000001.SZ
+    # 用于新下载的交易记录的标记start
+    exec_date = models.DateField(
+        _('执行日期'),  blank=False, null=False)
+    status = models.IntegerField(
+        _('状态'),  blank=False, null=False, default=0) # 0 - in progress, 1 - done, 2 - with exception, 
+    freq = models.CharField(
+        _('k线频率'), max_length=5, blank=False, null=False, default='D')
+    exception_tscode = models.CharField(
+        _('日志类型'), max_length=30000, blank=True, null=True)  # e.g. 000001.SZ
+    def __str__(self):
+        return self.event_type
 
 
 class StockHistoryDaily(BaseModel):

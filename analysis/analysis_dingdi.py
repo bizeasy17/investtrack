@@ -336,3 +336,6 @@ def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max
     print('post mark dingdi end  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return med_marked_df
+
+def calculate_slope(df, offset=2):
+    pass

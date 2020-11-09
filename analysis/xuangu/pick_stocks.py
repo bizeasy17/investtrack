@@ -14,7 +14,13 @@ from stockmarket.models import StockNameCodeMap
 from analysis.models import StockHistoryDaily
 
 
-def pick_stocks_by_strategy(strategy_code=None, freq='D'):
+def pre_stocks_pick():
+    '''
+    运行一遍下载，标记过程
+    '''
+
+def pick_stocks_by_strategy(strategy_code=None, freq='D', ts_code_list=[]
+                            ):
     '''
     1. 当天的数据是否已经下载，如果未下载，先下载
     2. 执行选股
@@ -27,7 +33,12 @@ def pick_stocks_by_strategy(strategy_code=None, freq='D'):
     '''
     today = date.today
     try:
-        listed_companies = StockNameCodeMap.objects.filter()
+        if ts_code_list is None:
+            listed_companies = StockNameCodeMap.objects.filter()
+        else:
+            listed_companies = StockNameCodeMap.objects.filter(
+                ts_code__in=ts_code_list)
+
         for listed_company in listed_companies:
             last_date = last_download_date(
                 listed_company.ts_code, 'HIST_DOWNLOAD', freq)

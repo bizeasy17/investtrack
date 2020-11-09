@@ -5,10 +5,12 @@ import tushare as ts
 from django.db.models import Q
 from stockmarket.models import StockNameCodeMap
 
-from analysis.utils import (generate_task, hist_downloaded,
-                            last_download_date, log_download_hist)
+from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
+                            is_event_completed, last_download_date,
+                            log_download_hist, set_event_completed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
+
 '''
 check the missing history sql query
 SELECT ts_code 
@@ -19,6 +21,18 @@ WHERE  NOT EXISTS (
    WHERE  ts_code = code.ts_code
    );
 '''
+
+
+def process_stock_download(ts_code, start_date, end_date, asset, freq, sys_event_list=['MARK_CP']):
+    exec_date = date.today()
+    is_downloading = is_event_completed('HIST_DOWNLOAD')
+    if not is_downloading:
+        init_eventlog('HIST_DOWNLOAD', exec_date, freq=freq)
+        handle_hist_download(ts_code, start_date, end_date,
+                             asset, freq, sys_event_list)
+        set_event_completed('HIST_DOWNLOAD', exec_date, freq=freq)
+    else:
+        print("is still downloading or has downloaded today")
 
 
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
@@ -46,7 +60,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                     listed_companies = StockNameCodeMap.objects.filter(
                         ts_code=ts_code)
         else:
-            listed_companies = StockNameCodeMap.objects.filter()    
+            listed_companies = StockNameCodeMap.objects.filter()
 
         if listed_companies is not None:
             for listed_company in listed_companies:
@@ -82,7 +96,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                     print('no history to be downloaded for give period')
     except Exception as e:
         print(e)
-    
+
 
 def split_trade_cal(start_date, end_date):
     '''

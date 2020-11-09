@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-from .models import StockStrategyTestLog, TradeStrategyStat,  StockHistoryDaily
+from .models import StockStrategyTestLog, TradeStrategyStat,  StockHistoryDaily, AnalysisEventLog
 # from investors.models import TradeStrategy
 import tushare as ts
 
@@ -52,6 +52,68 @@ def generate_task(ts_code, freq, start_date, end_date, event_list=[], strategy_l
                                            event_type=event, freq=freq, start_date=start_date, end_date=end_date)
             log.save()
 
+
+def is_event_completed(event, strategy_code=None, freq='D'):
+    '''
+    前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
+    1. 如果存在，就更新end date
+    2. 如果不存在，就创建新的
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
+    try:
+        if strategy_code is not None:  # Mark CP
+            event = AnalysisEventLog.objects.get(
+                analysis_code=strategy_code, event_type=event, freq=freq, status=0).order_by('-exec_date')
+        else:
+            event = AnalysisEventLog.objects.get(
+                event_type=event, freq=freq, status=0).order_by('-exec_date')
+        return True
+    except Exception as e:  # 未找到event log记录
+        print(e)
+        return False
+
+def init_eventlog(event, exec_date, strategy_code=None, freq='D'):
+    '''
+    前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
+    1. 如果存在，就更新end date
+    2. 如果不存在，就创建新的
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
+    try:
+        if strategy_code is not None:  # Mark CP
+            AnalysisEventLog.objects.get(
+                analysis_code=strategy_code, event_type=event, freq=freq, status=0, exec_date=exec_date)
+        else:
+            AnalysisEventLog.objects.get(
+                event_type=event, freq=freq, status=0, exec_date=exec_date)
+    except Exception as e:  # 未找到event log记录
+        print(e)
+        eventlog = AnalysisEventLog(
+            analysis_code=strategy_code,
+            event_type=event, freq=freq, exec_date=exec_date)
+        eventlog.save()
+
+
+def set_event_completed(event, exec_date, strategy_code=None, freq='D'):
+    '''
+    前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
+    1. 如果存在，就更新end date
+    2. 如果不存在，就创建新的
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
+    try:
+        if strategy_code is not None:  # Mark CP
+            event = AnalysisEventLog.objects.get(
+                analysis_code=strategy_code, event_type=event, freq=freq, exec_date=exec_date)
+        else:
+            event = AnalysisEventLog.objects.get(
+                event_type=event, freq=freq, exec_date=exec_date)
+        event.status = 1
+        event.save()
+        return True
+    except Exception as e:  # 未找到event log记录
+        print(e)
+        return False
 
 def has_analysis_task(ts_code, event, strategy_code, freq):
     try:

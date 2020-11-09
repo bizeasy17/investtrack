@@ -10,7 +10,9 @@ from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
 from analysis.utils import (generate_task, get_analysis_task,
-                            get_trade_cal_diff, set_task_completed)
+                            get_trade_cal_diff, init_eventlog,
+                            is_event_completed, set_event_completed,
+                            set_task_completed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
 from .stock_hist import download_hist_data
@@ -29,6 +31,18 @@ logger = logging.getLogger(__name__)
 
 
 def handle_jiuzhuan_cp(ts_code, freq='D'):
+    exec_date = date.today()
+    is_downloading = is_event_completed('HIST_DOWNLOAD', freq=freq)
+    is_marking = is_event_completed('MARK_CP', 'jiuzhuan_bs', freq=freq)
+    if not is_downloading and not is_marking:
+        init_eventlog('MARK_CP', 'jiuzhuan_bs', exec_date, freq=freq)
+        process_jiuzhuan_cp(ts_code, freq,)
+        set_event_completed('MARK_CP', 'jiuzhuan_bs', exec_date, freq=freq)
+    else:
+        print("is still marking cp / downloading or has marked today")
+
+
+def process_jiuzhuan_cp(ts_code, freq='D'):
     '''
     同步策略在交易中的使用情况
     '''
@@ -46,8 +60,8 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
-        for listed_company in listed_companies: #需要优化
-            tasks = get_analysis_task( 
+        for listed_company in listed_companies:  # 需要优化
+            tasks = get_analysis_task(
                 listed_company.ts_code, 'MARK_CP', 'jiuzhuan_bs', freq)
             if tasks is not None and len(tasks) > 0:
                 atype = '1'  # 标记更新的股票历史记录
@@ -64,13 +78,13 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
                                 ts_code, task.start_date))
 
                     mark_jiuzhuan(ts_code, freq, start_date,
-                                task.end_date, atype)
+                                  task.end_date, atype)
                     # print(task.start_date)
                     # print(task.end_date)
                     set_task_completed(listed_company.ts_code, 'MARK_CP',
-                                    freq, 'jiuzhuan_bs', task.start_date, task.end_date)
+                                       freq, 'jiuzhuan_bs', task.start_date, task.end_date)
                     generate_task(listed_company.ts_code,
-                                        freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                                  freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print('no jiuzhuan mark cp task')
     except Exception as e:
