@@ -46,11 +46,13 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
         elif evt_mk_status == 1:
             print("marking has been done today")
         else:
-            init_eventlog('MARK_CP',  exec_date=exec_date,
-                          strategy_code='jiuzhuan_bs', freq=freq)
+            if ts_code is None:
+                init_eventlog('MARK_CP',  exec_date=exec_date,
+                              strategy_code='jiuzhuan_bs', freq=freq)
             process_jiuzhuan_cp(ts_code, freq,)
-            set_event_completed('MARK_CP', exec_date=exec_date,
-                                strategy_code='jiuzhuan_bs', freq=freq)
+            if ts_code is None:
+                set_event_completed('MARK_CP', exec_date=exec_date,
+                                    strategy_code='jiuzhuan_bs', freq=freq)
 
 
 def process_jiuzhuan_cp(ts_code, freq='D'):

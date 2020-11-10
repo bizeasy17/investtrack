@@ -31,10 +31,12 @@ def process_stock_download(ts_code, start_date, end_date, asset, freq, sys_event
     elif evt_status == 1:
         print("history has been downloaded today")
     else: # event not exist, can run today
-        init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+        if ts_code is None:
+            init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
         handle_hist_download(ts_code, start_date, end_date,
                              asset, freq, sys_event_list)
-        set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+        if ts_code is None:
+            set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
         print("history has been downloaded successfully")
 
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
