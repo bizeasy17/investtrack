@@ -6,7 +6,7 @@ from django.db.models import Q
 from stockmarket.models import StockNameCodeMap
 
 from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
-                            is_event_completed, last_download_date,
+                            get_event_status, last_download_date,
                             log_download_hist, set_event_completed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
@@ -25,15 +25,17 @@ WHERE  NOT EXISTS (
 
 def process_stock_download(ts_code, start_date, end_date, asset, freq, sys_event_list=['MARK_CP']):
     exec_date = date.today()
-    is_downloading = is_event_completed('HIST_DOWNLOAD')
-    if not is_downloading:
-        init_eventlog('HIST_DOWNLOAD', exec_date, freq=freq)
+    evt_status = get_event_status('HIST_DOWNLOAD', exec_date)
+    if evt_status == 0:
+        print("previous downloading is still ongoing")
+    elif evt_status == 1:
+        print("history has been downloaded today")
+    else: # event not exist, can run today
+        init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
         handle_hist_download(ts_code, start_date, end_date,
                              asset, freq, sys_event_list)
-        set_event_completed('HIST_DOWNLOAD', exec_date, freq=freq)
-    else:
-        print("is still downloading or has downloaded today")
-
+        set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+        print("history has been downloaded successfully")
 
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
     '''
@@ -73,7 +75,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                         listed_company.ts_code, listed_company.list_date, today, asset, freq, )
                 else:  # 根据日志记录下载相应历史记录
                     if last_date is not None:
-                        if last_date[1] < today:
+                        if last_date[1] < today: #如果有差异就下载，不然就退出
                             # 已完成首次下载
                             # print('not first time')
                             start_date = last_date[1] + \
@@ -88,6 +90,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                             listed_company.ts_code, listed_company.list_date, today, asset, freq, )
                     end_date = today
                 if start_date is not None and end_date is not None:
+                    listed_company.last_update_date = end_date
                     log_download_hist(
                         listed_company.ts_code, 'HIST_DOWNLOAD', start_date, end_date, freq)
                     generate_task(

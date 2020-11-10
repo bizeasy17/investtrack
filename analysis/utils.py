@@ -53,7 +53,7 @@ def generate_task(ts_code, freq, start_date, end_date, event_list=[], strategy_l
             log.save()
 
 
-def is_event_completed(event, strategy_code=None, freq='D'):
+def get_event_status(event, exec_date, strategy_code=None, freq='D'):
     '''
     前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
     1. 如果存在，就更新end date
@@ -63,14 +63,14 @@ def is_event_completed(event, strategy_code=None, freq='D'):
     try:
         if strategy_code is not None:  # Mark CP
             event = AnalysisEventLog.objects.get(
-                analysis_code=strategy_code, event_type=event, freq=freq, status=0).order_by('-exec_date')
+                analysis_code=strategy_code, event_type=event, freq=freq, exec_date=exec_date)
         else:
             event = AnalysisEventLog.objects.get(
-                event_type=event, freq=freq, status=0).order_by('-exec_date')
-        return True
+                event_type=event, freq=freq, exec_date=exec_date)
+        return event.status
     except Exception as e:  # 未找到event log记录
         print(e)
-        return False
+        return -1
 
 def init_eventlog(event, exec_date, strategy_code=None, freq='D'):
     '''

@@ -43,7 +43,7 @@ class BaseModel1(models.Model):
         pass
 
 
-class AnalysisEventLog(models.Model):
+class AnalysisEventLog(BaseModel):
     analysis_code = models.CharField(
         _('测试策略'), max_length=25, blank=True, null=True)
     event_type = models.CharField(

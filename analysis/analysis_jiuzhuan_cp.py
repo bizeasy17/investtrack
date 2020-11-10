@@ -11,7 +11,7 @@ from stockmarket.models import StockNameCodeMap
 
 from analysis.utils import (generate_task, get_analysis_task,
                             get_trade_cal_diff, init_eventlog,
-                            is_event_completed, set_event_completed,
+                            get_event_status, set_event_completed,
                             set_task_completed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
@@ -32,14 +32,25 @@ logger = logging.getLogger(__name__)
 
 def handle_jiuzhuan_cp(ts_code, freq='D'):
     exec_date = date.today()
-    is_downloading = is_event_completed('HIST_DOWNLOAD', freq=freq)
-    is_marking = is_event_completed('MARK_CP', 'jiuzhuan_bs', freq=freq)
-    if not is_downloading and not is_marking:
-        init_eventlog('MARK_CP', 'jiuzhuan_bs', exec_date, freq=freq)
-        process_jiuzhuan_cp(ts_code, freq,)
-        set_event_completed('MARK_CP', 'jiuzhuan_bs', exec_date, freq=freq)
+    evt_dl_status = get_event_status(
+        'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+    evt_mk_status = get_event_status(
+        'MARK_CP', exec_date=exec_date, strategy_code='jiuzhuan_bs', freq=freq)
+    if evt_dl_status == 0:
+        print("previous downloading is still ongoing")
+    elif evt_dl_status == -1:
+        print("history has not yet been downloaded today")
     else:
-        print("is still marking cp / downloading or has marked today")
+        if evt_mk_status == 0:
+            print("previous marking is still ongoing")
+        elif evt_mk_status == 1:
+            print("marking has been done today")
+        else:
+            init_eventlog('MARK_CP',  exec_date=exec_date,
+                          strategy_code='jiuzhuan_bs', freq=freq)
+            process_jiuzhuan_cp(ts_code, freq,)
+            set_event_completed('MARK_CP', exec_date=exec_date,
+                                strategy_code='jiuzhuan_bs', freq=freq)
 
 
 def process_jiuzhuan_cp(ts_code, freq='D'):
@@ -75,9 +86,9 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                         print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
                         start_date = task.start_date - \
                             timedelta(days=get_trade_cal_diff(
-                                ts_code, task.start_date))
+                                listed_company.ts_code, task.start_date))
 
-                    mark_jiuzhuan(ts_code, freq, start_date,
+                    mark_jiuzhuan(listed_company.ts_code, freq, start_date,
                                   task.end_date, atype)
                     # print(task.start_date)
                     # print(task.end_date)

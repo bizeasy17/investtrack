@@ -12,7 +12,7 @@ from investors.models import StockFollowing, TradeStrategy
 from analysis.models import StockHistoryDaily, StockStrategyTestLog
 from analysis.utils import (generate_task, get_analysis_task,
                             get_trade_cal_diff, init_eventlog,
-                            is_event_completed, set_event_completed,
+                            get_event_status, set_event_completed,
                             set_task_completed)
 from analysis.stock_hist import download_hist_data
 from .utils import mark_mov_avg, calculate_slope
@@ -33,9 +33,9 @@ version = 'v2'
 
 def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset=2):
     exec_date = date.today()
-    is_marking = is_event_completed(
+    is_marking = get_event_status(
         'MARK_CP', 'jiuzhuan'+ma_freq+'_bs', freq=freq)
-    is_downloading = is_event_completed('HIST_DOWNLOAD', freq=freq)
+    is_downloading = get_event_status('HIST_DOWNLOAD', freq=freq)
 
     if not is_downloading and not is_marking:
         init_eventlog('MARK_CP', 'jiuzhuan'+ma_freq +

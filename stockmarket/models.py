@@ -84,6 +84,10 @@ class StockNameCodeMap(BaseModel):
         _('退市日期'), blank=True, null=True)
     is_hs = models.CharField(
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
+    last_update_date = models.DateField(
+        _('上次更新日期'), blank=True, null=True)
+    # is_hist_downloaded = models.BooleanField(
+    #     _('交易历史已下载？'), blank=False, null=False, default=False)
     # is_marked_jiuzhuan = models.BooleanField(
     #     _('是否标注九转'), blank=False, null=False, default=False)
     # is_marked_dingdi = models.BooleanField(

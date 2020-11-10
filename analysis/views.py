@@ -470,7 +470,8 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
 from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
 from analysis.analysis_dingdi import handle_dingdi_cp
 from analysis.analysis_tupo_b_cp import handle_tupo_cp
-
+from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
+from analysis.stock_hist import process_stock_download
 
 def analysis_command(request, cmd, params):
     try:
@@ -481,6 +482,10 @@ def analysis_command(request, cmd, params):
             handle_dingdi_cp(plist[0],plist[1],plist[2],plist[3],plist[4])
         elif cmd == 'tupo':
             handle_tupo_cp(plist[0], plist[1],plist[3],plist[4])
+        elif cmd == 'mark_jiuzhuan_cp':
+            handle_jiuzhuan_cp(plist[0] if plist[0]!='' else None, plist[1] if plist[1]!='' else 'D')
+        elif cmd == 'download_hist':
+            process_stock_download(plist[0], plist[1], plist[2], plist[3], plist[4], plist[5])    
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)
