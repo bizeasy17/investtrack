@@ -92,11 +92,13 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                             listed_company.ts_code, listed_company.list_date, today, asset, freq, )
                     end_date = today
                 if start_date is not None and end_date is not None:
-                    listed_company.last_update_date = end_date
+                    # print('update log...')
                     log_download_hist(
                         listed_company.ts_code, 'HIST_DOWNLOAD', start_date, end_date, freq)
                     generate_task(
                         listed_company.ts_code, freq, start_date, end_date, sys_event_list)
+                    listed_company.last_update_date = end_date
+                    listed_company.save()
                 else:
                     print('no history to be downloaded for give period')
     except Exception as e:
