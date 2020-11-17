@@ -244,20 +244,26 @@ def sync_company_list(request):
             if data is not None and len(data) > 0:
                 if company_list.count() != len(data):
                     for v in data.values:
-                        if str(v[1])[0] == '3':
-                            v[7] = 'CYB'
-                        elif str(v[1])[0] == '0':
-                            v[7] = 'ZXB'
-                        else:
-                            if str(v[1])[:3] == '688':
-                                v[7] = 'KCB'
+                        try:
+                            if str(v[1])[0] == '3':
+                                v[7] = 'CYB'
+                            elif str(v[1])[0] == '0':
+                                v[7] = 'ZXB'
                             else:
-                                v[7] = 'ZB'
-                        # cn_tz = pytz.timezone("Asia/Shanghai")
-                        company_list = StockNameCodeMap(ts_code=v[0], stock_code=v[1], stock_name=v[2], area=v[3],
-                                                        industry=v[4], fullname=v[5], en_name=v[6], market=v[7], exchange=v[8],
-                                                        list_status=v[9], list_date=datetime.strptime(v[10], '%Y%m%d'), delist_date=v[11],
-                                                        is_hs=v[12])
+                                if str(v[1])[:3] == '688':
+                                    v[7] = 'KCB'
+                                else:
+                                    v[7] = 'ZB'
+                            company_list =  StockNameCodeMap.objects.get(ts_code=v[0])
+                            company_list.stock_name = v[2]
+                            company_list.list_status = v[9]
+                            company_list.delist_date = v[11]
+                        except Exception as e:
+                            # cn_tz = pytz.timezone("Asia/Shanghai")
+                            company_list = StockNameCodeMap(ts_code=v[0], stock_code=v[1], stock_name=v[2], area=v[3],
+                                                            industry=v[4], fullname=v[5], en_name=v[6], market=v[7], exchange=v[8],
+                                                            list_status=v[9], list_date=datetime.strptime(v[10], '%Y%m%d'), delist_date=v[11],
+                                                            is_hs=v[12])
                         company_list.save()
             # result = StockNameCodeMap.objects.filter(stock_name=stock_name)
             return JsonResponse({'success': _('公司信息同步成功')}, safe=False)
