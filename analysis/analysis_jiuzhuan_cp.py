@@ -36,23 +36,27 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
         'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
     evt_mk_status = get_event_status(
         'MARK_CP', exec_date=exec_date, strategy_code='jiuzhuan_bs', freq=freq)
-    if evt_dl_status == 0:
-        print("previous downloading is still ongoing")
-    elif evt_dl_status == -1:
-        print("history has not yet been downloaded today")
-    else:
-        if evt_mk_status == 0:
-            print("previous marking is still ongoing")
-        elif evt_mk_status == 1:
-            print("marking has been done today")
+    
+    if ts_code is None:
+        if evt_dl_status == 0:
+            print("previous downloading is still ongoing")
+        elif evt_dl_status == -1:
+            print("history has not yet been downloaded today")
         else:
-            if ts_code is None:
+            if evt_mk_status == 0:
+                print("previous marking is still ongoing")
+            elif evt_mk_status == 1:
+                print("marking has been done today")
+            else:
                 init_eventlog('MARK_CP',  exec_date=exec_date,
-                              strategy_code='jiuzhuan_bs', freq=freq)
-            process_jiuzhuan_cp(ts_code, freq,)
-            if ts_code is None:
+                            strategy_code='jiuzhuan_bs', freq=freq)
+                process_jiuzhuan_cp(ts_code, freq,)
                 set_event_completed('MARK_CP', exec_date=exec_date,
                                     strategy_code='jiuzhuan_bs', freq=freq)
+    else:
+        process_jiuzhuan_cp(ts_code, freq,)
+
+    
 
 
 def process_jiuzhuan_cp(ts_code, freq='D'):
