@@ -50,9 +50,9 @@ class Command(BaseCommand):
         if freq is None:
             freq = 'D'
 
-        if ts_code is None:
-            print('ts_code is mandatory')
-            return
+        # if ts_code is None:
+        #     print('ts_code is mandatory')
+        #     return
         
         # for strategy_code in strategy_codes:
         handle_updown_pct_test(ts_code, freq, scode, )
