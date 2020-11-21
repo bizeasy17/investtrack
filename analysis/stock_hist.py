@@ -26,18 +26,23 @@ WHERE  NOT EXISTS (
 def process_stock_download(ts_code, start_date, end_date, asset, freq, sys_event_list=['MARK_CP']):
     exec_date = date.today()
     evt_status = get_event_status('HIST_DOWNLOAD', exec_date)
-    if evt_status == 0:
-        print("previous downloading is still ongoing")
-    elif evt_status == 1:
-        print("history has been downloaded today")
-    else: # event not exist, can run today
-        if ts_code is None:
-            init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+
+    if ts_code is None:
+        if evt_status == 0:
+            print("previous downloading is still ongoing")
+        elif evt_status == 1:
+            print("history has been downloaded today")
+        else: # event not exist, can run today
+            if ts_code is None:
+                init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+            handle_hist_download(ts_code, start_date, end_date,
+                                asset, freq, sys_event_list)
+            if ts_code is None:
+                set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+            print("history has been downloaded successfully")
+    else:
         handle_hist_download(ts_code, start_date, end_date,
                              asset, freq, sys_event_list)
-        if ts_code is None:
-            set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
-        print("history has been downloaded successfully")
 
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
     '''
@@ -74,7 +79,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                     start_date = sdate
                     end_date = edate
                     download_stock_hist(
-                        listed_company.ts_code, listed_company.list_date, today, asset, freq, )
+                        listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
                 else:  # 根据日志记录下载相应历史记录
                     if last_date is not None:
                         if last_date[1] < today: #如果有差异就下载，不然就退出
@@ -83,13 +88,13 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                             start_date = last_date[1] + \
                                 timedelta(days=1)
                             download_stock_hist(
-                                listed_company.ts_code, last_date[1] + timedelta(days=1), today, asset, freq, )
+                                listed_company.ts_code, last_date[1] + timedelta(days=1), today, listed_company.asset, freq, )
                     else:
                         # 需要进行首次下载
                         # print('first time')
                         start_date = listed_company.list_date
                         download_stock_hist(
-                            listed_company.ts_code, listed_company.list_date, today, asset, freq, )
+                            listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
                     end_date = today
                 if start_date is not None and end_date is not None:
                     # print('update log...')
