@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.stock_hist import handle_hist_download
+from analysis.pick_stocks import handle_stocks_pick
 from stockmarket.models import StockNameCodeMap
 
 
@@ -23,40 +23,28 @@ class Command(BaseCommand):
         # Named (optional) arguments
         # Named (optional) arguments
         parser.add_argument(
-            '--ts_code',
-            type=str,
-            help='Which ts_code you want to apply the download',
-        )
-        parser.add_argument(
             '--freq',
             type=str,
             help='Which freq you want to apply the download',
         )
-        parser.add_argument(
-            '--start_date',
-            type=str,
-            help='Which start date you want to apply the download',
-        )
-        parser.add_argument(
-            '--end_date',
-            type=str,
-            help='Which end date you want to apply the download',
-        )
+        # parser.add_argument(
+        #     '--start_date',
+        #     type=str,
+        #     help='Which start date you want to apply the download',
+        # )
+        # parser.add_argument(
+        #     '--end_date',
+        #     type=str,
+        #     help='Which end date you want to apply the download',
+        # )
         pass
 
     def handle(self, *args, **options):
-        sys_event_list = ['MARK_CP']
         freq = options['freq']
-        ts_code = options['ts_code']
-        asset = options['asset']
-        start_date = options['start_date']
-        end_date = options['end_date']
+        # start_date = options['start_date']
+        # end_date = options['end_date']
 
         if freq is None:
             freq = 'D'
 
-        if asset is None:
-            asset = 'E'  # 股票， I - 指数
-
-        handle_hist_download(ts_code, start_date, end_date,
-                             asset, freq, sys_event_list)
+        handle_stocks_pick(freq)

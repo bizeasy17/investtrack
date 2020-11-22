@@ -710,8 +710,8 @@ class PickedStocksMeetStrategy(BaseModel):
         _('策略代码'), max_length=25, blank=False, null=False, db_index=True)
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
-    stock_name = models.CharField(
-        _('股票名称'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    # stock_name = models.CharField(
+    #     _('股票名称'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
     trade_date = models.DateField(
         _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
     test_freq = models.CharField(

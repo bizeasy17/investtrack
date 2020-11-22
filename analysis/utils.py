@@ -82,10 +82,10 @@ def init_eventlog(event, exec_date, strategy_code=None, freq='D'):
     try:
         if strategy_code is not None:  # Mark CP
             AnalysisEventLog.objects.get(
-                analysis_code=strategy_code, event_type=event, freq=freq, status=0, exec_date=exec_date)
+                analysis_code=strategy_code, event_type=event, freq=freq, status__in=[0,-1], exec_date=exec_date)
         else:
             AnalysisEventLog.objects.get(
-                event_type=event, freq=freq, status=0, exec_date=exec_date)
+                event_type=event, freq=freq, status__in=[0,-1], exec_date=exec_date)
     except Exception as e:  # 未找到event log记录
         print(e)
         eventlog = AnalysisEventLog(
@@ -114,6 +114,26 @@ def set_event_completed(event, exec_date, strategy_code=None, freq='D'):
     except Exception as e:  # 未找到event log记录
         print(e)
         return False
+
+
+def set_event_exception(event, exec_date, strategy_code=None, freq='D'):
+    '''
+    前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
+    1. 如果存在，就更新end date
+    2. 如果不存在，就创建新的
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
+    try:
+        if strategy_code is not None:  # Mark CP
+            event = AnalysisEventLog.objects.get(
+                analysis_code=strategy_code, event_type=event, freq=freq, exec_date=exec_date)
+        else:
+            event = AnalysisEventLog.objects.get(
+                event_type=event, freq=freq, exec_date=exec_date)
+        event.status = -1
+        event.save()
+    except Exception as e:  # 未找到event log记录
+        print(e)
 
 def has_analysis_task(ts_code, event, strategy_code, freq):
     try:
@@ -203,17 +223,16 @@ def get_trade_cal_diff(ts_code, last_trade, exchange='SSE', period=4):
 
 
 def get_closest_trade_cal(cur_date, exchange='SSE'):
-    count = 0
+    # count = 0
     offset = 0
     pro = ts.pro_api()
-    while count == 0:
+    while True:
         df = pro.trade_cal(exchange=exchange, start_date=(cur_date -
                                                           timedelta(days=offset)).strftime('%Y%m%d'), end_date=(cur_date-timedelta(days=offset)).strftime('%Y%m%d'))
         if df['is_open'].iloc[0] == 1:
-            count += 1
+            return (cur_date - timedelta(days=offset))
         offset += 1
     # print(last_trade-timedelta(days=offset))
-    return (cur_date - timedelta(days=offset))
 
 
 def get_trade_cal_by_attr(ts_code, last_trade, attr='jiuzhuan_count_b'):

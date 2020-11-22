@@ -11,15 +11,21 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
-
-from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
-from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
-                                               StrategyUpDownTestRanking)
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
+from analysis.analysis_dingdi import handle_dingdi_cp
+from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
+from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
+from analysis.analysis_tupo_b_cp import handle_tupo_cp
+from analysis.stock_hist import process_stock_download
+from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
+                                               StrategyUpDownTestRanking)
+from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
+from analysis.xuangu.pick_stocks import handle_stocks_pick
+
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     StockHistoryDaily, StrategyTestLowHigh, TradeStrategyStat)
+                     StockHistoryDaily, StrategyTestLowHigh, TradeStrategyStat, PickedStocksMeetStrategy)
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +72,29 @@ class PaimingHomeView(LoginRequiredMixin, TemplateView):
             return render(request, self.template_name, {self.context_object_name: queryset})
 
 
-class YuCeHomeView(LoginRequiredMixin, TemplateView):
+class XuanguHomeView(LoginRequiredMixin, TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'analysis/xuangu.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'xuangu'
+    pick_date = date.today()
+    if pick_date.weekday() == 5:  # 周六推1天
+        pick_date = pick_date - timedelta(days=1)
+    elif pick_date.weekday == 6:  # 周日推2天
+        pick_date = pick_date - timedelta(days=2)
+
+    # def get(self, request, *args, **kwargs):
+    #     req_user = request.user
+    #     if req_user is not None:
+    #         picked_stocks = PickedStocksMeetStrategy.objects.filters(trade_date=self.pick_date).order_by(
+    #             'ts_code')
+    #         queryset = {
+    #             'pk': picked_stocks,
+    #         }
+    #         return render(request, self.template_name, {self.context_object_name: queryset})
+
+
+class YuceHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'analysis/yuce.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
@@ -86,7 +114,7 @@ class YuCeHomeView(LoginRequiredMixin, TemplateView):
             return render(request, self.template_name, {self.context_object_name: queryset})
 
 
-class ZhenGuHomeView(LoginRequiredMixin, TemplateView):
+class ZhenguHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'analysis/zhengu.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
@@ -104,6 +132,11 @@ class ZhenGuHomeView(LoginRequiredMixin, TemplateView):
                 'followings': stocks_following,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
+
+
+@login_required
+def get_picked_stocks(request, strategy_code, pick_date):
+    pass
 
 
 @login_required
@@ -328,55 +361,63 @@ def strategy_test_ranking(request, strategy_code, test_type, qt_pct, input_param
             return HttpResponse(status=500)
     pass
 
+
 @login_required
 def stock_ranking_updown_pct(request, stock_symbol, test_period, strategy_ctg, test_type):
     rtn_ranking_list = []
     ranking_label_list = []
     mean_list = []
     strategy_label = []
-    chart_label = ['10ile','25ile','50ile','75ile','90ile']
+    chart_label = ['10ile', '25ile', '50ile', '75ile', '90ile']
     qt_pct_list = ['qt_10pct', 'qt_25pct', 'qt_50pct',
-                     'qt_75pct', 'qt_90pct',]#, 'mean_val', 'min_val', 'max_val']
-    buy_strategy_list = ['jiuzhuan_b', 'dibu_b', 'w_di', 'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
+                   'qt_75pct', 'qt_90pct', ]  # , 'mean_val', 'min_val', 'max_val']
+    buy_strategy_list = ['jiuzhuan_b', 'dibu_b', 'w_di',
+                         'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
     buy_strategy_label = ['九转买', '底部', 'W底', '突破MA25', 'MA25支撑', '突破压力']
-    sell_strategy_list = ['jiuzhuan_s', 'dingbu_s', 'm_ding', 'ma25_diepo_s', 'ma25_yali_s', 'diepo_zhicheng_s']
+    sell_strategy_list = ['jiuzhuan_s', 'dingbu_s', 'm_ding',
+                          'ma25_diepo_s', 'ma25_yali_s', 'diepo_zhicheng_s']
     sell_strategy_label = ['九转卖', '顶部', 'M顶', '跌破MA25', 'MA25压力', '跌破支撑']
 
     try:
         # rankings = StrategyUpDownTestRanking.objects.filter(ts_code=stock_symbol, test_period=test_period, test_type=test_type, qt_pct__in=qt_pct_list).order_by('qt_pct')
-        rankings = StrategyUpDownTestRanking.objects.filter(ts_code=stock_symbol, test_period=test_period, qt_pct__in=qt_pct_list).order_by('qt_pct')
+        rankings = StrategyUpDownTestRanking.objects.filter(
+            ts_code=stock_symbol, test_period=test_period, qt_pct__in=qt_pct_list).order_by('qt_pct')
         # for qt_pct in qt_pct_list:
         if strategy_ctg == 'b':
             strategy_label = buy_strategy_label
             for buy_strategy in buy_strategy_list:
                 strategy_ranking_list = []
-                rankings_by_strategy = rankings.filter(strategy_code=buy_strategy, test_type=test_type)
+                rankings_by_strategy = rankings.filter(
+                    strategy_code=buy_strategy, test_type=test_type)
                 for ranking_by_strategy in rankings_by_strategy:
-                    strategy_ranking_list.append(ranking_by_strategy.qt_pct_val)
+                    strategy_ranking_list.append(
+                        ranking_by_strategy.qt_pct_val)
                 rtn_ranking_list.append(strategy_ranking_list)
                 # pass
         else:
             strategy_label = sell_strategy_label
             for sell_strategy in sell_strategy_list:
                 strategy_ranking_list = []
-                rankings_by_strategy = rankings.filter(strategy_code=sell_strategy, test_type=test_type)
+                rankings_by_strategy = rankings.filter(
+                    strategy_code=sell_strategy, test_type=test_type)
                 for ranking_by_strategy in rankings_by_strategy:
-                    strategy_ranking_list.append(ranking_by_strategy.qt_pct_val)
+                    strategy_ranking_list.append(
+                        ranking_by_strategy.qt_pct_val)
                 rtn_ranking_list.append(strategy_ranking_list)
                 strategy_ranking_list.clear()
-        
+
         df = pd.DataFrame(rtn_ranking_list, columns=chart_label)
         for qt_pct in chart_label:
-            mean_list.append(round(df[qt_pct].mean(),3))
+            mean_list.append(round(df[qt_pct].mean(), 3))
         return JsonResponse(
-        {
-            'code': 'OK',
-            'label': chart_label,
-            'mean': mean_list,
-            'strategy_label': strategy_label,
-            'rankings': rtn_ranking_list,
-        }, safe=False)
-                # pass
+            {
+                'code': 'OK',
+                'label': chart_label,
+                'mean': mean_list,
+                'strategy_label': strategy_label,
+                'rankings': rtn_ranking_list,
+            }, safe=False)
+        # pass
     except Exception as err:
         logger.error(err)
         return HttpResponse(status=500)
@@ -395,22 +436,26 @@ def stock_ranking_updown_pct(request, stock_symbol, test_period, strategy_ctg, t
     # rtn_ranking_list.append(ds4)
     # rtn_ranking_list.append(ds5)
 
+
 @login_required
 def stock_ranking_target_pct(request, stock_symbol, target_pct):
     rtn_ranking_list = []
     ranking_label_list = []
     mean_list = []
     strategy_label = []
-    chart_label = ['10ile','25ile','50ile','75ile','90ile']
+    chart_label = ['10ile', '25ile', '50ile', '75ile', '90ile']
     qt_pct_list = ['qt_10pct', 'qt_25pct', 'qt_50pct',
-                     'qt_75pct', 'qt_90pct',]#, 'mean_val', 'min_val', 'max_val']
-    buy_strategy_list = ['jiuzhuan_b', 'dibu_b', 'w_di', 'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
+                   'qt_75pct', 'qt_90pct', ]  # , 'mean_val', 'min_val', 'max_val']
+    buy_strategy_list = ['jiuzhuan_b', 'dibu_b', 'w_di',
+                         'ma25_tupo_b', 'ma25_zhicheng_b', 'tupo_yali_b']
     buy_strategy_label = ['九转买', '底部', 'W底', '突破MA25', 'MA25支撑', '突破压力']
-    sell_strategy_list = ['jiuzhuan_s', 'dingbu_s', 'm_ding', 'ma25_diepo_s', 'ma25_yali_s', 'diepo_zhicheng_s']
+    sell_strategy_list = ['jiuzhuan_s', 'dingbu_s', 'm_ding',
+                          'ma25_diepo_s', 'ma25_yali_s', 'diepo_zhicheng_s']
     sell_strategy_label = ['九转卖', '顶部', 'M顶', '跌破MA25', 'MA25压力', '跌破支撑']
 
     try:
-        rankings = StrategyTargetPctTestRanking.objects.filter(ts_code=stock_symbol, target_pct=target_pct, qt_pct__in=qt_pct_list).order_by('qt_pct')
+        rankings = StrategyTargetPctTestRanking.objects.filter(
+            ts_code=stock_symbol, target_pct=target_pct, qt_pct__in=qt_pct_list).order_by('qt_pct')
         # for qt_pct in qt_pct_list:
         strategy_label = buy_strategy_label
         for buy_strategy in buy_strategy_list:
@@ -419,19 +464,19 @@ def stock_ranking_target_pct(request, stock_symbol, target_pct):
             for ranking_by_strategy in rankings_by_strategy:
                 strategy_ranking_list.append(ranking_by_strategy.qt_pct_val)
             rtn_ranking_list.append(strategy_ranking_list)
-        
+
         df = pd.DataFrame(rtn_ranking_list, columns=chart_label)
         for qt_pct in chart_label:
-            mean_list.append(round(df[qt_pct].mean(),3))
+            mean_list.append(round(df[qt_pct].mean(), 3))
         return JsonResponse(
-        {
-            'code': 'OK',
-            'label': chart_label,
-            'mean': mean_list,
-            'strategy_label': strategy_label,
-            'rankings': rtn_ranking_list,
-        }, safe=False)
-                # pass
+            {
+                'code': 'OK',
+                'label': chart_label,
+                'mean': mean_list,
+                'strategy_label': strategy_label,
+                'rankings': rtn_ranking_list,
+            }, safe=False)
+        # pass
     except Exception as err:
         logger.error(err)
         return HttpResponse(status=500)
@@ -459,6 +504,7 @@ def stock_ranking_target_pct(request, stock_symbol, target_pct):
     #         'rankings': ranking_list,
     #     }, safe=False)
 
+
 @login_required
 def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
     '''
@@ -467,26 +513,23 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
     pass
 
 
-from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
-from analysis.analysis_dingdi import handle_dingdi_cp
-from analysis.analysis_tupo_b_cp import handle_tupo_cp
-from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
-from analysis.stock_hist import process_stock_download
-
 def analysis_command(request, cmd, params):
     try:
         plist = params.split(',')
         if cmd == 'mark_junxian_cp':
-            handle_junxian_cp(plist[0],plist[1],plist[2],plist[3])
+            handle_junxian_cp(plist[0], plist[1], plist[2], plist[3])
         elif cmd == 'dingdi':
-            handle_dingdi_cp(plist[0],plist[1],plist[2],plist[3],plist[4])
+            handle_dingdi_cp(plist[0], plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'tupo':
-            handle_tupo_cp(plist[0], plist[1],plist[3],plist[4])
+            handle_tupo_cp(plist[0], plist[1], plist[3], plist[4])
         elif cmd == 'mark_jiuzhuan_cp':
-            handle_jiuzhuan_cp(plist[0] if plist[0]!='' else None, plist[1] if plist[1]!='' else 'D')
+            handle_jiuzhuan_cp(
+                plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else 'D')
         elif cmd == 'download_hist':
-            process_stock_download(plist[0], plist[1], plist[2], plist[3], plist[4], plist[5])    
+            process_stock_download(
+                plist[0], plist[1], plist[2], plist[3], plist[4], plist[5])
+        elif cmd == 'pick_stock':
+            handle_stocks_pick(plist[0] if plist[0] != '' else None)
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)
-    

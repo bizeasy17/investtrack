@@ -40,7 +40,7 @@ def handle_exp_pct_test(strategy_code, ts_code, test_freq):
         print(e)
 
 
-def test_exp_pct(strategy_code, ts_code, start_date, end_date, test_freq='D'):
+def test_exp_pct(strategy_code, ts_code, start_date, end_date, test_freq='D', list_days=200):
     '''
     计算策略在某只股票涨幅达到10%，20% 。。。最小/大/平均时间
     1. 需要传入的参数为策略名称
@@ -69,57 +69,60 @@ def test_exp_pct(strategy_code, ts_code, start_date, end_date, test_freq='D'):
             ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date').values())
     else:
         pass
+    if df is not None and len(df) >= list_days:
+        if strategy_code.startswith('jiuzhuan_'):
+            split = strategy_code.split('_')
+            idx_list = df.loc[df['jiuzhuan_count_'+ split[1]] == 9].index
+        else:
+            idx_list = df.loc[df[strategy_code] == 1].index
 
-    if strategy_code.startswith('jiuzhuan_'):
-        split = strategy_code.split('_')
-        idx_list = df.loc[df['jiuzhuan_count_'+ split[1]] == 9].index
+        # 根据策略获取标注的关键点index
+        # if strategy_code == 'jiuzhuan_b':
+        #     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
+        # elif strategy_code == 'dibu_b':
+        #     idx_list = df.loc[df['di_min'] == 1].index
+        # elif strategy_code == 'w_di':
+        #     idx_list = df.loc[df['w_di'] == 1].index
+        # elif strategy_code == 'tupo_yali_b':
+        #     idx_list = df.loc[df['tupo_b'] == 1].index
+        # elif strategy_code == 'ma25_zhicheng_b':
+        #     idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
+        # elif strategy_code == 'ma25_tupo_b':
+        #     idx_list = df.loc[df['ma25_tupo_b'] == 1].index
+        # elif strategy_code == 'jiuzhuan_s':
+        #     idx_list = df.loc[df['jiuzhuan_count_s'] == 9].index
+        # elif strategy_code == 'dingbu_s':
+        #     idx_list = df.loc[df['ding_max'] == 1].index
+        # elif strategy_code == 'm_ding':
+        #     idx_list = df.loc[df['m_ding'] == 1].index
+        # elif strategy_code == 'diepo_zhicheng_s':
+        #     idx_list = df.loc[df['diepo_s'] == 1].index
+        # elif strategy_code == 'ma25_diepo_s':
+        #     idx_list = df.loc[df['ma25_diepo_s'] == 1].index
+        # elif strategy_code == 'ma25_yali_s':
+        #     idx_list = df.loc[df['ma25_yali_s'] == 1].index
+
+        # print(len(idx_list))
+
+        for idx in idx_list:
+            b = df.iloc[idx]
+            pct_list = get_fixed_pct_list(df, b, strategy_code)
+            all_pct_list.append(pct_list)
+            # 买入点
+            # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
+            b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date,
+                                            # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close,
+                                            # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount,
+                                            pct10_period=pct_list[0], pct20_period=pct_list[1], pct30_period=pct_list[2],
+                                            pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
+                                            pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
+            strategy_test_list.append(b_tnx)
+        if len(strategy_test_list) > 0:
+            BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
+            post_exp_days_pct_test(all_pct_list)
     else:
-        idx_list = df.loc[df[strategy_code] == 1].index
-
-    # 根据策略获取标注的关键点index
-    # if strategy_code == 'jiuzhuan_b':
-    #     idx_list = df.loc[df['jiuzhuan_count_b'] == 9].index
-    # elif strategy_code == 'dibu_b':
-    #     idx_list = df.loc[df['di_min'] == 1].index
-    # elif strategy_code == 'w_di':
-    #     idx_list = df.loc[df['w_di'] == 1].index
-    # elif strategy_code == 'tupo_yali_b':
-    #     idx_list = df.loc[df['tupo_b'] == 1].index
-    # elif strategy_code == 'ma25_zhicheng_b':
-    #     idx_list = df.loc[df['ma25_zhicheng_b'] == 1].index
-    # elif strategy_code == 'ma25_tupo_b':
-    #     idx_list = df.loc[df['ma25_tupo_b'] == 1].index
-    # elif strategy_code == 'jiuzhuan_s':
-    #     idx_list = df.loc[df['jiuzhuan_count_s'] == 9].index
-    # elif strategy_code == 'dingbu_s':
-    #     idx_list = df.loc[df['ding_max'] == 1].index
-    # elif strategy_code == 'm_ding':
-    #     idx_list = df.loc[df['m_ding'] == 1].index
-    # elif strategy_code == 'diepo_zhicheng_s':
-    #     idx_list = df.loc[df['diepo_s'] == 1].index
-    # elif strategy_code == 'ma25_diepo_s':
-    #     idx_list = df.loc[df['ma25_diepo_s'] == 1].index
-    # elif strategy_code == 'ma25_yali_s':
-    #     idx_list = df.loc[df['ma25_yali_s'] == 1].index
-
-    # print(len(idx_list))
-
-    for idx in idx_list:
-        b = df.iloc[idx]
-        pct_list = get_fixed_pct_list(df, b, strategy_code)
-        all_pct_list.append(pct_list)
-        # 买入点
-        # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-        b_tnx = BStrategyOnFixedPctTest(ts_code=b.ts_code, trade_date=b.trade_date,
-                                        # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close,
-                                        # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount,
-                                        pct10_period=pct_list[0], pct20_period=pct_list[1], pct30_period=pct_list[2],
-                                        pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
-                                        pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
-        strategy_test_list.append(b_tnx)
-    if len(strategy_test_list) > 0:
-        BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)
-        post_exp_days_pct_test(all_pct_list)
+        print('not enough data, list days less than 1 year for ' +
+              ts_code + ' at ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print(' test on pct end strategy - ' + strategy_code + ' for ' +
             ts_code + ' - ' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 

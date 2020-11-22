@@ -18,8 +18,10 @@ urlpatterns = [
          views.low_pct_data),  # ??
     path('stock-hist/strategy/<strategy>/<stock_symbol>/<freq>/<type>/<int:period>/',
          views.stock_history),  # ??
-    # 选股page
+    # paiming page
     path('paiming/', views.PaimingHomeView.as_view(), name="paiming"),
+    # 选股page
+    path('xuangu/', views.XuanguHomeView.as_view(), name="xuangu"),
     # 选股page
     path('ranking/<strategy_code>/<test_type>/<qt_pct>/<input_param>/<int:start_idx>/<int:end_idx>/', views.strategy_test_ranking),
     # target pct rankings
@@ -27,9 +29,9 @@ urlpatterns = [
     path('updown-pct-ranking-by-stock/<stock_symbol>/<test_period>/<strategy_ctg>/<test_type>/', views.stock_ranking_updown_pct),
 
     #     走势预测
-    path('yuce/', views.YuCeHomeView.as_view(), name="yuce"),
+    path('yuce/', views.YuceHomeView.as_view(), name="yuce"),
     #     走势预测
-    path('zhengu/', views.ZhenGuHomeView.as_view(), name="zhengu"),
+    path('zhengu/', views.ZhenguHomeView.as_view(), name="zhengu"),
 
     path('cmd/<cmd>/<params>/', views.analysis_command),
 
