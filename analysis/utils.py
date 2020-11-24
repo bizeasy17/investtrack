@@ -216,7 +216,8 @@ def get_trade_cal_diff(ts_code, last_trade, exchange='SSE', period=4):
                 ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
             count += 1
         except Exception as e:
-            print(ts_code + ' ' + e)
+            print(ts_code)
+            print(e)
         offset += 1
     # print(last_trade-timedelta(days=offset))
     return offset
@@ -251,7 +252,8 @@ def get_trade_cal_by_attr(ts_code, last_trade, attr='jiuzhuan_count_b'):
             if getattr(hist, attr) == 1:
                 it_is = True
         except Exception as e:
-            print(ts_code + ' ' + e)
+            print(ts_code)
+            print(e)
         offset += 1
     # print(last_trade-timedelta(days=offset))
     return hist
