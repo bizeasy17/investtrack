@@ -71,7 +71,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
 
     try:
         if ts_code is None:
-            listed_companies = StockNameCodeMap.objects.filter()
+            listed_companies = StockNameCodeMap.objects.filter().order_by('-ts_code')
         else:
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
@@ -85,11 +85,11 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                 # 如何差额取之前的历史记录？9
                 for task in tasks:
                     if task.start_date == listed_company.list_date:
-                        print('第一次处理，从上市日开始。。。')
+                        print(listed_company.ts_code + '第一次处理，从上市日开始。。。')
                         atype = '0'  # 从上市日开始标记
                         start_date = task.start_date
                     else:
-                        print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
+                        print(listed_company.ts_code + ' 更新处理，从上一次更新时间-4d - 开盘日 开始...')
                         start_date = task.start_date - \
                             timedelta(days=get_trade_cal_diff(
                                 listed_company.ts_code, task.start_date))
@@ -103,7 +103,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                     generate_task(listed_company.ts_code,
                                   freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
-                print('no jiuzhuan mark cp task')
+                print(listed_company.ts_code + ' no jiuzhuan mark cp task')
     except Exception as e:
         print(e)
 
