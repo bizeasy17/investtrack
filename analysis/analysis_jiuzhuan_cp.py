@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
-
+from dashboard.utils import days_between
 from analysis.utils import (generate_task, get_analysis_task,
                             get_trade_cal_diff, init_eventlog,
                             get_event_status, set_event_completed,
@@ -36,7 +36,7 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
         'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
     evt_mk_status = get_event_status(
         'MARK_CP', exec_date=exec_date, strategy_code='jiuzhuan_bs', freq=freq)
-    
+
     if ts_code is None:
         if evt_dl_status == 0:
             print("previous downloading is still ongoing")
@@ -49,14 +49,12 @@ def handle_jiuzhuan_cp(ts_code, freq='D'):
                 print("marking has been done today")
             else:
                 init_eventlog('MARK_CP',  exec_date=exec_date,
-                            strategy_code='jiuzhuan_bs', freq=freq)
+                              strategy_code='jiuzhuan_bs', freq=freq)
                 process_jiuzhuan_cp(ts_code, freq,)
                 set_event_completed('MARK_CP', exec_date=exec_date,
                                     strategy_code='jiuzhuan_bs', freq=freq)
     else:
         process_jiuzhuan_cp(ts_code, freq,)
-
-    
 
 
 def process_jiuzhuan_cp(ts_code, freq='D'):
@@ -68,7 +66,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
     start_date = None
     end_date = None
     today = date.today()
-
+    period = 4
     try:
         if ts_code is None:
             listed_companies = StockNameCodeMap.objects.filter().order_by('-ts_code')
@@ -89,10 +87,15 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                         atype = '0'  # 从上市日开始标记
                         start_date = task.start_date
                     else:
-                        print(listed_company.ts_code + ' 更新处理，从上一次更新时间-4d - 开盘日 开始...')
-                        start_date = task.start_date - \
-                            timedelta(days=get_trade_cal_diff(
-                                listed_company.ts_code, task.start_date))
+                        print(listed_company.ts_code +
+                              ' 更新处理，从上一次更新时间-4d - 开盘日 开始...')
+                        if days_between(task.start_date, listed_company.list_date) <= period:
+                            # fix issue - 计算period=4的有效交易日器
+                            start_date = listed_company.list_date
+                        else:
+                            start_date = task.start_date - \
+                                timedelta(days=get_trade_cal_diff(
+                                    listed_company.ts_code, task.start_date))
 
                     mark_jiuzhuan(listed_company.ts_code, freq, start_date,
                                   task.end_date, atype)

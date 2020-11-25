@@ -192,10 +192,10 @@ def get_analysis_task(ts_code, event, strategy_code, freq='D'):
     try:
         if strategy_code is not None:
             task = StockStrategyTestLog.objects.filter(
-                ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=False)
+                ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=False).order_by('start_date')
         else:
             tasks = StockStrategyTestLog.objects.filter(
-                ts_code=ts_code, event_type=event, freq=freq, is_done=False)
+                ts_code=ts_code, event_type=event, freq=freq, is_done=False).order_by('start_date')
         return task
     except Exception as e:
         # print(e)
