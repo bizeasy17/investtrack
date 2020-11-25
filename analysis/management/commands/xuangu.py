@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.pick_stocks import handle_stocks_pick
+from analysis.xuangu.pick_stocks import handle_stocks_pick
 from stockmarket.models import StockNameCodeMap
 
 
