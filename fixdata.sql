@@ -9,3 +9,12 @@ update public.analysis_stockstrategytestlog set end_date='2020-11-19' where end_
 -- 5. 更新straetegy test log下载，mark_cp的enddate为2020-11-19， created_time < 2020-11-23
 update public.analysis_stockstrategytestlog set end_date='2020-11-19' where event_type='HIST_DOWNLOAD' and end_date='2020-11-23'
 update public.analysis_stockstrategytestlog set end_date='2020-11-19' where event_type='HIST_DOWNLOAD' and end_date='2020-11-20'
+
+
+-- 清理历史数据
+-- 1. 清理public.analysis_stockhistorydaily
+delete from public.analysis_stockhistorydaily
+-- 2. 清理public.analysis_stockstrategytestlog
+delete from public.analysis_stockstrategytestlog
+-- 3. 清理public.analysis_analysiseventlog 
+delete from public.analysis_analysiseventlog 
