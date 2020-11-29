@@ -1,7 +1,13 @@
-from datetime import datetime, date, timedelta
-from .models import StockStrategyTestLog, TradeStrategyStat,  StockHistoryDaily, AnalysisEventLog
+from datetime import date, datetime, timedelta
+
+import numpy as np
+import pandas as pd
 # from investors.models import TradeStrategy
 import tushare as ts
+
+from .models import (AnalysisEventLog, StrategyTargetPctTestQuantiles,
+                     StockHistoryDaily, StockStrategyTestLog,
+                     StrategyUpDownTestQuantiles, TradeStrategyStat)
 
 
 def log_test_status(ts_code, event, freq, strategy_list=[]):
@@ -72,6 +78,7 @@ def get_event_status(event, exec_date, strategy_code=None, freq='D'):
         print(e)
         return -1
 
+
 def init_eventlog(event, exec_date, strategy_code=None, freq='D'):
     '''
     前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
@@ -82,10 +89,10 @@ def init_eventlog(event, exec_date, strategy_code=None, freq='D'):
     try:
         if strategy_code is not None:  # Mark CP
             AnalysisEventLog.objects.get(
-                analysis_code=strategy_code, event_type=event, freq=freq, status__in=[0,-1], exec_date=exec_date)
+                analysis_code=strategy_code, event_type=event, freq=freq, status__in=[0, -1], exec_date=exec_date)
         else:
             AnalysisEventLog.objects.get(
-                event_type=event, freq=freq, status__in=[0,-1], exec_date=exec_date)
+                event_type=event, freq=freq, status__in=[0, -1], exec_date=exec_date)
     except Exception as e:  # 未找到event log记录
         print(e)
         eventlog = AnalysisEventLog(
@@ -134,6 +141,7 @@ def set_event_exception(event, exec_date, strategy_code=None, freq='D'):
         event.save()
     except Exception as e:  # 未找到event log记录
         print(e)
+
 
 def has_analysis_task(ts_code, event, strategy_code, freq):
     try:
@@ -194,7 +202,7 @@ def get_analysis_task(ts_code, event, strategy_code, freq='D'):
             task = StockStrategyTestLog.objects.filter(
                 ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=False).order_by('start_date')
         else:
-            tasks = StockStrategyTestLog.objects.filter(
+            task = StockStrategyTestLog.objects.filter(
                 ts_code=ts_code, event_type=event, freq=freq, is_done=False).order_by('start_date')
         return task
     except Exception as e:
@@ -257,3 +265,49 @@ def get_trade_cal_by_attr(ts_code, last_trade, attr='jiuzhuan_count_b'):
         offset += 1
     # print(last_trade-timedelta(days=offset))
     return hist
+
+
+def get_pct_val_from(pct_str):
+    pct_arr = pct_str.split('_')
+    pct_val = pct_arr[0][3:]
+    return pct_val
+
+
+def get_qt_updownpct(ts_code, strategy_code, test_type):
+    result_qt = []
+    results = StrategyUpDownTestQuantiles.objects.filter(
+        strategy_code=strategy_code, ts_code=ts_code, test_type=test_type).order_by('test_period')
+    for result in results:
+        result_qt.append(
+            {
+                'period': result.test_period,
+                '25ile': round(result.qt_10pct, 2),
+                '50ile': round(result.qt_50pct, 2),
+                '75ile': round(result.qt_75pct, 2),
+                'max': round(result.max_val, 2),
+                'mean': round(result.mean_val, 2),
+            }
+        )
+    return result_qt
+
+
+def get_qt_period_on_exppct(ts_code, strategy_code):
+    result_qt = []
+    results = StrategyTargetPctTestQuantiles.objects.filter(
+        strategy_code=strategy_code, ts_code=ts_code).order_by('test_freq')
+    for result in results:
+        result_qt.append(
+            {
+                'pct': get_pct_val_from(result.target_pct) + '%',
+                '25ile': round(result.qt_10pct, 2),
+                '50ile': round(result.qt_50pct, 2),
+                '75ile': round(result.qt_75pct, 2),
+                'min': round(result.min_val, 2),
+                'mean': round(result.mean_val, 2),
+            }
+        )
+    return result_qt
+
+
+def get_pkdays_by_year_month(year, month):
+    pass

@@ -22,11 +22,24 @@ urlpatterns = [
     path('paiming/', views.PaimingHomeView.as_view(), name="paiming"),
     # 选股page
     path('xuangu/', views.XuanguHomeView.as_view(), name="xuangu"),
-    # 选股page
-    path('ranking/<strategy_code>/<test_type>/<qt_pct>/<input_param>/<int:start_idx>/<int:end_idx>/', views.strategy_test_ranking),
+    path('xuangu/<int:year>/<int:mon>/<int:day>/<strategy_code>/<int:start_idx>/<int:end_idx>/',
+         views.get_picked_stocks_bundle),
+#     path('xuangu/picked_stocks/<year>/<month>/<day>/<strategy_code>/<int:start_idx>/<int:end_idx>/',
+#          views.get_picked_stocks),
+#     path('qt-uppct/<ts_codes>/<strategy_code>/',
+#          views.get_qt_uppct),
+#     path('qt-downpct/<ts_codes>/<strategy_code>/',
+#          views.get_qt_downpct),
+#     path('qt-targetpct-period/<ts_codes>/<strategy_code>/',
+#          views.get_qt_targetpct),
+    # ranking
+    path('ranking/<strategy_code>/<test_type>/<qt_pct>/<input_param>/<int:start_idx>/<int:end_idx>/',
+         views.strategy_test_ranking),
     # target pct rankings
-    path('target-pct-ranking-by-stock/<stock_symbol>/<target_pct>/', views.stock_ranking_target_pct),
-    path('updown-pct-ranking-by-stock/<stock_symbol>/<test_period>/<strategy_ctg>/<test_type>/', views.stock_ranking_updown_pct),
+    path('target-pct-ranking-by-stock/<stock_symbol>/<target_pct>/',
+         views.stock_ranking_target_pct),
+    path('updown-pct-ranking-by-stock/<stock_symbol>/<test_period>/<strategy_ctg>/<test_type>/',
+         views.stock_ranking_updown_pct),
 
     #     走势预测
     path('yuce/', views.YuceHomeView.as_view(), name="yuce"),

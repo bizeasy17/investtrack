@@ -1,6 +1,7 @@
 import decimal
 import logging
 from datetime import date, datetime, timedelta
+from calendar import monthrange
 
 import pandas as pd
 import pytz
@@ -21,11 +22,15 @@ from analysis.analysis_tupo_b_cp import handle_tupo_cp
 from analysis.stock_hist import process_stock_download
 from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
                                                StrategyUpDownTestRanking)
+from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
+                            get_qt_updownpct)
 from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
 from analysis.xuangu.pick_stocks import handle_stocks_pick
+from stockmarket.utils import get_realtime_quotes
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     StockHistoryDaily, StrategyTestLowHigh, TradeStrategyStat, PickedStocksMeetStrategy)
+                     PickedStocksMeetStrategy, StockHistoryDaily,
+                     StrategyTestLowHigh, TradeStrategyStat)
 
 logger = logging.getLogger(__name__)
 
@@ -76,22 +81,31 @@ class XuanguHomeView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'analysis/xuangu.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'xuangu'
-    pick_date = date.today()
-    if pick_date.weekday() == 5:  # 周六推1天
-        pick_date = pick_date - timedelta(days=1)
-    elif pick_date.weekday == 6:  # 周日推2天
-        pick_date = pick_date - timedelta(days=2)
+    context_object_name = 'xg'
+    today = date.today()
 
-    # def get(self, request, *args, **kwargs):
-    #     req_user = request.user
-    #     if req_user is not None:
-    #         picked_stocks = PickedStocksMeetStrategy.objects.filters(trade_date=self.pick_date).order_by(
-    #             'ts_code')
-    #         queryset = {
-    #             'pk': picked_stocks,
-    #         }
-    #         return render(request, self.template_name, {self.context_object_name: queryset})
+    if today.weekday() == 5:  # 周六推1天
+        today = today - timedelta(days=1)
+    elif today.weekday == 6:  # 周日推2天
+        today = today - timedelta(days=2)
+
+    def get(self, request, *args, **kwargs):
+        req_user = request.user
+        if req_user is not None:
+            mon_range = monthrange(self.today.year, self.today.month)
+            days_of_mon = mon_range[1]
+            days = []
+            for i in range(days_of_mon):
+                days.append(i+1)
+            queryset = {
+                'cur_year': self.today.year,
+                'cur_mon': self.today.month,
+                'cur_day': self.today.day+1,
+                'days': days,
+                'mons': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                'yrs': [self.today.year, self.today.year+1]
+            }
+            return render(request, self.template_name, {self.context_object_name: queryset})
 
 
 class YuceHomeView(LoginRequiredMixin, TemplateView):
@@ -135,7 +149,89 @@ class ZhenguHomeView(LoginRequiredMixin, TemplateView):
 
 
 @login_required
+def get_picked_stocks_bundle(request, year, mon, day, strategy_code, start_idx, end_idx):
+    pk_stock_list = []
+    code_list = []
+    code_sfx_list = []
+    try:
+        picked_stocks = PickedStocksMeetStrategy.objects.filter(
+            strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))[start_idx:end_idx]
+        if picked_stocks is not None and len(picked_stocks) > 0:
+            for picked_stock in picked_stocks:
+                code_list.append(picked_stock.ts_code.split('.')[0])
+                code_sfx_list.append(picked_stock.ts_code)
+
+            quotes = get_realtime_quotes(code_list)
+            for ts_code in code_sfx_list:
+                qt_uppct = get_qt_updownpct(
+                    ts_code, strategy_code, 'up_pct')
+                qt_downpct = get_qt_updownpct(
+                    ts_code, strategy_code, 'down_pct')
+                qt_targetpct = get_qt_period_on_exppct(
+                    ts_code, strategy_code,)
+                pk_stock_list.append({
+                    'ts_code': ts_code,
+                    'price': quotes[ts_code.split('.')[0]].split(',')[0],
+                    'chg_pct': quotes[ts_code.split('.')[0]].split(',')[1],
+                    'qt_uppct': qt_uppct,
+                    'qt_downpct': qt_downpct,
+                    'qt_targetpct': qt_targetpct,
+                })
+            return JsonResponse({'value': pk_stock_list}, safe=False)
+        else:
+            return HttpResponse(status=404)
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=500)
+
+@login_required
 def get_picked_stocks(request, strategy_code, pick_date):
+    code_list = []
+    picked_stocks = PickedStocksMeetStrategy.objects.filter(
+        strategy_code=strategy_code, trade_date=pick_date)
+    if picked_stocks is not None and len(picked_stocks) > 0:
+        for picked_stock in picked_stocks:
+            code_list.append(picked_stock['ts_code'])
+        return JsonResponse({'value': code_list}, safe=False)
+    else:
+        return HttpResponse(status=404)
+
+
+def get_qt_uppct(request, ts_codes, strategy_code):
+    qt_list = []
+    code_list = ts_codes.split(',')
+    for ts_code in code_list:
+        qt_uppct = get_qt_updownpct(ts_code, strategy_code, 'up_pct')
+        qt_list.append(qt_uppct)
+    if qt_list is not None and len(qt_list) > 0:
+        return JsonResponse({'value': qt_list}, safe=False)
+    else:
+        return HttpResponse(status=404)
+
+
+def get_qt_downpct(request, ts_codes):
+    qt_list = []
+    code_list = ts_codes.split(',')
+    for ts_code in code_list:
+        qt_uppct = get_qt_updownpct(ts_code, strategy_code, 'down_pct')
+        qt_list.append(qt_uppct)
+    if qt_list is not None and len(qt_list) > 0:
+        return JsonResponse({'value': qt_list}, safe=False)
+    else:
+        return HttpResponse(status=404)
+
+
+def get_qt_targetpct(request, ts_codes):
+    qt_list = []
+    code_list = ts_codes.split(',')
+    for ts_code in code_list:
+        qt_targetpct = get_qt_period_on_exppct(
+            ts_code, strategy_code,)
+        qt_list.append(qt_targetpct)
+    if qt_list is not None and len(qt_list) > 0:
+        return JsonResponse({'value': qt_list}, safe=False)
+    else:
+        return HttpResponse(status=404)
     pass
 
 

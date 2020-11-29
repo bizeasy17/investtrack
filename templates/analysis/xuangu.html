@@ -34,16 +34,16 @@
                     <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian25_tupo" checked>{% trans 'MA25突破' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian25_zhicheng" >{% trans 'MA60支撑' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian60_zhicheng" >{% trans 'MA60支撑' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian25_tupo" checked>{% trans 'MA60突破' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian60_tupo" checked>{% trans 'MA60突破' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian25_zhicheng" >{% trans 'MA200支撑' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian200_zhicheng" >{% trans 'MA200支撑' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian25_tupo" checked>{% trans 'MA200突破' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian200_tupo" checked>{% trans 'MA200突破' %} 
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="bstrategy" id="w_di" autocomplete="off" value="w_di">{% trans 'W底' %} 
@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="col-lg-12">
-            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+            <div class="btn-group btn-group-sm btn-group-toggle mt-1" data-toggle="buttons">
                 <span class="mt-1 mr-1 small">{% trans '卖出策略' %}</span>
                 <label class="btn btn-light ">
                     <input type="radio" name="sstrategy" id="jiuzhuan_count_s" autocomplete="off" value="jiuzhuan_count_s" >{% trans '九转卖' %}
@@ -91,137 +91,34 @@
                 </label>
             </div>
         </div>
-        <div class="col-lg-12 ">
-            <span class="mt-1 mr-1 small">{% trans '选股日期' %}</span>
-            <div class="btn-group " role="group" aria-label="Button group with nested dropdown">
-                <button type="button" class="btn btn-sm btn-light">年份</button>
-                <div class="btn-group" role="group">
-                    <button id="btnGroupDrop3" type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                    <div class="dropdown-menu small" aria-labelledby="btnGroupDrop3" style="">
-                        <a class="dropdown-item small" href="#">2020</a>
-                        <a class="dropdown-item small" href="#">2021</a>
-                    </div>
-                </div>
+        <div class="col-lg-12 mt-1">
+            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '选股年月' %}</span>
+                {% for yr in xg.yrs %}
+                    <label class="btn btn-light  {% ifequal yr xg.cur_year %}active{% endifequal %}">
+                        <input type="radio" name="pick-yr" id="{{yr}}" autocomplete="off" value="{{yr}}" {% ifequal yr xg.cur_year %}checked{% endifequal %}>{{yr}}
+                    </label>
+                {% endfor %}
             </div>
 
-            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                <button type="button" class="btn btn-sm btn-light">月份</button>
-                <div class="btn-group" role="group">
-                    <button id="btnGroupDrop4" type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                    <div class="dropdown-menu small" aria-labelledby="btnGroupDrop4" style="">
-                        <a class="dropdown-item small" href="#">1</a>
-                        <a class="dropdown-item small" href="#">2</a>
-                        <a class="dropdown-item small" href="#">3</a>
-                        <a class="dropdown-item small" href="#">4</a>
-                        <a class="dropdown-item small" href="#">5</a>
-                        <a class="dropdown-item small" href="#">6</a>
-                        <a class="dropdown-item small" href="#">7</a>
-                        <a class="dropdown-item small" href="#">8</a>
-                        <a class="dropdown-item small" href="#">9</a>
-                        <a class="dropdown-item small" href="#">10</a>
-                        <a class="dropdown-item small" href="#">11</a>
-                        <a class="dropdown-item small" href="#">12</a>
-                    </div>
-                </div>
+            <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                {% for mon in xg.mons %}
+                    <label class="btn btn-light  {% ifequal mon xg.cur_mon %}active{% endifequal %}">
+                        <input type="radio" name="pick-mon" id="{{mon}}" autocomplete="off" value="{{mon}}" {% ifequal mon xg.cur_mon %}checked{% endifequal %}>{{mon}}
+                    </label>
+                {% endfor %}
             </div>
         </div>
         <div class="col-lg-12">
             <div>
-                <ul class="pagination pagination-sm">
-                    <li class="page-item active">
-                    <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">4</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">5</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">6</a>
-                    </li>
-                    <li class="page-item active">
-                    <a class="page-link" href="#">7</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">8</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">9</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">10</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">11</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">12</a>
-                    </li>
-                    <li class="page-item active">
-                    <a class="page-link" href="#">13</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">14</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">15</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">16</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">17</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">18</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">19</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">20</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">21</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">22</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">23</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">24</a>
-                    </li>
-                    <li class="page-item active">
-                    <a class="page-link" href="#">25</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">26</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">27</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">28</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">29</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">30</a>
-                    </li>
-                    <li class="page-item">
-                    <a class="page-link" href="#">31</a>
-                    </li>
-                </ul>
+                <div class="btn-group btn-group-sm btn-group-toggle mt-1" data-toggle="buttons">
+                    <span class="mt-1 mr-1 small">{% trans '选择日期' %}</span>
+                    {% for day in xg.days %}
+                        <label class="btn btn-light {% ifequal day xg.cur_day %}active{% endifequal %}">
+                            <input type="radio" name="pick-day" id="{{day}}" autocomplete="off" value="{{day}}" {% ifequal day xg.cur_day %}checked{% endifequal %}>{{day}}
+                        </label>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
@@ -230,13 +127,14 @@
         <div class="col-lg-12" id="">
             <div>
                 <!-- <span id="curAnalysisCond" class="small"></span> -->
-                <table class="table table-sm" id="tblStrategyRanking">
+                <table class="table table-sm" id="tblPickedStocks">
                     <thead>
                         <tr class="small">
                             <th scope="col">{% trans '股票' %}</th>
                             <th scope="col">{% trans '最新' %}</th>
                             <th scope="col">{% trans '涨%' %}</th>
                             <th scope="col">{% trans '固定天数内涨幅%' %}</th>
+                            <th scope="col">{% trans '固定天数内跌幅%' %}</th>
                             <th scope="col">{% trans '达固定涨幅天数' %}</th>
                         </tr>
                     </thead>
@@ -257,140 +155,33 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="small row d-none">
-                                    <div class="col-sm-2">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '10天' %}</div>
+                                <div class="content-wrapper small">
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                            {% trans '持仓天数' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-3">
+                                            {% trans '25ile' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-3">
+                                            {% trans '50ile' %}
                                         </div>
-                                    </div>
-                                    <div class="col-sm-2">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '20天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-3">
+                                            {% trans '75ile' %}
                                         </div>
                                     </div>
-                                    <div class="col-sm-2">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '30天' %}</div>
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                            10
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-3">
+                                            2%
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-3">
+                                            3.5%
                                         </div>
-                                    </div>
-                                    <div class="col-sm-2">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '50天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-2">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '80天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '130天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '210天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '350天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '560天' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-3">
+                                            8%
                                         </div>
                                     </div>
                                 </div>
@@ -401,111 +192,83 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="small row d-none">
-                                    <div class="col-sm-3">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '10%' %}</div>
+                                <div class="content-wrapper small">
+                                    <div class="row">
+                                        <div class="col-lg-2">
+                                            {% trans '持仓' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-2">
+                                            {% trans '25ile' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-2">
+                                            {% trans '50ile' %}
                                         </div>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '20%' %}</div>
+                                        <div class="col-lg-2">
+                                            {% trans '75ile' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-2">
+                                            {% trans '90ile' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-2">
+                                            {% trans 'Max' %}
                                         </div>
                                     </div>
-                                    <div class="col-sm-3">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '30%' %}</div>
+                                    <div class="row">
+                                        <div class="col-lg-2">
+                                            10天
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-2">
+                                            -2%
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-2">
+                                            -3.5%
                                         </div>
-                                    </div>
-                                    <div class="col-sm-3">
-                                        <div class="small row">
-                                            <div class="col-sm-12 text-dark">{% trans '50%' %}</div>
+                                        <div class="col-lg-2">
+                                            -8%
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-2">
+                                            -3.5%
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-2">
+                                            -28%
                                         </div>
                                     </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '80%' %}</div>
+                                </div>
+                                <div class="small">
+                                    <div class="col-lg-12">
+                                        <canvas id="targetPctChart" height="150"></canvas>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="content-wrapper small">
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                            {% trans '涨幅' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-3">
+                                            {% trans '25ile' %}
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-3">
+                                            {% trans '50ile' %}
+                                        </div>
+                                        <div class="col-lg-3">
+                                            {% trans '75ile' %}
                                         </div>
                                     </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '100%' %}</div>
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                            10%
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
+                                        <div class="col-lg-3">
+                                            15
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
+                                        <div class="col-lg-3">
+                                            35
                                         </div>
-                                    </div>
-                                    <div class="col-sm-2 d-none">
-                                        <div class="small row">
-                                            <div class="col-sm-12">{% trans '130%' %}</div>
+                                        <div class="col-lg-3">
+                                            80
                                         </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">{% trans '25ile' %}</div>
-                                            <div class="col-sm-4">{% trans '50ile' %}</div>
-                                            <div class="col-sm-4">{% trans '75ile' %}</div>
-                                        </div>
-                                        <div class="small row">
-                                            <div class="col-sm-4">3.4%</div>
-                                            <div class="col-sm-4">6.8%</div>
-                                            <div class="col-sm-4">13%</div>
-                                        </div>    
                                     </div>
                                 </div>
                                 <div class="small">
