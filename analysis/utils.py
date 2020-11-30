@@ -281,9 +281,9 @@ def get_qt_updownpct(ts_code, strategy_code, test_type):
         result_qt.append(
             {
                 'period': result.test_period,
-                '25ile': round(result.qt_10pct, 2),
-                '50ile': round(result.qt_50pct, 2),
-                '75ile': round(result.qt_75pct, 2),
+                'qt25ile': round(result.qt_10pct, 2),
+                'qt50ile': round(result.qt_50pct, 2),
+                'qt75ile': round(result.qt_75pct, 2),
                 'max': round(result.max_val, 2),
                 'mean': round(result.mean_val, 2),
             }
@@ -299,9 +299,9 @@ def get_qt_period_on_exppct(ts_code, strategy_code):
         result_qt.append(
             {
                 'pct': get_pct_val_from(result.target_pct) + '%',
-                '25ile': round(result.qt_10pct, 2),
-                '50ile': round(result.qt_50pct, 2),
-                '75ile': round(result.qt_75pct, 2),
+                'qt25ile': round(result.qt_10pct, 2),
+                'qt50ile': round(result.qt_50pct, 2),
+                'qt75ile': round(result.qt_75pct, 2),
                 'min': round(result.min_val, 2),
                 'mean': round(result.mean_val, 2),
             }

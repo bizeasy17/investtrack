@@ -25,25 +25,25 @@
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                 <span class="mt-1 mr-1 small">{% trans '买入策略' %}</span>
                 <label class="btn btn-light active">
-                    <input type="radio" name="bstrategy" id="jiuzhuan_count_b" autocomplete="off" value="jiuzhuan_count_b" >{% trans '九转买' %}
+                    <input type="radio" name="bstrategy" id="jiuzhuan_b" autocomplete="off" value="jiuzhuan_b" checked>{% trans '九转买' %}
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian25_zhicheng" >{% trans 'MA25支撑' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian25_tupo" checked>{% trans 'MA25突破' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian25_tupo">{% trans 'MA25突破' %} 
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian60_zhicheng" >{% trans 'MA60支撑' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian60_tupo" checked>{% trans 'MA60突破' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian60_tupo">{% trans 'MA60突破' %} 
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="bstrategy" id="junxian25_zhicheng" autocomplete="off" value="junxian200_zhicheng" >{% trans 'MA200支撑' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian200_tupo" checked>{% trans 'MA200突破' %} 
+                    <input type="radio" name="bstrategy" id="junxian25_tupo" autocomplete="off" value="junxian200_tupo" >{% trans 'MA200突破' %} 
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="bstrategy" id="w_di" autocomplete="off" value="w_di">{% trans 'W底' %} 
@@ -66,13 +66,13 @@
                     <input type="radio" name="sstrategy" id="junxian25_diepo" autocomplete="off" value="junxian25_diepo" >{% trans 'MA25跌破' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="sstrategy" id="junxian25_yali" autocomplete="off" value="junxian25_yali" checked>{% trans 'MA25压力' %} 
+                    <input type="radio" name="sstrategy" id="junxian25_yali" autocomplete="off" value="junxian25_yali">{% trans 'MA25压力' %} 
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="sstrategy" id="junxian60_diepo" autocomplete="off" value="junxian60_diepo" >{% trans 'MA60跌破' %} 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="sstrategy" id="junxian60_yali" autocomplete="off" value="junxian60_yali" checked>{% trans 'MA60压力' %} 
+                    <input type="radio" name="sstrategy" id="junxian60_yali" autocomplete="off" value="junxian60_yali">{% trans 'MA60压力' %} 
                 </label>
                 <label class="btn btn-light ">
                     <input type="radio" name="sstrategy" id="junxian200_diepo" autocomplete="off" value="junxian200_diepo" >{% trans 'MA200跌破' %} 
@@ -139,7 +139,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
+                        <!-- <tr>
                             <th scope="row">
                                 <div class="">
                                     <div class="card-title small"><a href="#" class="text-dark">000001.SZ</a><span class="small text-muted" id="xxx"></span></div>
@@ -277,7 +277,7 @@
                                     </div>
                                 </div>
                             </td>
-                        </tr>
+                        </tr> -->
                     </tbody>
                 </table>
             </div>
