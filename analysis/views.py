@@ -100,7 +100,7 @@ class XuanguHomeView(LoginRequiredMixin, TemplateView):
             queryset = {
                 'cur_year': self.today.year,
                 'cur_mon': self.today.month,
-                'cur_day': self.today.day+1,
+                'cur_day': self.today.day,
                 'days': days,
                 'mons': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 'yrs': [self.today.year, self.today.year+1]

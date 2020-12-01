@@ -64,15 +64,14 @@ class Command(BaseCommand):
                          'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
 
         if freq is None:
-            print('please input the mandatory freq')
-            return
+            freq = 'D'
 
         if ts_code is not None:
             ts_code_list = ts_code.split(',')
-            listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True, ts_code__in=ts_code_list)
+            listed_companies = StockNameCodeMap.objects.filter(ts_code__in=ts_code_list)
         else:
             # print(ts_code_list)
-            listed_companies = StockNameCodeMap.objects.filter(is_hist_downloaded=True)
+            listed_companies = StockNameCodeMap.objects.filter()
             # print(len(listed_companies))
             # hist_list = []
         if listed_companies is not None and len(listed_companies) > 0:

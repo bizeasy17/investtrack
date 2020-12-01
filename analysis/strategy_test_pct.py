@@ -26,15 +26,15 @@ def handle_exp_pct_test(strategy_code, ts_code, test_freq):
                     ts_code__in=ts_code_list)
         for listed_company in listed_companies:
             tasks = get_analysis_task(
-                ts_code, 'EXP_PCT_TEST', strategy_code, test_freq)
+                listed_company.ts_code, 'EXP_PCT_TEST', strategy_code, test_freq)
             if tasks is not None and len(tasks):
                 for task in tasks:
-                    test_exp_pct(strategy_code, ts_code,
+                    test_exp_pct(strategy_code, listed_company.ts_code,
                                 task.start_date, task.end_date, test_freq)
                     set_task_completed(listed_company.ts_code, 'EXP_PCT_TEST',
                                     test_freq, strategy_code, task.start_date, task.end_date)
             else:
-                print(ts_code + ' for strategy ' +
+                print(listed_company.ts_code + ' for strategy ' +
                     strategy_code + ' pct has tested already / no task')
     except Exception as e:
         print(e)

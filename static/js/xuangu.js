@@ -67,7 +67,7 @@ $(function () {
                             '<th scope="row">'+
                                 '<div class="">'+
                                     '<div class="card-title small"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a><span class="small text-muted" id=""></span></div>'+
-                                    '<div class="card-subtitle small text-muted"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a></div>'+
+                                    // '<div class="card-subtitle small text-muted"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a></div>'+
                                 '</div>'+
                             '</th>'+
                             '<td>'+
@@ -80,7 +80,7 @@ $(function () {
                             '<td>'+
                                 '<div class="content-wrapper small">'+
                                     '<div class="row">'+
-                                        '<div class="col-lg-2">持仓天数</div>'+
+                                        '<div class="col-lg-2">持仓</div>'+
                                         '<div class="col-lg-2">25ile</div>'+
                                         '<div class="col-lg-2">50ile</div>'+
                                         '<div class="col-lg-2">75ile</div>'+
@@ -93,7 +93,7 @@ $(function () {
                         content +=              
                                     '<div class="row">'+
                                         '<div class="col-lg-2">'+
-                                            obj.period +
+                                            obj.period + 
                                         '</div>'+
                                         '<div class="col-lg-2">'+
                                             obj.qt25ile +
@@ -120,7 +120,7 @@ $(function () {
                             '<td>'+
                                 '<div class="content-wrapper small">'+
                                     '<div class="row">'+
-                                        '<div class="col-lg-2">持仓天数</div>'+
+                                        '<div class="col-lg-2">持仓</div>'+
                                         '<div class="col-lg-2">25ile</div>'+
                                         '<div class="col-lg-2">50ile</div>'+
                                         '<div class="col-lg-2">75ile</div>'+
@@ -173,7 +173,7 @@ $(function () {
                         content +=              
                                     '<div class="row">'+
                                         '<div class="col-lg-2">'+
-                                            obj.period +
+                                            obj.pct +
                                         '</div>'+
                                         '<div class="col-lg-2">'+
                                             obj.qt25ile +
