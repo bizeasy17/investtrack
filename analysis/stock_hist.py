@@ -23,7 +23,7 @@ WHERE  NOT EXISTS (
 '''
 
 
-def process_stock_download(ts_code, start_date, end_date, asset, freq, sys_event_list=['MARK_CP']):
+def process_stock_download(ts_code, start_date, end_date, asset='E', freq='D', sys_event_list=['MARK_CP']):
     exec_date = date.today()
     evt_status = get_event_status('HIST_DOWNLOAD', exec_date)
 
@@ -128,7 +128,7 @@ def split_trade_cal(start_date, end_date):
         split_date_list.append(
             [start_date, mid_date])
         split_date_list.append(
-            [mid_date + timedelta(days=1), start_date]
+            [mid_date + timedelta(days=1), end_date] #fix issue of 年份分割错误 start_date -> end_date
         )
     elif end_year - start_year <= 30:
         mid_date = start_date + timedelta(days=365*10)
@@ -170,7 +170,7 @@ def download_hist_data(stock_symbol, start_date, end_date, freq='D', asset='E'):
 def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info started.')
-    end_date = date.today()
+    # end_date = date.today()
     # print(listed_company.ts_code)
     df = download_hist_data(ts_code, start_date, end_date, freq, asset,)
     hist_list = []
