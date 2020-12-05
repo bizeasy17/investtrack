@@ -26,7 +26,7 @@ from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
                             get_qt_updownpct)
 from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
 from analysis.xuangu.pick_stocks import handle_stocks_pick
-from stockmarket.utils import get_realtime_quotes
+from stockmarket.utils import get_realtime_quotes, get_stocknames
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      PickedStocksMeetStrategy, StockHistoryDaily,
@@ -84,10 +84,10 @@ class XuanguHomeView(LoginRequiredMixin, TemplateView):
     context_object_name = 'xg'
     today = date.today()
 
-    if today.weekday() == 5:  # 周六推1天
-        today = today - timedelta(days=1)
-    elif today.weekday == 6:  # 周日推2天
-        today = today - timedelta(days=2)
+    # if today.weekday() == 5:  # 周六推1天
+    #     today = today - timedelta(days=1)
+    # elif today.weekday == 6:  # 周日推2天
+    #     today = today - timedelta(days=2)
 
     def get(self, request, *args, **kwargs):
         req_user = request.user
@@ -149,7 +149,7 @@ class ZhenguHomeView(LoginRequiredMixin, TemplateView):
 
 
 @login_required
-def get_picked_stocks_bundle(request, year, mon, day, strategy_code, start_idx, end_idx):
+def get_picked_stocks_bundle(request, year, mon, day, strategy_code, period=80, exp_pct='pct20_period', start_idx=0, end_idx=5):
     pk_stock_list = []
     code_list = []
     code_sfx_list = []
@@ -162,15 +162,17 @@ def get_picked_stocks_bundle(request, year, mon, day, strategy_code, start_idx, 
                 code_sfx_list.append(picked_stock.ts_code)
 
             quotes = get_realtime_quotes(code_list)
+            stocknames = get_stocknames(code_sfx_list)
             for ts_code in code_sfx_list:
                 qt_uppct = get_qt_updownpct(
-                    ts_code, strategy_code, 'up_pct')
+                    ts_code, strategy_code, period, 'up_pct')
                 qt_downpct = get_qt_updownpct(
-                    ts_code, strategy_code, 'down_pct')
+                    ts_code, strategy_code, period, 'down_pct')
                 qt_targetpct = get_qt_period_on_exppct(
-                    ts_code, strategy_code,)
+                    ts_code, strategy_code, exp_pct)
                 pk_stock_list.append({
                     'ts_code': ts_code,
+                    'stockname': stocknames[ts_code],
                     'price': quotes[ts_code.split('.')[0]].split(',')[0],
                     'chg_pct': quotes[ts_code.split('.')[0]].split(',')[1],
                     'qt_uppct': qt_uppct,

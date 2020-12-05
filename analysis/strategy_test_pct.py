@@ -10,7 +10,7 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
-from .utils import get_analysis_task, set_task_completed
+from .utils import get_analysis_task, set_task_completed, generate_task
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +24,20 @@ def handle_exp_pct_test(strategy_code, ts_code, test_freq):
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
-        for listed_company in listed_companies:
+        for listed_company in listed_companies:    
             tasks = get_analysis_task(
                 listed_company.ts_code, 'EXP_PCT_TEST', strategy_code, test_freq)
             if tasks is not None and len(tasks):
+                print(listed_company.ts_code + ' for strategy ' +
+                      strategy_code + ' pct has started')
                 for task in tasks:
                     test_exp_pct(strategy_code, listed_company.ts_code,
                                 task.start_date, task.end_date, test_freq)
                     set_task_completed(listed_company.ts_code, 'EXP_PCT_TEST',
                                     test_freq, strategy_code, task.start_date, task.end_date)
+                    generate_task(listed_company.ts_code,
+                                  test_freq, task.start_date, task.end_date, event_list=['TGT_PCT_QTN'], strategy_list=[strategy_code])
+
             else:
                 print(listed_company.ts_code + ' for strategy ' +
                     strategy_code + ' pct has tested already / no task')
