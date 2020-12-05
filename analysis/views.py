@@ -623,7 +623,9 @@ def analysis_command(request, cmd, params):
                 plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else 'D')
         elif cmd == 'download_hist':
             process_stock_download(
-                plist[0], plist[1], plist[2], plist[3], plist[4], plist[5])
+                plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else None, 
+                plist[2] if plist[2] != '' else None, plist[3] if plist[3] != '' else 'E', 
+                plist[4] if plist[4] != '' else 'D')
         elif cmd == 'pick_stock':
             handle_stocks_pick(plist[0] if plist[0] != '' else None)
         return HttpResponse(status=200)

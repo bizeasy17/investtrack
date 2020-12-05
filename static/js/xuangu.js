@@ -8,7 +8,7 @@ $(function () {
     var pickDay;
     var inputParam;
     var startIdx = 0;
-    var rowCount = 25;
+    var rowCount = 5;
     var currentIdx = 0;
     var prevStockPickTr = undefined;
     var analysisEndpoint = '/analysis/';
