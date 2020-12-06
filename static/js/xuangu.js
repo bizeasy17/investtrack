@@ -248,21 +248,21 @@ $(function () {
     $('input:radio[name="sstrategy"]').change(function () {
         // 页面默认加载上证指数日K（D)
         pickStrategy = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, period, expPct,startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="stk-period"]').change(function () {
         // 页面默认加载上证指数日K（D)
         period = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, period, expPct, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="stk-pct_period"]').change(function () {
         // 页面默认加载上证指数日K（D)
         expPct = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, period, expPct, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     $(".pagination").on("click", ".page-item", function (event) {
