@@ -2,6 +2,7 @@ import decimal
 from datetime import datetime
 
 import tushare as ts
+from .models import StockNameCodeMap
 
 
 def get_single_realtime_quote(symbol):
@@ -71,3 +72,11 @@ def get_realtime_quotes(stock_symbols=[]):
                 realtime_quotes[realtime_quote[0]] = str(price) + ',' + str(round(
                     (price - pre_close) / pre_close, 2) * 100)
     return realtime_quotes
+
+def get_stocknames(stock_symbols=[]):
+    stocknames = {}
+    if stock_symbols is not None and len(stock_symbols) >= 1:
+        for stock_symbol in stock_symbols:
+            map = StockNameCodeMap.objects.get(ts_code=stock_symbol)
+            stocknames[stock_symbol] = map.stock_name
+    return stocknames

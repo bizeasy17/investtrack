@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 
 from stockmarket.models import StockNameCodeMap
-from .utils import is_analyzed, log_test_status
+from .utils import is_analyzed, log_test_status, get_analysis_task, set_task_completed
 from .models import (BStrategyOnFixedPctTest, StrategyTargetPctTestQuantiles,
                      StrategyTestLowHigh, StrategyUpDownTestQuantiles, StrategyUpDownTestRanking, StrategyTargetPctTestRanking)
 
@@ -17,14 +17,18 @@ def target_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     target_pct_list = ['pct10_period', 'pct20_period', 'pct30_period',
                        'pct50_period', 'pct80_period', 'pct100_period', 'pct130_period']
     try:
-        if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
-            print('target pct on start - ' + strategy_code + '/' + ts_code +
+        tasks = get_analysis_task(ts_code, 'TGT_PCT_QTN', strategy_code, freq)
+        # if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
+        if tasks is not None and len(tasks):
+            print('target pct quantile on start - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            task = tasks[0]
             quantile_list = []
             target_pct_qtiles_list = []
+            # for task in tasks: 
             # for target_pct in target_pct_list:
             results = BStrategyOnFixedPctTest.objects.filter(strategy_code=strategy_code, ts_code=ts_code,
-                                                             test_freq=freq).order_by('trade_date')  # [:int(freq_count)]
+                                                            test_freq=freq).order_by('trade_date')  # [:int(freq_count)]
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values())
                 for target_pct in target_pct_list:
@@ -50,15 +54,17 @@ def target_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
             if len(target_pct_qtiles_list) > 0:
                 StrategyTargetPctTestQuantiles.objects.bulk_create(
                     target_pct_qtiles_list)
-                log_test_status(ts_code,
-                                'TGT_PCT_QTN', freq, [strategy_code])
-                print('target pct on end - ' + strategy_code + '/' + ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                set_task_completed(ts_code, 'TGT_PCT_QTN',
+                                freq, strategy_code, task.start_date, task.end_date)
+                # log_test_status(ts_code,
+                #                 'TGT_PCT_QTN', freq, [strategy_code])
+                print('target pct quantile on end - ' + strategy_code + '/' + ts_code +
+                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             else:
-                print('no record for target pct on - ' + strategy_code + '/' + ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                print('no record for target pct quantile on - ' + strategy_code + '/' + ts_code +
+                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         else:
-            print('already exist target pct on - ' + strategy_code + '/' + ts_code +
+            print('already exist target pct quantile on - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         print(err)
@@ -73,8 +79,12 @@ def updown_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     test_type = ['up_pct', 'down_pct']
 
     try:
-        if not is_analyzed(ts_code, 'UPDN_PCT_QTN', strategy_code, freq):
-            print('updown pct on start - ' + strategy_code + '/' + ts_code +
+        tasks = get_analysis_task(ts_code, 'UPDN_PCT_QTN', strategy_code, freq)
+        # if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
+        if tasks is not None and len(tasks):
+        # if not is_analyzed(ts_code, 'UPDN_PCT_QTN', strategy_code, freq):
+            task = tasks[0]
+            print('updown pct quantile on start - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             updown_qtiles_list = []
             low_quantile_list = []
@@ -121,15 +131,17 @@ def updown_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
             if len(updown_qtiles_list) > 0:
                 StrategyUpDownTestQuantiles.objects.bulk_create(
                     updown_qtiles_list)
-                log_test_status(ts_code,
-                                'UPDN_PCT_QTN', freq, [strategy_code])
-                print('updown pct on end - ' + strategy_code + '/' + ts_code +
+                # log_test_status(ts_code,
+                #                 'UPDN_PCT_QTN', freq, [strategy_code])
+                set_task_completed(ts_code, 'UPDN_PCT_QTN',
+                                   freq, strategy_code, task.start_date, task.end_date)
+                print('updown pct quantile on end - ' + strategy_code + '/' + ts_code +
                       ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             else:
-                print('no record for updown pct on - ' + strategy_code + '/' + ts_code +
+                print('no record for updown pct quantile on - ' + strategy_code + '/' + ts_code +
                       ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         else:
-            print('already exist updown pct on end - ' + strategy_code + '/' + ts_code +
+            print('already exist updown pct quantile on end - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         logger.error(err)

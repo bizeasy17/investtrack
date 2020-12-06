@@ -18,7 +18,7 @@ from analysis.utils import (generate_task, get_analysis_task,
                             set_task_completed, set_event_exception)
 
 
-def handle_stocks_pick(freq='D'):
+def handle_stocks_pick(freq='D', force_run='0'):
     '''
     运行一遍下载，标记过程?
     '''
@@ -61,7 +61,23 @@ def handle_stocks_pick(freq='D'):
                 else:
                     print("previous marking is still ongoing or not run")
         else:
-            print("history has not yet downloade or still downloading")
+            if force_run == '1':
+                closest_trade_date = get_closest_trade_cal(exec_date)
+
+                for strategy_code in strategy_list:
+                    print("picking stock started for " + strategy_code)
+                    evt_mk_status = get_event_status(
+                        'MARK_CP', exec_date=date.today(), strategy_code=strategy_code, freq=freq)
+                    if evt_mk_status == 1:  # mark cp已经结束
+                        init_eventlog('PICK_STOCKS',  exec_date=exec_date,
+                                    strategy_code=strategy_code, freq=freq)
+                        feed_marked_stock(strategy_code,
+                                        strategy_cp_list[strategy_code], closest_trade_date, freq=freq)
+                        set_event_completed('PICK_STOCKS', exec_date=exec_date,
+                                            strategy_code=strategy_code, freq=freq)
+                        print("picking stock finished for " + strategy_code)
+            else:
+                print("history has not yet downloade or still downloading")
     except Exception as e:
         print(e)
         set_event_exception('PICK_STOCKS', exec_date=exec_date,

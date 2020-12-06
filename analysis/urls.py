@@ -22,7 +22,7 @@ urlpatterns = [
     path('paiming/', views.PaimingHomeView.as_view(), name="paiming"),
     # 选股page
     path('xuangu/', views.XuanguHomeView.as_view(), name="xuangu"),
-    path('xuangu/<int:year>/<int:mon>/<int:day>/<strategy_code>/<int:start_idx>/<int:end_idx>/',
+    path('xuangu/<int:year>/<int:mon>/<int:day>/<strategy_code>/<int:period>/<exp_pct>/<int:start_idx>/<int:end_idx>/',
          views.get_picked_stocks_bundle),
 #     path('xuangu/picked_stocks/<year>/<month>/<day>/<strategy_code>/<int:start_idx>/<int:end_idx>/',
 #          views.get_picked_stocks),

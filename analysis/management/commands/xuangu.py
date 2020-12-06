@@ -27,11 +27,11 @@ class Command(BaseCommand):
             type=str,
             help='Which freq you want to apply the download',
         )
-        # parser.add_argument(
-        #     '--start_date',
-        #     type=str,
-        #     help='Which start date you want to apply the download',
-        # )
+        parser.add_argument(
+            '--forcerun',
+            type=str,
+            help='force to run anyway',
+        )
         # parser.add_argument(
         #     '--end_date',
         #     type=str,
@@ -41,10 +41,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         freq = options['freq']
-        # start_date = options['start_date']
+        force_run = options['forcerun']
         # end_date = options['end_date']
 
         if freq is None:
             freq = 'D'
+        
+        if force_run is None:
+            freq = '0'
 
-        handle_stocks_pick(freq)
+        handle_stocks_pick(freq, force_run)

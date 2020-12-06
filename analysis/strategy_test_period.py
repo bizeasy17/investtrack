@@ -10,13 +10,14 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
-from .utils import get_analysis_task, set_task_completed
+from .utils import get_analysis_task, set_task_completed, generate_task
 
 logger = logging.getLogger(__name__)
 
 
 def handle_updown_pct_test(ts_code, test_freq, strategy_code, ):
     try:
+        
         if ts_code is None:
             listed_companies = StockNameCodeMap.objects.filter()
         else:
@@ -25,14 +26,18 @@ def handle_updown_pct_test(ts_code, test_freq, strategy_code, ):
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
         for listed_company in listed_companies:
+            # print(listed_company.ts_code + ' for strategy ' +
+            #       strategy_code + ' pct started')
             tasks = get_analysis_task(
                 listed_company.ts_code, 'PERIOD_TEST', strategy_code, test_freq)
-            if tasks is not None:
+            if tasks is not None and len(tasks) > 0:
                 for task in tasks:
                     test_by_period(strategy_code, listed_company.ts_code,
                                    task.start_date, task.end_date, test_freq)
                     set_task_completed(listed_company.ts_code, 'PERIOD_TEST',
                                        test_freq, strategy_code, task.start_date, task.end_date)
+                    generate_task(listed_company.ts_code,
+                                  test_freq, task.start_date, task.end_date, event_list=['UPDN_PCT_QTN'], strategy_list=[strategy_code])
             else:
                 print(listed_company.ts_code + ' for strategy ' +
                       strategy_code + ' pct has tested already / no task')

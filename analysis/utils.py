@@ -273,10 +273,10 @@ def get_pct_val_from(pct_str):
     return pct_val
 
 
-def get_qt_updownpct(ts_code, strategy_code, test_type):
+def get_qt_updownpct(ts_code, strategy_code, period, test_type):
     result_qt = []
     results = StrategyUpDownTestQuantiles.objects.filter(
-        strategy_code=strategy_code, ts_code=ts_code, test_type=test_type).order_by('test_period')
+        strategy_code=strategy_code, ts_code=ts_code, test_period=period, test_type=test_type).order_by('test_period')
     for result in results:
         result_qt.append(
             {
@@ -285,16 +285,17 @@ def get_qt_updownpct(ts_code, strategy_code, test_type):
                 'qt50ile': round(result.qt_50pct, 2),
                 'qt75ile': round(result.qt_75pct, 2),
                 'max': round(result.max_val, 2),
+                'min': round(result.min_val, 2),
                 'mean': round(result.mean_val, 2),
             }
         )
     return result_qt
 
 
-def get_qt_period_on_exppct(ts_code, strategy_code):
+def get_qt_period_on_exppct(ts_code, strategy_code, exp_pct):
     result_qt = []
     results = StrategyTargetPctTestQuantiles.objects.filter(
-        strategy_code=strategy_code, ts_code=ts_code).order_by('test_freq')
+        strategy_code=strategy_code, ts_code=ts_code, target_pct=exp_pct).order_by('test_freq')
     for result in results:
         result_qt.append(
             {

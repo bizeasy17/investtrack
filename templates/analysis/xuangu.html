@@ -12,7 +12,7 @@
 {% block content %}
 <div class="content-wrapper">
     {% comment %} 股票搜索框 {% endcomment %}
-    <div class="row flex-grow mb-4">
+    <div class="row flex-grow mb-1">
         <div class="grid-margin stretch-card">
             <!-- <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search"> -->
             <input type="hidden" id="hiddenCode" value="000001.SH"><!--real code e.g. 000001 -->
@@ -121,165 +121,76 @@
                 </div>
             </div>
         </div>
+        <div class="col-lg-12">
+            <div id="periodBtnGroupStock" class="btn-group btn-group-sm btn-group-toggle mt-1" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '持仓天数' %}</span>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-period" id="p10" autocomplete="off" value="10" ><small>{% trans '10' %}</small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-period" id="p20" autocomplete="off" value="20" ><small>{% trans '20' %} </small>
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-period" id="p30" autocomplete="off" value="30"><small>{% trans '30' %}</small> 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-period" id="p50" autocomplete="off" value="50"><small>{% trans '50' %}</small> 
+                </label>
+                <label class="btn btn-light active">
+                    <input type="radio" name="stk-period" id="p80" autocomplete="off" value="80" checked><small>{% trans '80' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-period" id="p130" autocomplete="off" value="130" ><small>{% trans '130' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-period" id="p210" autocomplete="off" value="210" ><small>{% trans '210' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-period" id="p350" autocomplete="off" value="350" ><small>{% trans '350' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-period" id="p560" autocomplete="off" value="560" ><small>{% trans '560' %}</small> 
+                </label>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div id="pctPeriodBtnGroupStock" class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '预期涨幅' %}</span>
+                <label class="btn btn-light ">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct10_period" ><small>{% trans '10%' %}</small>
+                </label>
+                <label class="btn btn-light active">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct20_period" checked><small>{% trans '20%' %}</small>
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct30_period"><small>{% trans '30%' %}</small> 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct50_period"><small>{% trans '50%' %}</small> 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct80_period"><small>{% trans '80%' %}</small> 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct100_period"><small>{% trans '100%' %}</small> 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="stk-pct_period" autocomplete="off" value="pct130_period"><small>{% trans '130%' %}</small> 
+                </label>
+            </div>
+        </div>
     </div>
-    <!-- <hr/> -->
+    <hr/>
     <div class="row flex-grow">
-        <div class="col-lg-12" id="">
-            <div>
-                <!-- <span id="curAnalysisCond" class="small"></span> -->
-                <table class="table table-sm table-bordered" id="tblPickedStocks">
-                    <thead>
-                        <tr class="small">
-                            <th scope="col">{% trans '股票' %}</th>
-                            <th scope="col">{% trans '最新' %}</th>
-                            <th scope="col">{% trans '涨%' %}</th>
-                            <th scope="col">{% trans '固定天数内涨幅%' %}</th>
-                            <th scope="col">{% trans '固定天数内跌幅%' %}</th>
-                            <th scope="col">{% trans '达固定涨幅天数' %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- <tr>
-                            <th scope="row">
-                                <div class="">
-                                    <div class="card-title small"><a href="#" class="text-dark">000001.SZ</a><span class="small text-muted" id="xxx"></span></div>
-                                    <div class="card-subtitle small text-muted"><a href="#" class="text-dark">平安银行</a></div>
-                                </div>
-                            </th>   
-                            <td>
-                                <span class="small">25.00
-                                </span>
-                            </td>
-                            <td>
-                                <span class="small">2.5%
-                                </span>
-                            </td>
-                            <td>
-                                <div class="content-wrapper small">
-                                    <div class="row">
-                                        <div class="col-lg-3">
-                                            {% trans '持仓天数' %}
-                                        </div>
-                                        <div class="col-lg-3">
-                                            {% trans '25ile' %}
-                                        </div>
-                                        <div class="col-lg-3">
-                                            {% trans '50ile' %}
-                                        </div>
-                                        <div class="col-lg-3">
-                                            {% trans '75ile' %}
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-lg-3">
-                                            10
-                                        </div>
-                                        <div class="col-lg-3">
-                                            2%
-                                        </div>
-                                        <div class="col-lg-3">
-                                            3.5%
-                                        </div>
-                                        <div class="col-lg-3">
-                                            8%
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="small row">
-                                    <div class="col-lg-12">
-                                        <canvas id="updownPctChart" height="150"></canvas>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="content-wrapper small">
-                                    <div class="row">
-                                        <div class="col-lg-2">
-                                            {% trans '持仓' %}
-                                        </div>
-                                        <div class="col-lg-2">
-                                            {% trans '25ile' %}
-                                        </div>
-                                        <div class="col-lg-2">
-                                            {% trans '50ile' %}
-                                        </div>
-                                        <div class="col-lg-2">
-                                            {% trans '75ile' %}
-                                        </div>
-                                        <div class="col-lg-2">
-                                            {% trans '90ile' %}
-                                        </div>
-                                        <div class="col-lg-2">
-                                            {% trans 'Max' %}
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-lg-2">
-                                            10天
-                                        </div>
-                                        <div class="col-lg-2">
-                                            -2%
-                                        </div>
-                                        <div class="col-lg-2">
-                                            -3.5%
-                                        </div>
-                                        <div class="col-lg-2">
-                                            -8%
-                                        </div>
-                                        <div class="col-lg-2">
-                                            -3.5%
-                                        </div>
-                                        <div class="col-lg-2">
-                                            -28%
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="small">
-                                    <div class="col-lg-12">
-                                        <canvas id="targetPctChart" height="150"></canvas>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="content-wrapper small">
-                                    <div class="row">
-                                        <div class="col-lg-3">
-                                            {% trans '涨幅' %}
-                                        </div>
-                                        <div class="col-lg-3">
-                                            {% trans '25ile' %}
-                                        </div>
-                                        <div class="col-lg-3">
-                                            {% trans '50ile' %}
-                                        </div>
-                                        <div class="col-lg-3">
-                                            {% trans '75ile' %}
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-lg-3">
-                                            10%
-                                        </div>
-                                        <div class="col-lg-3">
-                                            15
-                                        </div>
-                                        <div class="col-lg-3">
-                                            35
-                                        </div>
-                                        <div class="col-lg-3">
-                                            80
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="small">
-                                    <div class="col-lg-12">
-                                        <canvas id="targetPctChart" height="150"></canvas>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr> -->
-                    </tbody>
-                </table>
+        <div class="col-lg-12" >
+            <div class="row">
+                <div class="col-lg-2">{% trans '股票' %}</div>
+                <div class="col-lg-3">{% trans '固定天数涨幅%' %}</div>
+                <div class="col-lg-3">{% trans '固定天数跌幅%' %}</div>
+                <div class="col-lg-4">{% trans '达固定涨幅天数' %}</div>
+            </div>
+            <hr/>
+            <div id="pkResults"> 
             </div>
             <div>
                 <nav aria-label="Page navigation">
@@ -288,13 +199,7 @@
                         <li class="page-item small"><a class="page-link" href="#next">{% trans '后25条 >>' %}</a></li>
                     </ul>
                 </nav>
-            </div>
-            <div class="d-none" id="stockHist">
-                <!-- <input type="button" class="btn btn-sm btn-primary" id="collapseHistCanv" value="{% trans '显示股票历史数据' %}"/> -->
-                <!-- <canvas class="" id="stockHistCanvK" height="150"></canvas>  -->
-                <canvas class="" id="stockHistCanvC" height="200"></canvas> 
-            </div>
-            
+            </div>            
         </div>    
     </div>
     <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_b"/>
@@ -328,8 +233,301 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.0"></script>
 <script src="{% static 'js/chartjs-chart-financial.v_0_1_1.js' %}"type="text/javascript"></script>
 {% endcomment %}
-<script src="{% static 'js/analysis.js' %}" type="text/javascript"></script>
+{% comment %} <script src="{% static 'js/analysis.js' %}" type="text/javascript"></script>{% endcomment %}
 <script src="{% static 'js/xuangu.js' %}" type="text/javascript"></script>
 
 
 {% endblock javascript %}
+
+<!-- <div class="row">
+    <div class="col-lg-2">
+        <div class="small">
+            <a href="#" class="text-dark">
+            <span class="small text-muted" id="xxx">平安银行</span>
+            000001.SZ</a>
+        </div>
+        <div class="small">
+            <span class="small text-muted" id="xxx">价: 35.0</span>
+            <span class="small text-danger" id="xxx">涨: 2.5%</span>
+        </div>
+    </div>
+    <div class="col-lg-3"> 
+        <div class="content-wrapper small">
+            <div class="row">
+                <div class="col-lg-2">
+                    {% trans '天' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '25ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '50ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '75ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Mean' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Best' %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    10
+                </div>
+                <div class="col-lg-2">
+                    2%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="content-wrapper small">
+            <div class="row">
+                <div class="col-lg-2">
+                    {% trans '天' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '25ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '50ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '75ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Mean' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Worst' %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    10
+                </div>
+                <div class="col-lg-2">
+                    2%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="content-wrapper small">
+            <div class="row">
+                <div class="col-lg-2">
+                    {% trans '涨%' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '25ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '50ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '75ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Mean' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Best' %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    10%
+                </div>
+                <div class="col-lg-2">
+                    2%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<hr/>
+<div class="row">
+    <div class="col-lg-2">
+        <div class="small">
+            <a href="#" class="text-dark">
+            <span class="small text-muted" id="xxx">平安银行</span>
+            000001.SZ</a>
+        </div>
+        <div class="small">
+            <span class="small text-muted" id="xxx">价: 35.0</span>
+            <span class="small text-danger" id="xxx">涨: 2.5%</span>
+        </div>
+    </div>
+    <div class="col-lg-3"> 
+        <div class="content-wrapper small">
+            <div class="row">
+                <div class="col-lg-2">
+                    {% trans '天' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '25ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '50ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '75ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Mean' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Best' %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    10
+                </div>
+                <div class="col-lg-2">
+                    2%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="content-wrapper small">
+            <div class="row">
+                <div class="col-lg-2">
+                    {% trans '天' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '25ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '50ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '75ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Mean' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Worst' %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    10
+                </div>
+                <div class="col-lg-2">
+                    2%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="content-wrapper small">
+            <div class="row">
+                <div class="col-lg-2">
+                    {% trans '涨%' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '25ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '50ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans '75ile' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Mean' %}
+                </div>
+                <div class="col-lg-2">
+                    {% trans 'Best' %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    10%
+                </div>
+                <div class="col-lg-2">
+                    2%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+                <div class="col-lg-2">
+                    3.5%
+                </div>
+                <div class="col-lg-2">
+                    8%
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<hr/> -->

@@ -6,9 +6,11 @@ $(function () {
     var pickYear;
     var pickMon;
     var pickDay;
+    var period;
+    var expPct;
     var inputParam;
     var startIdx = 0;
-    var rowCount = 25;
+    var rowCount = 5;
     var currentIdx = 0;
     var prevStockPickTr = undefined;
     var analysisEndpoint = '/analysis/';
@@ -23,69 +25,52 @@ $(function () {
         pickYear = $('input:radio[name="pick-yr"]:checked').val();
         pickMon = $('input:radio[name="pick-mon"]:checked').val();
         pickDay = $('input:radio[name="pick-day"]:checked').val();
+        period = $('input:radio[name="stk-period"]:checked').val();
+        expPct = $('input:radio[name="stk-pct_period"]:checked').val();
     }
 
-    var updateStockPicking = function (strategyCode, pickYear, pickMon, pickDay) {
-        bandPickingTable(strategyCode, pickYear, pickMon, pickDay);
+    var updateStockPicking = function (strategyCode, pickYear, pickMon, pickDay, period, expPct) {
+        bandPickingTable(strategyCode, pickYear, pickMon, pickDay, period, expPct);
     }
 
-    var showStockDetailRanking = function () {
-        var nameCode = $(this).find('th a');
-        selStockName = $(nameCode[0]).text();
-        selStockCode = $(nameCode[1]).text();
-        showStockCode = selStockCode;
-        if (prevStockPickTr) {
-            if ($(prevStockPickTr).hasClass("bg-light")) {
-                $(prevStockPickTr).removeClass("bg-light");
-            }
-        }
-        prevStockPickTr = this;
-        $(this).addClass("bg-light");
-        $(".cur-stock").text(selStockName + ' - ' + showStockCode);
-        updateStockPicking(selStockCode, testPeriod, targetPct);
-    }
-
-    var bandPickingTable = function (strategyCode, pickYear, pickMon, pickDay, startIdx, endIdx) {
-        var tbd = $("#tblPickedStocks > tbody");
+    var bandPickingTable = function (strategyCode, pickYear, pickMon, pickDay, period, expPct, startIdx, endIdx) {
+        var container = $("#pkResults");
         $.ajax({
-            url: analysisEndpoint + 'xuangu/' + pickYear + "/" + pickMon + "/" + pickDay + "/" + strategyCode + "/" + startIdx + "/" + endIdx + "/",
+            url: analysisEndpoint + 'xuangu/' + pickYear + "/" + pickMon + "/" + pickDay + "/" + strategyCode + "/" + period + "/" + expPct + "/" + startIdx + "/" + endIdx + "/",
             success: function (data) {
-                tbd.empty();
+                // return;
+                container.empty();
                 $(data.value).each(function (idx, pkStocks) {
-                    // var me = this;//save `this` reference
-                    // $(pkStocks.qt_uppct).each(function (idx, upPct) {
-                    // });
-
-                    // $(pkStocks.qt_downpct).each(function (idx, downPct) {
-                    // });
-                    
-                    // $(pkStocks.qt_targetpct).each(function (idx, targetPct) {
-                    // });
                     var content = "";
+                    var pctInd = ""
+                    if(parseFloat(pkStocks.chg_pct) < 0){
+                        pctInd = "text-success";
+                    }else{
+                        pctInd = "text-danger";
+                    }
                     content += 
-                        '<tr>'+
-                            '<th scope="row">'+
-                                '<div class="">'+
-                                    '<div class="card-title small"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a><span class="small text-muted" id=""></span></div>'+
+                        '<div class="row">'+
+                            '<div class="col-lg-2">'+
+                                '<div class="small">'+
+                                    '<a href="#" class="text-dark">' + pkStocks.stockname + '</a><span class="small text-muted" id=""> '+ pkStocks.ts_code +'</span>'+
                                     // '<div class="card-subtitle small text-muted"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a></div>'+
                                 '</div>'+
-                            '</th>'+
-                            '<td>'+
-                                '<span class="small">'+pkStocks.price+'</span>'+
-                            '</td>'+
-                            '<td>'+
-                                '<span class="small">'+pkStocks.chg_pct+'</span>'+
-                            '</td>';
+                                '<div class="small">'+
+                                    '<span class="small text-muted" id="xxx">价:'+pkStocks.price+'</span>'+
+                                    '<span class="small '+pctInd+'" id="xxx"> 涨跌: ' + pkStocks.chg_pct +'%</span>'+
+                                '</div>'+
+                            '</div>';
+
                     content += 
-                            '<td>'+
+                            '<div class="col-lg-3">'+
                                 '<div class="content-wrapper small">'+
                                     '<div class="row">'+
-                                        '<div class="col-lg-2">持仓</div>'+
+                                        '<div class="col-lg-2">(天)</div>'+
                                         '<div class="col-lg-2">25ile</div>'+
                                         '<div class="col-lg-2">50ile</div>'+
                                         '<div class="col-lg-2">75ile</div>'+
-                                        '<div class="col-lg-2">Max</div>' +
                                         '<div class="col-lg-2">Mean</div>' +
+                                        '<div class="col-lg-2">Best</div>' +
                                     '</div>';
                     
                     for(var i=0;i<pkStocks.qt_uppct.length;i++){  
@@ -105,27 +90,27 @@ $(function () {
                                             obj.qt75ile +
                                         '</div>'+
                                         '<div class="col-lg-2">' +
-                                            obj.max +
+                                            obj.mean +
                                         '</div>'+
                                         '<div class="col-lg-2">' +
-                                            obj.mean +
+                                            obj.max +
                                         '</div>'+
                                     '</div>';
                     }
                     content +=
                                 '</div>'+
-                            '</td>';
+                            '</div>';
                     
                     content += 
-                            '<td>'+
+                            '<div class="col-lg-3">'+
                                 '<div class="content-wrapper small">'+
                                     '<div class="row">'+
-                                        '<div class="col-lg-2">持仓</div>'+
+                                        '<div class="col-lg-2">(天)</div>'+
                                         '<div class="col-lg-2">25ile</div>'+
                                         '<div class="col-lg-2">50ile</div>'+
                                         '<div class="col-lg-2">75ile</div>'+
-                                        '<div class="col-lg-2">Max</div>'+
                                         '<div class="col-lg-2">Mean</div>'+
+                                        '<div class="col-lg-2">Worst</div>'+
                                     '</div>';
                     
                     for(var i=0;i<pkStocks.qt_downpct.length;i++){  
@@ -145,27 +130,27 @@ $(function () {
                                             obj.qt75ile +
                                         '</div>'+
                                         '<div class="col-lg-2">' +
-                                            obj.max +
+                                            obj.mean +
                                         '</div>'+
                                         '<div class="col-lg-2">' +
-                                            obj.mean +
+                                            obj.min +
                                         '</div>'+
                                     '</div>';
                     }
                     content +=
                                 '</div>'+
-                            '</td>';
+                            '</div>';
                     
                     content += 
-                            '<td>'+
+                            '<div class="col-lg-4">'+
                                 '<div class="content-wrapper small">'+
                                     '<div class="row">'+
                                         '<div class="col-lg-2">涨幅</div>'+
                                         '<div class="col-lg-2">25ile</div>'+
                                         '<div class="col-lg-2">50ile</div>'+
                                         '<div class="col-lg-2">75ile</div>'+
-                                        '<div class="col-lg-2">Max</div>'+
                                         '<div class="col-lg-2">Mean</div>'+
+                                        '<div class="col-lg-2">Best</div>'+
                                     '</div>';
                     
                     for(var i=0;i<pkStocks.qt_targetpct.length;i++){  
@@ -185,149 +170,27 @@ $(function () {
                                             obj.qt75ile +
                                         '</div>'+
                                         '<div class="col-lg-2">' +
-                                            obj.min +
+                                            obj.mean +
                                         '</div>'+
                                         '<div class="col-lg-2">' +
-                                            obj.mean +
+                                            obj.min +
                                         '</div>'+
                                     '</div>';
                     }
                     content +=
                                 '</div>'+
-                            '</td>'+
-                        '</tr>';
-                    tbd.append(content);
-                    // tbd.append(
-                    //     '<tr>'+
-                    //         '<th scope="row">'+
-                    //             '<div class="">'+
-                    //                 '<div class="card-title small"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a><span class="small text-muted" id=""></span></div>'+
-                    //                 '<div class="card-subtitle small text-muted"><a href="#" class="text-dark">'+pkStocks.ts_code+'</a></div>'+
-                    //             '</div>'+
-                    //         '</th>'+
-                    //         '<td>'+
-                    //             '<span class="small">'+pkStocks.price+'</span>'+
-                    //         '</td>'+
-                    //         '<td>'+
-                    //             '<span class="small">'+pkStocks.chg_pct+'</span>'+
-                    //         '</td>'+
-                    //         '<td>'+
-                    //             '<div class="content-wrapper small">'+
-                    //                 '<div class="row">'+
-                    //                     '<div class="col-lg-2">持仓天数</div>'+
-                    //                     '<div class="col-lg-2">25ile</div>'+
-                    //                     '<div class="col-lg-2">50ile</div>'+
-                    //                     '<div class="col-lg-2">75ile</div>'+
-                    //                     '<div class="col-lg-2">Max</div>' +
-                    //                     '<div class="col-lg-2">Mean</div>' +
-                    //                 '</div>'+
-                    //                 '<div class="row">'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         10
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         2%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         3.5%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         8%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">' +
-                    //                         8 %
-                    //                     '</div>'+
-                    //                 '</div>'+
-                    //             '</div>'+
-                    //         '</td>'+
-                    //         '<td>'+
-                    //             '<div class="content-wrapper small">'+
-                    //                 '<div class="row">'+
-                    //                     '<div class="col-lg-2">持仓</div>'+
-                    //                     '<div class="col-lg-2">25ile</div>'+
-                    //                     '<div class="col-lg-2">50ile</div>'+
-                    //                     '<div class="col-lg-2">75ile</div>'+
-                    //                     '<div class="col-lg-2">Max</div>'+
-                    //                     '<div class="col-lg-2">Mean</div>'+
-                    //                 '</div>'+
-                    //                 '<div class="row">'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         10天
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         -2%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         -3.5%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         -8%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         -3.5%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         -28%
-                    //                     '</div>'+
-                    //                 '</div>'+
-                    //             '</div>'+
-                    //         '</td>'+
-                    //         '<td>'+
-                    //             '<div class="content-wrapper small">'+
-                    //                 '<div class="row">'+
-                    //                     '<div class="col-lg-2">涨幅</div>'+
-                    //                     '<div class="col-lg-2">25ile</div>'+
-                    //                     '<div class="col-lg-2">50ile</div>'+
-                    //                     '<div class="col-lg-2">75ile</div>'+
-                    //                     '<div class="col-lg-2">Max</div>'+
-                    //                     '<div class="col-lg-2">Mean</div>'+
-                    //                 '</div>'+
-                    //                 '<div class="row">'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         10%
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         15
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         35
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         80
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         35
-                    //                     '</div>'+
-                    //                     '<div class="col-lg-2">'+
-                    //                         80
-                    //                     '</div>‘+
-                    //                 '</div>’+
-                    //             '</div>‘+
-                    //         '</td>’+
-                    //     '</tr>‘
-                    // )
-                    // tbd.append(
-                    //     '<tr id="rankingRow' + pkStocks.ts_code + '">' +
-                    //     '<th scope="row">' +
-                    //     '<div class="">' +
-                    //     '<div class="card-title small"><a href="#" class="text-dark">' + pkStocks.stock_name + '</a><span class="small text-muted" id="xxx"></span></div>' +
-                    //     '<div class="card-subtitle small text-muted"><a href="#" class="text-dark">' + pkStocks.ts_code + '</a></div>' +
-                    //     '</div>' +
-                    //     '</th>' +
-                    //     '<td><span id="" class="small">-</span></td>' +
-                    //     '<td><span id="" class="small">' + pkStocks.qt_pct_val + '</span></td>' +
-                    //     '<td><span id="" class="small">' + (pkStocks.rank + 1) + '</span></td>' +
-                    //     '</tr>'
-                    // );
-                    // var showStockRanking = document.getElementById("rankingRow" + pkStocks.ts_code);
-                    // showStockRanking.addEventListener("click", showStockDetailRanking);
+                            '</div>'+
+                        '</div>'+
+                        '<hr/>';
+                    container.append(content);
                 });
             },
             statusCode: {
                 403: function () {
                 },
                 404: function () {
-                    $(tbd).append(
+                    $(container).empty();
+                    $(container).append(
                         '<th scope="row">' +
                         '<div class="">' +
                         '<div class="card-title small"><a href="#" class="text-dark">无选股记录</a><span class="small text-muted" id="xxx"></span></div>' +
@@ -337,7 +200,8 @@ $(function () {
                     );
                 },
                 500: function () {
-                    $(tbd).append(
+                    $(container).empty();
+                    $(container).append(
                         '<th scope="row">' +
                         '<div class="">' +
                         '<div class="card-title small"><a href="#" class="text-dark">系统错误</a><span class="small text-muted" id="xxx"></span></div>' +
@@ -352,39 +216,53 @@ $(function () {
 
     // 初始化ranking表
     initParam();
-    bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, startIdx, rowCount);
+    bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
 
     $('input:radio[name="pick-yr"]').change(function () {
         // 页面默认加载上证指数日K（D)
         pickYear = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     $('input:radio[name="pick-mon"]').change(function () {
         // 页面默认加载上证指数日K（D)
         pickMon = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="pick-day"]').change(function () {
         // 页面默认加载上证指数日K（D)
         pickDay = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="bstrategy"]').change(function () {
         // 页面默认加载上证指数日K（D)
         pickStrategy = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="sstrategy"]').change(function () {
         // 页面默认加载上证指数日K（D)
         pickStrategy = this.value;
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, startIdx, rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="stk-period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        period = this.value;
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="stk-pct_period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        expPct = this.value;
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, startIdx, rowCount);
     });
 
     $(".pagination").on("click", ".page-item", function (event) {
@@ -398,6 +276,6 @@ $(function () {
             currentIdx += rowCount;
             console.log(currentIdx);
         }
-        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, currentIdx, currentIdx + rowCount);
+        bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, currentIdx, currentIdx + rowCount);
     });
 });
