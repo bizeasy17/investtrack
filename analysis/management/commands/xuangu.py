@@ -48,6 +48,6 @@ class Command(BaseCommand):
             freq = 'D'
         
         if force_run is None:
-            freq = '0'
+            force_run = '0'
 
         handle_stocks_pick(freq, force_run)
