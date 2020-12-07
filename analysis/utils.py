@@ -36,10 +36,9 @@ def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date
             ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, start_date=start_date, end_date=end_date, is_done=False)
         task.is_done = True
         task.last_mod_time = datetime.now()
+        task.save()
     except Exception as e:
         print(e)
-    task.save()
-
 
 def generate_task(ts_code, freq, start_date, end_date, event_list=[], strategy_list=['jiuzhuan_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
                                                                                      'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']):
@@ -116,6 +115,7 @@ def set_event_completed(event, exec_date, strategy_code=None, freq='D'):
             event = AnalysisEventLog.objects.get(
                 event_type=event, freq=freq, exec_date=exec_date)
         event.status = 1
+        event.last_mod_time = datetime.now()
         event.save()
         return True
     except Exception as e:  # 未找到event log记录
