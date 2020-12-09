@@ -18,3 +18,11 @@ delete from public.analysis_stockhistorydaily
 delete from public.analysis_stockstrategytestlog
 -- 3. 清理public.analysis_analysiseventlog 
 delete from public.analysis_analysiseventlog 
+
+delete from public.analysis_analysiseventlog
+delete from public.analysis_stockhistorydaily
+delete from public.analysis_stockstrategytestlog
+delete from public.analysis_strategytestlowhigh
+delete from public.analysis_bstrategyonfixedpcttest
+delete from public.analysis_bstrategyonpcttest
+delete from public.analysis_pickedstocksmeetstrategy
