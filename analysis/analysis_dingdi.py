@@ -1,17 +1,20 @@
 
 
-import pandas as pd
-import numpy as np
+import logging
 import math
 import time
-import logging
-from scipy import stats
 from datetime import date, datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
+from scipy import stats
 from stockmarket.models import StockNameCodeMap
+
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task, get_analysis_task, get_trade_cal_diff
 from .stock_hist import download_hist_data
+from .utils import (get_analysis_task, get_event_status, get_trade_cal_diff,
+                    has_analysis_task, log_test_status, set_task_completed)
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +28,43 @@ logger = logging.getLogger(__name__)
 #     return df
 #     # print(df.head())
 
+def ready_for_proceed(strategy_code, freq='D'):
+    exec_date = date.today()
+    evt_dl_status = get_event_status(
+        'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+    evt_mk_status = get_event_status(
+        'MARK_CP', exec_date=exec_date, strategy_code=strategy_code, freq=freq)
 
-def handle_dingdi_cp(ts_code, freq, slope_offset=2, slope_deg=0.05241, version='v1'):
+    if evt_dl_status == 0:
+        print("previous downloading is still ongoing")
+        return False
+    elif evt_dl_status == -1:
+        print("history has not yet been downloaded today")
+        return False
+    else:
+        if evt_mk_status == 0:
+            print("previous marking is still ongoing")
+            return False
+        elif evt_mk_status == 1:
+            print("marking has been done today")
+            return False
+    return True
+
+def handle_dingdi_cp(ts_code, freq='D', slope_offset=2, slope_deg=0.05241, version='v1'):
     '''
     同步策略在交易中的使用情况
     '''
-    if ts_code is not None and freq is not None:
+    try:
+        if ts_code is None:
+            if ready_for_proceed('dingdi', freq):
+                listed_companies = StockNameCodeMap.objects.filter().order_by('-ts_code')
+        else:
+            ts_code_list = ts_code.split(',')
+            if ts_code_list is not None and len(ts_code_list) >= 1:
+                listed_companies = StockNameCodeMap.objects.filter(
+                    ts_code__in=ts_code_list)
+
+    if ts_code is not None:
         start_date = None
         end_date = None
         # today = date.today()
@@ -68,7 +102,8 @@ def handle_dingdi_cp(ts_code, freq, slope_offset=2, slope_deg=0.05241, version='
                         print('no mark dingdi cp task')
                 except Exception as e:
                     print(e)
-
+    else:
+        pass
 
 def mark_dingdi_listed(freq, ts_code, start_date, end_date, slope_offset=2, slope_deg=0.05241, atype='1'):
     '''
