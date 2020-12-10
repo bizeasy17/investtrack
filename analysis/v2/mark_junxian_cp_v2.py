@@ -31,23 +31,34 @@ version = 'v2'
 #     # print(df.head())
 
 
-def handle_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset=2):
+def pre_handle(ts_code, freq='D', ma_freq='25', version='v1', slope_offset=2):
     exec_date = date.today()
-    is_marking = get_event_status(
-        'MARK_CP', 'jiuzhuan'+ma_freq+'_bs', freq=freq)
-    is_downloading = get_event_status('HIST_DOWNLOAD', freq=freq)
+    evt_mk_status = get_event_status(
+        'MARK_CP', 'junxian'+ma_freq+'_bs', freq=freq)
+    evt_dl_status = get_event_status('HIST_DOWNLOAD', freq=freq)
 
-    if not is_downloading and not is_marking:
-        init_eventlog('MARK_CP', 'jiuzhuan'+ma_freq +
-                      '_bs', exec_date, freq=freq)
-        process_junxian_cp(ts_code, freq, ma_freq, version, days_offset)
-        set_event_completed('MARK_CP', 'jiuzhuan'+ma_freq +
-                            '_bs', exec_date, freq=freq)
+    if ts_code is None:
+        if evt_dl_status == 0:
+            print("previous downloading is still ongoing")
+        elif evt_dl_status == -1:
+            print("history has not yet been downloaded today")
+        else:
+            if evt_mk_status == 0:
+                print("previous marking is still ongoing")
+            elif evt_mk_status == 1:
+                print("marking has been done today")
+            else:
+                init_eventlog('MARK_CP', 'junxian'+ma_freq +
+                              '_bs', exec_date, freq=freq)
+                process_junxian_cp(ts_code, freq, ma_freq,
+                                   version, slope_offset)
+                set_event_completed('MARK_CP', 'junxian'+ma_freq +
+                                    '_bs', exec_date, freq=freq)
     else:
-        print("is still marking cp or has marked today")
+        process_junxian_cp(ts_code, freq, ma_freq, version, slope_offset)
 
 
-def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offset=2):
+def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', slope_offset=2):
     start_date = None
     end_date = None
     today = date.today()
@@ -78,7 +89,7 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offse
                     print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
                     start_date = task.start_date - \
                         timedelta(days=get_trade_cal_diff(
-                            listed_company.ts_code, task.start_date, period=int(ma_freq)+days_offset))
+                            listed_company.ts_code, task.start_date, period=int(ma_freq)+slope_offset))
 
                 mark_junxian_cp(listed_company.ts_code, start_date,
                                 task.end_date, ma_freq=ma_freq, atype=atype)
@@ -90,12 +101,12 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', days_offse
                 generate_task(listed_company.ts_code,
                               freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
-                print('no jiuzhuan mark cp task')
+                print('no junxian mark cp task')
     except Exception as e:
         print(e)
 
 
-def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, day_offset=2, version='v2', done_by='system'):
+def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, slope_offset=2, version='v2', done_by='system'):
     '''
     目标：
     参数化分析均线，可能对结果有影响的参数
@@ -120,7 +131,7 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
             # 存储结果
             start_index = 0
             if atype != '0':  # 更新标记
-                start_index = int(ma_freq) + day_offset  # - day_offset
+                start_index = int(ma_freq) + slope_offset  # - day_offset
             # 计算斜率,需要朝前取一个offset记录
             calculate_slope(df, ts_code, ma_freq=ma_freq)
             # print(start_index)

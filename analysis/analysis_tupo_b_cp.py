@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import get_analysis_task, get_trade_cal_by_attr, set_task_completed
+from .utils import get_analysis_task, get_trade_cal_by_attr, set_task_completed, get_event_status, init_eventlog, set_event_completed
 from .stock_hist import download_hist_data
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,31 @@ logger = logging.getLogger(__name__)
 #                        fields='cal_date')
 #     return df
 #     # print(df.head())
+
+
+def pre_handle(ts_code, freq, price_chg_pct=0.03, version='1'):
+    exec_date = date.today()
+    evt_mk_status = get_event_status(
+        'MARK_CP', 'tupo_yali_b', freq=freq)
+    evt_dl_status = get_event_status('HIST_DOWNLOAD', freq=freq)
+
+    if ts_code is None:
+        if evt_dl_status == 0:
+            print("previous downloading is still ongoing")
+        elif evt_dl_status == -1:
+            print("history has not yet been downloaded today")
+        else:
+            if evt_mk_status == 0:
+                print("previous marking is still ongoing")
+            elif evt_mk_status == 1:
+                print("marking has been done today")
+            else:
+                init_eventlog('MARK_CP', 'tupo_yali_b', exec_date, freq=freq)
+                handle_tupo_cp(ts_code, freq, price_chg_pct, version)
+                set_event_completed(
+                    'MARK_CP', 'tupo_yali_b', exec_date, freq=freq)
+    else:
+        handle_tupo_cp(ts_code, freq, price_chg_pct, version)
 
 
 def handle_tupo_cp(ts_code, freq, price_chg_pct=0.03, version='1'):
@@ -93,9 +118,9 @@ def mark_tupo_yali_listed(ts_code, freq, start_date, end_date, task_start, price
         tail_tupo_mark(ts_code, df, last_ding_index=last_ding_index,
                        price_chg_pct=price_chg_pct)
         # start_index = 0
-        if atype == '1': #用于更新
+        if atype == '1':  # 用于更新
             # start_index = 0  # ???
-            df = df[df['trade_date']>=task_start]
+            df = df[df['trade_date'] >= task_start]
         # else: #更新历史数据
         #     pre_marked_df = update_tupo_mark(ts_code, df, price_chg_pct)
         #     post_tupo_mark(ts_code, df, last_ding_index = 1, price_chg_pct=price_chg_pct)
@@ -140,7 +165,8 @@ def mark_tupo_bwt_ding(ts_code, df, price_chg_pct):
                 for idx_bwt in range(idx_prev+1, id):
                     chg_pct = (df.loc[idx_bwt].close -
                                df.loc[idx_prev].close) / df.loc[idx_prev].close
-                    if df.loc[idx_bwt].open < df.loc[idx_prev].close and df.loc[idx_bwt].close > df.loc[idx_prev].close and chg_pct >= price_chg_pct:  # slope >0 means 上涨趋势
+                    # slope >0 means 上涨趋势
+                    if df.loc[idx_bwt].open < df.loc[idx_prev].close and df.loc[idx_bwt].close > df.loc[idx_prev].close and chg_pct >= price_chg_pct:
                         # pass
                         print(df.loc[idx_prev].trade_date)
                         print(df.loc[idx_prev].close)
@@ -170,7 +196,8 @@ def tail_tupo_mark(ts_code, df, last_ding_index, price_chg_pct):
         # 跳过第一个顶的索引
         for index, row in df.loc[last_ding_index:].iterrows():
             chg_pct = (row['close'] - prev_close) / prev_close
-            if row['open'] < prev_close and row['close'] > prev_close and chg_pct >= price_chg_pct:  # slope >0 means 上涨趋势
+            # slope >0 means 上涨趋势
+            if row['open'] < prev_close and row['close'] > prev_close and chg_pct >= price_chg_pct:
                 print(trade_date)
                 print(prev_close)
                 print(row['trade_date'])
