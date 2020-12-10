@@ -24,7 +24,7 @@ from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
                                                StrategyUpDownTestRanking)
 from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
                             get_qt_updownpct)
-from analysis.v2.mark_junxian_cp_v2 import handle_junxian_cp
+from analysis.v2.mark_junxian_cp_v2 import pre_handle
 from analysis.xuangu.pick_stocks import handle_stocks_pick
 from stockmarket.utils import get_realtime_quotes, get_stocknames
 
@@ -615,7 +615,7 @@ def analysis_command(request, cmd, params):
     try:
         plist = params.split(',')
         if cmd == 'mark_junxian_cp':
-            handle_junxian_cp(plist[0], plist[1], plist[2], plist[3])
+            pre_handle(plist[0], plist[1], plist[2], plist[3])
         elif cmd == 'dingdi':
             handle_dingdi_cp(plist[0], plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'tupo':

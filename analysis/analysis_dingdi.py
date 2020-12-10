@@ -1,17 +1,20 @@
 
 
-import pandas as pd
-import numpy as np
+import logging
 import math
 import time
-import logging
-from scipy import stats
 from datetime import date, datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
+from scipy import stats
 from stockmarket.models import StockNameCodeMap
+
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task, get_analysis_task, get_trade_cal_diff
 from .stock_hist import download_hist_data
+from .utils import (get_analysis_task, get_event_status, get_trade_cal_diff,
+                    init_eventlog, set_event_completed, set_task_completed)
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,31 @@ logger = logging.getLogger(__name__)
 #                        fields='cal_date')
 #     return df
 #     # print(df.head())
+
+
+def pre_handle(ts_code, freq, slope_offset=2, slope_deg=0.05241, version='v1'):
+    exec_date = date.today()
+    evt_mk_status = get_event_status(
+        'MARK_CP', 'dingdi', freq=freq)
+    evt_dl_status = get_event_status('HIST_DOWNLOAD', freq=freq)
+
+    if ts_code is None:
+        if evt_dl_status == 0:
+            print("previous downloading is still ongoing")
+        elif evt_dl_status == -1:
+            print("history has not yet been downloaded today")
+        else:
+            if evt_mk_status == 0:
+                print("previous marking is still ongoing")
+            elif evt_mk_status == 1:
+                print("marking has been done today")
+            else:
+                init_eventlog('MARK_CP', 'dingdi', exec_date, freq=freq)
+                handle_dingdi_cp(ts_code, freq, slope_offset,
+                                 slope_deg, version)
+                set_event_completed('MARK_CP', 'dingdi', exec_date, freq=freq)
+    else:
+        handle_dingdi_cp(ts_code, freq, slope_offset, slope_deg, version)
 
 
 def handle_dingdi_cp(ts_code, freq, slope_offset=2, slope_deg=0.05241, version='v1'):
@@ -55,7 +83,7 @@ def handle_dingdi_cp(ts_code, freq, slope_offset=2, slope_deg=0.05241, version='
                             print('更新处理，从上一次更新时间-2d offset day - 开盘日 开始...')
                             start_date = task.start_date - \
                                 timedelta(days=get_trade_cal_diff(
-                                    ts_code, task.start_date, period=int(slope_offset * 2))) #取2倍于计算slope的偏差的交易日数量，保证最后几个slope_offset的slope有值
+                                    ts_code, task.start_date, period=int(slope_offset * 2)))  # 取2倍于计算slope的偏差的交易日数量，保证最后几个slope_offset的slope有值
 
                         mark_dingdi_listed(
                             freq, ts_code, start_date, task.end_date, slope_deg=slope_deg, atype=atype)
@@ -160,7 +188,7 @@ def pre_mark_dingdi(ts_code, df, day_offset=2, slope_deg=0.05241):
     dingdi_list = []
     dingdi_count_list = []
     dingdi_end_list = []
-    
+
     try:
         for index, row in df.iterrows():
             '''
@@ -376,6 +404,7 @@ def post_mark_dingdi(med_marked_df, dingbu_s_idx_list, dibu_b_idx_list, ding_max
     print('post mark dingdi end  - ' + ts_code + ',' +
           datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     return med_marked_df
+
 
 def calculate_slope(df, offset=2):
     pass
