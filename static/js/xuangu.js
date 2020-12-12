@@ -1,5 +1,6 @@
 $(function () {
     var recordCount = 50;
+    var csrftoken = Cookies.get('csrftoken');
     // ranking/<strategy_code>/<test_type>/<qt_pct>/<input_param>/<int:start_idx>/<int:end_idx>/
     var pickStrategy;
     // var sStrategy;
@@ -14,6 +15,9 @@ $(function () {
     var currentIdx = 0;
     var prevStockPickTr = undefined;
     var analysisEndpoint = '/analysis/';
+    var investorEndpoint = "/investors/";
+    var totalRowCount = 0
+    var prevPagination;
 
     var selStockName;
     var selStockCode;
@@ -28,6 +32,40 @@ $(function () {
         period = $('input:radio[name="stk-period"]:checked').val();
         expPct = $('input:radio[name="stk-pct_period"]:checked').val();
     }
+
+    var followStock = function (symbol, name) {
+        $.ajax(
+            {
+                url: investorEndpoint + 'follow-stock/' + symbol + "/",
+                data: {
+                    name: name
+                },
+                headers: { 'X-CSRFToken': csrftoken },
+                method: 'POST',
+                success: function (data) {
+                    $("#messages").removeClass('d-none');
+                    if (data.code == "ok") {
+                        $("#messages").addClass('alert-success');
+                    } else {
+                        $("#messages").addClass('alert-danger');
+                    }
+                    $("#messageText").html("<strong>" + data.message + "</strong>");
+                },
+                statusCode: {
+                    403: function () {
+                        alert("403 forbidden");
+                    },
+                    404: function () {
+                        alert("404 page not found");
+                    },
+                    500: function () {
+                        alert("500 internal server error");
+                    }
+                }
+            }
+        );
+    }
+
 
     var updateStockPicking = function (strategyCode, pickYear, pickMon, pickDay, period, expPct) {
         bandPickingTable(strategyCode, pickYear, pickMon, pickDay, period, expPct);
@@ -58,6 +96,9 @@ $(function () {
                                 '<div class="small">'+
                                     '<span class="small text-muted" id="xxx">价:'+pkStocks.price+'</span>'+
                                     '<span class="small '+pctInd+'" id="xxx"> 涨跌: ' + pkStocks.chg_pct +'%</span>'+
+                                '</div>'+
+                                '<div class="small">'+
+                    '<span class="small text-light btn btn-sm btn-info follow" id="' + pkStocks.ts_code + ',' + pkStocks.stockname + '">加自选</span>'+
                                 '</div>'+
                             '</div>';
 
@@ -182,8 +223,22 @@ $(function () {
                             '</div>'+
                         '</div>'+
                         '<hr/>';
-                    container.append(content);
+                    container.append(content);  
                 });
+
+                $(".follow").click(function () {
+                    followStock($(this).attr("id").split(",")[0], $(this).attr("id").split(",")[1]);
+                });
+
+                $(container).append(
+                    '<div class="row">' +
+                        '<div class="col-lg-12">' +
+                        '<div class="card-title small"><a href="#" class="text-dark">选股结果共: '+data.row_count+' 条</a><span class="small text-muted" id="xxx"></span></div>' +
+                        '<div class="card-subtitle small text-muted">当前: '+(currentIdx+1)+' - '+ (currentIdx + rowCount)+' 条<a href="#" class="text-dark"></a></div>' +
+                        '</div>' +
+                    '</div>'
+                );
+                totalRowCount = data.row_count;
             },
             statusCode: {
                 403: function () {
@@ -266,16 +321,29 @@ $(function () {
     });
 
     $(".pagination").on("click", ".page-item", function (event) {
+        // if (currentIdx + rowCount * 2 > totalRowCount) {
+        //     $(this).prop("disabled", true)
+        //     return;
+        // } else {
+        //     $(this).removeAttr("disabled")
+        // }
         if ($(this).index() == 0) {
+            // prev
             if (currentIdx == 0) return;
             else {
                 currentIdx -= rowCount;
             }
             console.log(currentIdx);
         } else {
+            // next
+            if (currentIdx + rowCount >= totalRowCount) {
+                return;
+            } 
             currentIdx += rowCount;
             console.log(currentIdx);
         }
+        
+        prevPagination = $(this);
         bandPickingTable(pickStrategy, pickYear, pickMon, pickDay, period, expPct, currentIdx, currentIdx + rowCount);
     });
 });

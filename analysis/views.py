@@ -15,7 +15,7 @@ from django.views.generic import TemplateView
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
-from analysis.analysis_dingdi import handle_dingdi_cp
+from analysis.analysis_dingdi import pre_handle_dd
 from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
 from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
 from analysis.analysis_tupo_b_cp import handle_tupo_cp
@@ -24,7 +24,7 @@ from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
                                                StrategyUpDownTestRanking)
 from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
                             get_qt_updownpct)
-from analysis.v2.mark_junxian_cp_v2 import pre_handle
+from analysis.v2.mark_junxian_cp_v2 import pre_handle_jx
 from analysis.xuangu.pick_stocks import handle_stocks_pick
 from stockmarket.utils import get_realtime_quotes, get_stocknames
 
@@ -155,9 +155,11 @@ def get_picked_stocks_bundle(request, year, mon, day, strategy_code, period=80, 
     code_sfx_list = []
     try:
         picked_stocks = PickedStocksMeetStrategy.objects.filter(
-            strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))[start_idx:end_idx]
+            strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))
+        # picked_stocks = PickedStocksMeetStrategy.objects.filter(
+        #     strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))[start_idx:end_idx]
         if picked_stocks is not None and len(picked_stocks) > 0:
-            for picked_stock in picked_stocks:
+            for picked_stock in picked_stocks[start_idx:end_idx]:
                 code_list.append(picked_stock.ts_code.split('.')[0])
                 code_sfx_list.append(picked_stock.ts_code)
 
@@ -179,7 +181,7 @@ def get_picked_stocks_bundle(request, year, mon, day, strategy_code, period=80, 
                     'qt_downpct': qt_downpct,
                     'qt_targetpct': qt_targetpct,
                 })
-            return JsonResponse({'value': pk_stock_list}, safe=False)
+            return JsonResponse({'value': pk_stock_list, 'row_count': len(picked_stocks)}, safe=False)
         else:
             return HttpResponse(status=404)
     except Exception as e:
@@ -615,9 +617,9 @@ def analysis_command(request, cmd, params):
     try:
         plist = params.split(',')
         if cmd == 'mark_junxian_cp':
-            pre_handle(plist[0], plist[1], plist[2], plist[3])
+            pre_handle_jx(plist[0], plist[1], plist[2], plist[3])
         elif cmd == 'dingdi':
-            handle_dingdi_cp(plist[0], plist[1], plist[2], plist[3], plist[4])
+            pre_handle_dd(plist[0], plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'tupo':
             handle_tupo_cp(plist[0], plist[1], plist[3], plist[4])
         elif cmd == 'mark_jiuzhuan_cp':
