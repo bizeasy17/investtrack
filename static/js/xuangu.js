@@ -336,9 +336,12 @@ $(function () {
             console.log(currentIdx);
         } else {
             // next
-            if (currentIdx + rowCount >= totalRowCount) {
+            if (currentIdx + rowCount + 1 > totalRowCount) {
                 return;
             } 
+            // if (totalRowCount - currentIdx > 1 && totalRowCount - currentIdx - rowCount < rowCount) {
+            //     rowCount = totalRowCount - currentIdx - rowCount;
+            // } 
             currentIdx += rowCount;
             console.log(currentIdx);
         }

@@ -23,8 +23,8 @@ urlpatterns = [
     path('companylisted/sync/', views.sync_company_list),
     path('analysis/mark-jz-cp/<stock_symbol>/<start_date>/<freq>/',
          views.jiuzhuan_test),
-    path('analysis/mark-dingdi-cp/<stock_symbol>/<freq>/',
-         views.dingdi_test),
+#     path('analysis/mark-dingdi-cp/<stock_symbol>/<freq>/',
+#          views.dingdi_test),
     path('strategy-test-by-period/<strategy>/<stock_symbol>/<test_period>/',
          views.bstrategy_test_by_period),  # ??
     path('strategy-test-exp-pct/<strategy>/<stock_symbol>/<test_freq>/',

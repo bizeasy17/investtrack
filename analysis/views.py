@@ -1,7 +1,7 @@
 import decimal
 import logging
-from datetime import date, datetime, timedelta
 from calendar import monthrange
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import pytz
@@ -14,6 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
+from stockmarket.utils import get_realtime_quotes, get_stocknames
 
 from analysis.analysis_dingdi import pre_handle_dd
 from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
@@ -26,7 +27,6 @@ from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
                             get_qt_updownpct)
 from analysis.v2.mark_junxian_cp_v2 import pre_handle_jx
 from analysis.xuangu.pick_stocks import handle_stocks_pick
-from stockmarket.utils import get_realtime_quotes, get_stocknames
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      PickedStocksMeetStrategy, StockHistoryDaily,
@@ -155,7 +155,7 @@ def get_picked_stocks_bundle(request, year, mon, day, strategy_code, period=80, 
     code_sfx_list = []
     try:
         picked_stocks = PickedStocksMeetStrategy.objects.filter(
-            strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))
+            strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day)).order_by('ts_code')
         # picked_stocks = PickedStocksMeetStrategy.objects.filter(
         #     strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))[start_idx:end_idx]
         if picked_stocks is not None and len(picked_stocks) > 0:
@@ -616,13 +616,13 @@ def sstrategy_test_result_drop(request, strategy, stock_symbol, test_period):
 def analysis_command(request, cmd, params):
     try:
         plist = params.split(',')
-        if cmd == 'mark_junxian_cp':
-            pre_handle_jx(plist[0], plist[1], plist[2], plist[3])
+        if cmd == 'junxian':
+            pre_handle_jx(plist[0], plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'dingdi':
             pre_handle_dd(plist[0], plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'tupo':
             handle_tupo_cp(plist[0], plist[1], plist[3], plist[4])
-        elif cmd == 'mark_jiuzhuan_cp':
+        elif cmd == 'jiuzhuan':
             handle_jiuzhuan_cp(
                 plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else 'D')
         elif cmd == 'download_hist':
@@ -630,7 +630,7 @@ def analysis_command(request, cmd, params):
                 plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else None, 
                 plist[2] if plist[2] != '' else None, plist[3] if plist[3] != '' else 'E', 
                 plist[4] if plist[4] != '' else 'D')
-        elif cmd == 'pick_stock':
+        elif cmd == 'pick':
             handle_stocks_pick(plist[0] if plist[0] != '' else None)
         return HttpResponse(status=200)
     except Exception as e:

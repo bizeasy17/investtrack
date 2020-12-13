@@ -9,7 +9,7 @@ from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
 from analysis.models import PickedStocksMeetStrategy
 from analysis.stock_hist import handle_hist_download
 from analysis.utils import get_closest_trade_cal, last_download_date
-from analysis.v2.mark_junxian_cp_v2 import pre_handle
+from analysis.v2.mark_junxian_cp_v2 import pre_handle_jx
 from stockmarket.models import StockNameCodeMap
 from analysis.models import StockHistoryDaily
 from analysis.utils import (generate_task, get_analysis_task,
@@ -138,7 +138,7 @@ def pick_stocks_by_strategy(strategy_code=None, freq='D', ts_code_list=[]
         # 标记斜率，顶底
         # handle_mw_cp(freq=freq)
         # 标记均线
-        pre_handle(None, freq=freq)
+        pre_handle_jx(None, freq=freq)
         # 存储选股结果?
         feed_marked_stock(strategy_code, closest_trade_date, freq=freq)
     except Exception as e:

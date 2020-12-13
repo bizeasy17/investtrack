@@ -30,6 +30,29 @@ def log_test_status(ts_code, event, freq, strategy_list=[]):
         mark_log.save()
 
 
+def ready2proceed(strategy_code, freq='D'):
+    exec_date = date.today()
+    evt_dl_status = get_event_status(
+        'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+    evt_mk_status = get_event_status(
+        'MARK_CP', exec_date=exec_date, strategy_code=strategy_code, freq=freq)
+
+    if evt_dl_status == 0:
+        print("previous downloading is still ongoing")
+        return False
+    elif evt_dl_status == -1:
+        print("history has not yet been downloaded today")
+        return False
+    else:
+        if evt_mk_status == 0:
+            print("previous marking is still ongoing")
+            return False
+        elif evt_mk_status == 1:
+            print("marking has been done today")
+            return False
+    return True
+
+
 def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date):
     try:
         task = StockStrategyTestLog.objects.get(
@@ -39,6 +62,7 @@ def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date
         task.save()
     except Exception as e:
         print(e)
+
 
 def generate_task(ts_code, freq, start_date, end_date, event_list=[], strategy_list=['jiuzhuan_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
                                                                                      'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']):

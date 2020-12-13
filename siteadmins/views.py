@@ -21,7 +21,7 @@ from users.models import User
 from analysis.analysis_jiuzhuan_cp import test_mark, mark_jiuzhuan
 from analysis.strategy_test_pct import test_exp_pct
 from analysis.strategy_test_period import test_by_period
-from analysis.analysis_dingdi import mark_dingdi_listed
+# from analysis.analysis_dingdi import mark_dingdi_listed
 
 
 logger = logging.getLogger(__name__)
@@ -281,14 +281,14 @@ def jiuzhuan_test(request, stock_symbol, start_date, freq):
     else:
         return HttpResponse(status=500)
 
-def dingdi_test(request, stock_symbol, freq):
-    # end_date = date.today()
-    symbol_list = stock_symbol.split(',')
-    res = mark_dingdi_listed(freq, symbol_list)
-    if res:
-        return HttpResponse(status=200)
-    else:
-        return HttpResponse(status=500)
+# def dingdi_test(request, stock_symbol, freq):
+#     # end_date = date.today()
+#     symbol_list = stock_symbol.split(',')
+#     res = mark_dingdi_listed(freq, symbol_list)
+#     if res:
+#         return HttpResponse(status=200)
+#     else:
+#         return HttpResponse(status=500)
 
 @login_required
 def bstrategy_test_by_period(request,  strategy, stock_symbol, test_period):

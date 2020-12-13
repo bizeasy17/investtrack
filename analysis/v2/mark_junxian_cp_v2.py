@@ -13,7 +13,7 @@ from analysis.models import StockHistoryDaily, StockStrategyTestLog
 from analysis.utils import (generate_task, get_analysis_task,
                             get_trade_cal_diff, init_eventlog,
                             get_event_status, set_event_completed,
-                            set_task_completed)
+                            set_task_completed, ready2proceed)
 from analysis.stock_hist import download_hist_data
 from .utils import mark_mov_avg, calculate_slope
 from analysis.utils import is_analyzed, get_analysis_task, get_trade_cal_diff, set_task_completed, generate_task
@@ -31,29 +31,18 @@ version = 'v2'
 #     # print(df.head())
 
 
-def pre_handle(ts_code, freq='D', ma_freq='25', version='v1', slope_offset=2):
+def pre_handle_jx(ts_code, freq='D', ma_freq='25', version='v1', slope_offset=2):
     exec_date = date.today()
-    evt_mk_status = get_event_status(
-        'MARK_CP', 'junxian'+ma_freq+'_bs', freq=freq)
-    evt_dl_status = get_event_status('HIST_DOWNLOAD', freq=freq)
 
     if ts_code is None:
-        if evt_dl_status == 0:
-            print("previous downloading is still ongoing")
-        elif evt_dl_status == -1:
-            print("history has not yet been downloaded today")
-        else:
-            if evt_mk_status == 0:
-                print("previous marking is still ongoing")
-            elif evt_mk_status == 1:
-                print("marking has been done today")
-            else:
-                init_eventlog('MARK_CP', 'junxian'+ma_freq +
-                              '_bs', exec_date, freq=freq)
-                process_junxian_cp(ts_code, freq, ma_freq,
-                                   version, slope_offset)
-                set_event_completed('MARK_CP', 'junxian'+ma_freq +
-                                    '_bs', exec_date, freq=freq)
+        if ready2proceed('junxian'+ma_freq +
+                         '_bs', freq):
+            init_eventlog('MARK_CP', 'junxian'+ma_freq +
+                          '_bs', exec_date, freq=freq)
+            process_junxian_cp(ts_code, freq, ma_freq,
+                               version, slope_offset)
+            set_event_completed('MARK_CP', 'junxian'+ma_freq +
+                                '_bs', exec_date, freq=freq)
     else:
         process_junxian_cp(ts_code, freq, ma_freq, version, slope_offset)
 
@@ -75,31 +64,32 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', slope_offs
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
         for listed_company in listed_companies:
-            task = get_analysis_task(
+            tasks = get_analysis_task(
                 listed_company.ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs', freq)
-            if task is not None:
-                atype = '1'  # 标记更新的股票历史记录
-                # 如何差额取之前的历史记录？9
-                if task.start_date == listed_company.list_date:
-                    print('第一次处理，从上市日开始。。。')
-                    atype = '0'  # 从上市日开始标记
-                    start_date = task.start_date
-                else:
-                    # q更新交易记录开始时间需要往前获取日期为MA周期的时间
-                    print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
-                    start_date = task.start_date - \
-                        timedelta(days=get_trade_cal_diff(
-                            listed_company.ts_code, task.start_date, period=int(ma_freq)+slope_offset))
+            if tasks is not None and len(tasks) > 0:
+                for task in tasks:
+                    atype = '1'  # 标记更新的股票历史记录
+                    # 如何差额取之前的历史记录？9
+                    if task.start_date == listed_company.list_date:
+                        print('第一次处理，从上市日开始。。。')
+                        atype = '0'  # 从上市日开始标记
+                        start_date = task.start_date
+                    else:
+                        # q更新交易记录开始时间需要往前获取日期为MA周期的时间
+                        print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
+                        start_date = task.start_date - \
+                            timedelta(days=get_trade_cal_diff(
+                                listed_company.ts_code, task.start_date, period=int(ma_freq)+int(slope_offset) * 2))
 
-                mark_junxian_cp(listed_company.ts_code, start_date,
-                                task.end_date, ma_freq=ma_freq, atype=atype)
+                    mark_junxian_cp(listed_company.ts_code, start_date,
+                                    task.end_date, ma_freq=ma_freq, atype=atype, slope_offset=int(slope_offset))
 
-                # print(task.start_date)
-                # # print(task.end_date)
-                set_task_completed(ts_code, 'MARK_CP',
-                                   freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
-                generate_task(listed_company.ts_code,
-                              freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                    # print(task.start_date)
+                    # # print(task.end_date)
+                    set_task_completed(ts_code, 'MARK_CP',
+                                    freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
+                    generate_task(listed_company.ts_code,
+                                freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print('no junxian mark cp task')
     except Exception as e:
@@ -130,8 +120,8 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
             mark_mov_avg(ts_code, df, ma_freq)
             # 存储结果
             start_index = 0
-            if atype != '0':  # 更新标记
-                start_index = int(ma_freq) + slope_offset  # - day_offset
+            if atype == '1':  # 更新标记
+                start_index = int(ma_freq) + slope_offset # - day_offset
             # 计算斜率,需要朝前取一个offset记录
             calculate_slope(df, ts_code, ma_freq=ma_freq)
             # print(start_index)
@@ -356,7 +346,7 @@ def post_mark(ts_code, df, price_chg_pct):
         print('post mark ma b&s end on code - ' + ts_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
-        time.sleep(1)
+        # time.sleep(1)
         print(e)
     else:
         return df

@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from analysis.v2.mark_junxian_cp_v2 import pre_handle
+from analysis.v2.mark_junxian_cp_v2 import pre_handle_jx
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from stockmarket.models import StockNameCodeMap
@@ -54,6 +54,6 @@ class Command(BaseCommand):
         if ma_freq is None:
             ma_freq = '25'
         
-        pre_handle(ts_code, freq, ma_freq, version)
+        pre_handle_jx(ts_code, freq, ma_freq, version)
 
     
