@@ -37,12 +37,12 @@ def pre_handle_jx(ts_code, freq='D', ma_freq='25', version='v1', slope_offset=2)
     if ts_code is None:
         if ready2proceed('junxian'+ma_freq +
                          '_bs', freq):
-            init_eventlog('MARK_CP', 'junxian'+ma_freq +
-                          '_bs', exec_date, freq=freq)
+            init_eventlog('MARK_CP', exec_date,  'junxian'+ma_freq +
+                          '_bs', freq=freq)
             process_junxian_cp(ts_code, freq, ma_freq,
                                version, slope_offset)
-            set_event_completed('MARK_CP', 'junxian'+ma_freq +
-                                '_bs', exec_date, freq=freq)
+            set_event_completed('MARK_CP', exec_date, 'junxian'+ma_freq +
+                                '_bs', freq=freq)
     else:
         process_junxian_cp(ts_code, freq, ma_freq, version, slope_offset)
 
@@ -57,12 +57,12 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', slope_offs
 
     try:
         if ts_code is None:
-            listed_companies = StockNameCodeMap.objects.filter()
+            listed_companies = StockNameCodeMap.objects.filter().order_by('-ts_code')
         else:
             ts_code_list = ts_code.split(',')
             if ts_code_list is not None and len(ts_code_list) >= 1:
                 listed_companies = StockNameCodeMap.objects.filter(
-                    ts_code__in=ts_code_list)
+                    ts_code__in=ts_code_list).order_by('-ts_code')
         for listed_company in listed_companies:
             tasks = get_analysis_task(
                 listed_company.ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs', freq)
@@ -87,9 +87,9 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', slope_offs
                     # print(task.start_date)
                     # # print(task.end_date)
                     set_task_completed(ts_code, 'MARK_CP',
-                                    freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
+                                       freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
                     generate_task(listed_company.ts_code,
-                                freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                                  freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print('no junxian mark cp task')
     except Exception as e:
@@ -121,7 +121,7 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
             # 存储结果
             start_index = 0
             if atype == '1':  # 更新标记
-                start_index = int(ma_freq) + slope_offset # - day_offset
+                start_index = int(ma_freq) + slope_offset  # - day_offset
             # 计算斜率,需要朝前取一个offset记录
             calculate_slope(df, ts_code, ma_freq=ma_freq)
             # print(start_index)

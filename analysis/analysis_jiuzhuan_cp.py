@@ -12,7 +12,7 @@ from dashboard.utils import days_between
 from analysis.utils import (generate_task, get_analysis_task,
                             get_trade_cal_diff, init_eventlog,
                             get_event_status, set_event_completed,
-                            set_task_completed)
+                            set_task_completed, ready2proceed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
 from .stock_hist import download_hist_data
@@ -32,22 +32,8 @@ logger = logging.getLogger(__name__)
 
 def handle_jiuzhuan_cp(ts_code, freq='D'):
     exec_date = date.today()
-    evt_dl_status = get_event_status(
-        'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
-    evt_mk_status = get_event_status(
-        'MARK_CP', exec_date=exec_date, strategy_code='jiuzhuan_bs', freq=freq)
-
     if ts_code is None:
-        if evt_dl_status == 0:
-            print("previous downloading is still ongoing")
-        elif evt_dl_status == -1:
-            print("history has not yet been downloaded today")
-        else:
-            if evt_mk_status == 0:
-                print("previous marking is still ongoing")
-            elif evt_mk_status == 1:
-                print("marking has been done today")
-            else:
+        if ready2proceed('jiuzhuan_bs'):
                 init_eventlog('MARK_CP',  exec_date=exec_date,
                               strategy_code='jiuzhuan_bs', freq=freq)
                 process_jiuzhuan_cp(ts_code, freq,)
