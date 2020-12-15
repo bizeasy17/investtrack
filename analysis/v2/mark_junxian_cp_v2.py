@@ -1,22 +1,22 @@
 
 
-import pandas as pd
-import numpy as np
-import time
-import math
 import logging
-from scipy import stats
+import math
+import time
 from datetime import date, datetime, timedelta
-from stockmarket.models import StockNameCodeMap
-from investors.models import StockFollowing, TradeStrategy
+
+import numpy as np
+import pandas as pd
 from analysis.models import StockHistoryDaily, StockStrategyTestLog
-from analysis.utils import (generate_task, get_analysis_task,
-                            get_trade_cal_diff, init_eventlog,
-                            get_event_status, set_event_completed,
-                            set_task_completed, ready2proceed)
 from analysis.stock_hist import download_hist_data
-from .utils import mark_mov_avg, calculate_slope
-from analysis.utils import is_analyzed, get_analysis_task, get_trade_cal_diff, set_task_completed, generate_task
+from analysis.utils import (generate_task, get_analysis_task, get_event_status,
+                            get_trade_cal_diff, init_eventlog, ready2proceed,
+                            set_event_completed, set_task_completed)
+from investors.models import StockFollowing, TradeStrategy
+from scipy import stats
+from stockmarket.models import StockNameCodeMap
+
+from .utils import calculate_slope, mark_mov_avg
 
 logger = logging.getLogger(__name__)
 version = 'v2'
@@ -86,7 +86,7 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', slope_offs
 
                     # print(task.start_date)
                     # # print(task.end_date)
-                    set_task_completed(ts_code, 'MARK_CP',
+                    set_task_completed(listed_company.ts_code, 'MARK_CP',
                                        freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
                     generate_task(listed_company.ts_code,
                                   freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)

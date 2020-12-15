@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.analysis_dingdi import mark_dingdi_listed, handle_dingdi_cp
+from analysis.analysis_dingdi import mark_dingdi_listed, pre_handle_dd
 
 
 class Command(BaseCommand):
@@ -44,7 +44,7 @@ class Command(BaseCommand):
         if version is None:
             version = 'v2'
 
-        handle_dingdi_cp(ts_code, freq, version)
+        pre_handle_dd(ts_code, freq, version)
 
         # if ts_code is not None and freq is not None:
         #     ts_code_list = ts_code.split(',')

@@ -1,17 +1,21 @@
 
 
-import pandas as pd
-import numpy as np
-import time
-import math
 import logging
-from scipy import stats
+import math
+import time
 from datetime import date, datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
+from scipy import stats
 from stockmarket.models import StockNameCodeMap
+
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import get_analysis_task, get_trade_cal_by_attr, set_task_completed, get_event_status, init_eventlog, set_event_completed
 from .stock_hist import download_hist_data
+from .utils import (get_analysis_task, get_event_status, get_trade_cal_by_attr,
+                    init_eventlog, ready2proceed, set_event_completed,
+                    set_task_completed)
 
 logger = logging.getLogger(__name__)
 
@@ -28,25 +32,13 @@ logger = logging.getLogger(__name__)
 
 def pre_handle(ts_code, freq, price_chg_pct=0.03, version='1'):
     exec_date = date.today()
-    evt_mk_status = get_event_status(
-        'MARK_CP', 'tupo_yali_b', freq=freq)
-    evt_dl_status = get_event_status('HIST_DOWNLOAD', freq=freq)
 
     if ts_code is None:
-        if evt_dl_status == 0:
-            print("previous downloading is still ongoing")
-        elif evt_dl_status == -1:
-            print("history has not yet been downloaded today")
-        else:
-            if evt_mk_status == 0:
-                print("previous marking is still ongoing")
-            elif evt_mk_status == 1:
-                print("marking has been done today")
-            else:
-                init_eventlog('MARK_CP', 'tupo_yali_b', exec_date, freq=freq)
-                handle_tupo_cp(ts_code, freq, price_chg_pct, version)
-                set_event_completed(
-                    'MARK_CP', 'tupo_yali_b', exec_date, freq=freq)
+        if ready2proceed('tupo_yali_b', freq):
+            init_eventlog('MARK_CP', 'tupo_yali_b', exec_date, freq=freq)
+            handle_tupo_cp(ts_code, freq, price_chg_pct, version)
+            set_event_completed(
+                'MARK_CP', 'tupo_yali_b', exec_date, freq=freq)
     else:
         handle_tupo_cp(ts_code, freq, price_chg_pct, version)
 
@@ -55,41 +47,39 @@ def handle_tupo_cp(ts_code, freq, price_chg_pct=0.03, version='1'):
     '''
     同步策略在交易中的使用情况
     '''
-    if ts_code is not None and freq is not None:
-        ts_code_list = ts_code.split(',')
-        if ts_code_list is not None and len(ts_code_list) >= 1:
-            # print(ts_code_list)
-            for ts_code in ts_code_list:
-                try:
-                    listed_company = StockNameCodeMap.objects.get(
-                        ts_code=ts_code)
-                    task = get_analysis_task(
-                        ts_code, 'MARK_CP', 'tupo_yali_b', freq)
-                    if task is not None:
-                        atype = '1'  # 标记更新的股票历史记录
-                        # 如何差额取之前的历史记录？9
-                        if task.start_date == listed_company.list_date:
-                            print('第一次处理，从上市日开始。。。')
-                            atype = '0'  # 从上市日开始标记
-                            start_date = task.start_date
-                        else:
-                            print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
-                            start_date = task.start_date - \
-                                timedelta(days=get_trade_cal_by_attr(
-                                    ts_code, task.start_date, attr='ding_max'))
-
-                        mark_tupo_yali_listed(ts_code, freq, start_date,
-                                              task.end_date, task.start_date, price_chg_pct, atype)
-
-                        # print(task.start_date)
-                        # print(task.end_date)
-                        set_task_completed(listed_company.ts_code, 'MARK_CP',
-                                           freq, 'tupo_yali_b', task.start_date, task.end_date)
+    ts_code_list = ts_code.split(',')
+    if ts_code_list is not None and len(ts_code_list) >= 1:
+        # print(ts_code_list)
+        for ts_code in ts_code_list:
+            try:
+                listed_company = StockNameCodeMap.objects.get(
+                    ts_code=ts_code)
+                task = get_analysis_task(
+                    ts_code, 'MARK_CP', 'tupo_yali_b', freq)
+                if task is not None:
+                    atype = '1'  # 标记更新的股票历史记录
+                    # 如何差额取之前的历史记录？9
+                    if task.start_date == listed_company.list_date:
+                        print('第一次处理，从上市日开始。。。')
+                        atype = '0'  # 从上市日开始标记
+                        start_date = task.start_date
                     else:
-                        print('no tupo_b mark cp task')
-                except Exception as e:
-                    print(e)
-    pass
+                        print('更新处理，从上一次更新时间-4d - 开盘日 开始...')
+                        start_date = task.start_date - \
+                            timedelta(days=get_trade_cal_by_attr(
+                                ts_code, task.start_date, attr='ding_max'))
+
+                    mark_tupo_yali_listed(ts_code, freq, start_date,
+                                            task.end_date, task.start_date, price_chg_pct, atype)
+
+                    # print(task.start_date)
+                    # print(task.end_date)
+                    set_task_completed(listed_company.ts_code, 'MARK_CP',
+                                        freq, 'tupo_yali_b', task.start_date, task.end_date)
+                else:
+                    print('no tupo_b mark cp task')
+            except Exception as e:
+                print(e)
 
 
 def mark_tupo_yali_listed(ts_code, freq, start_date, end_date, task_start, price_chg_pct=0.03, atype='1'):
