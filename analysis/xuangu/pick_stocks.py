@@ -33,9 +33,9 @@ def handle_stocks_pick(freq='D', force_run='0'):
                          'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']
         strategy_cp_list = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingdi': {'dingbu_s', 'dibu_b'},
                             'tupo_yali_b': {'tupo_b'}, 'diepo_zhicheng_s': {'diepo_s'},  'wm_dingdi_bs': {'m_ding', 'w_di'},
-                            'junxian25_bs': {'junxian25_zhicheng', 'junxian25_diepo', 'junxian25_yali', 'junxian25_tupo'},
-                            'junxian60_bs': {'junxian60_zhicheng', 'junxian60_diepo', 'junxian60_yali', 'junxian60_tupo'},
-                            'junxian200_bs': {'junxian200_zhicheng', 'junxian200_diepo', 'junxian200_yali', 'junxian200_tupo', }}
+                            'junxian25_bs': {'ma25_zhicheng', 'ma25_diepo', 'ma25_yali', 'ma25_tupo'},
+                            'junxian60_bs': {'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo'},
+                            'junxian200_bs': {'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo', }}
 
         evt_status = get_event_status('HIST_DOWNLOAD', exec_date)
 

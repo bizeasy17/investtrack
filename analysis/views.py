@@ -155,7 +155,7 @@ def get_picked_stocks_bundle(request, year, mon, day, strategy_code, period=80, 
     code_sfx_list = []
     try:
         picked_stocks = PickedStocksMeetStrategy.objects.filter(
-            strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day)).order_by('ts_code')
+            strategy_code=strategy_code, trade_date=datetime(year, mon, day)).order_by('ts_code')
         # picked_stocks = PickedStocksMeetStrategy.objects.filter(
         #     strategy_code=strategy_code.split('_')[0]+'_count_'+strategy_code.split('_')[1], trade_date=datetime(year, mon, day))[start_idx:end_idx]
         if picked_stocks is not None and len(picked_stocks) > 0:
