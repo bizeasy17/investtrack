@@ -1,5 +1,3 @@
-
-
 import logging
 import math
 import time
@@ -77,6 +75,11 @@ def process_junxian_cp(ts_code, freq='D', ma_freq='25', version='v1', slope_offs
                     else:
                         # q更新交易记录开始时间需要往前获取日期为MA周期的时间
                         print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
+                        hist = StockHistoryDaily.objects.filter(
+                            ts_code=ts_code)
+                        if len(hist) - 1 < int(ma_freq) + int(slope_offset) * 2:
+                            print('not enough hist to mark, exit for now')
+                            return
                         start_date = task.start_date - \
                             timedelta(days=get_trade_cal_diff(
                                 listed_company.ts_code, task.start_date, period=int(ma_freq)+int(slope_offset) * 2))
