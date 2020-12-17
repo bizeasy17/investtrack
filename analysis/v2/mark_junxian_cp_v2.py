@@ -62,12 +62,19 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list).order_by('-ts_code')
         for listed_company in listed_companies:
+            hist = StockHistoryDaily.objects.filter(
+                ts_code=listed_company.ts_code)
+            if hist is not None and len(hist) < int(ma_freq):
+                print('stock hist to mark is less than required vol, will not proceed')
+                continue
+
             tasks = get_analysis_task(
                 listed_company.ts_code, 'MARK_CP', 'junxian'+ma_freq+'_bs', freq)
             if tasks is not None and len(tasks) > 0:
                 for task in tasks:
                     atype = '1'  # 标记更新的股票历史记录
                     # 如何差额取之前的历史记录？9
+
                     if task.start_date == listed_company.list_date:
                         print('第一次处理，从上市日开始。。。')
                         atype = '0'  # 从上市日开始标记
@@ -75,11 +82,11 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
                     else:
                         # q更新交易记录开始时间需要往前获取日期为MA周期的时间
                         print('更新处理，从上一次更新时间-25,60,200d - 开盘日 开始...')
-                        hist = StockHistoryDaily.objects.filter(
-                            ts_code=listed_company.ts_code)
                         if len(hist) - 1 < int(ma_freq) + int(slope_offset) * 2:
-                            print('not enough hist to mark, exit for now')
-                            continue
+                            print(
+                                'stock hist to mark is less than required vol, will pick list date')
+                            start_date = listed_company.list_date
+                            # continue
                         else:
                             start_date = task.start_date - \
                                 timedelta(days=get_trade_cal_diff(
@@ -125,7 +132,10 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
             # 存储结果
             start_index = 0
             if atype == '1':  # 更新标记
-                start_index = int(ma_freq) + slope_offset  # - day_offset
+                if len(df) <= int(ma_freq) + slope_offset:
+                    start_index = int(ma_freq)
+                else:
+                    start_index = int(ma_freq) + slope_offset  # - day_offset
             # 计算斜率,需要朝前取一个offset记录
             calculate_slope(df, ts_code, ma_freq=ma_freq)
             # print(start_index)
