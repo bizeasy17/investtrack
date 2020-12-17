@@ -50,8 +50,8 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
     end_date = None
     today = date.today()
     btest_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST']
-    strategy_list = ['junxian'+ma_freq+'_zhicheng', 'junxian'+ma_freq +
-                     '_tupo', 'junxian'+ma_freq+'_diepo', 'junxian'+ma_freq+'_yali']
+    strategy_list = ['ma'+ma_freq+'_zhicheng', 'ma'+ma_freq +
+                     '_tupo', 'ma'+ma_freq+'_diepo', 'ma'+ma_freq+'_yali']
 
     try:
         if ts_codes is None:

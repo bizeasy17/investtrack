@@ -48,7 +48,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
     同步策略在交易中的使用情况
     '''
     btest_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST']
-    strategy_list = ['jiuzhuan_b', 'jiuzhuan_s']
+    strategy_list = ['jiuzhuan_count_b', 'jiuzhuan_count_s']
     start_date = None
     end_date = None
     today = date.today()
