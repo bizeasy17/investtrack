@@ -43,19 +43,31 @@ class Command(BaseCommand):
         # strategy_code = options['strategy_code']
         freq = options['freq']
         s_code = options['strategy_code']
-        # strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
-        #                   'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
-        
+        strategy_codes = ['jiuzhuan_count_b', 'jiuzhuan_count_s', 'dibu_b', 'dingbu_s', 'w_di',
+                          'm_ding', 'tupo_b', 'diepo_s', 
+                          'ma25_zhicheng', 'ma25_tupo', 'ma25_diepo', 'ma25_yali',
+                          'ma60_zhicheng', 'ma60_tupo', 'ma60_diepo', 'ma60_yali',
+                          'ma200_zhicheng', 'ma200_tupo', 'ma200_diepo', 'ma200_yali',]
+
         if freq is None:
             freq = 'D'
+
+        if s_code is None:
+            print('strategy code is mandatory')
+            return
+
+        if s_code not in strategy_codes:
+            print('strategy code should be in the scope')
+            print(strategy_codes)
+            return
 
         # if ts_code is None:
         #     print('ts_code is mandatory')
         #     return
-        
+
         # for strategy_code in strategy_codes:
         handle_exp_pct_test(s_code, ts_code, freq)
-        
+
         # if ts_code is not None:
         #     ts_code_list = ts_code.split(',')
         #     if ts_code_list is not None and len(ts_code_list) >= 1:
@@ -77,8 +89,6 @@ class Command(BaseCommand):
         #             test_exp_pct(strategy_code, test_freq=freq, )
         #     else:
         #         print('please input the mandatory freq')
-        
-        
 
         # print(ts_code_list)
         # target_pct_backtesting(ts_code, freq, )

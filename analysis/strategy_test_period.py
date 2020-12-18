@@ -73,8 +73,8 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
     if df is not None and len(df) >= list_days:
         # 根据策略获取标注的关键点index
         if strategy_code.startswith('jiuzhuan_'):
-            split = strategy_code.split('_')
-            idx_list = df.loc[df['jiuzhuan_count_'+ split[1]] == 9].index
+            # split = strategy_code.split('_')
+            idx_list = df.loc[df[strategy_code] == 9].index
         else:
             idx_list = df.loc[df[strategy_code] == 1].index
 

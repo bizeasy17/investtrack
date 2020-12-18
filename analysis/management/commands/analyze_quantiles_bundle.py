@@ -60,11 +60,23 @@ class Command(BaseCommand):
         ts_code = options['ts_code']
         strategy_code = options['strategy_code']
         freq = options['freq']
-        strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
-                         'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
+        strategy_codes = ['jiuzhuan_count_b', 'jiuzhuan_count_s', 'dibu_b', 'dingbu_s', 'w_di',
+                          'm_ding', 'tupo_b', 'diepo_s',
+                          'ma25_zhicheng', 'ma25_tupo', 'ma25_diepo', 'ma25_yali',
+                          'ma60_zhicheng', 'ma60_tupo', 'ma60_diepo', 'ma60_yali',
+                          'ma200_zhicheng', 'ma200_tupo', 'ma200_diepo', 'ma200_yali', ]
 
         if freq is None:
             freq = 'D'
+
+        if strategy_code is None:
+            print('strategy code is mandatory')
+            return
+
+        if strategy_code not in strategy_codes:
+            print('strategy code should be in the scope')
+            print(strategy_codes)
+            return
 
         if ts_code is not None:
             ts_code_list = ts_code.split(',')
@@ -76,10 +88,5 @@ class Command(BaseCommand):
             # hist_list = []
         if listed_companies is not None and len(listed_companies) > 0:
             for listed_company in listed_companies:
-                if strategy_code is not None:
-                    updown_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
-                    target_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
-                else:
-                    for scode in strategy_codes:
-                        updown_pct_quantiles_stat(scode, listed_company.ts_code, listed_company.stock_name, freq)
-                        target_pct_quantiles_stat(scode, listed_company.ts_code, listed_company.stock_name, freq)
+                updown_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
+                target_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)

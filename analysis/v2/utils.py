@@ -26,7 +26,7 @@ def mark_mov_avg(ts_code, df, ma_freq):
 def calculate_slope(df, ts_code, day_offset=2, ma_freq='25', atype='1'):
     # df.loc[:int(ma_freq)-1, 'ma'+ma_freq+"_slope"] = np.nan
     # col='ma' + ma_freq, slope_col='ma'+ma_freq+'_slope',
-    print('mark slope')
+    print('mark slope' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     try:
         # if atype == '0':
         #     pass
@@ -50,4 +50,4 @@ def calculate_slope(df, ts_code, day_offset=2, ma_freq='25', atype='1'):
                        '_slope'] = np.nan
     except Exception as e:
         print(e)
-    print('mark slope end')
+    print('mark slope end' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
