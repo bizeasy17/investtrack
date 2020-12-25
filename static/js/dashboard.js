@@ -666,7 +666,8 @@ $(function () {
               elements: {
                 point: {
                   radius: 3,
-                  backgroundColor: "#ff4c5b"
+                  backgroundColor: "#ff4c5b",
+                  display: false
                 }
               }
             }
