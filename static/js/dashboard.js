@@ -665,7 +665,7 @@ $(function () {
               },
               elements: {
                 point: {
-                  radius: 3,
+                  radius: 0,
                   backgroundColor: "#ff4c5b",
                   display: false
                 }
