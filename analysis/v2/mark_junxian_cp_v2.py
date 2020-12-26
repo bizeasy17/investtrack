@@ -99,8 +99,8 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
                     # # print(task.end_date)
                     set_task_completed(listed_company.ts_code, 'MARK_CP',
                                        freq, 'junxian'+ma_freq+'_bs', task.start_date, task.end_date)
-                    generate_task(listed_company.ts_code,
-                                  freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                    # generate_task(listed_company.ts_code,
+                    #               freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print('no junxian mark cp task')
     except Exception as e:

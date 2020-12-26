@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 
 from stockmarket.models import StockNameCodeMap
-from .utils import is_analyzed, log_test_status, get_analysis_task, set_task_completed
+from .utils import log_test_status, get_analysis_task, set_task_completed
 from .models import (BStrategyOnFixedPctTest, StrategyTargetPctTestQuantiles,
                      StrategyTestLowHigh, StrategyUpDownTestQuantiles, StrategyUpDownTestRanking, StrategyTargetPctTestRanking)
 

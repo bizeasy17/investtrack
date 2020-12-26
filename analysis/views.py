@@ -617,7 +617,7 @@ def analysis_command(request, cmd, params):
     try:
         plist = params.split(',')
         if cmd == 'junxian':
-            pre_handle_jx(plist[0], plist[1], plist[2], plist[3], plist[4])
+            pre_handle_jx(plist[0] if plist[0] !='' else None, plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'dingdi':
             pre_handle_dd(plist[0], plist[1], plist[2], plist[3], plist[4])
         elif cmd == 'tupo':

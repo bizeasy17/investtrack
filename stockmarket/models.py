@@ -91,6 +91,8 @@ class StockNameCodeMap(BaseModel):
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
     last_update_date = models.DateField(
         _('上次更新日期'), blank=True, null=True)
+    last_analyze_date = models.DateField(
+        _('上次分析日期'), blank=True, null=True)
     asset = models.CharField(
         _('股票/指数'), choices=ASSET_CHOICES, max_length=1, blank=True, null=True, default='E')
     # is_hist_downloaded = models.BooleanField(

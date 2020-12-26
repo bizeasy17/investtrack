@@ -7,7 +7,7 @@ from stockmarket.models import StockNameCodeMap
 
 from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
                             get_event_status, last_download_date,
-                            log_download_hist, set_event_completed)
+                            log_download_hist, set_event_completed, generate_event)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
 
@@ -54,6 +54,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
     freq：周期，D，W（未实现），M（未实现），60分钟（为实现）
     system event list：完成下载后
     '''
+    download_type = 0 # 首次
     start_date = None
     end_date = None
     today = date.today()
@@ -81,17 +82,19 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                     download_stock_hist(
                         listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
                 else:  # 根据日志记录下载相应历史记录
+
                     if last_date is not None:
                         if last_date[1] < today: #如果有差异就下载，不然就退出
                             # 已完成首次下载
-                            # print('not first time')
+                            download_type = 1
+                            print('update hist')
                             start_date = last_date[1] + \
                                 timedelta(days=1)
                             download_stock_hist(
                                 listed_company.ts_code, last_date[1] + timedelta(days=1), today, listed_company.asset, freq, )
                     else:
                         # 需要进行首次下载
-                        # print('first time')
+                        print('first time')
                         start_date = listed_company.list_date
                         download_stock_hist(
                             listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
@@ -100,8 +103,9 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                     # print('update log...')
                     log_download_hist(
                         listed_company.ts_code, 'HIST_DOWNLOAD', start_date, end_date, freq)
+                    # generate_event(listed_company, download_type, freq)
                     generate_task(
-                        listed_company.ts_code, freq, start_date, end_date, sys_event_list)
+                        listed_company, start_date, end_date, freq)
                     listed_company.last_update_date = end_date
                     listed_company.save()
                 else:

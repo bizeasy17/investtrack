@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 # from investors.models import TradeStrategy
 import tushare as ts
+from dashboard.utils import days_between
 
-from .models import (AnalysisEventLog, StrategyTargetPctTestQuantiles,
-                     StockHistoryDaily, StockStrategyTestLog,
+from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
+                     StrategyTargetPctTestQuantiles,
                      StrategyUpDownTestQuantiles, TradeStrategyStat)
 
 
@@ -28,6 +29,149 @@ def log_test_status(ts_code, event, freq, strategy_list=[]):
             # except Exception as e:
             #     print(e)
         mark_log.save()
+
+
+def gen_analysis_event(listed_company, start_date, end_date, strategy_list, freq='D'):
+    '''
+    1. 分析功能最少需要历史记录
+        600d - 3年
+    2. 选股功能最少需要历史记录
+        各个策略不同,新股需要去除前x个交易日
+    怎么判断？
+    更新 - 1和新建 - 0
+    下载 -> 下载完成 -> 是否存在event ？ ->
+    -> 存在？ or 不存在？
+    -> 存在（更新），说明已经成功生成任务列表 - 计算从上一次end_date -> today的交易历史
+        -> 获取从end_date -> today的交易历史
+        -> 分析功能
+        -> if leng > 600
+            -> event [EXP_PCT_TEST, UPDOWN_PCT_TEST, QTN_TEST, RANKING?]
+        -> else
+            -> 为所有策略生成所有event [MARK_CP]
+    -> 不存在 - 计算从上市日list_date -> today的交易历史
+        -> 获取从list_date -> today的交易历史
+        -> 判断交易历史长度
+            -> if leng > 600
+                -> 为所有策略生成所有event [MARK_CP, EXP_PCT_TEST, UPDOWN_PCT_TEST, QTN_TEST, RANKING]
+            -> else
+                if  60 > len > 25
+                    -> 生成ma25
+                if  200 > len > 60
+                    -> 生成 除了MA200以外所有event
+                if len > 200
+                    -> 生成ma200
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST', 'QTN_TEST', 'RANKING']
+    analysis_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST',
+                           'TGT_PCT_QTN', 'UPDN_PCT_QTN', 'UPDN_PCT_RK', 'TGT_PCT_RK']
+    threshold_hist_fx = 600
+
+    # 如果hist length > 600，生成分析事件
+
+    if days_between(start_date, end_date) >= threshold_hist_fx:
+        for av in analysis_event_list:
+            for strategy in strategy_list:
+                event = StockStrategyTestLog(ts_code=listed_company.ts_code,
+                                             analysis_code=strategy,
+                                             event_type=av, freq=freq, start_date=start_date, end_date=end_date)
+                event.save()
+        listed_company.last_analyze_date = date.today()
+        listed_company.save()
+    # 如果hist length < 600, >= 25, 生成MA25 标记事件
+    # if len(hist) < 600 and len(hist) >= 25:
+    #     pass
+    # 如果hist length < 600, >= 60, 生成MA60，突破，WM底，跌破，标记事件
+    # if len(hist) < 600 and len(hist) >= 60:
+    #     pass
+    # 如果hist length < 600, >= 200, 生成MA200 标记事件
+    # if len(hist) < 600 and len(hist) >= 200:
+    #     pass
+
+
+def gen_mark_event(ts_code, start_date, end_date, freq='D'):
+    '''
+    1. 分析功能最少需要历史记录
+        600d - 3年
+    2. 选股功能最少需要历史记录
+        各个策略不同,新股需要去除前x个交易日
+    怎么判断？
+    更新 - 1和新建 - 0
+    下载 -> 下载完成 -> 是否存在event ？ ->
+    -> 存在？ or 不存在？
+    -> 存在（更新），说明已经成功生成任务列表 - 计算从上一次end_date -> today的交易历史
+        -> 获取从end_date -> today的交易历史
+        -> 分析功能
+        -> if leng > 600
+            -> event [EXP_PCT_TEST, UPDOWN_PCT_TEST, QTN_TEST, RANKING?]
+        -> else
+            -> 为所有策略生成所有event [MARK_CP]
+    -> 不存在 - 计算从上市日list_date -> today的交易历史
+        -> 获取从list_date -> today的交易历史
+        -> 判断交易历史长度
+            -> if leng > 600
+                -> 为所有策略生成所有event [MARK_CP, EXP_PCT_TEST, UPDOWN_PCT_TEST, QTN_TEST, RANKING]
+            -> else
+                if  60 > len > 25
+                    -> 生成ma25
+                if  200 > len > 60
+                    -> 生成 除了MA200以外所有event
+                if len > 200
+                    -> 生成ma200
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST', 'QTN_TEST', 'RANKING']
+    mark_cp_event_list = ['MARK_CP']
+    strategy_cp_list = {'strategy_25': {'ma25_zhicheng', 'ma25_diepo', 'ma25_yali', 'ma25_tupo'},
+                        'strategy_60': {'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo',
+                                        'jiuzhuan_count_b', 'jiuzhuan_count_s', 'dingbu_s', 'dibu_b',
+                                        'tupo_b', 'diepo_s', 'm_ding', 'w_di'},
+                        'strategy_200': {'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo', }}
+    threshold_hist_25 = 25
+    threshold_hist_60 = 60
+    threshold_hist_200 = 200
+
+    # 如果hist length < 600, >= 25, 生成MA25 标记事件
+    # if len(hist) < 600 and len(hist) >= 25:
+    #     pass
+    # 如果hist length < 600, >= 60, 生成MA60，突破，WM底，跌破，标记事件
+    # if len(hist) < 600 and len(hist) >= 60:
+    #     pass
+    # 如果hist length < 600, >= 200, 生成MA200 标记事件
+    # if len(hist) < 600 and len(hist) >= 200:
+    #     pass
+
+    if days_between(start_date, end_date) >= threshold_hist_200:
+        for mv in mark_cp_event_list:
+            for strategy in set.union(strategy_cp_list['strategy_200'], strategy_cp_list['strategy_60'], strategy_cp_list['strategy_25']):
+                event = StockStrategyTestLog(ts_code=ts_code,
+                                             analysis_code=strategy,
+                                             event_type=mv, freq=freq, start_date=start_date, end_date=end_date)
+                event.save()
+    elif days_between(start_date, end_date) < threshold_hist_200 and days_between(start_date, end_date) >= threshold_hist_60:
+        for mv in mark_cp_event_list:
+            for strategy in set.union(strategy_cp_list['strategy_60'], strategy_cp_list['strategy_25']):
+                event = StockStrategyTestLog(ts_code=ts_code,
+                                             analysis_code=strategy,
+                                             event_type=mv, freq=freq, start_date=start_date, end_date=end_date)
+                event.save()
+    elif days_between(start_date, end_date) < threshold_hist_60 and days_between(start_date, end_date) >= threshold_hist_25:
+        for mv in mark_cp_event_list:
+            for strategy in strategy_cp_list['strategy_25']:
+                event = StockStrategyTestLog(ts_code=ts_code,
+                                             analysis_code=strategy,
+                                             event_type=mv, freq=freq, start_date=start_date, end_date=end_date)
+                event.save()
+
+
+def generate_event(listed_company, download_type=1, freq='D'):
+    strategy_list = ['jiuzhuan_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
+                     'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']
+    end_date = date.today()
+    start_date = listed_company.last_analyze_date if listed_company.last_analyze_date is not None else listed_company.list_date
+    mark_start_date = listed_company.list_date
+    gen_analysis_event(listed_company, start_date,
+                       end_date, strategy_list, freq)
+    gen_mark_event(listed_company.ts_code, mark_start_date,
+                   end_date, freq)
 
 
 def ready2proceed(strategy_code, freq='D'):
@@ -64,22 +208,92 @@ def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date
         print(e)
 
 
-def generate_task(ts_code, freq, start_date, end_date, event_list=[], strategy_list=['jiuzhuan_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
-                                                                                     'wm_dingdi_bs', 'junxian25_bs', 'junxian60_bs', 'junxian200_bs']):
-    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
-    for event in event_list:
-        for strategy in strategy_list:
+def generate_task(listed_company, start_date, end_date, freq='D', ):
+    threshold_hist_fx = 600
+    threshold_hist_25 = 25
+    threshold_hist_60 = 60
+    threshold_hist_200 = 200
+
+    analysis_start_date = listed_company.last_analyze_date if listed_company.last_analyze_date is not None else listed_company.list_date
+    mark_start_date = listed_company.list_date
+
+    analysis_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST',
+                           'TGT_PCT_QTN', 'UPDN_PCT_QTN', 'UPDN_PCT_RK', 'TGT_PCT_RK']
+    analysis_strategy_list = ['ma25_zhicheng', 'ma25_diepo', 'ma25_yali', 'ma25_tupo',
+                              'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo',
+                              'jiuzhuan_count_b', 'jiuzhuan_count_s', 'dingbu_s', 'dibu_b',
+                              'tupo_b', 'diepo_s', 'm_ding', 'w_di',
+                              'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo']
+    mark_cp_event_list = ['MARK_CP']
+    mark_strategy_set = {}
+    mark_strategy_dict = {
+        '25': {'junxian25_bs', 'jiuzhuan_bs'},
+        '60': {'junxian60_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
+               'wm_dingdi_bs', },
+        '200': {'junxian200_bs'}
+    }
+
+    analysis_hist = StockHistoryDaily.objects.filter(
+        ts_code=listed_company.ts_code, trade_date__gte=analysis_start_date, trade_date__lte=end_date)
+    mark_hist = StockHistoryDaily.objects.filter(
+        ts_code=listed_company.ts_code, trade_date__gte=mark_start_date, trade_date__lte=end_date)
+
+    # 如果hist length > 600，生成分析事件
+    if len(analysis_hist) >= threshold_hist_fx:
+        mark_strategy_set = set.union(
+            mark_strategy_dict['200'], mark_strategy_dict['60'], mark_strategy_dict['25'])
+
+        for event in analysis_event_list:
+            for strategy in analysis_strategy_list:
+                try:
+                    # tasks = get_analysis_task(ts_code, event, )
+                    task = StockStrategyTestLog.objects.get(
+                        ts_code=listed_company.ts_code, analysis_code=strategy, event_type=event, freq=freq, end_date=start_date - timedelta(days=1), is_done=False)
+                    task.end_date = end_date
+                    # mark_log.save()
+                except Exception as e:  # 未找到运行记录
+                    print(e)
+                    task = StockStrategyTestLog(ts_code=listed_company.ts_code,
+                                                analysis_code=strategy,
+                                                event_type=event, freq=freq, start_date=start_date, end_date=end_date)
+                task.save()
+        listed_company.last_analyze_date = end_date
+        # listed_company.save()
+    else:
+        # 如果hist length < 600, >= 25, 生成MA25 标记事件
+        # if len(hist) < 600 and len(hist) >= 25:
+        #     pass
+        # 如果hist length < 600, >= 60, 生成MA60，突破，WM底，跌破，标记事件
+        # if len(hist) < 600 and len(hist) >= 60:
+        #     pass
+        # 如果hist length < 600, >= 200, 生成MA200 标记事件
+        # if len(hist) < 600 and len(hist) >= 200:
+        #     pass
+        if len(mark_hist) >= threshold_hist_200:
+            mark_strategy_set = set.union(
+                mark_strategy_dict['200'], mark_strategy_dict['60'], mark_strategy_dict['25'])
+        else:
+            if len(mark_hist) >= threshold_hist_60:
+                mark_strategy_set = set.union(
+                    mark_strategy_dict['25'], mark_strategy_dict['60'])
+            else:
+                if len(mark_hist) >= threshold_hist_25:
+                    mark_strategy_set = mark_strategy_dict['25']
+
+    for event in mark_cp_event_list:
+        for strategy in mark_strategy_set:
             try:
-                log = StockStrategyTestLog.objects.get(
-                    ts_code=ts_code, analysis_code=strategy, event_type=event, freq=freq, end_date=start_date - timedelta(days=1), is_done=False)
-                log.end_date = end_date
+                # tasks = get_analysis_task(ts_code, event, )
+                task = StockStrategyTestLog.objects.get(
+                    ts_code=listed_company.ts_code, analysis_code=strategy, event_type=event, freq=freq, end_date=start_date - timedelta(days=1), is_done=False)
+                task.end_date = end_date
                 # mark_log.save()
             except Exception as e:  # 未找到运行记录
                 print(e)
-                log = StockStrategyTestLog(ts_code=ts_code,
-                                           analysis_code=strategy,
-                                           event_type=event, freq=freq, start_date=start_date, end_date=end_date)
-            log.save()
+                task = StockStrategyTestLog(ts_code=listed_company.ts_code,
+                                            analysis_code=strategy,
+                                            event_type=event, freq=freq, start_date=start_date, end_date=end_date)
+            task.save()
 
 
 def get_event_status(event, exec_date, strategy_code=None, freq='D'):
@@ -171,16 +385,6 @@ def has_analysis_task(ts_code, event, strategy_code, freq):
     try:
         mark_log = StockStrategyTestLog.objects.get(
             ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=False)
-        return True
-    except Exception as e:
-        # print(e)
-        return False
-
-
-def is_analyzed(ts_code, event, strategy_code, freq='D', is_done=True):
-    try:
-        mark_log = StockStrategyTestLog.objects.get(
-            ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=is_done)
         return True
     except Exception as e:
         # print(e)

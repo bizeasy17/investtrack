@@ -89,8 +89,8 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                     # print(task.end_date)
                     set_task_completed(listed_company.ts_code, 'MARK_CP',
                                        freq, 'jiuzhuan_bs', task.start_date, task.end_date)
-                    generate_task(listed_company.ts_code,
-                                  freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
+                    # generate_task(listed_company.ts_code,
+                    #               freq, task.start_date, task.end_date, event_list=btest_event_list, strategy_list=strategy_list)
             else:
                 print(listed_company.ts_code + ' no jiuzhuan mark cp task')
     except Exception as e:
