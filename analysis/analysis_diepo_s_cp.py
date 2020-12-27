@@ -14,7 +14,7 @@ from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
 from .stock_hist import download_hist_data
 from .utils import (get_analysis_task, get_event_status, init_eventlog,
-                    set_event_completed, set_task_completed), ready2proceed
+                    set_event_completed, set_task_completed, ready2proceed)
 
 logger = logging.getLogger(__name__)
 

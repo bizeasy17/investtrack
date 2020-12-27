@@ -10,12 +10,12 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
-from .utils import get_analysis_task, set_task_completed, generate_task
+from .utils import get_analysis_task, set_task_completed, generate_task, ready2btest
 
 logger = logging.getLogger(__name__)
 
 
-def handle_exp_pct_test(strategy_code, ts_code, test_freq):
+def btest_period_on_pct(strategy_code, ts_code, freq='D'):
     try:
         if ts_code is None:
             listed_companies = StockNameCodeMap.objects.filter()
@@ -26,17 +26,18 @@ def handle_exp_pct_test(strategy_code, ts_code, test_freq):
                     ts_code__in=ts_code_list)
         for listed_company in listed_companies:    
             tasks = get_analysis_task(
-                listed_company.ts_code, 'EXP_PCT_TEST', strategy_code, test_freq)
+                listed_company.ts_code, 'EXP_PCT_TEST', strategy_code, freq)
             if tasks is not None and len(tasks):
                 print(listed_company.ts_code + ' for strategy ' +
                       strategy_code + ' pct has started')
                 for task in tasks:
-                    test_exp_pct(strategy_code, listed_company.ts_code,
-                                task.start_date, task.end_date, test_freq)
-                    set_task_completed(listed_company.ts_code, 'EXP_PCT_TEST',
-                                    test_freq, strategy_code, task.start_date, task.end_date)
-                    generate_task(listed_company.ts_code,
-                                  test_freq, task.start_date, task.end_date, event_list=['TGT_PCT_QTN'], strategy_list=[strategy_code])
+                    if ready2btest(listed_company.ts_code, 'MARK_CP', strategy_code, task.start_date, task.end_date, freq):
+                        test_exp_pct(strategy_code, listed_company.ts_code,
+                                    task.start_date, task.end_date, freq)
+                        set_task_completed(listed_company.ts_code, 'EXP_PCT_TEST',
+                                        freq, strategy_code, task.start_date, task.end_date)
+                        # generate_task(listed_company.ts_code,
+                        #             test_freq, task.start_date, task.end_date, event_list=['TGT_PCT_QTN'], strategy_list=[strategy_code])
 
             else:
                 print(listed_company.ts_code + ' for strategy ' +

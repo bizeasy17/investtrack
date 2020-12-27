@@ -88,5 +88,6 @@ class Command(BaseCommand):
             # hist_list = []
         if listed_companies is not None and len(listed_companies) > 0:
             for listed_company in listed_companies:
+                print(listed_company.ts_code)
                 updown_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)
                 target_pct_quantiles_stat(strategy_code, listed_company.ts_code, listed_company.stock_name, freq)

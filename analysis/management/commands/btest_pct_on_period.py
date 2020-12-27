@@ -6,7 +6,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.strategy_test_period import handle_updown_pct_test
+from analysis.strategy_test_period import btest_pct_on_period
 
 
 class Command(BaseCommand):
@@ -63,7 +63,7 @@ class Command(BaseCommand):
             return
 
         # for strategy_code in strategy_codes:
-        handle_updown_pct_test(ts_code, freq, s_code, )
+        btest_pct_on_period(ts_code, freq, s_code, )
 
         # if ts_code is not None:
         #     ts_code_list = ts_code.split(',')

@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import log_test_status, has_analysis_task, get_analysis_task
+from .utils import log_test_status, is_task_completed, get_analysis_task
 from .stock_hist import download_hist_data
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def mark_junxian_bs_listed(freq, ts_code_list=[]):
     hist_list = []
     if listed_companies is not None and len(listed_companies) > 0:
         for listed_company in listed_companies:
-            if has_analysis_task(listed_company.ts_code, 'MARK_CP', 'junxian25_bs', freq):
+            if is_task_completed(listed_company.ts_code, 'MARK_CP', 'junxian25_bs', freq):
                 print(' marked junxian zhicheng on start code - ' + listed_company.ts_code +
                     ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 task = get_analysis_task(

@@ -10,14 +10,14 @@ from stockmarket.models import StockNameCodeMap
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
-from .utils import get_analysis_task, set_task_completed, generate_task
+from .utils import get_analysis_task, set_task_completed, generate_task, ready2btest
 
 logger = logging.getLogger(__name__)
 
 
-def handle_updown_pct_test(ts_code, test_freq, strategy_code, ):
+def btest_pct_on_period(ts_code, freq, strategy_code, ):
     try:
-        
+
         if ts_code is None:
             listed_companies = StockNameCodeMap.objects.filter()
         else:
@@ -26,18 +26,20 @@ def handle_updown_pct_test(ts_code, test_freq, strategy_code, ):
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list)
         for listed_company in listed_companies:
+            print(listed_company)
             # print(listed_company.ts_code + ' for strategy ' +
             #       strategy_code + ' pct started')
             tasks = get_analysis_task(
-                listed_company.ts_code, 'PERIOD_TEST', strategy_code, test_freq)
+                listed_company.ts_code, 'PERIOD_TEST', strategy_code, freq)
             if tasks is not None and len(tasks) > 0:
                 for task in tasks:
-                    test_by_period(strategy_code, listed_company.ts_code,
-                                   task.start_date, task.end_date, test_freq)
-                    set_task_completed(listed_company.ts_code, 'PERIOD_TEST',
-                                       test_freq, strategy_code, task.start_date, task.end_date)
-                    generate_task(listed_company.ts_code,
-                                  test_freq, task.start_date, task.end_date, event_list=['UPDN_PCT_QTN'], strategy_list=[strategy_code])
+                    if ready2btest(listed_company.ts_code, 'MARK_CP', strategy_code, task.start_date, task.end_date, freq):
+                        test_by_period(strategy_code, listed_company.ts_code,
+                                       task.start_date, task.end_date, freq)
+                        set_task_completed(listed_company.ts_code, 'PERIOD_TEST',
+                                           freq, strategy_code, task.start_date, task.end_date)
+                        # generate_task(listed_company.ts_code,
+                        #             test_freq, task.start_date, task.end_date, event_list=['UPDN_PCT_QTN'], strategy_list=[strategy_code])
             else:
                 print(listed_company.ts_code + ' for strategy ' +
                       strategy_code + ' pct has tested already / no task')
@@ -143,7 +145,7 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
                     found_min = df.iloc[idx_min]
                     # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                     test_by_day = StrategyTestLowHigh(ts_code=critical_point.ts_code, trade_date=critical_point.trade_date, test_period=test_period,
-                                                    stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, stage_low_pct=pct_down, strategy_code=strategy_code)
+                                                      stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, stage_low_pct=pct_down, strategy_code=strategy_code)
                     # test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period,
                     #                                         # open=min.open, high=min.high, low=min.low, close=min.close, pre_close=min.pre_close,
                     #                                         # change=min.change, pct_chg=min.pct_chg, vol=min.vol, amount=min.amount,

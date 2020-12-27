@@ -10,6 +10,12 @@ from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
                      StrategyTargetPctTestQuantiles,
                      StrategyUpDownTestQuantiles, TradeStrategyStat)
 
+strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingdi': {'dingbu_s', 'dibu_b'},
+                 'tupo_yali_b': {'tupo_b'}, 'diepo_zhicheng_s': {'diepo_s'},  'wm_dingdi_bs': {'m_ding', 'w_di'},
+                 'junxian25_bs': {'ma25_zhicheng', 'ma25_diepo', 'ma25_yali', 'ma25_tupo'},
+                 'junxian60_bs': {'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo'},
+                 'junxian200_bs': {'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo', }}
+
 
 def log_test_status(ts_code, event, freq, strategy_list=[]):
     for strategy in strategy_list:
@@ -197,6 +203,24 @@ def ready2proceed(strategy_code, freq='D'):
     return True
 
 
+def get_dict_key(dict, value):
+    for (k, v) in dict.items():
+        if value in v:
+            return k
+
+
+def ready2btest(ts_code, event, strategy_code, start_date, end_date, freq='D'):
+    exec_date = date.today()
+    completed = is_task_completed(
+        ts_code, event, strategy_code=get_dict_key(strategy_dict, strategy_code) if event == 'MARK_CP' else strategy_code, start_date=start_date, end_date=end_date, freq=freq)
+
+    if completed:
+        print('previous '+event+' is completed')
+        return True
+    print('previous '+event+' is still ongoing/ not exist')
+    return False
+
+
 def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date):
     try:
         task = StockStrategyTestLog.objects.get(
@@ -381,11 +405,12 @@ def set_event_exception(event, exec_date, strategy_code=None, freq='D'):
         print(e)
 
 
-def has_analysis_task(ts_code, event, strategy_code, freq):
+def is_task_completed(ts_code, event, strategy_code, start_date, end_date, freq):
     try:
-        mark_log = StockStrategyTestLog.objects.get(
-            ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, is_done=False)
-        return True
+        task = StockStrategyTestLog.objects.get(
+            ts_code=ts_code, analysis_code=strategy_code, event_type=event,
+            start_date=start_date, end_date=end_date, freq=freq)
+        return task.is_done
     except Exception as e:
         # print(e)
         return False
