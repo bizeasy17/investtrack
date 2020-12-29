@@ -4,7 +4,7 @@ from datetime import date, datetime
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from analysis.strategy_quantiles_stats import rank_updown_test,rank_target_pct_test
+from analysis.strategy_quantiles_stats import rank_updown_test, rank_target_pct_test
 from stockmarket.models import StockNameCodeMap
 
 
@@ -53,17 +53,24 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         strategy_code = options['strategy_code']
         freq = options['freq']
-        strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
-                         'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
-        
+        strategy_codes = ['jiuzhuan_count_b', 'jiuzhuan_count_s', 'dibu_b', 'dingbu_s', 'w_di',
+                          'm_ding', 'tupo_b', 'diepo_s',
+                          'ma25_zhicheng', 'ma25_tupo', 'ma25_diepo', 'ma25_yali',
+                          'ma60_zhicheng', 'ma60_tupo', 'ma60_diepo', 'ma60_yali',
+                          'ma200_zhicheng', 'ma200_tupo', 'ma200_diepo', 'ma200_yali', ]
+
         if freq is None:
             print('please input the mandatory freq')
             return
-        
-        if strategy_code is not None:
-            rank_updown_test(strategy_code, freq)
-            rank_target_pct_test(strategy_code, freq)
-        else:
-            for scode in strategy_codes:
-                rank_updown_test(scode, freq)
-                rank_target_pct_test(scode, freq)
+
+        if strategy_code is None:
+            print('strategy code is mandatory')
+            return
+
+        if strategy_code not in strategy_codes:
+            print('strategy code should be in the scope')
+            print(strategy_codes)
+            return
+
+        rank_updown_test(strategy_code, freq)
+        rank_target_pct_test(strategy_code, freq)

@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 
 from stockmarket.models import StockNameCodeMap
-from .utils import is_analyzed, log_test_status
+from .utils import log_test_status, get_analysis_task, set_task_completed, ready2btest
 from .models import (BStrategyOnFixedPctTest, StrategyTargetPctTestQuantiles,
                      StrategyTestLowHigh, StrategyUpDownTestQuantiles, StrategyUpDownTestRanking, StrategyTargetPctTestRanking)
 
@@ -17,48 +17,55 @@ def target_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     target_pct_list = ['pct10_period', 'pct20_period', 'pct30_period',
                        'pct50_period', 'pct80_period', 'pct100_period', 'pct130_period']
     try:
-        if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
-            print('target pct on start - ' + strategy_code + '/' + ts_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            quantile_list = []
-            target_pct_qtiles_list = []
-            # for target_pct in target_pct_list:
-            results = BStrategyOnFixedPctTest.objects.filter(strategy_code=strategy_code, ts_code=ts_code,
-                                                             test_freq=freq).order_by('trade_date')  # [:int(freq_count)]
-            if results is not None and len(results) > 0:
-                df = pd.DataFrame(results.values())
-                for target_pct in target_pct_list:
-                    # print(target_pct)
-                    df = df[df[target_pct] != -1]
-                    qtiles = df[target_pct].quantile(
-                        [0.1, 0.25, 0.5, 0.75, 0.9])
-                    # for qtile in qtiles.values():
-                    for idx, value in qtiles.items():
-                        quantile_list.append(round(value, 3))
-                        # print(value)
-                    quantile_list.append(round(df[target_pct].max(), 3))
-                    quantile_list.append(round(df[target_pct].min(), 3))
-                    quantile_list.append(round(df[target_pct].mean(), 3))
-                    # print(quantile_list)
-                    target_pct_qtiles = StrategyTargetPctTestQuantiles(
-                        strategy_code=strategy_code, target_pct=target_pct, ts_code=ts_code, stock_name=stock_name,
-                        qt_10pct=quantile_list[0], qt_25pct=quantile_list[1], qt_50pct=quantile_list[2],
-                        qt_75pct=quantile_list[3], qt_90pct=quantile_list[4], max_val=quantile_list[5],
-                        min_val=quantile_list[6], mean_val=quantile_list[7])
-                    target_pct_qtiles_list.append(target_pct_qtiles)
-                    quantile_list.clear()
-            if len(target_pct_qtiles_list) > 0:
-                StrategyTargetPctTestQuantiles.objects.bulk_create(
-                    target_pct_qtiles_list)
-                log_test_status(ts_code,
-                                'TGT_PCT_QTN', freq, [strategy_code])
-                print('target pct on end - ' + strategy_code + '/' + ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            else:
-                print('no record for target pct on - ' + strategy_code + '/' + ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        tasks = get_analysis_task(ts_code, 'TGT_PCT_QTN', strategy_code, freq)
+        # if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
+        if tasks is not None and len(tasks):
+            task = tasks[0]
+            if ready2btest(ts_code, 'EXP_PCT_TEST', strategy_code, task.start_date, task.end_date, freq):
+                print('target pct quantile on start - ' + strategy_code + '/' + ts_code +
+                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                quantile_list = []
+                target_pct_qtiles_list = []
+                # for task in tasks: 
+                # for target_pct in target_pct_list:
+                results = BStrategyOnFixedPctTest.objects.filter(strategy_code=strategy_code, ts_code=ts_code,
+                                                                test_freq=freq).order_by('trade_date')  # [:int(freq_count)]
+                if results is not None and len(results) > 0:
+                    df = pd.DataFrame(results.values())
+                    for target_pct in target_pct_list:
+                        # print(target_pct)
+                        df = df[df[target_pct] != -1]
+                        qtiles = df[target_pct].quantile(
+                            [0.1, 0.25, 0.5, 0.75, 0.9])
+                        # for qtile in qtiles.values():
+                        for idx, value in qtiles.items():
+                            quantile_list.append(round(value, 3))
+                            # print(value)
+                        quantile_list.append(round(df[target_pct].max(), 3))
+                        quantile_list.append(round(df[target_pct].min(), 3))
+                        quantile_list.append(round(df[target_pct].mean(), 3))
+                        # print(quantile_list)
+                        target_pct_qtiles = StrategyTargetPctTestQuantiles(
+                            strategy_code=strategy_code, target_pct=target_pct, ts_code=ts_code, stock_name=stock_name,
+                            qt_10pct=quantile_list[0], qt_25pct=quantile_list[1], qt_50pct=quantile_list[2],
+                            qt_75pct=quantile_list[3], qt_90pct=quantile_list[4], max_val=quantile_list[5],
+                            min_val=quantile_list[6], mean_val=quantile_list[7])
+                        target_pct_qtiles_list.append(target_pct_qtiles)
+                        quantile_list.clear()
+                if len(target_pct_qtiles_list) > 0:
+                    StrategyTargetPctTestQuantiles.objects.bulk_create(
+                        target_pct_qtiles_list)
+                    set_task_completed(ts_code, 'TGT_PCT_QTN',
+                                    freq, strategy_code, task.start_date, task.end_date)
+                    # log_test_status(ts_code,
+                    #                 'TGT_PCT_QTN', freq, [strategy_code])
+                    print('target pct quantile on end - ' + strategy_code + '/' + ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                else:
+                    print('no record for target pct quantile on - ' + strategy_code + '/' + ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         else:
-            print('already exist target pct on - ' + strategy_code + '/' + ts_code +
+            print('already exist target pct quantile on - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         print(err)
@@ -73,63 +80,70 @@ def updown_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     test_type = ['up_pct', 'down_pct']
 
     try:
-        if not is_analyzed(ts_code, 'UPDN_PCT_QTN', strategy_code, freq):
-            print('updown pct on start - ' + strategy_code + '/' + ts_code +
-                  ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            updown_qtiles_list = []
-            low_quantile_list = []
-            high_quantile_list = []
-            for test_period in test_period_list:
-                results = StrategyTestLowHigh.objects.filter(
-                    strategy_code=strategy_code, ts_code=ts_code, test_period=test_period)
-                if results is not None and len(results) > 0:
-                    df = pd.DataFrame(results.values(
-                        'stage_high_pct', 'stage_low_pct'))
-                    high_qtiles = df.stage_high_pct.quantile(
-                        [0.1, 0.25, 0.5, 0.75, 0.9])
-                    low_qtiles = df.stage_low_pct.quantile(
-                        [0.1, 0.25, 0.5, 0.75, 0.9])
-                    for qtile in high_qtiles:
-                        high_quantile_list.append(round(qtile, 3))
-                    high_quantile_list.append(
-                        round(df.stage_high_pct.max(), 3))
-                    high_quantile_list.append(
-                        round(df.stage_high_pct.min(), 3))
-                    high_quantile_list.append(
-                        round(df.stage_high_pct.mean(), 3))
-                    for qtile in low_qtiles:
-                        low_quantile_list.append(round(qtile, 3))
-                    low_quantile_list.append(round(df.stage_low_pct.max(), 3))
-                    low_quantile_list.append(round(df.stage_low_pct.min(), 3))
-                    low_quantile_list.append(round(df.stage_low_pct.mean(), 3))
-                    strategy_up_qtiles = StrategyUpDownTestQuantiles(
-                        strategy_code=strategy_code, test_type=test_type[
-                            0], ts_code=ts_code, stock_name=stock_name, test_period=test_period,
-                        qt_10pct=high_quantile_list[0], qt_25pct=high_quantile_list[1], qt_50pct=high_quantile_list[2],
-                        qt_75pct=high_quantile_list[3], qt_90pct=high_quantile_list[4], max_val=high_quantile_list[5],
-                        min_val=high_quantile_list[6], mean_val=high_quantile_list[7])
-                    strategy_down_qtiles = StrategyUpDownTestQuantiles(
-                        strategy_code=strategy_code, stock_name=stock_name, test_type=test_type[
-                            1], ts_code=ts_code, test_period=test_period,
-                        qt_10pct=low_quantile_list[0], qt_25pct=low_quantile_list[1], qt_50pct=low_quantile_list[2],
-                        qt_75pct=low_quantile_list[3], qt_90pct=low_quantile_list[4], max_val=low_quantile_list[5],
-                        min_val=low_quantile_list[6], mean_val=low_quantile_list[7])
-                    updown_qtiles_list.append(strategy_up_qtiles)
-                    updown_qtiles_list.append(strategy_down_qtiles)
-                    high_quantile_list.clear()
-                    low_quantile_list.clear()
-            if len(updown_qtiles_list) > 0:
-                StrategyUpDownTestQuantiles.objects.bulk_create(
-                    updown_qtiles_list)
-                log_test_status(ts_code,
-                                'UPDN_PCT_QTN', freq, [strategy_code])
-                print('updown pct on end - ' + strategy_code + '/' + ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            else:
-                print('no record for updown pct on - ' + strategy_code + '/' + ts_code +
-                      ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        tasks = get_analysis_task(ts_code, 'UPDN_PCT_QTN', strategy_code, freq)
+        # if not is_analyzed(ts_code, 'TGT_PCT_QTN', strategy_code, freq):
+        if tasks is not None and len(tasks):
+        # if not is_analyzed(ts_code, 'UPDN_PCT_QTN', strategy_code, freq):
+            task = tasks[0]
+            if ready2btest(ts_code, 'PERIOD_TEST', strategy_code, task.start_date, task.end_date, freq):
+                print('updown pct quantile on start - ' + strategy_code + '/' + ts_code +
+                    ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                updown_qtiles_list = []
+                low_quantile_list = []
+                high_quantile_list = []
+                for test_period in test_period_list:
+                    results = StrategyTestLowHigh.objects.filter(
+                        strategy_code=strategy_code, ts_code=ts_code, test_period=test_period)
+                    if results is not None and len(results) > 0:
+                        df = pd.DataFrame(results.values(
+                            'stage_high_pct', 'stage_low_pct'))
+                        high_qtiles = df.stage_high_pct.quantile(
+                            [0.1, 0.25, 0.5, 0.75, 0.9])
+                        low_qtiles = df.stage_low_pct.quantile(
+                            [0.1, 0.25, 0.5, 0.75, 0.9])
+                        for qtile in high_qtiles:
+                            high_quantile_list.append(round(qtile, 3))
+                        high_quantile_list.append(
+                            round(df.stage_high_pct.max(), 3))
+                        high_quantile_list.append(
+                            round(df.stage_high_pct.min(), 3))
+                        high_quantile_list.append(
+                            round(df.stage_high_pct.mean(), 3))
+                        for qtile in low_qtiles:
+                            low_quantile_list.append(round(qtile, 3))
+                        low_quantile_list.append(round(df.stage_low_pct.max(), 3))
+                        low_quantile_list.append(round(df.stage_low_pct.min(), 3))
+                        low_quantile_list.append(round(df.stage_low_pct.mean(), 3))
+                        strategy_up_qtiles = StrategyUpDownTestQuantiles(
+                            strategy_code=strategy_code, test_type=test_type[
+                                0], ts_code=ts_code, stock_name=stock_name, test_period=test_period,
+                            qt_10pct=high_quantile_list[0], qt_25pct=high_quantile_list[1], qt_50pct=high_quantile_list[2],
+                            qt_75pct=high_quantile_list[3], qt_90pct=high_quantile_list[4], max_val=high_quantile_list[5],
+                            min_val=high_quantile_list[6], mean_val=high_quantile_list[7])
+                        strategy_down_qtiles = StrategyUpDownTestQuantiles(
+                            strategy_code=strategy_code, stock_name=stock_name, test_type=test_type[
+                                1], ts_code=ts_code, test_period=test_period,
+                            qt_10pct=low_quantile_list[0], qt_25pct=low_quantile_list[1], qt_50pct=low_quantile_list[2],
+                            qt_75pct=low_quantile_list[3], qt_90pct=low_quantile_list[4], max_val=low_quantile_list[5],
+                            min_val=low_quantile_list[6], mean_val=low_quantile_list[7])
+                        updown_qtiles_list.append(strategy_up_qtiles)
+                        updown_qtiles_list.append(strategy_down_qtiles)
+                        high_quantile_list.clear()
+                        low_quantile_list.clear()
+                if len(updown_qtiles_list) > 0:
+                    StrategyUpDownTestQuantiles.objects.bulk_create(
+                        updown_qtiles_list)
+                    # log_test_status(ts_code,
+                    #                 'UPDN_PCT_QTN', freq, [strategy_code])
+                    set_task_completed(ts_code, 'UPDN_PCT_QTN',
+                                    freq, strategy_code, task.start_date, task.end_date)
+                    print('updown pct quantile on end - ' + strategy_code + '/' + ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                else:
+                    print('no record for updown pct quantile on - ' + strategy_code + '/' + ts_code +
+                        ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         else:
-            print('already exist updown pct on end - ' + strategy_code + '/' + ts_code +
+            print('already exist updown pct quantile on end - ' + strategy_code + '/' + ts_code +
                   ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         logger.error(err)

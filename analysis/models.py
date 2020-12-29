@@ -29,6 +29,7 @@ class BaseModel(models.Model):
     def get_absolute_url(self):
         pass
 
+
 class BaseModel1(models.Model):
     id = models.AutoField(primary_key=True)
     created_date = models.DateField(_('创建日期'), default=now)
@@ -41,8 +42,24 @@ class BaseModel1(models.Model):
     def get_absolute_url(self):
         pass
 
-class MarkCriticalPointTask(models.Model):
-    pass
+
+class AnalysisEventLog(BaseModel):
+    analysis_code = models.CharField(
+        _('测试策略'), max_length=25, blank=True, null=True)
+    event_type = models.CharField(
+        _('日志类型'), max_length=50, blank=False, null=False)  # e.g. 000001.SZ
+    # 用于新下载的交易记录的标记start
+    exec_date = models.DateField(
+        _('执行日期'),  blank=False, null=False)
+    status = models.IntegerField(
+        _('状态'),  blank=False, null=False, default=0) # 0 - in progress, 1 - done, 2 - with exception, 
+    freq = models.CharField(
+        _('k线频率'), max_length=5, blank=False, null=False, default='D')
+    exception_tscode = models.CharField(
+        _('日志类型'), max_length=30000, blank=True, null=True)  # e.g. 000001.SZ
+    def __str__(self):
+        return self.event_type
+
 
 class StockHistoryDaily(BaseModel):
     '''
@@ -120,13 +137,13 @@ class StockHistoryDaily(BaseModel):
     tupo_b = models.IntegerField(
         _('突破压力位B?'),  blank=True, null=True)
     diepo_s = models.IntegerField(
-        _('跌破支撑位S?'),  blank=True, null=True)   
+        _('跌破支撑位S?'),  blank=True, null=True)
     # ma25_zhicheng_b = models.IntegerField(
     #     _('MA25均线支撑B?'),  blank=True, null=True)
     ma25_zhicheng = models.IntegerField(
-        _('MA25均线支撑'),  blank=True, null=True)  
+        _('MA25均线支撑'),  blank=True, null=True)
     # ma25_tupo_b = models.IntegerField(
-    #     _('MA25均线突破B?'),  blank=True, null=True) 
+    #     _('MA25均线突破B?'),  blank=True, null=True)
     ma25_tupo = models.IntegerField(
         _('MA25均线突破'),  blank=True, null=True)
     # ma25_diepo_s = models.IntegerField(
@@ -136,25 +153,25 @@ class StockHistoryDaily(BaseModel):
     # ma25_yali_s = models.IntegerField(
     #     _('MA25压力S?'),  blank=True, null=True)
     ma25_yali = models.IntegerField(
-        _('MA25压力'),  blank=True, null=True) 
+        _('MA25压力'),  blank=True, null=True)
     # MA60
     ma60_zhicheng = models.IntegerField(
         _('MA60均线支撑B?'),  blank=True, null=True)
     ma60_tupo = models.IntegerField(
-        _('MA60均线突破B?'),  blank=True, null=True) 
+        _('MA60均线突破B?'),  blank=True, null=True)
     ma60_diepo = models.IntegerField(
         _('MA60均线跌破S?'),  blank=True, null=True)
     ma60_yali = models.IntegerField(
-        _('MA60压力S?'),  blank=True, null=True) 
+        _('MA60压力S?'),  blank=True, null=True)
     # MA200
     ma200_zhicheng = models.IntegerField(
         _('MA200均线支撑B?'),  blank=True, null=True)
     ma200_tupo = models.IntegerField(
-        _('MA200均线突破B?'),  blank=True, null=True) 
+        _('MA200均线突破B?'),  blank=True, null=True)
     ma200_diepo = models.IntegerField(
         _('MA200均线跌破S?'),  blank=True, null=True)
     ma200_yali = models.IntegerField(
-        _('MA200压力S?'),  blank=True, null=True) 
+        _('MA200压力S?'),  blank=True, null=True)
 
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
@@ -347,6 +364,7 @@ class BStrategyOnPctTest(BaseModel):
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
+
 class BStrategyOnFixedPctTest(BaseModel):
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
     #                                   on_delete=models.CASCADE)
@@ -400,11 +418,12 @@ class BStrategyOnFixedPctTest(BaseModel):
         verbose_name = _('达到固定涨幅周期')
         verbose_name_plural = verbose_name
 
+
 class StrategyUpDownTestQuantiles(BaseModel):
     strategy_code = models.CharField(
         _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
     test_type = models.CharField(
-        _('测试类型'), max_length=25, blank=True, null=True)    
+        _('测试类型'), max_length=25, blank=True, null=True)
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
     stock_name = models.CharField(
@@ -473,11 +492,12 @@ class StrategyTargetPctTestQuantiles(BaseModel):
         verbose_name = _('目标涨幅四分位统计')
         verbose_name_plural = verbose_name
 
+
 class StrategyUpDownTestRanking(BaseModel):
     strategy_code = models.CharField(
         _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
     test_type = models.CharField(
-        _('测试类型'), max_length=25, blank=True, null=True)    
+        _('测试类型'), max_length=25, blank=True, null=True)
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     stock_name = models.CharField(
@@ -498,9 +518,10 @@ class StrategyUpDownTestRanking(BaseModel):
         verbose_name = _('涨跌四分位统计')
         verbose_name_plural = verbose_name
 
+
 class StrategyTargetPctTestRanking(BaseModel):
     strategy_code = models.CharField(
-        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)   
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
     ts_code = models.CharField(
         _('股票代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     stock_name = models.CharField(
@@ -520,6 +541,7 @@ class StrategyTargetPctTestRanking(BaseModel):
         ordering = ['ts_code']
         verbose_name = _('涨跌四分位统计')
         verbose_name_plural = verbose_name
+
 
 class StrategyOnDownPctTest(BaseModel):
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
@@ -570,6 +592,7 @@ class StrategyOnDownPctTest(BaseModel):
         verbose_name = _('跌幅天数统计')
         verbose_name_plural = verbose_name
 
+
 class StrategyOnFixedDownPctTest(BaseModel):
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
     #                                   on_delete=models.CASCADE)
@@ -600,6 +623,7 @@ class StrategyOnFixedDownPctTest(BaseModel):
         ordering = ['ts_code']
         verbose_name = _('跌幅天数')
         verbose_name_plural = verbose_name
+
 
 class FocusAreaDuration(BaseModel):
     '''
@@ -640,6 +664,7 @@ class FocusAreaDuration(BaseModel):
         verbose_name = _('关注区周期长度')
         verbose_name_plural = verbose_name
 
+
 class TradeStrategyStat(BaseModel):
     PERIOD_CHOICE = {
         ('M', _('月线')),
@@ -676,3 +701,26 @@ class TradeStrategyStat(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class PickedStocksMeetStrategy(BaseModel):
+    done_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('操作者'), blank=True, null=True,
+                                on_delete=models.SET_NULL)
+    strategy_code = models.CharField(
+        _('策略代码'), max_length=25, blank=False, null=False, db_index=True)
+    ts_code = models.CharField(
+        _('股票代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    # stock_name = models.CharField(
+    #     _('股票名称'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
+    test_freq = models.CharField(
+        _('K线周期'), max_length=5, blank=False, null=False, default='D')
+
+    class Meta:
+        ordering = ['ts_code']
+        verbose_name = _('选股结果')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.ts_code

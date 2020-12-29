@@ -42,6 +42,11 @@ class StockNameCodeMap(BaseModel):
         ('SZSE', _('深交所')),
     )
 
+    ASSET_CHOICES = (
+        ('I', _('INDEX')),
+        ('E', _('STOCK')),
+    )
+
     LIST_STATUS_CHOICES = (
         ('L', _('上市')),
         ('D', _('退市')),
@@ -84,6 +89,14 @@ class StockNameCodeMap(BaseModel):
         _('退市日期'), blank=True, null=True)
     is_hs = models.CharField(
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
+    last_update_date = models.DateField(
+        _('上次更新日期'), blank=True, null=True)
+    last_analyze_date = models.DateField(
+        _('上次分析日期'), blank=True, null=True)
+    asset = models.CharField(
+        _('股票/指数'), choices=ASSET_CHOICES, max_length=1, blank=True, null=True, default='E')
+    # is_hist_downloaded = models.BooleanField(
+    #     _('交易历史已下载？'), blank=False, null=False, default=False)
     # is_marked_jiuzhuan = models.BooleanField(
     #     _('是否标注九转'), blank=False, null=False, default=False)
     # is_marked_dingdi = models.BooleanField(

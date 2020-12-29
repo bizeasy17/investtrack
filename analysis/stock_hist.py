@@ -3,10 +3,14 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import tushare as ts
 from django.db.models import Q
+from stockmarket.models import StockNameCodeMap
 
+from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
+                            get_event_status, last_download_date,
+                            log_download_hist, set_event_completed, generate_event)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
-from .utils import generate_systask
+
 '''
 check the missing history sql query
 SELECT ts_code 
@@ -17,6 +21,97 @@ WHERE  NOT EXISTS (
    WHERE  ts_code = code.ts_code
    );
 '''
+
+
+def process_stock_download(ts_code, start_date, end_date, asset='E', freq='D', sys_event_list=['MARK_CP']):
+    exec_date = date.today()
+    evt_status = get_event_status('HIST_DOWNLOAD', exec_date)
+
+    if ts_code is None:
+        if evt_status == 0:
+            print("previous downloading is still ongoing")
+        elif evt_status == 1:
+            print("history has been downloaded today")
+        else: # event not exist, can run today
+            if ts_code is None:
+                init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+            handle_hist_download(ts_code, start_date, end_date,
+                                asset, freq, sys_event_list)
+            if ts_code is None:
+                set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+            print("history has been downloaded successfully")
+    else:
+        handle_hist_download(ts_code, start_date, end_date,
+                             asset, freq, sys_event_list)
+
+def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
+    '''
+    可以接受的输入参数
+    ts_code：1) 如果有输入，则只下载输入的code股票，2）未输入，下载所有股票
+    start date：下载开始时间
+    end date：下载结束时间
+    asset：股票还是指数，E or I
+    freq：周期，D，W（未实现），M（未实现），60分钟（为实现）
+    system event list：完成下载后
+    '''
+    download_type = 0 # 首次
+    start_date = None
+    end_date = None
+    today = date.today()
+
+    try:
+        if ts_code is not None:
+            ts_code_list = ts_code.split(',')
+            if ts_code_list is not None:
+                if len(ts_code_list) > 1:
+                    listed_companies = StockNameCodeMap.objects.filter(
+                        ts_code__in=ts_code_list)
+                else:
+                    listed_companies = StockNameCodeMap.objects.filter(
+                        ts_code=ts_code)
+        else:
+            listed_companies = StockNameCodeMap.objects.filter()
+
+        if listed_companies is not None:
+            for listed_company in listed_companies:
+                last_date = last_download_date(
+                    listed_company.ts_code, 'HIST_DOWNLOAD', freq)
+                if sdate is not None and edate is not None:  # 给定下载开始和结束时间
+                    start_date = sdate
+                    end_date = edate
+                    download_stock_hist(
+                        listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
+                else:  # 根据日志记录下载相应历史记录
+
+                    if last_date is not None:
+                        if last_date[1] < today: #如果有差异就下载，不然就退出
+                            # 已完成首次下载
+                            download_type = 1
+                            print('update hist')
+                            start_date = last_date[1] + \
+                                timedelta(days=1)
+                            download_stock_hist(
+                                listed_company.ts_code, last_date[1] + timedelta(days=1), today, listed_company.asset, freq, )
+                    else:
+                        # 需要进行首次下载
+                        print('first time')
+                        start_date = listed_company.list_date
+                        download_stock_hist(
+                            listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
+                    end_date = today
+                if start_date is not None and end_date is not None:
+                    # print('update log...')
+                    log_download_hist(
+                        listed_company.ts_code, 'HIST_DOWNLOAD', start_date, end_date, freq)
+                    # generate_event(listed_company, download_type, freq)
+                    generate_task(
+                        listed_company, start_date, end_date, freq)
+                    listed_company.last_update_date = end_date
+                    listed_company.save()
+                else:
+                    print('no history to be downloaded for give period')
+    except Exception as e:
+        print(e)
 
 
 def split_trade_cal(start_date, end_date):
@@ -37,7 +132,7 @@ def split_trade_cal(start_date, end_date):
         split_date_list.append(
             [start_date, mid_date])
         split_date_list.append(
-            [mid_date + timedelta(days=1), start_date]
+            [mid_date + timedelta(days=1), end_date] #fix issue of 年份分割错误 start_date -> end_date
         )
     elif end_year - start_year <= 30:
         mid_date = start_date + timedelta(days=365*10)
@@ -79,7 +174,7 @@ def download_hist_data(stock_symbol, start_date, end_date, freq='D', asset='E'):
 def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info started.')
-    end_date = date.today()
+    # end_date = date.today()
     # print(listed_company.ts_code)
     df = download_hist_data(ts_code, start_date, end_date, freq, asset,)
     hist_list = []
