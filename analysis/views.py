@@ -46,14 +46,20 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         req_user = request.user
         if req_user is not None:
-            ts_code = None
-            ts_code_no_surfix = None
+            ts_code = '000001.SH'
+            stock_name = '上证指数'
+            ts_code_no_surfix = '000001.SH'
             code_map = None
             if len(kwargs) > 0:
-                ts_code = kwargs['ts_code']
-            if ts_code is not None:
-                ts_code_no_surfix = ts_code.split('.')[0]
-                code_map = StockNameCodeMap.objects.get(ts_code=ts_code)
+                # ts_code = kwargs['ts_code']
+                try:
+                    code_map = StockNameCodeMap.objects.get(
+                        ts_code=kwargs['ts_code'])
+                    ts_code = code_map.ts_code
+                    ts_code_no_surfix = ts_code.split('.')[0]
+                    stock_name = code_map.stock_name
+                except Exception as e:
+                    print(e)
             strategie_ctgs = TradeStrategyStat.objects.all().order_by(
                 'category').distinct('category')
             stocks_following = StockFollowing.objects.filter(
@@ -61,9 +67,9 @@ class AnalysisHomeView(LoginRequiredMixin, TemplateView):
             queryset = {
                 'strategy_ctgs': strategie_ctgs,
                 'followings': stocks_following,
-                'ts_code': ts_code if ts_code is not None else '',
-                'ts_code_only': ts_code_no_surfix if ts_code_no_surfix is not None else '',
-                'stock_name': code_map.stock_name if code_map is not None else '',
+                'ts_code': ts_code,
+                'ts_code_only': ts_code_no_surfix,
+                'stock_name': stock_name,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
