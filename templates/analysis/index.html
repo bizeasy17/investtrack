@@ -12,63 +12,162 @@
 {% block content %}
 <div class="content-wrapper">
     {% comment %} 股票搜索框 {% endcomment %}
-    <div class="row flex-grow mb-4">
+    <div class="row flex-grow mb-2">
         <div class="col-lg-3 grid-margin stretch-card">
-            <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search">
+            
+            {% ifnotequal analysis.ts_code '' %}
+            <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search" value="{{analysis.ts_code_only}} - {{analysis.stock_name}}">
+            <!-- <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search"> -->
+            <input type="hidden" id="hiddenCode" value="{{analysis.ts_code}}"><!--real code e.g. 000001 -->
+            <input type="hidden" id="hiddenStockName" value="{{analysis.stock_name}}"><!--e.g.平安保险-->
+            <input type="hidden" id="hiddenTsCode" value="{{analysis.ts_code}}"><!--show code, 000001.SZ-->
+            {%else%}
+            <input type="text"  id="searchForAnalysis" class="form-control" placeholder="{% trans '输入股票名称或代码'%}" aria-label="search" aria-describedby="search" value="000001.SH - 上证指数">
             <input type="hidden" id="hiddenCode" value="000001.SH"><!--real code e.g. 000001 -->
             <input type="hidden" id="hiddenStockName" value="{% trans '上证指数' %}"><!--e.g.平安保险-->
             <input type="hidden" id="hiddenTsCode" value="000001.SH"><!--show code, 000001.SZ-->
+            {% endifnotequal %}
+            
         </div>
+    </div>
+    <div class="row flex-grow mb-1">
+        <div class="grid-margin stretch-card">
+            
+        </div>
+        
         {% comment %} 策略列表 {% endcomment %}
-        <div class="col-lg-3">
+        <div class="col-lg-12">
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                {% if analysis %}
-                {% for ctg in analysis.strategy_ctgs %}
-                    <label class="btn btn-light  {% if forloop.first %}active{% endif %}">
-                        <input type="radio" name="strategy-ctg" id="{{ctg.category}}" autocomplete="off" value="{{ctg.category}}" {% if forloop.first %}checked{% endif %}>{{ctg.category}}
-                    </label>
-                {% endfor %}
-                {% endif %}
+                <span class="mt-1 mr-1 small">{% trans '买入策略' %}</span>
+                <label class="btn btn-light active">
+                    <input type="radio" name="bstrategy" id="jiuzhuan_b" autocomplete="off" value="jiuzhuan_count_b" checked><small>{% trans '九转买' %}</small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="ma25_zhicheng" autocomplete="off" value="ma25_zhicheng" ><small>{% trans 'MA25支撑' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="ma25_tupo" autocomplete="off" value="ma25_tupo"><small>{% trans 'MA25突破' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="ma25_zhicheng" autocomplete="off" value="ma60_zhicheng" ><small>{% trans 'MA60支撑' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="ma25_tupo" autocomplete="off" value="ma60_tupo"><small>{% trans 'MA60突破' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="ma25_zhicheng" autocomplete="off" value="ma200_zhicheng" ><small>{% trans 'MA200支撑' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="ma25_tupo" autocomplete="off" value="ma200_tupo" ><small>{% trans 'MA200突破' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="w_di" autocomplete="off" value="w_di"><small>{% trans 'W底' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="dibu_b" autocomplete="off" value="dibu_b" ><small>{% trans '底部' %} </small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="bstrategy" id="tupo_b" autocomplete="off" value="tupo_b" ><small>{% trans '突破' %}</small> 
+                </label>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
-                <span class="mt-1 mr-1 small">{% trans '持仓周期' %}</span>
+        <div class="col-lg-12">
+            <div class="btn-group btn-group-sm btn-group-toggle mt-1" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '卖出策略' %}</span>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="jiuzhuan_count_s" autocomplete="off" value="jiuzhuan_count_s" ><small>{% trans '九转卖' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="ma25_diepo" autocomplete="off" value="ma25_diepo" ><small>{% trans 'MA25跌破' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="ma25_yali" autocomplete="off" value="ma25_yali"><small>{% trans 'MA25压力' %}</small>  
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="ma60_diepo" autocomplete="off" value="ma60_diepo" ><small>{% trans 'MA60跌破' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="ma60_yali" autocomplete="off" value="ma60_yali"><small>{% trans 'MA60压力' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="ma200_diepo" autocomplete="off" value="ma200_diepo" ><small>{% trans 'MA200跌破' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="ma200_yali" autocomplete="off" value="ma200_yali"><small>{% trans 'MA200压力' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="m_ding" autocomplete="off" value="m_ding"><small>{% trans 'M顶' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="dingbu_s" autocomplete="off" value="dingbu_s" ><small>{% trans '顶部' %} </small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="sstrategy" id="diepo_s" autocomplete="off" value="diepo_s" ><small>{% trans '跌破' %} </small> 
+                </label>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div id="periodBtnGroupStock" class="btn-group btn-group-sm btn-group-toggle mt-1" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '持仓天数' %}</span>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p10" autocomplete="off" value="10" ><small>{% trans '10' %}</small>
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p20" autocomplete="off" value="20" ><small>{% trans '20' %} </small>
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="period" id="p30" autocomplete="off" value="30"><small>{% trans '30' %}</small> 
+                </label>
+                <label class="btn btn-light">
+                    <input type="radio" name="period" id="p50" autocomplete="off" value="50"><small>{% trans '50' %}</small> 
+                </label>
                 <label class="btn btn-light active">
-                    <input type="radio" name="period" id="p10" autocomplete="off" value="10" checked>{% trans '10天' %}
+                    <input type="radio" name="period" id="p80" autocomplete="off" value="80" checked><small>{% trans '80' %}</small> 
                 </label>
                 <label class="btn btn-light ">
-                    <input type="radio" name="period" id="p20" autocomplete="off" value="20" >{% trans '20天' %} 
+                    <input type="radio" name="period" id="p130" autocomplete="off" value="130" ><small>{% trans '130' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p210" autocomplete="off" value="210" ><small>{% trans '210' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p350" autocomplete="off" value="350" ><small>{% trans '350' %}</small> 
+                </label>
+                <label class="btn btn-light ">
+                    <input type="radio" name="period" id="p560" autocomplete="off" value="560" ><small>{% trans '560' %}</small> 
+                </label>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div id="pctPeriodBtnGroupStock" class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                <span class="mt-1 mr-1 small">{% trans '预期涨幅' %}</span>
+                <label class="btn btn-light ">
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct10_period" ><small>{% trans '10%' %}</small>
+                </label>
+                <label class="btn btn-light active">
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct20_period" checked><small>{% trans '20%' %}</small>
                 </label>
                 <label class="btn btn-light">
-                    <input type="radio" name="period" id="p30" autocomplete="off" value="30">{% trans '30天' %} 
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct30_period"><small>{% trans '30%' %}</small> 
                 </label>
                 <label class="btn btn-light">
-                    <input type="radio" name="period" id="p50" autocomplete="off" value="50">{% trans '50天' %} 
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct50_period"><small>{% trans '50%' %}</small> 
                 </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="period" id="p80" autocomplete="off" value="80" >{% trans '80天' %} 
+                <label class="btn btn-light">
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct80_period"><small>{% trans '80%' %}</small> 
                 </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="period" id="p80" autocomplete="off" value="130" >{% trans '130天' %} 
+                <label class="btn btn-light">
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct100_period"><small>{% trans '100%' %}</small> 
                 </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="period" id="p80" autocomplete="off" value="210" >{% trans '210天' %} 
-                </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="period" id="p80" autocomplete="off" value="350" >{% trans '350天' %} 
-                </label>
-                <label class="btn btn-light ">
-                    <input type="radio" name="period" id="p80" autocomplete="off" value="560" >{% trans '560天' %} 
+                <label class="btn btn-light">
+                    <input type="radio" name="pct_period" autocomplete="off" value="pct130_period"><small>{% trans '130%' %}</small> 
                 </label>
             </div>
         </div>
     </div>
     <hr/>
-    <div class="container row">
-        <div class="col-lg-2" id="strategyList">
-        </div>
-        <div class="col-lg-6" id="">
+    <div class="row flex-grow ">
+        <div class="col-lg-8" id="">
             
             <div class="row flex-grow">
                 <div class="col-md-12 stretch-card mb-4">
@@ -148,30 +247,6 @@
                                 <span class="text-muted small mr-1">{% trans '75ile - ' %}</span>
                                 <span class="text-primary" id="expPct75ile">-</span>
                             </div>
-                            <div class="btn-group btn-group-sm btn-group-toggle mt-2" data-toggle="buttons">
-                                <label class="btn btn-light ">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct10_period" >{% trans '10%' %}
-                                </label>
-                                <label class="btn btn-light active">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct20_period" checked>{% trans '20%' %} 
-                                </label>
-                                <label class="btn btn-light">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct30_period">{% trans '30%' %} 
-                                </label>
-                                <label class="btn btn-light">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct50_period">{% trans '50%' %} 
-                                </label>
-                                <label class="btn btn-light">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct80_period">{% trans '80%' %} 
-                                </label>
-                                <label class="btn btn-light">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct100_period">{% trans '100%' %} 
-                                </label>
-                                <label class="btn btn-light">
-                                    <input type="radio" name="pct_period" autocomplete="off" value="pct130_period">{% trans '130%' %} 
-                                </label>
-                            </div>
-                        
                             <div class="no-trans-data" id="noProfit"></div>
                             <canvas id="expIncrPct" height="150"></canvas>
                         </div>
@@ -183,25 +258,16 @@
             <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                 <!-- <span class="mt-1 mr-1 small">{% trans '' %}</span> -->
                 <label class="btn btn-light active">
-                    <input type="radio" name="chart-period" id="y1" autocomplete="off" value="1"  checked>{% trans '1年' %}
+                    <input type="radio" name="candlestick-period" id="y1" autocomplete="off" value="1"  checked>{% trans '1年' %}
                 </label>
                 <label class="btn btn-light">
-                    <input type="radio" name="chart-period" id="y2" autocomplete="off" value="2">{% trans '2年' %} 
+                    <input type="radio" name="candlestick-period" id="y2" autocomplete="off" value="2">{% trans '2年' %} 
                 </label>
                 <label class="btn btn-light">
-                    <input type="radio" name="chart-period" id="y5" autocomplete="off" value="3">{% trans '3年' %} 
+                    <input type="radio" name="candlestick-period" id="y5" autocomplete="off" value="3">{% trans '3年' %} 
                 </label>
                 <label class="btn btn-light">
-                    <input type="radio" name="chart-period" id="y5" autocomplete="off" value="5">{% trans '5年' %} 
-                </label>
-            </div>
-            <div class="btn-group btn-group-sm btn-group-toggle float-right" data-toggle="buttons">
-                <!-- <span class="mt-1 mr-1 small">{% trans '图表类型' %}</span> -->
-                <label class="btn btn-light active">
-                    <input type="radio" name="chart-type" id="c" autocomplete="off" value="c"  checked>{% trans '收盘线' %}
-                </label>
-                <label class="btn btn-light">
-                    <input type="radio" name="chart-type" id="k" autocomplete="off" value="k">{% trans '分时图(即将推出)' %} 
+                    <input type="radio" name="candlestick-period" id="y5" autocomplete="off" value="5">{% trans '5年' %} 
                 </label>
             </div>
             <div>
@@ -233,7 +299,7 @@
             {% endif %}
         </div>
     </div>
-    <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_b"/>
+    <input type="hidden"  id="hiddenStrategyCode" value="jiuzhuan_count_b"/>
     <input type="hidden"  id="hiddenStrategyName" value="{% trans '九转买点(默认)' %} "/>
     <input type="hidden"  id="hiddenStrategyBtnId"/>   
     

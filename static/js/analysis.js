@@ -14,157 +14,42 @@ window.chartColors = {
 };
 
 $(function () {
-    var chart;
+    var freq = "D";
+    var market;
+    var stockCode;
+    var tsCode;
+    var stockName;
+    var period;
+    var candlestickPeriod;
+    var pctPeriod;
+    var strategyCode;
+    var strategyName;
+    var bstr;
+    var sstr;
     var analysisEndpoint = '/analysis/';
     var investorBaseEndpoint = '/investors/';
     var stockmarketEndpoint = '/stockmarket/';
-    var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
+    // var selCategory = $('input:radio[name="strategy-ctg"]:checked').val();
 
-    var showAnalysisHist = function () {
+    var initParam = function () {
         // var strategy = "jz_b";
         // console.log($('#hiddenStrategyBtnId').val());
-        $(this).removeClass("btn-info");
-        $(this).addClass("btn-danger");
-        if ($('#hiddenStrategyBtnId').val()) {
-            $("#" + $('#hiddenStrategyBtnId').val()).removeClass("btn-danger");
-            $("#" + $('#hiddenStrategyBtnId').val()).addClass("btn-info");
-        }
-
         // var strategyAnalyzeBtns = document.getElementsByName("show-analysis-hist");
-        var tsCode = $('#hiddenTsCode').val();
-        var stockName = $('#hiddenStockName').val();
-        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
-        var period = $('input:radio[name="period"]:checked').val();
-        var strategyCode = $(this).val().split(",")[0];
-        var strategyName = $(this).val().split(",")[1];
-        $('#hiddenStrategyCode').val(strategyCode);
-        $('#hiddenStrategyName').val(strategyName);
-        $('#hiddenStrategyBtnId').val($(this).attr("id"))
-        $(".cur-strategy").text(strategyName);
-        $(".cur-stock").text(stockName + ' - ' + tsCode);
+        tsCode = $("#hiddenTsCode").val();
+        stockCode = $.trim($("#searchForAnalysis").val().split("-")[0]);// 000001.SH";
+        stockName = $.trim($("#searchForAnalysis").val().split("-")[1]);
+        pctPeriod = $('input:radio[name="pct_period"]:checked').val();
+        period = $('input:radio[name="period"]:checked').val();
+        candlestickPeriod = 1
+        strategyCode = $('input:radio[name="bstrategy"]:checked').val();;
+        strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
         // var freq = "D";
-        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
-        showHighPeriodChart(tsCode, strategyCode, period);
-        showLowPeriodDistChart(tsCode, strategyCode, period);
+        // showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        // showHighPeriodChart(tsCode, strategyCode, period);
+        // showLowPeriodDistChart(tsCode, strategyCode, period);
     }
+    initParam();
 
-    var fetchStrategyByCtg = function (categoryName) {
-        var strategyDiv = $("#strategyList");
-        $.ajax(
-            {
-                url: analysisEndpoint + 'strategies/by-category/' + categoryName + "/",
-                method: 'GET',
-                success: function (data) {
-                    var strategiesTag = "";
-                    strategyDiv.html("");
-                    $(data).each(function (idx, obj) {
-                        strategiesTag +=
-                            '<div class="row">' +
-                            '<div class="col-lg-6">' +
-                            '<img src="' + imgRoot + obj.code + '.png" height="65" width="65">' +
-                            '</div>' +
-                            '<div class="col-lg-6">' +
-                            '<div><span class="small text-primary">' + obj.strategy_name + '</span></div>'
-                        // '<div class="small text-muted">成功率-' + obj.success_rate + '%</div>';<span class="small"> 成功率-' + obj.success_rate + '%</span>
-                        // '<div class="container">'+
-                        //     '<div class="row">'+
-                        //         '<div class="col-4 text-primary">总数</div>'+
-                        //         '<div class="col-4 text-primary">成功</div>'+00000
-                        //         '<div class="col-4 text-primary">失败</div>'+
-                        //         '<div class="w-100"></div>'+
-                        //         '<div class="col-4 text-primary">'+
-                        //             obj.count+
-                        //         '</div>'+
-                        //         '<div class="col-4 text-primary">'+
-                        //             obj.success_count+
-                        //         '</div>'+
-                        //         '<div class="col-4 text-primary">'+
-                        //             obj.fail_count+
-                        //         '</div>'+
-                        //     '</div>'+
-                        // '</div>';
-                        // if(obj.analyzed){
-                        //     strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'"><i class="fa fa-eye">历史分析</i></button>';
-                        // }else{
-                        //     strategiesTag += '<button class="btn btn-sm btn-outline-info" name="show-analysis-hist" id="showHistBtn'+obj.id+'" value="'+obj.code+'" disabled><i class="fa fa-eye"></i>未分析</button>';
-                        // }
-                        strategiesTag += '<button class="btn btn-sm btn-info" name="show-analysis-hist" id="showHistBtn' + obj.id + '" value="' + obj.code + ',' + obj.strategy_name + '"><small>分析</small></button>';
-                        strategiesTag += '</div></div><hr/>';
-                        strategyDiv.append(strategiesTag);
-                        strategiesTag = "";
-                        var showAnalysisBtn = document.getElementById("showHistBtn" + obj.id);
-                        showAnalysisBtn.addEventListener("click", showAnalysisHist);
-                    });
-                    // strategiesTag += '</div>';
-
-                    // if (btns) {
-                    //     $(btns).each(function (id, obj) {
-                    //         $(obj).on("click", bindDetailOfPosition);
-                    //     });
-                    // }
-                },
-                statusCode: {
-                    403: function () {
-                        alert("403 forbidden");
-                    },
-                    404: function () {
-                        strategyDiv.html("系统无法找到相关策略");
-                    },
-                    500: function () {
-                        strategyDiv.html("系统错误，请稍后再试");
-                    }
-                }
-            }
-        );
-    }
-
-    // 根据默认策略分类显示该分类下的默认策略
-    fetchStrategyByCtg(selCategory);
-
-    $('#searchForAnalysis').autoComplete({
-        resolver: 'custom',
-        formatResult: function (item) {
-            return {
-                value: item.id,
-                text: item.id + " - " + item.text,
-                html: [
-                    item.id + ' - ' + item.text,// +  '[' + item.market + ']',
-                ]
-            };
-        },
-        events: {
-            search: function (qry, callback) {
-                // let's do a custom ajax call
-                $.ajax(
-                    stockmarketEndpoint + 'listed_companies/' + $('#searchForAnalysis').val(),
-                ).done(function (res) {
-                    callback(res.results)
-                });
-            }
-        }
-    });
-
-    $('#searchForAnalysis').on('autocomplete.select', function (evt, item) {
-        var code = item.id;
-        var tsCode = item.ts_code;
-        var showName = item.text;
-        var market = item.market;
-        var freq = 'D'
-        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
-        var period = $('input:radio[name="period"]:checked').val();
-        var chartType = $('input:radio[name="chart-type"]:checked').val();
-        var chartPeriod = $('input:radio[name="chart-period"]:checked').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
-        var strategyName = $('#hiddenStrategyName').val();
-        $('#hiddenTsCode').val(tsCode);
-        $('#hiddenStockName').val(showName);
-        $(".cur-strategy").text(strategyName);
-        $(".cur-stock").text(tsCode);
-        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
-        showHighPeriodChart(tsCode, strategyCode, period);
-        showLowPeriodDistChart(tsCode, strategyCode, period);
-        drawStockChart(tsCode, code, showName, strategyCode, chartType, freq, chartPeriod);
-    });
 
     // 更新当前所选股票信息
     var chartShowDays60 = 30
@@ -187,17 +72,6 @@ $(function () {
         return formatDate(priorDate, format);
     }
 
-    // 根据选择的期望收益，显示达到期望收益的天数
-    $('input:radio[name="chart-type"]').change(function () {
-        // 页面默认加载上证指数日K（D)
-        updateStockChart();
-    });
-
-    $('input:radio[name="chart-period"]').change(function () {
-        // 页面默认加载上证指数日K（D)
-        updateStockChart();
-    });
-
     // 股票历史收盘数据
     var stockHistChartK;
     var stockHistChartC;
@@ -207,120 +81,8 @@ $(function () {
     var canvasCloseChart = $("#stockHistCanvC")
         .get(0)
         .getContext("2d");
-    var drawStockChart = function (symbol, showCode, showName, strategyCode, type, freq, period) {
-        $("#stockNameCodeLabel").text(showName + " - " + showCode);
-        if (type == "k") {
-            // drawStockKChart(symbol, showCode, showName, strategyCode, freq);
-        } else if (type == "c") {
-            drawStockHistCloseChart(symbol, strategyCode, freq, period)
-        }
-    }
-
-    var drawStockKChart = function (tsCode, showCode, showName, strategyCode, freq) {
-        var startDate = getStartDate(freq, '-');
-        // var accountId = $("#hiddenAccount").val();
-        $.ajax({
-            // url: investBaseEndpoint + 'get-price/' + code + '/' + startDate + '/' + endDate + '/' + period + '/',
-            url: analysisEndpoint + "stock-hist/strategy/" + strategyCode + "/" + tsCode + "/" + freq + '/ticks/',
-            success: function (data) {
-                if (stockHistChartK) {
-                    // update chart
-                    stockHistChartK.data.labels = data.label;
-                    stockHistChartK.data.datasets[0].data = data.ticks;
-                    stockHistChartK.data.datasets[1].data = data.ma25;
-                    stockHistChartK.data.datasets[2].data = data.ma60;
-                    stockHistChartK.data.datasets[3].data = data.ma200;
-                    stockHistChartK.update();
-                } else {
-                    stockHistChartK = new Chart(canvasKChart, {
-                        type: 'candlestick',
-                        data: {
-                            datasets: [{
-                                label: showName + '-' + showCode,
-                                data: data.ticks
-                            }
-                                // , {
-                                //     label: 'MA25',
-                                //     backgroundColor: window.chartColors.red,
-                                //     borderColor: window.chartColors.red,
-                                //     data: data.ma25,
-                                //     type: 'line',
-                                //     fill: false,
-                                // }, {
-                                //     label: 'MA60',
-                                //     backgroundColor: window.chartColors.red,
-                                //     borderColor: window.chartColors.blue,
-                                //     data: data.ma60,
-                                //     type: 'line',
-                                //     fill: false,
-                                // },{
-                                //     label: 'MA200',
-                                //     backgroundColor: window.chartColors.red,
-                                //     borderColor: window.chartColors.green,
-                                //     data: data.ma200,
-                                //     type: 'line',
-                                //     fill: false,
-                                // }
-                            ]
-                        },
-                        options: {
-                            scales: {
-                                xAxes: [{
-                                    afterBuildTicks: function (scale, ticks) {
-                                        var majorUnit = scale._majorUnit;
-                                        var firstTick = ticks[0];
-                                        var i, ilen, val, tick, currMajor, lastMajor;
-
-                                        val = luxon.DateTime.fromMillis(ticks[0].value);
-                                        if ((majorUnit === 'minute' && val.second === 0)
-                                            || (majorUnit === 'hour' && val.minute === 0)
-                                            || (majorUnit === 'day' && val.hour === 9)
-                                            || (majorUnit === 'month' && val.day <= 3 && val.weekday === 1)
-                                            || (majorUnit === 'year' && val.month === 0)) {
-                                            firstTick.major = true;
-                                        } else {
-                                            firstTick.major = false;
-                                        }
-                                        lastMajor = val.get(majorUnit);
-
-                                        for (i = 1, ilen = ticks.length; i < ilen; i++) {
-                                            tick = ticks[i];
-                                            val = luxon.DateTime.fromMillis(tick.value);
-                                            currMajor = val.get(majorUnit);
-                                            tick.major = currMajor !== lastMajor;
-                                            lastMajor = currMajor;
-                                        }
-                                        return ticks;
-                                    }
-                                }]
-                            },
-                            // tooltips: {
-                            //     callbacks: {
-                            //         label: function (tooltipItem, data) {
-                            //             var dataset = data.datasets[tooltipItem.datasetIndex];
-                            //             var point = dataset.data[tooltipItem.index];
-                            //             var label = data.datasets[tooltipItem.datasetIndex].label || '';
-
-                            //             var o = point.o;
-                            //             var h = point.h;
-                            //             var l = point.l;
-                            //             var c = point.c;
-
-                            //             var percentage = Math.floor((parseFloat(c) - parseFloat(o)) / parseFloat(o) * 100) + "%";
-
-                            //             if (label) {
-                            //                 label += ': ';
-                            //             }
-                            //             label = showName + ' - 开盘: ' + o + '  最高: ' + h + '  最低: ' + l + '  收盘: ' + c + ' 涨幅: ' + percentage;
-                            //             return label;
-                            //         }
-                            //     }
-                            // }
-                        }
-                    });
-                }
-            }
-        });
+    var drawStockChart = function () {
+        drawStockHistCloseChart(tsCode, strategyCode, freq, candlestickPeriod)
     }
 
 
@@ -455,38 +217,7 @@ $(function () {
     }
 
     // 页面加载时 初始显示的收盘线为上证
-    var updateStockChart = function(){
-        var period = $('input:radio[name="chart-period"]:checked').val();
-        var type = $('input:radio[name="chart-type"]:checked').val();
-        var freq = "D";
-        var code = $("#hiddenCode").val(); // 页面初始加载时 为上证指数 sh
-        var tsCode = $("#hiddenTsCode").val()
-        var showName = $("#hiddenStockName").val();
-        var strategyCode = $("#hiddenStrategyCode").val();
-        drawStockChart(tsCode, code, showName, strategyCode, type, freq, period);
-    }
-    updateStockChart();
-
-    $(".view-hist").click(function(){
-        var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
-        var period = $('input:radio[name="period"]:checked').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
-        var strategyName = $('#hiddenStrategyName').val();
-        var tsCode = $(this).attr("id");
-        var mixed = $(this).text();
-        var nameCode = mixed.split("-");
-        if(tsCode.charAt(0)=="6") tsCode += ".SH";
-        else tsCode += ".SZ";
-        $(".cur-strategy").text(strategyName);
-        $(".cur-stock").text(tsCode);
-        $("#hiddenCode").val($(this).attr("id")); // 页面初始加载时 为上证指数 sh
-        $("#hiddenTsCode").val(tsCode)
-        $("#hiddenStockName").val(nameCode[0]);
-        updateStockChart();
-        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
-        showHighPeriodChart(tsCode, strategyCode, period);
-        showLowPeriodDistChart(tsCode, strategyCode, period);
-    });
+    drawStockChart();
 
     // 刷新自选股
     var refreshFollowing = function () {
@@ -542,6 +273,19 @@ $(function () {
         }
     }, refreshInterval * 60 * 1000);
 
+    var showHelpInfo =  function(){
+        $(".cur-strategy").text(strategyName);
+        $(".cur-stock").text(stockName);
+        $("#stockNameCodeLabel").text(stockName + " - " + stockCode);
+    }
+
+    var showAnalysisResult = function(){
+        showHelpInfo();
+        showHighPeriodChart(tsCode, strategyCode, period);
+        showLowPeriodDistChart(tsCode, strategyCode, period);
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
+        drawStockChart();
+    }
 
     // 涨幅分布
     var incrChart;
@@ -651,8 +395,9 @@ $(function () {
                                 },
                                 elements: {
                                     point: {
-                                        radius: 3,
-                                        backgroundColor: "#ff4c5b"
+                                        radius: 1,
+                                        backgroundColor: "#ff4c5b",
+                                        display: false
                                     }
                                 }
                             }
@@ -780,8 +525,9 @@ $(function () {
                                 },
                                 elements: {
                                     point: {
-                                        radius: 3,
-                                        backgroundColor: "#ff4c5b"
+                                        radius: 1,
+                                        backgroundColor: "#ff4c5b",
+                                        display: false
                                     }
                                 }
                             }
@@ -802,7 +548,7 @@ $(function () {
 
     // 达到预期涨幅天数
     var pctIncrChart;
-    var showExpectedPctChart = function (tsCode, strategyCode, expPct) {
+    var showExpectedPctChart = function (tsCode, strategyCode, pctPeriod) {
         if ($("#expIncrPct").length) {
             var pctIncrChartCanvas = $("#expIncrPct")
                 .get(0)
@@ -811,7 +557,7 @@ $(function () {
             // var stock_symbol = "600626.SH"
             // var pctPeriod = $('input:radio[name="pct_period"]:checked').val();
             $.ajax({
-                url: analysisEndpoint + "expected-pct-data/strategy/" + strategyCode + "/" + tsCode + "/D/" + expPct + '/',
+                url: analysisEndpoint + "expected-pct-data/strategy/" + strategyCode + "/" + tsCode + "/D/" + pctPeriod + '/',
                 // headers: { 'X-CSRFToken': csrftoken },
                 method: 'GET',
                 dataType: 'json',
@@ -895,8 +641,9 @@ $(function () {
                                 },
                                 elements: {
                                     point: {
-                                        radius: 3,
-                                        backgroundColor: "#ff4c5b"
+                                        radius: 1,
+                                        backgroundColor: "#ff4c5b",
+                                        display: false
                                     }
                                 }
                             }
@@ -917,34 +664,98 @@ $(function () {
     }
 
     // 根据选择的期望收益，显示达到期望收益的天数
-    $('input:radio[name="strategy-ctg"]').change(function () {
+    // $('input:radio[name="strategy-ctg"]').change(function () {
+    //     // 页面默认加载上证指数日K（D)
+    //     var parentStrategyId = this.value;
+    //     fetchStrategyByCtg(parentStrategyId);
+    // });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="bstrategy"]').change(function () {
         // 页面默认加载上证指数日K（D)
-        var parentStrategyId = this.value;
-        fetchStrategyByCtg(parentStrategyId);
+        // 页面默认加载上证指数日K（D)
+        bstr = $(this)
+        if (sstr != undefined) {
+            $(sstr).removeAttr("checked")
+            $(sstr).parent("label").removeClass("active");
+        } 
+
+        strategyCode = this.value;
+        strategyName = $(this).next().text();
+        // showHelpInfo();
+        showAnalysisResult();
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="sstrategy"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        sstr = $(this);
+        if (bstr != undefined) {
+            $(bstr).removeAttr("checked")
+            $(bstr).parent("label").removeClass("active");
+        } 
+
+        strategyCode = this.value;
+        strategyName = $(this).next().text();
+        // showHelpInfo();
+        showAnalysisResult();
     });
 
     // 根据选择的期望收益，显示达到期望收益的天数
     $('input:radio[name="pct_period"]').change(function () {
         // 页面默认加载上证指数日K（D)
-        var expPct = this.value;
-        var tsCode = $('#hiddenTsCode').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
-        showExpectedPctChart(tsCode, strategyCode, expPct);
+        pctPeriod = this.value;
+        showHelpInfo();
+        showExpectedPctChart(tsCode, strategyCode, pctPeriod);
     });
 
     // 根据选择的周期，显示该周期中最大跌幅，最大涨幅
     $('input:radio[name="period"]').change(function () {
         // 页面默认加载上证指数日K（D)
-        var period = this.value;
-        var tsCode = $('#hiddenTsCode').val();
-        var strategyCode = $('#hiddenStrategyCode').val();
+        period = this.value;
+        showHelpInfo();
         showHighPeriodChart(tsCode, strategyCode, period);
         showLowPeriodDistChart(tsCode, strategyCode, period);
     });
 
-    
+    // 根据选择的周期，显示该周期中最大跌幅，最大涨幅
+    $('input:radio[name="candlestick-period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        candlestickPeriod = this.value;
+        drawStockChart();
+    });
 
-    // showHighPeriodChart();
-    // showLowPeriodDistChart();
-    // showExpectedPctChart();
+
+    $('#searchForAnalysis').autoComplete({
+        resolver: 'custom',
+        formatResult: function (item) {
+            return {
+                value: item.id,
+                text: item.id + " - " + item.text,
+                html: [
+                    item.id + ' - ' + item.text,// +  '[' + item.market + ']',
+                ]
+            };
+        },
+        events: {
+            search: function (qry, callback) {
+                // let's do a custom ajax call
+                $.ajax(
+                    stockmarketEndpoint + 'listed_companies/' + $('#searchForAnalysis').val(),
+                ).done(function (res) {
+                    callback(res.results)
+                });
+            }
+        }
+    });
+
+    $('#searchForAnalysis').on('autocomplete.select', function (evt, item) {
+        stockCode = item.id;
+        tsCode = item.ts_code;
+        stockName = item.text;
+        market = item.market;
+        showAnalysisResult();
+    });
+
+    showAnalysisResult();
 });  
