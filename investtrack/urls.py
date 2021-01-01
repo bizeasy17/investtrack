@@ -38,14 +38,16 @@ urlpatterns = [
     path('txnvis/', include('txnvisibility.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('analysis/', include('analysis.urls')),
+    path('predict/', include('predictions.urls')),
+
 
 
     # home pages
     re_path(r'^$',
-            TemplateView.as_view(template_name='pages/home.html'), name='home'),
+            TemplateView.as_view(template_name='predict/home.html'), name='home'),
     # simple pages
     re_path(r'^about/$',
-        TemplateView.as_view(template_name='pages/about.html'), name='about'),
+            TemplateView.as_view(template_name='pages/about.html'), name='about'),
     # test pages
     re_path(r'^404/$',
             TemplateView.as_view(template_name='pages/404.html'), name='404'),
@@ -54,4 +56,5 @@ urlpatterns = [
 handler404 = 'users.views.page_not_found_view'
 if settings.DEBUG:
     # static files (images, css, javascript, etc.)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)
