@@ -1,0 +1,155 @@
+{% extends 'base_public.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}
+{% trans '投呗 - 首页' %}
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<!-- /.container -->
+<header class="masthead text-white text-center">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
+          <form action="{% url 'home' %}">
+            <div class="form-row">
+              <div class="col-12 col-md-9 mb-2 mb-md-0">
+                <input type="text" class="form-control form-control-lg" name="q" placeholder="{% trans '股票名称或者代码' %}">
+              </div>
+              <div class="col-12 col-md-3">
+                <button type="submit" class="btn btn-block btn-lg btn-info">{% trans '查看' %}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="row">
+            <div class="col-lg-12 grid-margin stretch-card mt-2">
+                <hr>
+                <div class="row flex-grow mt-2">
+                    <div class="col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '上证指数 - 000001' %}</p>
+                                    <p class="font-weight-medium small">
+                                        <!-- <span class="text-muted mr-1"></span> -->
+                                        <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
+                                    </p>
+                                    
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="shPreClose"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="shVolume"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="shAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center
+                                    justify-content-between flex-wrap">
+                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '深圳成指 - 399001' %}</p>
+                                    <p class="text-danger font-weight-medium small">
+                                        <!-- <span class="text-muted small mr-1"></span> -->
+                                        <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="szPreClose"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="szVolume"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="szAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center
+                                    justify-content-between flex-wrap">
+                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '创业板 - 399006' %}</p>
+                                    <p class="text-danger font-weight-medium small">
+                                        <!-- <span class="text-muted small mr-1"></span> -->
+                                        <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="cybPreClose"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="cybVolume"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="cybAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center
+                                    justify-content-between flex-wrap">
+                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '科创板 - 688006' %}</p>
+                                    <p class="text-danger font-weight-medium small">
+                                        <!-- <span class="text-muted small mr-1"></span> -->
+                                        <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="cybPreClose"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="cybVolume"></p>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
+                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
+                                        <p class="text-primary mb-0" id="cybAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- content-wrapper ends -->
+{% endblock content %}

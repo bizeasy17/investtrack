@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 
 class PredictHomeView(TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'predict/home.html'
+    template_name = 'consol/home.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'pred'
 
