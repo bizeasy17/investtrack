@@ -165,7 +165,7 @@ def mark_jiuzhuan(ts_code, freq, start_date, end_date, atype):
                 pass
             # print(row['chg4'])
             hist.chg4 = round(
-                row['chg4'], 3) if row['chg4'] is not None else None
+                row['chg4'], 3) if row['chg4'] is not np.nan else None
             hist.jiuzhuan_count_b = row['jiuzhuan_count_b'] if row['jiuzhuan_count_b'] != 0 else None
             hist.jiuzhuan_count_s = row['jiuzhuan_count_s'] if row['jiuzhuan_count_s'] != 0 else None
             hist_list.append(hist)
@@ -195,9 +195,9 @@ def pre_mark_jiuzhuan(df, atype=1):
         # print(df['jiuzhuan_count_b'].iloc[3])
         # print(df['jiuzhuan_count_s'].iloc[3])
         # 九转买点计数器
-        count_b = df['jiuzhuan_count_b'].iloc[3] if df['jiuzhuan_count_b'].iloc[3] is not np.nan else 0
+        count_b = df['jiuzhuan_count_b'].iloc[3] if df['jiuzhuan_count_b'].iloc[3] is not None else 0
         # 九转卖点计数器
-        count_s = df['jiuzhuan_count_s'].iloc[3] if df['jiuzhuan_count_s'].iloc[3] is not np.nan else 0
+        count_s = df['jiuzhuan_count_s'].iloc[3] if df['jiuzhuan_count_s'].iloc[3] is not None else 0
         print(count_b)
         print(count_s)
         for i in range(0, periods):
