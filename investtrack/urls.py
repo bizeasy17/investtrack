@@ -44,7 +44,7 @@ urlpatterns = [
 
     # home pages
     re_path(r'^$',
-            TemplateView.as_view(template_name='predict/home.html'), name='home'),
+            TemplateView.as_view(template_name='consol/home.html'), name='home'),
     # simple pages
     re_path(r'^about/$',
             TemplateView.as_view(template_name='pages/about.html'), name='about'),
