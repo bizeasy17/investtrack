@@ -95,6 +95,8 @@ class StockNameCodeMap(BaseModel):
         _('上次分析日期'), blank=True, null=True)
     asset = models.CharField(
         _('股票/指数'), choices=ASSET_CHOICES, max_length=1, blank=True, null=True, default='E')
+    stock_name_pinyin = models.CharField(
+        _('股票名称拼音'), max_length=50, blank=True, null=True)  # name e.g. 平安银行
     # is_hist_downloaded = models.BooleanField(
     #     _('交易历史已下载？'), blank=False, null=False, default=False)
     # is_marked_jiuzhuan = models.BooleanField(

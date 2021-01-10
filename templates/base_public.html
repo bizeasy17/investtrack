@@ -7,13 +7,15 @@
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
+  <meta name="description" content="Machine Learning, Deep Learning, 机器学习，股票投资">
+  <meta name="author" content="Data Science Digitalization Lab - DSDL">
 
   <title>{% block title %}{% trans '投呗' %}{% endblock title %}</title>
 
 
   <!-- Bootstrap core CSS -->
+  {% block css %}
+
   <link href="{% static 'css/bootstrap.css' %}" rel="stylesheet">
   <link rel="icon" type="image/png" href="{% static 'img/favicon.ico' %}">
 
@@ -24,6 +26,9 @@
 
   <!-- Custom styles for this template -->
   <link href="{% static 'css/landing-page.min.css' %}" rel="stylesheet">
+  {% endblock css %}
+
+  {% block head %}{% endblock head %}
 
 </head>
 <body>
@@ -33,7 +38,7 @@
     <div class="container">
       <div>
         <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
-        <a class="navbar-brand text-primary" href="{% url 'home' %}">{% trans '投呗 - 用数据帮你找到一只好股票' %}</a>
+        <a class="navbar-brand text-primary" href="{% url 'search:home' %}">{% trans '投呗 - 用数据帮你解读股票' %}</a>
       </div>
       <a class="btn btn-primary" href="#">{% trans '登录' %}</a>
     </div>
@@ -95,8 +100,12 @@
   </footer>
 
   <!-- Bootstrap core JavaScript -->
+  {% block javascript %}
+
   <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+  {% endblock javascript %}
 
 </body>
 

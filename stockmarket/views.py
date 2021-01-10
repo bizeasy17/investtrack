@@ -47,14 +47,20 @@ def listed_companies(request, name_or_code):
     '''
     根据输入获得上市公司信息
     '''
+    market_exch_map = {
+        'ZB': '主板',
+        'ZXB':'中小板',
+        'CYB':'创业板',
+        'KCB':'科创板',
+    }
     if request.method == 'GET':
         try:
             if not name_or_code.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    stock_name__startswith=name_or_code)[:10]
+                    stock_name__startswith=name_or_code).order_by('list_date')[:10]
             elif name_or_code.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    stock_code__startswith=name_or_code)[:10]
+                    stock_code__startswith=name_or_code).order_by('list_date')[:10]
             else:  # 输入条件是拼音首字母
                 pass
             company_list = []
@@ -65,7 +71,10 @@ def listed_companies(request, name_or_code):
                         'id': c.stock_code,
                         'ts_code': c.ts_code,
                         'text': c.stock_name,
-                        'market': c.market,
+                        'market': market_exch_map[c.market],
+                        'industry': c.industry,
+                        'list_date': c.list_date,
+                        'area': c.area,
                     })
                 # c_str = 'results:[' + c_str + ']'
                 # c_dict = json.loads(c_str)

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'txnvisibility.apps.TxnvisibilityConfig',
     'dashboard.apps.DashboardConfig',
     'analysis.apps.AnalysisConfig',
+    'search.apps.SearchConfig',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

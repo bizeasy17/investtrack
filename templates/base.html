@@ -40,7 +40,7 @@
               </button>
               <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">
 
-              <a class="navbar-brand text-secondary text-hov-white" href="{% url 'home' %}">{% trans '投呗' %}</a>
+              <a class="navbar-brand text-secondary text-hov-white" href="{% url 'search:home' %}">{% trans '投呗' %}</a>
               <nav class="collapse navbar-collapse" role="navigation">
                 <ul class="navbar-nav">
                   <li class="nav-item">
@@ -51,7 +51,6 @@
                 </ul>
                 
                 <ul class="navbar-nav mr-auto">
-                  <!-- <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">{% trans '首页' %} <span class="sr-only">(current)</span></a></li> -->
                   {% if request.user.is_authenticated %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'investors:kanpan' %}">{% trans '看盘' %} </a></li>
                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">{% trans '持仓一览' %} </a></li>
@@ -59,7 +58,7 @@
                   <li class="nav-item"><a class="nav-link" href="{% url 'analysis:home' %}">{% trans '策略分析' %} </a></li>
                   <!-- <li class="nav-item"><a class="nav-link" href="#">{% trans 'Blog' %}</a></li> -->
                   {% endif %}
-                  <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">{% trans '实验室' %} </a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'search:home' %}">{% trans '实验室' %} </a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                   {% if False %}

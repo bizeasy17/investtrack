@@ -38,13 +38,13 @@ urlpatterns = [
     path('txnvis/', include('txnvisibility.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('analysis/', include('analysis.urls')),
-    path('predict/', include('predictions.urls')),
+    re_path(r'^', include('search.urls')),
 
 
 
     # home pages
-    re_path(r'^$',
-            TemplateView.as_view(template_name='consol/home.html'), name='home'),
+    # re_path(r'^$',
+    #         TemplateView.as_view(template_name='public_pages/home.html'), name='home'),
     # simple pages
     re_path(r'^about/$',
             TemplateView.as_view(template_name='pages/about.html'), name='about'),
