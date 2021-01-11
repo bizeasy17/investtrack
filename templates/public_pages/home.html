@@ -30,116 +30,108 @@
         </div>
       </div>
       <div class="row">
-            <div class="col-lg-12 grid-margin stretch-card mt-2">
+            <div class="col-lg-12 grid-margin stretch-card mt-3">
                 <hr>
-                <div class="row flex-grow mt-2">
-                    <div class="col-md-3 stretch-card">
+                <div class="row flex-grow small">
+                    <div class="mt-3 col-md-3 stretch-card">
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '上证指数 - 000001' %}</p>
+                                    <p class="card-title"><a class="text-primary" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上指 - 000001' %}</a></p>
                                     <p class="font-weight-medium small">
                                         <!-- <span class="text-muted mr-1"></span> -->
                                         <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
                                     </p>
                                     
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="shPreClose"></p>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="shVolume"></p>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="shAmount"></p>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="shPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="shVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="shAmount"></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 stretch-card">
+                    <div class="mt-3 col-md-3 stretch-card">
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '深圳成指 - 399001' %}</p>
+                                    <p class="card-title text-primary"><a class="text-primary" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深指 - 399001' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
                                         <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>
                                     </p>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="szPreClose"></p>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="szVolume"></p>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="szAmount"></p>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="szPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="szVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="szAmount"></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 stretch-card">
+                    <div class="mt-3 col-md-3 stretch-card">
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '创业板 - 399006' %}</p>
+                                    <p class="card-title text-primary"><a class="text-primary" href="?q=399006.SZ"><i class="fa fa-chart-line"></i> {% trans '创业 - 399006' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
                                         <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
                                     </p>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="cybPreClose"></p>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="cybVolume"></p>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="cybAmount"></p>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="cybPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="cybVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="cybAmount"></p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3 stretch-card">
+                    <div class="mt-3 col-md-3 stretch-card">
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><i class="fa fa-chart-line"></i> {% trans '科创板 - 688006' %}</p>
+                                    <p class="card-title text-primary"><a class="text-primary" href="?q=000300.SH"><i class="fa fa-chart-line"></i> {% trans '沪深 - 000300' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
-                                        <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
+                                        <span class="text-danger" id="hsPrice"></span><span id="hsChange" class="ml-1"></span>
                                     </p>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between flex-wrapper mb-3 small">
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '昨收' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="cybPreClose"></p>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交量（百万手）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="cybVolume"></p>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-between  flex-wrapper ">
-                                        <h7 class="font-weight-normal mb-0 mb-md-1 mb-lg-0 mr-3 text-muted">{% trans '成交额（亿元）' %}<span id="prfAvgProfit"></span></h5>
-                                        <p class="text-primary mb-0" id="cybAmount"></p>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="hsPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="hsVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="hsAmount"></p>
                                     </div>
                                 </div>
                             </div>

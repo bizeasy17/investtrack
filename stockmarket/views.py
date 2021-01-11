@@ -5,7 +5,7 @@ from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.http import HttpResponse, JsonResponse
 from stockmarket.models import StockNameCodeMap
-
+from django.db.models import Q
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -27,8 +27,8 @@ def realtime_quotes(request, symbols):
                     {
                         'code': quote[0],
                         'open': quote[1],
-                        'pre_close': quote[2],
-                        'price': quote[3],
+                        'pre_close': round(float(quote[2]),2),
+                        'price': round(float(quote[3]),2),
                         'high': quote[4],
                         'low': quote[5],
                         'bid': quote[6],
@@ -57,7 +57,7 @@ def listed_companies(request, name_or_code):
         try:
             if not name_or_code.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    stock_name__startswith=name_or_code).order_by('list_date')[:10]
+                    Q(stock_name__startswith=name_or_code) | Q(stock_name_pinyin__contains=name_or_code)).order_by('list_date')[:10]
             elif name_or_code.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
                     stock_code__startswith=name_or_code).order_by('list_date')[:10]

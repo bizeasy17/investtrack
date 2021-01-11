@@ -43,13 +43,14 @@
       <a class="btn btn-primary" href="#">{% trans '登录' %}</a>
     </div>
   </nav>
-  <hr class="tight-hr">
   {% block content %}
     <p>Use this document as a way to quick start any new project.</p>
   {% endblock content %}
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
+      <hr class="tight-hr">
+
       <div class="row">
         <div class="col-lg-6 h-100 text-center text-lg-left my-auto">
           <ul class="list-inline mb-2">
@@ -101,7 +102,55 @@
 
   <!-- Bootstrap core JavaScript -->
   {% block javascript %}
+  <script language="javascript">
+    function formatDate(date, conn) {
+      var dayNames = [
+          "01", "02", "03",
+          "04", "05", "06", "07",
+          "08", "09", "10",
+          "11", "12", "13", "14",
+          "15", "16", "17", "18",
+          "19", "20", "21", "22",
+          "23", "24", "25", "26",
+          "27", "28", "29", "30", "31"
+      ];
 
+      var monthNames = [
+          "01", "02", "03",
+          "04", "05", "06", "07",
+          "08", "09", "10",
+          "11", "12"
+      ];
+
+      var dayIndex = date.getDate();
+      var monthIndex = date.getMonth();
+      var year = date.getFullYear();
+
+      return year + conn + monthNames[monthIndex] + conn + dayNames[dayIndex - 1];
+    }
+    var isOpenForTrade = function (inputDatetime) {
+      // var dateAndTime = inputDatetime.split(" ");
+      var date = formatDate(inputDatetime, "-");
+      var openTime = new Date(date + " 9:30:00");
+      var morningCloseTime = new Date(date + " 11:30:00");
+      var afternoonOpenTime = new Date(date + " 13:00:00");
+      var closeTime = new Date(date + " 15:00:00");
+      var day = inputDatetime.getDay();
+      var hour = inputDatetime.getHours();
+      var min = inputDatetime.getMinutes();
+      if (day == 0 || day == 6) return false; //周六周日不需要刷新
+      if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
+          return true;
+      }
+      if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
+          return true;
+      }
+      if (inputDatetime > date) {
+          return false;
+      }
+      return false;
+    }
+  </script>
   <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
