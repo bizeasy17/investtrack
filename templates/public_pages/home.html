@@ -19,12 +19,12 @@
         <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
           <form id="searchForm" action="{% url 'search:home' %}">
             <div class="form-row">
-              <div class="col-12 col-md-9 mb-2 mb-md-0">
-                <input type="text" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '股票名称或者代码' %}">
+              <div class="col-12 col-md-12 mb-2 mb-md-0">
+                <input type="text" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称,代码或首字母' %}">
               </div>
-              <div class="col-12 col-md-3">
-                <button type="submit" class="btn btn-block btn-lg btn-info">{% trans '查看' %}</button>
-              </div>
+              <!-- <div class="col-12 col-md-3">
+                <button type="submit" class="btn btn-block btn-lg btn-primary">{% trans '查看' %}</button>
+              </div> -->
             </div>
           </form>
         </div>
@@ -37,7 +37,7 @@
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                    <p class="card-title"><a class="text-primary" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上指 - 000001' %}</a></p>
+                                    <p class="card-title"><a class="text-primary" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上证 - 000001' %}</a></p>
                                     <p class="font-weight-medium small">
                                         <!-- <span class="text-muted mr-1"></span> -->
                                         <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
@@ -64,7 +64,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><a class="text-primary" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深指 - 399001' %}</a></p>
+                                    <p class="card-title text-primary"><a class="text-primary" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深证 - 399001' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
                                         <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>

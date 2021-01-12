@@ -1,6 +1,14 @@
 $(function () {
     var stockmarketEndpoint = '/stockmarket/';
+    var homeEndpoint = '/';
     var indexList = "sh,sz,cyb,hs300"
+
+    $(window).keydown(function (event) {
+        if ((event.keyCode == 13) && ($("#searchText").text() == "")) {
+            event.preventDefault();
+            return false;
+        }
+    });
 
     $('#searchText').autoComplete({
         resolver: 'custom',
@@ -32,6 +40,7 @@ $(function () {
         var tsCode = item.ts_code;
         var stockName = item.text;
         var market = item.market;
+        window.location.href = homeEndpoint + "?q=" + tsCode;
         // alert(
         //     tsCode + " " + stockName + " " + stockCode + " " + market
         // );
