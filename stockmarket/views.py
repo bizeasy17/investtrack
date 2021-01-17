@@ -5,10 +5,108 @@ from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.http import HttpResponse, JsonResponse
 from stockmarket.models import StockNameCodeMap
+from analysis.models import StockHistoryDaily
 from django.db.models import Q
 # Create your views here.
 
 logger = logging.getLogger(__name__)
+
+
+def stock_close_hist(request, ts_code, freq='D', type='close', period=3):
+    '''
+    用户需要授权可以使用策略
+    '''
+    # 从当前时间为获取历史的最后一天
+    if request.method == 'GET':
+        end_date = date.today()
+        try:
+            close_result = []
+            ticks_result = []
+            ma25_result = []
+            ma60_result = []
+            ma200_result = []
+            amount_result = []
+            lbl_trade_date = []
+            start_date = end_date - timedelta(days=365 * period)
+            results = StockHistoryDaily.objects.filter(
+                ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+            # df = pd.DataFrame(results.values('stage_low_pct'))
+            for result in results:
+                ma25_result.append(result.ma25)
+                ma60_result.append(result.ma60)
+                ma200_result.append(result.ma200)
+                close_result.append(result.close)
+                ticks_result.append(
+                    {
+                        't': result.trade_date, 'o': result.open, 'h': result.high,
+                        'l': result.low, 'c': result.close, 'd': '',
+                        'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
+                    }
+                )
+                amount_result.append(result.amount)
+                lbl_trade_date.append(result.trade_date)
+            if type == 'ticks':
+                return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            if type == 'close':
+                return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+        except Exception as err:
+            logging.error(err)
+            return HttpResponse(status=500)
+
+
+def high_pct_data(request, strategy, ts_code, test_period):
+    '''
+    用户需要授权可以使用策略
+    '''
+    user = request.user
+    if request.method == 'GET':
+        try:
+            result_pct = []
+            result_label = []
+            quantile = []
+            results = StrategyTestLowHigh.objects.filter(
+                strategy_code=strategy, ts_code=ts_code, test_period=test_period).order_by('trade_date')
+            df = pd.DataFrame(results.values('stage_high_pct'))
+            qtiles = df.stage_high_pct.quantile([0.25, 0.5, 0.75])
+            for qtile in qtiles:
+                quantile.append(round(qtile, 3))
+            quantile.append(round(df.mean().stage_high_pct, 3))
+            for result in results:
+                result_pct.append(round(result.stage_high_pct, 2))
+                result_label.append(result.trade_date)
+            return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
+        except IndexError as err:
+            logging.error(err)
+            return HttpResponse(status=500)
+    pass
+
+
+def low_pct_data(request, strategy, stock_symbol, test_period):
+    '''
+    用户需要授权可以使用策略
+    '''
+    user = request.user
+    if request.method == 'GET':
+        try:
+            result_pct = []
+            result_label = []
+            quantile = []
+
+            results = StrategyTestLowHigh.objects.filter(
+                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period).order_by('trade_date')
+            df = pd.DataFrame(results.values('stage_low_pct'))
+            qtiles = df.stage_low_pct.quantile([0.25, 0.5, 0.75])
+            for qtile in qtiles:
+                quantile.append(round(qtile, 3))
+            quantile.append(round(df.mean().stage_low_pct, 3))
+            for result in results:
+                result_pct.append(round(result.stage_low_pct, 2))
+                result_label.append(result.trade_date)
+            return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
+        except IndexError as err:
+            logging.error(err)
+            return HttpResponse(status=500)
+    pass
 
 
 def realtime_quotes(request, symbols):
@@ -27,8 +125,8 @@ def realtime_quotes(request, symbols):
                     {
                         'code': quote[0],
                         'open': quote[1],
-                        'pre_close': round(float(quote[2]),2),
-                        'price': round(float(quote[3]),2),
+                        'pre_close': round(float(quote[2]), 2),
+                        'price': round(float(quote[3]), 2),
                         'high': quote[4],
                         'low': quote[5],
                         'bid': quote[6],
@@ -49,9 +147,9 @@ def listed_companies(request, name_or_code):
     '''
     market_exch_map = {
         'ZB': '主板',
-        'ZXB':'中小板',
-        'CYB':'创业板',
-        'KCB':'科创板',
+        'ZXB': '中小板',
+        'CYB': '创业板',
+        'KCB': '科创板',
     }
     if request.method == 'GET':
         try:
@@ -78,10 +176,115 @@ def listed_companies(request, name_or_code):
                     })
                 # c_str = 'results:[' + c_str + ']'
                 # c_dict = json.loads(c_str)
-                return JsonResponse({'results':company_list}, safe=False)
+                return JsonResponse({'results': company_list}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as e:
             logger.error(e)
             return HttpResponse(status=500)
 
+
+def get_company_basic(request, ts_code):
+    if request.method == 'GET':
+        company_basic_list = []
+        try:
+            pro = ts.pro_api()
+            ts_code_list = ts_code.split(',')
+            if len(ts_code_list) > 0:
+                for code in ts_code_list:
+                    company_basic = StockNameCodeMap.objects.filter(
+                        ts_code=code)
+                    if company_basic is not None and len(company_basic) > 0:
+                        df = pro.stock_company(
+                            ts_code=code, fields='ts_code,chairman,manager,reg_capital,setup_date,province,city,website,employees,main_business')
+                        if df is not None and len(df) > 0:
+                            company_basic_list.append(
+                                {
+                                    'ts_code': code,
+                                    'company_name': company_basic[0].fullname,
+                                    'chairman': df['chairman'][0],
+                                    'manager': df['manager'][0],
+                                    'reg_capital': df['reg_capital'][0],
+                                    'setup_date': df['setup_date'][0],
+                                    'province': df['province'][0],
+                                    'city': df['city'][0],
+                                    'website': df['website'][0],
+                                    'employees': int(df['employees'][0]),
+                                    'main_business': df['main_business'][0],
+                                }
+                            )
+                return JsonResponse({'results': company_basic_list}, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as err:
+            logger.error(err)
+            return HttpResponse(status=500)
+
+
+def get_daily_basic(request, ts_code, start_date, end_date):
+    if request.method == 'GET':
+        pro = ts.pro_api()
+        company_daily_list = []
+        try:
+            ts_code_list = ts_code.split(',')
+            if len(ts_code_list) > 0:
+                for code in ts_code_list:
+                    part_basic = []
+                    df = pro.daily_basic(ts_code=code, start_date=start_date, end_date=end_date,
+                                         fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
+                    if df is not None and len(df) > 0:
+                        for index, row in df.iterrows():
+                            part_basic.append({
+                                'trade_date': row['trade_date'],
+                                'turnover_rate': row['turnover_rate'],
+                                'volume_ratio': row['volume_ratio'],
+                                'pe': row['pe'],
+                                'pe_ttm': row['pe_ttm'],
+                                'pb': row['pb'],
+                                'ps_ttm': row['ps_ttm'],
+                                'ps': row['ps'],
+                            })
+                        company_daily_list.append({
+                            code: part_basic
+                        })
+                return JsonResponse({'results': company_daily_list}, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as err:
+            logger.error(err)
+            return HttpResponse(status=500)
+
+
+def get_single_daily_basic(request, ts_code, start_date, end_date):
+    if request.method == 'GET':
+        pro = ts.pro_api()
+        company_daily_list = []
+        to_list = []
+        vr_list = []
+        pe_list = []
+        pe_ttm_list = []
+        pb_list = []
+        ps_list = []
+        ps_ttm_list = []
+        date_label = []
+        try:
+            df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
+                                 fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
+            if df is not None and len(df) > 0:
+                for index, row in df.iterrows():
+                    date_label.append(row['trade_date'])
+                    to_list.append(row['turnover_rate'])
+                    vr_list.append(row['volume_ratio'])
+                    pe_list.append(row['pe'] if row['pe'] is not None else 0)
+                    pe_ttm_list.append(
+                        row['pe_ttm'] if row['pe_ttm'] is not None else 0)
+                    pb_list.append(row['pb'])
+                    ps_ttm_list.append(row['ps_ttm'])
+                    ps_list.append(row['ps'])
+                return JsonResponse({'date_label': date_label, 'turnover_rate': to_list, 'volume_ratio': vr_list,
+                                     'pe': pe_list, 'pe_ttm': pe_ttm_list, 'pb': pb_list, 'ps_ttm': ps_ttm_list, 'ps': ps_list}, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as err:
+            logger.error(err)
+            return HttpResponse(status=500)

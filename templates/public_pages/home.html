@@ -37,7 +37,7 @@
                         <div class="card shadow">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                    <p class="card-title"><a class="text-primary" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上证 - 000001' %}</a></p>
+                                    <p class="card-title"><a class="text-muted" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上证 - 000001' %}</a></p>
                                     <p class="font-weight-medium small">
                                         <!-- <span class="text-muted mr-1"></span> -->
                                         <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
@@ -64,7 +64,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><a class="text-primary" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深证 - 399001' %}</a></p>
+                                    <p class="card-title text-muted"><a class="text-muted" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深证 - 399001' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
                                         <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>
@@ -90,7 +90,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><a class="text-primary" href="?q=399006.SZ"><i class="fa fa-chart-line"></i> {% trans '创业 - 399006' %}</a></p>
+                                    <p class="card-title text-muted"><a class="text-muted" href="?q=399006.SZ"><i class="fa fa-chart-line"></i> {% trans '创业 - 399006' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
                                         <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
@@ -116,7 +116,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-center
                                     justify-content-between flex-wrap">
-                                    <p class="card-title text-primary"><a class="text-primary" href="?q=000300.SH"><i class="fa fa-chart-line"></i> {% trans '沪深 - 000300' %}</a></p>
+                                    <p class="card-title text-muted"><a class="text-muted" href="?q=000300.SH"><i class="fa fa-chart-line"></i> {% trans '沪深 - 000300' %}</a></p>
                                     <p class="text-danger font-weight-medium small">
                                         <!-- <span class="text-muted small mr-1"></span> -->
                                         <span class="text-danger" id="hsPrice"></span><span id="hsChange" class="ml-1"></span>
@@ -142,6 +142,8 @@
         </div>
     </div>
 </header>
+<!-- 新股IPO -->
+df = pro.new_share(start_date='20180901', end_date='20181018')
 
 <!-- content-wrapper ends -->
 {% endblock content %}

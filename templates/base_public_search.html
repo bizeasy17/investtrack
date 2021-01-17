@@ -25,7 +25,7 @@
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
 
   <!-- Custom styles for this template -->
-  <link href="{% static 'css/landing-page.min.css' %}" rel="stylesheet">
+  <!-- <link href="{% static 'css/landing-page.min.css' %}" rel="stylesheet"> -->
   {% endblock css %}
 
   {% block head %}{% endblock head %}
@@ -35,10 +35,18 @@
 
   <!-- Navigation -->
   <nav class="navbar static-top">
-    <div class="container">
-      <div>
-        <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
-        <a class="navbar-brand text-muted" href="{% url 'search:home' %}">{% trans '投呗 - 股票历史数据解读' %}</a>
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-lg-2">
+          <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+          <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
+          </a>
+        </div>
+        <div class="col-lg-10">
+          <form id="searchForm" action="{% url 'search:home' %}">
+            <input type="text" class="form-control form-control-sm" id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}">
+          </form>
+          </div>
       </div>
       <a class="btn btn-primary" href="#">{% trans '微信扫码登录' %}</a>
     </div>
@@ -47,10 +55,9 @@
     <p>Use this document as a way to quick start any new project.</p>
   {% endblock content %}
   <!-- Footer -->
+  <hr>
   <footer class="footer">
-    <div class="container">
-      <hr class="tight-hr">
-
+    <div class="container-fluid">
       <div class="row">
         <div class="col-lg-6 h-100 text-center text-lg-left my-auto">
           <ul class="list-inline mb-2">
@@ -93,7 +100,6 @@
                 <i class="fab fa-weibo fa-2x fa-fw"></i>
               </a>
             </li>
-            
           </ul>
         </div>
       </div>
@@ -154,6 +160,7 @@
   <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/echarts.min.js"></script>
   {% endblock javascript %}
 
 </body>

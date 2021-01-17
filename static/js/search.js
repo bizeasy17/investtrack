@@ -4,7 +4,7 @@ $(function () {
     var indexList = "sh,sz,cyb,hs300"
 
     $(window).keydown(function (event) {
-        if ((event.keyCode == 13) && ($("#searchText").text() == "")) {
+        if ((event.keyCode == 13) && ($("#searchText").val() == "")) {
             event.preventDefault();
             return false;
         }
@@ -40,6 +40,7 @@ $(function () {
         var tsCode = item.ts_code;
         var stockName = item.text;
         var market = item.market;
+        $("#searchText").val(tsCode);
         window.location.href = homeEndpoint + "?q=" + tsCode;
         // alert(
         //     tsCode + " " + stockName + " " + stockCode + " " + market
