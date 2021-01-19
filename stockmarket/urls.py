@@ -9,10 +9,14 @@ urlpatterns = [
          views.listed_companies),
     path('company-basic/<ts_code>/',
          views.get_company_basic),
-    path('company-daily-basic/<ts_code>/<start_date>/<end_date>/',
+    path('daily-basic/companies/<ts_code>/<start_date>/<end_date>/',
          views.get_daily_basic),
-    path('company-single-daily-basic/<ts_code>/<start_date>/<end_date>/',
+    path('daily-basic/company/<ts_code>/<start_date>/<end_date>/',
          views.get_single_daily_basic),
     path('stock-hist/<ts_code>/<freq>/<type>/<int:period>/',
          views.stock_close_hist),  # ??
+    path('updown-pct/<ts_code>/<strategy>/<test_period>/',
+         views.get_updown_pct),
+    path('exp-pct/<ts_code>/<strategy>/<exp_pct>/<freq>/',
+         views.get_expected_pct),
 ]

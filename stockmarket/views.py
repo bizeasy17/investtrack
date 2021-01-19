@@ -1,11 +1,13 @@
 import tushare as ts
+import numpy as np
+import pandas as pd
 import logging
 
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.http import HttpResponse, JsonResponse
 from stockmarket.models import StockNameCodeMap
-from analysis.models import StockHistoryDaily
+from analysis.models import StockHistoryDaily, StrategyTestLowHigh, BStrategyOnFixedPctTest
 from django.db.models import Q
 # Create your views here.
 
@@ -52,61 +54,6 @@ def stock_close_hist(request, ts_code, freq='D', type='close', period=3):
         except Exception as err:
             logging.error(err)
             return HttpResponse(status=500)
-
-
-def high_pct_data(request, strategy, ts_code, test_period):
-    '''
-    用户需要授权可以使用策略
-    '''
-    user = request.user
-    if request.method == 'GET':
-        try:
-            result_pct = []
-            result_label = []
-            quantile = []
-            results = StrategyTestLowHigh.objects.filter(
-                strategy_code=strategy, ts_code=ts_code, test_period=test_period).order_by('trade_date')
-            df = pd.DataFrame(results.values('stage_high_pct'))
-            qtiles = df.stage_high_pct.quantile([0.25, 0.5, 0.75])
-            for qtile in qtiles:
-                quantile.append(round(qtile, 3))
-            quantile.append(round(df.mean().stage_high_pct, 3))
-            for result in results:
-                result_pct.append(round(result.stage_high_pct, 2))
-                result_label.append(result.trade_date)
-            return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
-        except IndexError as err:
-            logging.error(err)
-            return HttpResponse(status=500)
-    pass
-
-
-def low_pct_data(request, strategy, stock_symbol, test_period):
-    '''
-    用户需要授权可以使用策略
-    '''
-    user = request.user
-    if request.method == 'GET':
-        try:
-            result_pct = []
-            result_label = []
-            quantile = []
-
-            results = StrategyTestLowHigh.objects.filter(
-                strategy_code=strategy, ts_code=stock_symbol, test_period=test_period).order_by('trade_date')
-            df = pd.DataFrame(results.values('stage_low_pct'))
-            qtiles = df.stage_low_pct.quantile([0.25, 0.5, 0.75])
-            for qtile in qtiles:
-                quantile.append(round(qtile, 3))
-            quantile.append(round(df.mean().stage_low_pct, 3))
-            for result in results:
-                result_pct.append(round(result.stage_low_pct, 2))
-                result_label.append(result.trade_date)
-            return JsonResponse({'value': result_pct, 'label': result_label, 'quantile': quantile}, safe=False)
-        except IndexError as err:
-            logging.error(err)
-            return HttpResponse(status=500)
-    pass
 
 
 def realtime_quotes(request, symbols):
@@ -275,16 +222,81 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     date_label.append(row['trade_date'])
                     to_list.append(row['turnover_rate'])
                     vr_list.append(row['volume_ratio'])
-                    pe_list.append(row['pe'] if row['pe'] is not None else 0)
+                    pe_list.append(row['pe'] if not np.isnan(row['pe']) else 0)
                     pe_ttm_list.append(
-                        row['pe_ttm'] if row['pe_ttm'] is not None else 0)
+                        row['pe_ttm'] if not np.isnan(row['pe_ttm']) else 0)
                     pb_list.append(row['pb'])
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])
-                return JsonResponse({'date_label': date_label, 'turnover_rate': to_list, 'volume_ratio': vr_list,
-                                     'pe': pe_list, 'pe_ttm': pe_ttm_list, 'pb': pb_list, 'ps_ttm': ps_ttm_list, 'ps': ps_list}, safe=False)
+                return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1], 'volume_ratio': vr_list[::-1],
+                                     'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1], 'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1], 'ps': ps_list[::-1]}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
             logger.error(err)
+            return HttpResponse(status=500)
+
+
+def get_updown_pct(request, strategy, ts_code, test_period):
+    '''
+    用户需要授权可以使用策略
+    '''
+    user = request.user
+    if request.method == 'GET':
+        try:
+            up_pct_list = []
+            down_pct_list = []
+            date_label = []
+            up_qt = []
+            down_qt = []
+            results = StrategyTestLowHigh.objects.filter(
+                strategy_code=strategy, ts_code=ts_code, test_period=test_period).order_by('trade_date')
+            if results is not None and len(results) > 0:
+                df = pd.DataFrame(results.values(
+                    'stage_high_pct', 'stage_low_pct'))
+                up_qtiles = df.stage_high_pct.quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+                down_qtiles = df.stage_low_pct.quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+                for qtile in up_qtiles:
+                    up_qt.append(round(qtile, 3))
+                for qtile in down_qtiles:
+                    down_qt.append(round(qtile, 3))
+                up_qt.append(round(df.mean().stage_high_pct, 3))
+                down_qt.append(round(df.mean().stage_low_pct, 3))
+
+                for result in results:
+                    up_pct_list.append(round(result.stage_high_pct, 2))
+                    down_pct_list.append(round(result.stage_low_pct, 2))
+                    date_label.append(result.trade_date)
+                return JsonResponse({'date_label': date_label, 'up_pct': up_pct_list,
+                                    'up_qt': up_qt, 'down_pct': down_pct_list, 'down_qt': down_qt}, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as err:
+            logging.error(err)
+            return HttpResponse(status=500)
+
+
+def get_expected_pct(request, strategy, ts_code, exp_pct="pct20_period", freq='D',):
+    if request.method == 'GET':
+        try:
+            exp_pct_data = []
+            data_label = []
+            quantile = []
+            results = BStrategyOnFixedPctTest.objects.filter(
+                strategy_code=strategy, ts_code=ts_code,
+                test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
+            df = pd.DataFrame(results.values())
+            qtiles = df[exp_pct].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            # for qtile in qtiles.values():
+            for index, value in qtiles.items():
+                quantile.append(value)
+            quantile.append(round(df[exp_pct].mean(), 3))
+            for rst in results:
+                if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
+                    data_label.append(rst['trade_date'])
+                    exp_pct_data.append(rst[exp_pct])
+            return JsonResponse({'exp_pct': exp_pct_data, 'date_label': data_label, 'quantile': quantile}, safe=False)
+        except Exception as err:
+            print(err)
+            logging.error(err)
             return HttpResponse(status=500)
