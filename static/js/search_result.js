@@ -10,11 +10,14 @@ $(function () {
     var stockName = "";
     var market = "";
 
+    var bstr;
+    var sstr;
+
     var today = new Date();
     var startDate = "";
     var endDate = "";
 
-    var strategy = "";
+    var strategyCode = "";
     var strategyName = "";
     var updownPctPeriod = 80;
     var expdPctPeriod = "pct20_period";
@@ -29,24 +32,52 @@ $(function () {
     var periodByUpRangeChart = echarts.init(document.getElementById('periodByUpRangeChart'));
 
 
-    var initParam = function(){
+    var initParam = function () {
         tsCode = $("#currentTsCode").val();
         expdPctPeriod = $('input:radio[name="pct_period"]:checked').val();
         updownPctPeriod = $('input:radio[name="period"]:checked').val();
-        strategy = $('input:radio[name="bstrategy"]:checked').val();;
+        strategyCode = $('input:radio[name="bstrategy"]:checked').val();
         strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
 
         startDate = formatDate(new Date(today.getTime() - (365 * 2 * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
     }
 
-    var initChart = function () {
-        initParam();
-
+    var renderChart = function () {
+        showCompanyBasic(tsCode);
         renderCloseChart(tsCode);
         renderCompanyBasicChart(tsCode, startDate, endDate);
         renderUpdownByPeriodChart();
         renderPeriodByUpRangeChart();
+    }
+
+    var showCompanyBasic = function (tsCode) {
+        $.ajax({
+            url: stockmarketEndpoint + "company-basic/" + tsCode + "/",
+            success: function (data) {
+                $("#companyName").parent().append("<span>" + data[0].company_name + "</span>");
+                $("#setupDate").parent().append("<span>" + data[0].setup_date + "</span>");
+                $("#capital").parent().append("<span>" + data[0].reg_capital + "万</span>");
+                $("#website").parent().append('<a href="http://' + data[0].website + '"><span>http://' + data[0].website + "</span></a>");
+                $("#province").parent().append("<span>" + data[0].province + "</span>");
+                $("#city").parent().append("<span>" + data[0].city + "</span>");
+                $("#industry").parent().append("<span>" + data[0].main_business + "</span>");
+                $("#chairman").parent().append("<span>" + data[0].chairman + "</span>");
+                $("#manager").parent().append("<span>" + data[0].manager + "</span>");
+                $("#employees").parent().append("<span>" + data[0].employees + "</span>");
+            },
+            statusCode: {
+                403: function () {
+                    alert(403);
+                },
+                404: function () {
+                    alert(404);
+                },
+                500: function () {
+                    alert(500);
+                }
+            }
+        });
     }
 
     var renderCloseChart = function (tsCode) {
@@ -61,7 +92,7 @@ $(function () {
                         }
                     },
                     legend: {
-                        data: ['Close', 'MA25', 'MA60', 'MA200']
+                        data: ['收', '25', '60', '200']
                     },
                     title: {
                         text: '收盘线',
@@ -103,7 +134,7 @@ $(function () {
                     }],
                     series: [
                         {
-                            name: 'Close',
+                            name: '收',
                             type: 'line',
                             smooth: true,
                             symbol: 'none',
@@ -114,7 +145,7 @@ $(function () {
                             data: data.close
                         },
                         {
-                            name: 'MA25',
+                            name: '25',
                             type: 'line',
                             smooth: true,
                             symbol: 'none',
@@ -125,7 +156,7 @@ $(function () {
                             data: data.ma25
                         },
                         {
-                            name: 'MA60',
+                            name: '60',
                             type: 'line',
                             smooth: true,
                             symbol: 'none',
@@ -136,7 +167,7 @@ $(function () {
                             data: data.ma60
                         },
                         {
-                            name: 'MA200',
+                            name: '200',
                             type: 'line',
                             smooth: true,
                             symbol: 'none',
@@ -158,11 +189,11 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "daily-basic/company/" + tsCode + "/" + startDate + "/" + endDate + "/",
             success: function (data) {
-                renderPEChart(data.date_label, data.pe, data.pe_ttm);
-                renderPSChart(data.date_label, data.ps, data.ps_ttm);
-                renderPBChart(data.date_label, data.pb);
-                renderTOChart(data.date_label, data.turnover_rate);
-                renderVRChart(data.date_label, data.volume_ratio);
+                renderPEChart(data.date_label, data.pe, data.pe_ttm, data.pe_50qt, data.pe_ttm_50qt);
+                renderPSChart(data.date_label, data.ps, data.ps_ttm, data.ps_50qt, data.ps_ttm_50qt);
+                renderPBChart(data.date_label, data.pb, data.pb_50qt);
+                renderTOChart(data.date_label, data.turnover_rate, data.to_50qt);
+                renderVRChart(data.date_label, data.volume_ratio, data.vr_50qt);
             },
             statusCode: {
                 403: function () {
@@ -178,7 +209,7 @@ $(function () {
         });
     }
 
-    var renderPEChart = function (dateLabel, pe, peTTM) {
+    var renderPEChart = function (dateLabel, pe, peTTM, pe50qt, peTTM50qt) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -187,10 +218,10 @@ $(function () {
                 }
             },
             legend: {
-                data: ['PE', 'PE-TTM']
+                data: ['PE', 'PE(动)', 'PE中位', 'PE(动)中位']
             },
             title: {
-                text: 'PE-市盈率',
+                text: '市盈',
             },
             toolbox: {
                 feature: {
@@ -240,7 +271,7 @@ $(function () {
                     data: pe
                 },
                 {
-                    name: 'PE-TTM',
+                    name: 'PE(动)',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -250,13 +281,35 @@ $(function () {
                     },
                     data: peTTM
                 },
+                {
+                    name: 'PE中位',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    data: peTTM50qt
+                },
+                {
+                    name: 'PE(动)中位',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    data: pe50qt
+                }
             ]
         };
 
         peChart.setOption(option);
     }
 
-    var renderPSChart = function (dateLabel, ps, psTTM) {
+    var renderPSChart = function (dateLabel, ps, psTTM, ps50qt, psTTM50qt) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -265,10 +318,10 @@ $(function () {
                 }
             },
             legend: {
-                data: ['PS', 'PS-TTM']
+                data: ['PS', 'PS(动)', 'PS中位', 'PS(动)中位']
             },
             title: {
-                text: '市销率',
+                text: '市销',
             },
             toolbox: {
                 feature: {
@@ -319,7 +372,7 @@ $(function () {
                     data: ps
                 },
                 {
-                    name: 'PS-TTM',
+                    name: 'PS(动)',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -329,6 +382,30 @@ $(function () {
                     },
 
                     data: psTTM
+                },
+                {
+                    name: 'PS中位',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+
+                    data: ps50qt
+                },
+                {
+                    name: 'PS(动)中位',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(55, 70, 131)'
+                    },
+
+                    data: psTTM50qt
                 }
             ]
         };
@@ -336,7 +413,7 @@ $(function () {
         psChart.setOption(option);
     }
 
-    var renderPBChart = function (dateLabel, pb) {
+    var renderPBChart = function (dateLabel, pb, pb50qt) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -348,7 +425,7 @@ $(function () {
                 data: ['PB']
             },
             title: {
-                text: 'PB-市净率',
+                text: '市净',
             },
             toolbox: {
                 feature: {
@@ -397,6 +474,18 @@ $(function () {
                     },
 
                     data: pb
+                },
+                {
+                    name: 'PB',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+
+                    data: pb50qt
                 }
             ]
         };
@@ -404,7 +493,7 @@ $(function () {
         pbChart.setOption(option);
     }
 
-    var renderTOChart = function (dateLabel, turnoverRate) {
+    var renderTOChart = function (dateLabel, turnoverRate, tr50qt) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -416,7 +505,7 @@ $(function () {
                 data: ['Turnover Rate']
             },
             title: {
-                text: 'Turnover-换手率',
+                text: '换手',
             },
             toolbox: {
                 feature: {
@@ -434,7 +523,11 @@ $(function () {
             },
             yAxis: {
                 type: 'value',
-                boundaryGap: [0, '100%']
+                boundaryGap: [0, '100%'],
+                // max: Math.round(data.up_qt[6])+100,
+                axisLabel: {
+                    formatter: '{value} %'
+                },
             },
             dataZoom: [{
                 type: 'inside',
@@ -465,6 +558,18 @@ $(function () {
                     },
 
                     data: turnoverRate
+                },
+                {
+                    name: 'Turnover Rate',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+
+                    data: tr50qt
                 }
             ]
         };
@@ -472,7 +577,7 @@ $(function () {
         toChart.setOption(option);
     }
 
-    var renderVRChart = function (dateLabel, volumeRatio) {
+    var renderVRChart = function (dateLabel, volumeRatio, vr50qt) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -484,7 +589,7 @@ $(function () {
                 data: ['Volume Ratio']
             },
             title: {
-                text: 'Volume Ratio-量比',
+                text: '量比',
             },
             toolbox: {
                 feature: {
@@ -502,7 +607,10 @@ $(function () {
             },
             yAxis: {
                 type: 'value',
-                boundaryGap: [0, '100%']
+                boundaryGap: [0, '100%'],
+                axisLabel: {
+                    formatter: '{value} %'
+                },
             },
             dataZoom: [{
                 type: 'inside',
@@ -533,6 +641,18 @@ $(function () {
                     },
 
                     data: volumeRatio
+                },
+                {
+                    name: 'Volume Ratio',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    sampling: 'average',
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+
+                    data: vr50qt
                 }
             ]
         };
@@ -542,22 +662,22 @@ $(function () {
 
     var renderUpdownByPeriodChart = function () {
         $.ajax({
-            url: stockmarketEndpoint + "updown-pct/" + tsCode + "/" + strategy + "/" + updownPctPeriod + "/",
+            url: stockmarketEndpoint + "updown-pct/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/",
             success: function (data) {
                 option = {
                     title: {
-                        text: '固定天数内涨跌幅%',
+                        text: '固定天数内涨跌幅%'
                         // subtext: '数据来自西安兰特水电测控技术有限公司',
-                        left: 10
+                        // left: 10
                     },
                     tooltip: {
                         trigger: 'axis',
-                        axisPointer: {
-                            animation: false
+                        position: function (pt) {
+                            return [pt[0], '10%'];
                         }
                     },
                     legend: {
-                        data: ['涨幅%', '跌幅%'],
+                        data: ['涨%', '涨中位%', '跌%', '跌中位%'],
                         left: 'center'
                     },
                     toolbox: {
@@ -569,89 +689,70 @@ $(function () {
                             saveAsImage: {}
                         }
                     },
-                    axisPointer: {
-                        link: { xAxisIndex: 'all' }
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: data.date_label
                     },
-                    dataZoom: [
-                        {
-                            show: true,
-                            realtime: true,
-                            start: 30,
-                            end: 70,
-                            xAxisIndex: [0, 1]
+                    yAxis: {
+                        type: 'value',
+                        // max: Math.round(data.up_qt[6])+100,
+                        axisLabel: {
+                            formatter: '{value} %'
                         },
-                        {
-                            type: 'inside',
-                            realtime: true,
-                            start: 30,
-                            end: 70,
-                            xAxisIndex: [0, 1]
-                        }
-                    ],
-                    grid: [{
-                        left: 50,
-                        right: 50,
-                        height: '35%'
+                        boundaryGap: [0, '100%']
+                    },
+                    dataZoom: [{
+                        type: 'inside',
+                        start: 0,
+                        end: 1000
                     }, {
-                        left: 50,
-                        right: 50,
-                        top: '55%',
-                        height: '35%'
-                    }],
-                    xAxis: [
-                        {
-                            type: 'category',
-                            boundaryGap: false,
-                            axisLine: { onZero: true },
-                            data: data.date_label
-                        },
-                        {
-                            gridIndex: 1,
-                            type: 'category',
-                            boundaryGap: false,
-                            axisLine: { onZero: true },
-                            data: data.date_label,
-                            position: 'top'
+                        start: 0,
+                        end: 10,
+                        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                        handleSize: '100%',
+                        handleStyle: {
+                            color: '#fff',
+                            shadowBlur: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.6)',
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 2
                         }
-                    ],
-                    yAxis: [
-                        {
-                            name: '涨幅%',
-                            type: 'value',
-                            max: 500,
-                            axisLabel: {
-                                formatter: '{value} %'
-                            },
-                        },
-                        {
-                            gridIndex: 1,
-                            name: '跌幅%',
-                            type: 'value',
-                            inverse: false,
-                            axisLabel: {
-                                formatter: '{value} %'
-                            },
-                        },
-                    ],
+                    }],
                     series: [
                         {
-                            name: '涨幅%',
+                            name: '涨%',
                             type: 'line',
                             symbolSize: 8,
                             hoverAnimation: false,
                             data: data.up_pct
                         },
                         {
-                            name: '跌幅%',
+                            name: '涨中位%',
                             type: 'line',
-                            xAxisIndex: 1,
-                            yAxisIndex: 1,
+                            symbolSize: 8,
+                            hoverAnimation: false,
+                            data: data.up_50qt
+                        },
+                        {
+                            name: '跌%',
+                            type: 'line',
                             symbolSize: 8,
                             hoverAnimation: false,
                             data: data.down_pct
-                        }
+                        },
+                        {
+                            name: '跌中位%',
+                            type: 'line',
+                            symbolSize: 8,
+                            hoverAnimation: false,
+                            data: data.down_50qt
+                        },
                     ]
+
                 };
+
+
                 updownByPeriodChart.setOption(option);
             },
             statusCode: {
@@ -670,7 +771,7 @@ $(function () {
 
     var renderPeriodByUpRangeChart = function () {
         $.ajax({
-            url: stockmarketEndpoint + "exp-pct/" + tsCode + "/" + strategy + "/" + expdPctPeriod + "/" + freq + "/",
+            url: stockmarketEndpoint + "exp-pct/" + tsCode + "/" + strategyCode + "/" + expdPctPeriod + "/" + freq + "/",
             success: function (data) {
                 option = {
                     title: {
@@ -695,7 +796,7 @@ $(function () {
                         }
                     },
                     legend: {
-                        data: ['%涨幅天数']//, '降水量', '平均温度']
+                        data: ['%天数', '%中位天数']//, '降水量', '平均温度']
                     },
                     xAxis: [
                         {
@@ -727,21 +828,15 @@ $(function () {
                     ],
                     series: [
                         {
-                            name: '%涨幅天数',
+                            name: '%天数',
                             type: 'bar',
                             data: data.exp_pct
+                        },
+                        {
+                            name: '%中位天数',
+                            type: 'line',
+                            data: data.qt_50
                         }
-                        // {
-                        //     name: '降水量',
-                        //     type: 'bar',
-                        //     data: [2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3]
-                        // },
-                        // {
-                        //     name: '平均温度',
-                        //     type: 'line',
-                        //     yAxisIndex: 1,
-                        //     data: [2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2]
-                        // }
                     ]
                 };
 
@@ -799,8 +894,7 @@ $(function () {
             }
         });
     }
-    // 初始化图表
-    initChart();
+
 
     $('#searchText').autoComplete({
         resolver: 'custom',
@@ -834,5 +928,59 @@ $(function () {
         market = item.market;
         $("#searchText").val(tsCode);
         window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
+        renderChart();
     });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="bstrategy"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        // 页面默认加载上证指数日K（D)
+        bstr = $(this)
+        if (sstr != undefined) {
+            $(sstr).removeAttr("checked")
+            $(sstr).parent("label").removeClass("active");
+        }
+
+        strategyCode = this.value;
+        strategyName = $(this).next().text();
+        // showHelpInfo();
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="sstrategy"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        sstr = $(this);
+        if (bstr != undefined) {
+            $(bstr).removeAttr("checked")
+            $(bstr).parent("label").removeClass("active");
+        }
+
+        strategyCode = this.value;
+        strategyName = $(this).next().text();
+        // showHelpInfo();
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="pct_period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        expdPctPeriod = this.value;
+        // showHelpInfo();
+        renderPeriodByUpRangeChart();
+    });
+
+    // 根据选择的周期，显示该周期中最大跌幅，最大涨幅
+    $('input:radio[name="period"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        updownPctPeriod = this.value;
+        // showHelpInfo();
+        renderUpdownByPeriodChart();
+    });
+
+    // 初始化图表
+    initParam();
+    renderChart();
 });

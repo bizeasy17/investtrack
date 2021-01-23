@@ -160,7 +160,7 @@ def get_company_basic(request, ts_code):
                                     'main_business': df['main_business'][0],
                                 }
                             )
-                return JsonResponse({'results': company_basic_list}, safe=False)
+                return JsonResponse(company_basic_list, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
@@ -172,6 +172,8 @@ def get_daily_basic(request, ts_code, start_date, end_date):
     if request.method == 'GET':
         pro = ts.pro_api()
         company_daily_list = []
+        pe_50qt = []
+        pe_ttm_50 = []
         try:
             ts_code_list = ts_code.split(',')
             if len(ts_code_list) > 0:
@@ -214,9 +216,24 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         ps_list = []
         ps_ttm_list = []
         date_label = []
+        pe_50qt_list = []
+        pe_ttm_50qt_list = []
+        ps_50qt_list  = []
+        ps_ttm_50qt_list  = []
+        to_50qt_list  = []
+        vr_50qt_list  = []
+        pb_50qt_list = []
         try:
             df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
                                  fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
+            pe_50qt = df['pe'].quantile()
+            pe_ttm_50qt = df['pe_ttm'].quantile()
+            ps_50qt = df['ps'].quantile()
+            ps_ttm_50qt = df['ps_ttm'].quantile()
+            to_50qt = df['turnover_rate'].quantile()
+            vr_50qt = df['volume_ratio'].quantile()
+            pb_50qt = df['pb'].quantile()
+            
             if df is not None and len(df) > 0:
                 for index, row in df.iterrows():
                     date_label.append(row['trade_date'])
@@ -228,8 +245,23 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     pb_list.append(row['pb'])
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])
-                return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1], 'volume_ratio': vr_list[::-1],
-                                     'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1], 'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1], 'ps': ps_list[::-1]}, safe=False)
+
+                    pe_50qt_list.append(pe_50qt)
+                    pe_ttm_50qt_list.append(pe_ttm_50qt)
+                    ps_50qt_list.append(ps_50qt)
+                    ps_ttm_50qt_list.append(ps_ttm_50qt)
+                    to_50qt_list.append(to_50qt)
+                    vr_50qt_list.append(vr_50qt)
+                    pb_50qt_list.append(pb_50qt)
+
+                return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1], 
+                                    'volume_ratio': vr_list[::-1],
+                                     'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1], 
+                                     'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1], 
+                                     'ps': ps_list[::-1], 'pe_50qt': pe_50qt_list,
+                                     'pe_ttm_50qt': pe_ttm_50qt_list, 'ps_50qt': ps_50qt_list,
+                                     'ps_ttm_50qt': ps_ttm_50qt_list, 'to_50qt': to_50qt_list,
+                                     'vr_50qt': vr_50qt_list, 'pb_50qt': pb_50qt_list,}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
@@ -237,7 +269,7 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
             return HttpResponse(status=500)
 
 
-def get_updown_pct(request, strategy, ts_code, test_period):
+def get_updown_pct(request, strategy, ts_code, test_period=80):
     '''
     用户需要授权可以使用策略
     '''
@@ -248,6 +280,8 @@ def get_updown_pct(request, strategy, ts_code, test_period):
             down_pct_list = []
             date_label = []
             up_qt = []
+            up_50qt = []
+            down_50qt = []
             down_qt = []
             results = StrategyTestLowHigh.objects.filter(
                 strategy_code=strategy, ts_code=ts_code, test_period=test_period).order_by('trade_date')
@@ -261,14 +295,19 @@ def get_updown_pct(request, strategy, ts_code, test_period):
                 for qtile in down_qtiles:
                     down_qt.append(round(qtile, 3))
                 up_qt.append(round(df.mean().stage_high_pct, 3))
+                up_qt.append(round(df.max().stage_high_pct, 3))
                 down_qt.append(round(df.mean().stage_low_pct, 3))
+                down_qt.append(round(df.min().stage_low_pct, 3))
 
                 for result in results:
                     up_pct_list.append(round(result.stage_high_pct, 2))
                     down_pct_list.append(round(result.stage_low_pct, 2))
+                    up_50qt.append(up_qt[2])
+                    down_50qt.append(down_qt[2])
                     date_label.append(result.trade_date)
                 return JsonResponse({'date_label': date_label, 'up_pct': up_pct_list,
-                                    'up_qt': up_qt, 'down_pct': down_pct_list, 'down_qt': down_qt}, safe=False)
+                                    'up_qt': up_qt, 'up_50qt': up_50qt, 
+                                    'down_pct': down_pct_list, 'down_qt': down_qt, 'down_50qt': down_50qt}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
@@ -282,6 +321,7 @@ def get_expected_pct(request, strategy, ts_code, exp_pct="pct20_period", freq='D
             exp_pct_data = []
             data_label = []
             quantile = []
+            qt_50 = []
             results = BStrategyOnFixedPctTest.objects.filter(
                 strategy_code=strategy, ts_code=ts_code,
                 test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
@@ -295,7 +335,8 @@ def get_expected_pct(request, strategy, ts_code, exp_pct="pct20_period", freq='D
                 if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
                     data_label.append(rst['trade_date'])
                     exp_pct_data.append(rst[exp_pct])
-            return JsonResponse({'exp_pct': exp_pct_data, 'date_label': data_label, 'quantile': quantile}, safe=False)
+                    qt_50.append(quantile[2])
+            return JsonResponse({'exp_pct': exp_pct_data, 'date_label': data_label, 'quantile': quantile, 'qt_50': qt_50}, safe=False)
         except Exception as err:
             print(err)
             logging.error(err)
