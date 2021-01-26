@@ -16,6 +16,7 @@ $(function () {
     var today = new Date();
     var startDate = "";
     var endDate = "";
+    // var countYear = 3;
 
     var strategyCode = "";
     var strategyName = "";
@@ -39,7 +40,7 @@ $(function () {
         strategyCode = $('input:radio[name="bstrategy"]:checked').val();
         strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
 
-        startDate = formatDate(new Date(today.getTime() - (365 * 2 * 24 * 60 * 60 * 1000)), "");
+        startDate = formatDate(new Date(today.getTime() - (365 * histPeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
     }
 
