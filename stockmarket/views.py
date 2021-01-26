@@ -237,8 +237,9 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
             if df is not None and len(df) > 0:
                 for index, row in df.iterrows():
                     date_label.append(row['trade_date'])
-                    to_list.append(row['turnover_rate'])
-                    vr_list.append(row['volume_ratio'])
+                    to_list.append(row['turnover_rate']
+                                   if not np.isnan(row['turnover_rate']) else 0)
+                    vr_list.append(row['volume_ratio'] if not np.isnan(row['volume_ratio']) else 0)
                     pe_list.append(row['pe'] if not np.isnan(row['pe']) else 0)
                     pe_ttm_list.append(
                         row['pe_ttm'] if not np.isnan(row['pe_ttm']) else 0)

@@ -277,7 +277,7 @@ $(function () {
                     symbol: 'none',
                     sampling: 'average',
                     itemStyle: {
-                        color: 'rgb(0, 255, 0)'
+                        color: 'rgb(255, 0, 0)'
                     },
                     data: peTTM
                 },
@@ -299,7 +299,7 @@ $(function () {
                     symbol: 'none',
                     sampling: 'average',
                     itemStyle: {
-                        color: 'rgb(0, 255, 0)'
+                        color: 'rgb(255, 0, 0)'
                     },
                     data: pe50qt
                 }
@@ -378,7 +378,7 @@ $(function () {
                     symbol: 'none',
                     sampling: 'average',
                     itemStyle: {
-                        color: 'rgb(55, 70, 131)'
+                        color: 'rgb(255, 0, 0)'
                     },
 
                     data: psTTM
@@ -402,7 +402,7 @@ $(function () {
                     symbol: 'none',
                     sampling: 'average',
                     itemStyle: {
-                        color: 'rgb(55, 70, 131)'
+                        color: 'rgb(255, 0, 0)'
                     },
 
                     data: psTTM50qt
@@ -422,7 +422,7 @@ $(function () {
                 }
             },
             legend: {
-                data: ['PB']
+                data: ['PB','PB中位']
             },
             title: {
                 text: '市净',
@@ -469,21 +469,21 @@ $(function () {
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
+                    // itemStyle: {
+                    //     color: 'rgb(25, 70, 131)'
+                    // },
 
                     data: pb
                 },
                 {
-                    name: 'PB',
+                    name: 'PB中位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
+                    // itemStyle: {
+                    //     color: 'rgb(255, 0, 0)'
+                    // },
 
                     data: pb50qt
                 }
@@ -502,10 +502,10 @@ $(function () {
                 }
             },
             legend: {
-                data: ['Turnover Rate']
+                data: ['换手','换手中位']
             },
             title: {
-                text: '换手',
+                text: '换手率',
             },
             toolbox: {
                 feature: {
@@ -548,26 +548,26 @@ $(function () {
             }],
             series: [
                 {
-                    name: 'Turnover Rate',
+                    name: '换手',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
+                    // itemStyle: {
+                    //     color: 'rgb(25, 70, 131)'
+                    // },
 
                     data: turnoverRate
                 },
                 {
-                    name: 'Turnover Rate',
+                    name: '换手中位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
+                    // itemStyle: {
+                    //     color: 'rgb(255, 0, 0)'
+                    // },
 
                     data: tr50qt
                 }
@@ -586,7 +586,7 @@ $(function () {
                 }
             },
             legend: {
-                data: ['Volume Ratio']
+                data: ['量比','量比中位']
             },
             title: {
                 text: '量比',
@@ -631,26 +631,26 @@ $(function () {
             }],
             series: [
                 {
-                    name: 'Volume Ratio',
+                    name: '量比',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
+                    // itemStyle: {
+                    //     color: 'rgb(25, 70, 131)'
+                    // },
 
                     data: volumeRatio
                 },
                 {
-                    name: 'Volume Ratio',
+                    name: '量比中位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
+                    // itemStyle: {
+                    //     color: 'rgb(255, 0, 0)'
+                    // },
 
                     data: vr50qt
                 }
