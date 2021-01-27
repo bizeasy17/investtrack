@@ -209,38 +209,58 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         pro = ts.pro_api()
         company_daily_list = []
         to_list = []
+        to_range = []
         vr_list = []
+        vr_range = []
         pe_list = []
+        pe_range = []
         pe_ttm_list = []
         pb_list = []
+        pb_range = []
         ps_list = []
         ps_ttm_list = []
+        ps_range = []
         date_label = []
         pe_50qt_list = []
         pe_ttm_50qt_list = []
-        ps_50qt_list  = []
-        ps_ttm_50qt_list  = []
-        to_50qt_list  = []
-        vr_50qt_list  = []
+        ps_50qt_list = []
+        ps_ttm_50qt_list = []
+        to_50qt_list = []
+        vr_50qt_list = []
         pb_50qt_list = []
         try:
             df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
                                  fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
-            pe_50qt = df['pe'].quantile() if df['pe'].quantile() is not None and not np.isnan(df['pe'].quantile()) else 0
-            pe_ttm_50qt = df['pe_ttm'].quantile() if df['pe_ttm'].quantile() is not None and not np.isnan(df['pe_ttm'].quantile()) else 0 
+            pe_50qt = df['pe'].quantile() if df['pe'].quantile(
+            ) is not None and not np.isnan(df['pe'].quantile()) else 0
+            pe_ttm_50qt = df['pe_ttm'].quantile() if df['pe_ttm'].quantile(
+            ) is not None and not np.isnan(df['pe_ttm'].quantile()) else 0
             ps_50qt = df['ps'].quantile()
             ps_ttm_50qt = df['ps_ttm'].quantile()
             to_50qt = df['turnover_rate'].quantile()
             vr_50qt = df['volume_ratio'].quantile()
             pb_50qt = df['pb'].quantile()
-            
+
+            pe_range.append(75)
+            pe_range.append(100)
+            ps_range.append(75)
+            ps_range.append(100)
+            to_range.append(75)
+            to_range.append(100)
+            vr_range.append(75)
+            vr_range.append(100)
+            pb_range.append(75)
+            pb_range.append(100)
+
             if df is not None and len(df) > 0:
                 for index, row in df.iterrows():
                     date_label.append(row['trade_date'])
                     to_list.append(row['turnover_rate']
                                    if row['turnover_rate'] is not None and not np.isnan(row['turnover_rate']) else 0)
-                    vr_list.append(row['volume_ratio'] if row['volume_ratio']is not None and not np.isnan(row['volume_ratio']) else 0)
-                    pe_list.append(row['pe'] if row['pe'] is not None and not np.isnan(row['pe']) else 0)
+                    vr_list.append(row['volume_ratio'] if row['volume_ratio']is not None and not np.isnan(
+                        row['volume_ratio']) else 0)
+                    pe_list.append(
+                        row['pe'] if row['pe'] is not None and not np.isnan(row['pe']) else 0)
                     pe_ttm_list.append(
                         row['pe_ttm'] if row['pe_ttm'] is not None and not np.isnan(row['pe_ttm']) else 0)
                     pb_list.append(row['pb'])
@@ -255,14 +275,17 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     vr_50qt_list.append(vr_50qt)
                     pb_50qt_list.append(pb_50qt)
 
-                return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1], 
-                                    'volume_ratio': vr_list[::-1],
-                                     'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1], 
-                                     'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1], 
+                return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1],
+                                     'volume_ratio': vr_list[::-1],
+                                     'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1],
+                                     'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1],
                                      'ps': ps_list[::-1], 'pe_50qt': pe_50qt_list,
                                      'pe_ttm_50qt': pe_ttm_50qt_list, 'ps_50qt': ps_50qt_list,
                                      'ps_ttm_50qt': ps_ttm_50qt_list, 'to_50qt': to_50qt_list,
-                                     'vr_50qt': vr_50qt_list, 'pb_50qt': pb_50qt_list,}, safe=False)
+                                     'vr_50qt': vr_50qt_list, 'pb_50qt': pb_50qt_list,
+                                     'pe_range': pe_range, 'ps_range': ps_range,
+                                     'pb_range': pb_range, 'to_range': to_range,
+                                     'vr_range': vr_range}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
@@ -278,6 +301,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
     if request.method == 'GET':
         try:
             up_pct_list = []
+            up_max_rounded = 0
             down_pct_list = []
             date_label = []
             up_qt = []
@@ -289,8 +313,10 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values(
                     'stage_high_pct', 'stage_low_pct'))
-                up_qtiles = df.stage_high_pct.quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-                down_qtiles = df.stage_low_pct.quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+                up_qtiles = df.stage_high_pct.quantile(
+                    [0.1, 0.25, 0.5, 0.75, 0.9])
+                down_qtiles = df.stage_low_pct.quantile(
+                    [0.1, 0.25, 0.5, 0.75, 0.9])
                 for qtile in up_qtiles:
                     up_qt.append(round(qtile, 3))
                 for qtile in down_qtiles:
@@ -300,6 +326,9 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
                 down_qt.append(round(df.mean().stage_low_pct, 3))
                 down_qt.append(round(df.min().stage_low_pct, 3))
 
+                up_max_rounded = int(
+                    np.around(df['stage_high_pct'].max() / 100)) * 100 + 50
+
                 for result in results:
                     up_pct_list.append(round(result.stage_high_pct, 2))
                     down_pct_list.append(round(result.stage_low_pct, 2))
@@ -307,8 +336,9 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
                     down_50qt.append(down_qt[2])
                     date_label.append(result.trade_date)
                 return JsonResponse({'date_label': date_label, 'up_pct': up_pct_list,
-                                    'up_qt': up_qt, 'up_50qt': up_50qt, 
-                                    'down_pct': down_pct_list, 'down_qt': down_qt, 'down_50qt': down_50qt}, safe=False)
+                                     'up_qt': up_qt, 'up_50qt': up_50qt,
+                                     'down_pct': down_pct_list, 'down_qt': down_qt,
+                                     'down_50qt': down_50qt, 'up_max': up_max_rounded}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:

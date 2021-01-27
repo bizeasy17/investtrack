@@ -190,11 +190,11 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "daily-basic/company/" + tsCode + "/" + startDate + "/" + endDate + "/",
             success: function (data) {
-                renderPEChart(data.date_label, data.pe, data.pe_ttm, data.pe_50qt, data.pe_ttm_50qt);
-                renderPSChart(data.date_label, data.ps, data.ps_ttm, data.ps_50qt, data.ps_ttm_50qt);
-                renderPBChart(data.date_label, data.pb, data.pb_50qt);
-                renderTOChart(data.date_label, data.turnover_rate, data.to_50qt);
-                renderVRChart(data.date_label, data.volume_ratio, data.vr_50qt);
+                renderPEChart(data.date_label, data.pe, data.pe_ttm, data.pe_50qt, data.pe_ttm_50qt, data.pe_range[0], data.pe_range[1]);
+                renderPSChart(data.date_label, data.ps, data.ps_ttm, data.ps_50qt, data.ps_ttm_50qt, data.ps_range[0], data.ps_range[1]);
+                renderPBChart(data.date_label, data.pb, data.pb_50qt, data.pb_range[0], data.pb_range[1]);
+                renderTOChart(data.date_label, data.turnover_rate, data.to_50qt, data.to_range[0], data.to_range[1]);
+                renderVRChart(data.date_label, data.volume_ratio, data.vr_50qt, data.vr_range[0], data.vr_range[1]);
             },
             statusCode: {
                 403: function () {
@@ -210,7 +210,7 @@ $(function () {
         });
     }
 
-    var renderPEChart = function (dateLabel, pe, peTTM, pe50qt, peTTM50qt) {
+    var renderPEChart = function (dateLabel, pe, peTTM, pe50qt, peTTM50qt, zoomMin, zoomMax) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -244,8 +244,8 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: 0,
-                end: 1000
+                start: zoomMin,
+                end: zoomMax
             }, {
                 start: 0,
                 end: 10,
@@ -310,7 +310,7 @@ $(function () {
         peChart.setOption(option);
     }
 
-    var renderPSChart = function (dateLabel, ps, psTTM, ps50qt, psTTM50qt) {
+    var renderPSChart = function (dateLabel, ps, psTTM, ps50qt, psTTM50qt, zoomMin, zoomMax) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -344,8 +344,8 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: 0,
-                end: 10
+                start: zoomMin,
+                end: zoomMax
             }, {
                 start: 0,
                 end: 10,
@@ -414,7 +414,7 @@ $(function () {
         psChart.setOption(option);
     }
 
-    var renderPBChart = function (dateLabel, pb, pb50qt) {
+    var renderPBChart = function (dateLabel, pb, pb50qt, zoomMin, zoomMax) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -448,8 +448,8 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: 0,
-                end: 10
+                start: zoomMin,
+                end: zoomMax
             }, {
                 start: 0,
                 end: 10,
@@ -494,7 +494,7 @@ $(function () {
         pbChart.setOption(option);
     }
 
-    var renderTOChart = function (dateLabel, turnoverRate, tr50qt) {
+    var renderTOChart = function (dateLabel, turnoverRate, tr50qt, zoomMin, zoomMax) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -532,8 +532,8 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: 0,
-                end: 10
+                start: zoomMin,
+                end: zoomMax
             }, {
                 start: 0,
                 end: 10,
@@ -578,7 +578,7 @@ $(function () {
         toChart.setOption(option);
     }
 
-    var renderVRChart = function (dateLabel, volumeRatio, vr50qt) {
+    var renderVRChart = function (dateLabel, volumeRatio, vr50qt, zoomMin, zoomMax) {
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -615,8 +615,8 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: 0,
-                end: 10
+                start: zoomMin,
+                end: zoomMax
             }, {
                 start: 0,
                 end: 10,
@@ -697,7 +697,7 @@ $(function () {
                     },
                     yAxis: {
                         type: 'value',
-                        // max: Math.round(data.up_qt[6])+100,
+                        max: data.up_max,
                         axisLabel: {
                             formatter: '{value} %'
                         },
