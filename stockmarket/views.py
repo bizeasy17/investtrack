@@ -226,8 +226,8 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         try:
             df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
                                  fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
-            pe_50qt = df['pe'].quantile()
-            pe_ttm_50qt = df['pe_ttm'].quantile()
+            pe_50qt = df['pe'].quantile() if df['pe'].quantile() is not None and not np.isnan(df['pe'].quantile()) else 0
+            pe_ttm_50qt = df['pe_ttm'].quantile() if df['pe_ttm'].quantile() is not None and not np.isnan(df['pe_ttm'].quantile()) else 0 
             ps_50qt = df['ps'].quantile()
             ps_ttm_50qt = df['ps_ttm'].quantile()
             to_50qt = df['turnover_rate'].quantile()
@@ -238,11 +238,11 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                 for index, row in df.iterrows():
                     date_label.append(row['trade_date'])
                     to_list.append(row['turnover_rate']
-                                   if not np.isnan(row['turnover_rate']) else 0)
-                    vr_list.append(row['volume_ratio'] if not np.isnan(row['volume_ratio']) else 0)
-                    pe_list.append(row['pe'] if not np.isnan(row['pe']) else 0)
+                                   if row['turnover_rate'] is not None and not np.isnan(row['turnover_rate']) else 0)
+                    vr_list.append(row['volume_ratio'] if row['volume_ratio']is not None and not np.isnan(row['volume_ratio']) else 0)
+                    pe_list.append(row['pe'] if row['pe'] is not None and not np.isnan(row['pe']) else 0)
                     pe_ttm_list.append(
-                        row['pe_ttm'] if not np.isnan(row['pe_ttm']) else 0)
+                        row['pe_ttm'] if row['pe_ttm'] is not None and not np.isnan(row['pe_ttm']) else 0)
                     pb_list.append(row['pb'])
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])

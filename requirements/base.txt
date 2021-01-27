@@ -9,6 +9,7 @@ redis>=2.10.5  # https://github.com/antirez/redis
 whitenoise>=3.3.1  # https://github.com/evansd/whitenoise
 #mistune>0.8.4 #https://github.com/lepture/mistune
 datedelta #https://github.com/datedelta
+pypinyin 
 
 # Django
 # ------------------------------------------------------------------------------
