@@ -56,6 +56,36 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "company-basic/" + tsCode + "/",
             success: function (data) {
+                if($("#companyName").parent().children().length>1){
+                    $("#companyName").parent().children().last().remove();
+                }
+                if ($("#setupDate").parent().children().length > 1) {
+                    $("#setupDate").parent().children().last().remove();
+                }
+                if ($("#capital").parent().children().length > 1) {
+                    $("#capital").parent().children().last().remove();
+                }
+                if ($("#website").parent().children().length > 1) {
+                    $("#website").parent().children().last().remove();
+                }
+                if ($("#province").parent().children().length > 1) {
+                    $("#province").parent().children().last().remove();
+                }
+                if ($("#city").parent().children().length > 1) {
+                    $("#city").parent().children().last().remove();
+                }
+                if ($("#industry").parent().children().length > 1) {
+                    $("#industry").parent().children().last().remove();
+                }
+                if ($("#chairman").parent().children().length > 1) {
+                    $("#chairman").parent().children().last().remove();
+                }
+                if ($("#manager").parent().children().length > 1) {
+                    $("#manager").parent().children().last().remove();
+                }
+                if ($("#employees").parent().children().length > 1) {
+                    $("#employees").parent().children().last().remove();
+                }
                 $("#companyName").parent().append("<span>" + data[0].company_name + "</span>");
                 $("#setupDate").parent().append("<span>" + data[0].setup_date + "</span>");
                 $("#capital").parent().append("<span>" + data[0].reg_capital + "万</span>");
