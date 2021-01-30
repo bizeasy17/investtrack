@@ -9,6 +9,9 @@ from django.http import HttpResponse, JsonResponse
 from stockmarket.models import StockNameCodeMap
 from analysis.models import StockHistoryDaily, StrategyTestLowHigh, BStrategyOnFixedPctTest
 from django.db.models import Q
+from users.models import UserActionTrace, UserQueryTrace, UserBackTestTrace
+from analysis.utils import get_ip
+
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -134,11 +137,16 @@ def listed_companies(request, name_or_code):
 def get_company_basic(request, ts_code):
     if request.method == 'GET':
         company_basic_list = []
+        req_user = request.user
         try:
             pro = ts.pro_api()
             ts_code_list = ts_code.split(',')
             if len(ts_code_list) > 0:
                 for code in ts_code_list:
+                    query_trace = UserQueryTrace(
+                        query_string=code, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
+                    query_trace.save()
+                    
                     company_basic = StockNameCodeMap.objects.filter(
                         ts_code=code)
                     if company_basic is not None and len(company_basic) > 0:
@@ -297,7 +305,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
     '''
     用户需要授权可以使用策略
     '''
-    user = request.user
+    req_user = request.user
     if request.method == 'GET':
         try:
             up_pct_list = []
@@ -335,6 +343,11 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
                     up_50qt.append(up_qt[2])
                     down_50qt.append(down_qt[2])
                     date_label.append(result.trade_date)
+                
+                query_trace = UserBackTestTrace(
+                    ts_code=ts_code, strategy_code=strategy, btest_type='PERIOD_TEST', btest_param=test_period, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
+                query_trace.save()
+
                 return JsonResponse({'date_label': date_label, 'up_pct': up_pct_list,
                                      'up_qt': up_qt, 'up_50qt': up_50qt,
                                      'down_pct': down_pct_list, 'down_qt': down_qt,
@@ -346,7 +359,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
             return HttpResponse(status=500)
 
 
-def get_expected_pct(request, strategy, ts_code, exp_pct="pct20_period", freq='D',):
+def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D',):
     if request.method == 'GET':
         try:
             exp_pct_data = []
@@ -367,6 +380,11 @@ def get_expected_pct(request, strategy, ts_code, exp_pct="pct20_period", freq='D
                     data_label.append(rst['trade_date'])
                     exp_pct_data.append(rst[exp_pct])
                     qt_50.append(quantile[2])
+            
+            query_trace = UserBackTestTrace(
+                ts_code=ts_code, strategy_code=strategy, btest_type='EXP_PCT_TEST', btest_param=exp_pct, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
+            query_trace.save()
+
             return JsonResponse({'exp_pct': exp_pct_data, 'date_label': data_label, 'quantile': quantile, 'qt_50': qt_50}, safe=False)
         except Exception as err:
             print(err)

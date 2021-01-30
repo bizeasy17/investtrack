@@ -173,7 +173,18 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(25, 70, 131)'
                             },
-                            data: data.close
+                            data: data.close,
+                            markPoint: {
+                                data: [
+                                    { type: 'max', name: '最大值' }
+                                    // { type: 'min', name: '最小值' }
+                                ]
+                            },
+                            markLine: {
+                                data: [
+                                    { type: 'average', name: '平均值' }
+                                ]
+                            }
                         },
                         {
                             name: '25',
@@ -299,7 +310,18 @@ $(function () {
                     itemStyle: {
                         color: 'rgb(25, 70, 131)'
                     },
-                    data: pe
+                    data: pe,
+                    markPoint: {
+                        data: [
+                            { type: 'max', name: '最大值' },
+                            { type: 'min', name: '最小值' }
+                        ]
+                    },
+                    markLine: {
+                        data: [
+                            { type: 'average', name: '平均值' }
+                        ]
+                    }
                 },
                 {
                     name: 'PE(动)',
@@ -400,7 +422,18 @@ $(function () {
                         color: 'rgb(25, 70, 131)'
                     },
 
-                    data: ps
+                    data: ps,
+                    markPoint: {
+                        data: [
+                            { type: 'max', name: '最大值' },
+                            { type: 'min', name: '最小值' }
+                        ]
+                    },
+                    markLine: {
+                        data: [
+                            { type: 'average', name: '平均值' }
+                        ]
+                    }
                 },
                 {
                     name: 'PS(动)',
@@ -504,7 +537,18 @@ $(function () {
                     //     color: 'rgb(25, 70, 131)'
                     // },
 
-                    data: pb
+                    data: pb,
+                    markPoint: {
+                        data: [
+                            { type: 'max', name: '最大值' },
+                            { type: 'min', name: '最小值' }
+                        ]
+                    },
+                    markLine: {
+                        data: [
+                            { type: 'average', name: '平均值' }
+                        ]
+                    }
                 },
                 {
                     name: 'PB中位',
@@ -588,7 +632,18 @@ $(function () {
                     //     color: 'rgb(25, 70, 131)'
                     // },
 
-                    data: turnoverRate
+                    data: turnoverRate,
+                    markPoint: {
+                        data: [
+                            { type: 'max', name: '最大值' },
+                            { type: 'min', name: '最小值' }
+                        ]
+                    },
+                    markLine: {
+                        data: [
+                            { type: 'average', name: '平均值' }
+                        ]
+                    }
                 },
                 {
                     name: '换手中位',
@@ -671,7 +726,18 @@ $(function () {
                     //     color: 'rgb(25, 70, 131)'
                     // },
 
-                    data: volumeRatio
+                    data: volumeRatio,
+                    markPoint: {
+                        data: [
+                            { type: 'max', name: '最大值' },
+                            { type: 'min', name: '最小值' }
+                        ]
+                    },
+                    markLine: {
+                        data: [
+                            { type: 'average', name: '平均值' }
+                        ]
+                    }
                 },
                 {
                     name: '量比中位',
@@ -697,8 +763,8 @@ $(function () {
             success: function (data) {
                 option = {
                     title: {
-                        text: '固定天数内涨跌幅%'
-                        // subtext: '数据来自西安兰特水电测控技术有限公司',
+                        text: '固定天数涨跌%',
+                        subtext: '数据来自西安兰特水电测控技术有限公司',
                         // left: 10
                     },
                     tooltip: {
@@ -756,7 +822,18 @@ $(function () {
                             type: 'line',
                             symbolSize: 8,
                             hoverAnimation: false,
-                            data: data.up_pct
+                            data: data.up_pct,
+                            markPoint: {
+                                data: [
+                                    { type: 'max', name: '最大值' }
+                                    // { type: 'min', name: '最小值' }
+                                ]
+                            },
+                            markLine: {
+                                data: [
+                                    { type: 'average', name: '平均值' }
+                                ]
+                            }
                         },
                         {
                             name: '涨中位%',
@@ -770,7 +847,18 @@ $(function () {
                             type: 'line',
                             symbolSize: 8,
                             hoverAnimation: false,
-                            data: data.down_pct
+                            data: data.down_pct,
+                            markPoint: {
+                                data: [
+                                    // { type: 'max', name: '最大值' }
+                                    { type: 'min', name: '最小值' }
+                                ]
+                            },
+                            markLine: {
+                                data: [
+                                    { type: 'average', name: '平均值' }
+                                ]
+                            }
                         },
                         {
                             name: '跌中位%',

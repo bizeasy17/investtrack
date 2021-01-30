@@ -371,8 +371,8 @@
                         <span class="col-lg-8">{% trans '25日均线趋势' %}</span>
                         <div class="form-group col-lg-4">
                             <div class="col-lg-6 custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="switchIndexMA25" checked="">
-                                <label class="custom-control-label" for="switchIndexMA25">{% trans '开' %}</label>
+                                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
+                                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
                             </div>
                         </div>
                     </div>
@@ -398,8 +398,8 @@
                         <span class="col-lg-8">{% trans '60日均线趋势' %}</span>
                         <div class="form-group col-lg-4">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="switchIndexMA60" checked="">
-                                <label class="custom-control-label" for="switchIndexMA60">{% trans '开' %}</label>
+                                <input type="checkbox" class="custom-control-input" id="switchIndexMA60" >
+                                <label class="custom-control-label" for="switchIndexMA60">{% trans '关' %}</label>
                             </div>
                         </div>
                     </div>
@@ -425,8 +425,8 @@
                         <span class="col-lg-8">{% trans '200日均线趋势' %}</span>
                         <div class="form-group col-lg-4">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="switchIndexMA200" checked="">
-                                <label class="custom-control-label" for="switchIndexMA200">{% trans '开' %}</label>
+                                <input type="checkbox" class="custom-control-input" id="switchIndexMA200" >
+                                <label class="custom-control-label" for="switchIndexMA200">{% trans '关' %}</label>
                             </div>
                         </div>
                     </div>
@@ -449,10 +449,16 @@
         </div>
       </div>
       <div class="row">
-        <fieldset class="col-lg-12 form-group">
+        <fieldset class="col-lg-8 form-group">
             <label class="font-weight-bold" for="rangeIndexVolume">{% trans '大盘成交量' %}</label>
             <input type="range" class="custom-range" id="rangeIndexVolume">
         </fieldset>
+        <div class="form-group col-lg-4">
+            <div class="col-lg-6 custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
+                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+            </div>
+        </div>
         <span class="font-weight-bold" id="indexVolume"></span>
       </div>
       <div class="row">
@@ -469,8 +475,8 @@
                         <span class="col-lg-8">{% trans '25日均线趋势' %}</span>
                         <div class="form-group col-lg-4">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="switchStockMA25" checked="">
-                                <label class="custom-control-label" for="switchStockMA25">{% trans '开' %}</label>
+                                <input type="checkbox" class="custom-control-input" id="switchStockMA25" >
+                                <label class="custom-control-label" for="switchStockMA25">{% trans '关' %}</label>
                             </div>
                         </div>
                     </div>
@@ -496,8 +502,8 @@
                         <span class="col-lg-8">{% trans '60日均线趋势' %}</span>
                         <div class="form-group col-lg-4">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="switchStockMA60" checked="">
-                                <label class="custom-control-label" for="switchStockMA60">{% trans '开' %}</label>
+                                <input type="checkbox" class="custom-control-input" id="switchStockMA60" >
+                                <label class="custom-control-label" for="switchStockMA60">{% trans '关' %}</label>
                             </div>
                         </div>
                     </div>
@@ -523,8 +529,8 @@
                         <span class="col-lg-8">{% trans '200日均线趋势' %}</span>
                         <div class="form-group col-lg-4">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="switchStockMA200" checked="">
-                                <label class="custom-control-label" for="switchStockMA200">{% trans '开' %}</label>
+                                <input type="checkbox" class="custom-control-input" id="switchStockMA200" >
+                                <label class="custom-control-label" for="switchStockMA200">{% trans '关' %}</label>
                             </div>
                         </div>
                     </div>
@@ -547,10 +553,16 @@
         </div>
       </div>
       <div class="row">
-        <fieldset class="col-lg-12 form-group">
+        <fieldset class="col-lg-8 form-group">
             <label class="font-weight-bold" for="rangeStock">{% trans '个股成交量' %}</label>
             <input type="range" class="custom-range" id="rangeStock">
         </fieldset>
+        <div class="form-group col-lg-4">
+            <div class="col-lg-6 custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
+                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+            </div>
+        </div>
         <span class="font-weight-bold" id="stockVolume"></span>
       </div>
     </div>
