@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import logging
 
+from django.contrib.auth.models import AnonymousUser
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
 from django.http import HttpResponse, JsonResponse
@@ -143,6 +144,8 @@ def get_company_basic(request, ts_code):
             ts_code_list = ts_code.split(',')
             if len(ts_code_list) > 0:
                 for code in ts_code_list:
+                    if req_user.is_anonymous:
+                        req_user = None
                     query_trace = UserQueryTrace(
                         query_string=code, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
                     query_trace.save()
@@ -344,6 +347,9 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
                     down_50qt.append(down_qt[2])
                     date_label.append(result.trade_date)
                 
+                if req_user.is_anonymous:
+                    req_user = None
+
                 query_trace = UserBackTestTrace(
                     ts_code=ts_code, strategy_code=strategy, btest_type='PERIOD_TEST', btest_param=test_period, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
                 query_trace.save()
@@ -360,6 +366,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
 
 
 def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D',):
+    req_user = request.user
     if request.method == 'GET':
         try:
             exp_pct_data = []
@@ -381,6 +388,8 @@ def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D
                     exp_pct_data.append(rst[exp_pct])
                     qt_50.append(quantile[2])
             
+            if req_user.is_anonymous:
+                req_user = None
             query_trace = UserBackTestTrace(
                 ts_code=ts_code, strategy_code=strategy, btest_type='EXP_PCT_TEST', btest_param=exp_pct, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
             query_trace.save()
