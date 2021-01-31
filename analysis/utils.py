@@ -5,7 +5,7 @@ import pandas as pd
 # from investors.models import TradeStrategy
 import tushare as ts
 from dashboard.utils import days_between
-
+from django.utils import timezone
 from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
                      StrategyTargetPctTestQuantiles,
                      StrategyUpDownTestQuantiles, TradeStrategyStat)
@@ -94,7 +94,7 @@ def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date
         task = StockStrategyTestLog.objects.get(
             ts_code=ts_code, analysis_code=strategy_code, event_type=event, freq=freq, start_date=start_date, end_date=end_date, is_done=False)
         task.is_done = True
-        task.last_mod_time = datetime.now()
+        task.last_mod_time = datetime.now(timezone.utc)
         task.save()
     except Exception as e:
         print(e)
@@ -250,7 +250,7 @@ def set_event_completed(event, exec_date, strategy_code=None, freq='D'):
             event = AnalysisEventLog.objects.get(
                 event_type=event, freq=freq, exec_date=exec_date)
         event.status = 1
-        event.last_mod_time = datetime.now()
+        event.last_mod_time = datetime.now(timezone.utc)
         event.save()
         return True
     except Exception as e:  # 未找到event log记录
