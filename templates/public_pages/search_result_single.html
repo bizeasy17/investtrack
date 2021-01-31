@@ -1,0 +1,673 @@
+{% extends 'base_public_search.html' %} {% load static i18n thumbnail %} 
+{% block content %}
+<hr style="margin-top: 0rem; margin-bottom: 0.5rem" />
+<div class="container-fluid mt-4 small">
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="container">
+        <!-- 策略 -->
+        <div class="row align-items-center">
+          <div class="col-lg-12">
+            <div
+              class="btn-group btn-group-sm btn-group-toggle"
+              data-toggle="buttons"
+            >
+              <span class="mt-1 mr-1 small">{% trans '买入策略' %}</span>
+              <label class="btn btn-light active">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="jiuzhuan_b"
+                  autocomplete="off"
+                  value="jiuzhuan_count_b"
+                  checked
+                />{% trans '九转买' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="ma25_zhicheng"
+                  autocomplete="off"
+                  value="ma25_zhicheng"
+                />{% trans 'MA25支撑' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="ma25_tupo"
+                  autocomplete="off"
+                  value="ma25_tupo"
+                />{% trans 'MA25突破' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="ma25_zhicheng"
+                  autocomplete="off"
+                  value="ma60_zhicheng"
+                />{% trans 'MA60支撑' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="ma25_tupo"
+                  autocomplete="off"
+                  value="ma60_tupo"
+                />{% trans 'MA60突破' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="ma25_zhicheng"
+                  autocomplete="off"
+                  value="ma200_zhicheng"
+                />{% trans 'MA200支撑' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="bstrategy"
+                  id="ma25_tupo"
+                  autocomplete="off"
+                  value="ma200_tupo"
+                />{% trans 'MA200突破' %}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12">
+            <div
+              class="btn-group btn-group-sm btn-group-toggle mt-1"
+              data-toggle="buttons"
+            >
+              <span class="mt-1 mr-1 small">{% trans '卖出策略' %}</span>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="jiuzhuan_count_s"
+                  autocomplete="off"
+                  value="jiuzhuan_count_s"
+                />{% trans '九转卖' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="ma25_diepo"
+                  autocomplete="off"
+                  value="ma25_diepo"
+                />{% trans 'MA25跌破' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="ma25_yali"
+                  autocomplete="off"
+                  value="ma25_yali"
+                />{% trans 'MA25压力' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="ma60_diepo"
+                  autocomplete="off"
+                  value="ma60_diepo"
+                />{% trans 'MA60跌破' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="ma60_yali"
+                  autocomplete="off"
+                  value="ma60_yali"
+                />{% trans 'MA60压力' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="ma200_diepo"
+                  autocomplete="off"
+                  value="ma200_diepo"
+                />{% trans 'MA200跌破' %}
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="sstrategy"
+                  id="ma200_yali"
+                  autocomplete="off"
+                  value="ma200_yali"
+                />{% trans 'MA200压力' %}
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12">
+            <hr />
+          </div>
+        </div>
+        <!-- 策略回测信息，自动生成的报告 -->
+        <div class="row">
+          <div class="col-lg-12">
+            <div
+              id="periodBtnGroupStock"
+              class="btn-group btn-group-sm btn-group-toggle mb-2"
+              data-toggle="buttons"
+            >
+              <span class="mt-1 mr-1 small">{% trans '持仓天数' %}</span>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p10"
+                  autocomplete="off"
+                  value="10"
+                /><small>{% trans '10' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p20"
+                  autocomplete="off"
+                  value="20"
+                /><small>{% trans '20' %} </small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p30"
+                  autocomplete="off"
+                  value="30"
+                /><small>{% trans '30' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p50"
+                  autocomplete="off"
+                  value="50"
+                /><small>{% trans '50' %}</small>
+              </label>
+              <label class="btn btn-light active">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p80"
+                  autocomplete="off"
+                  value="80"
+                  checked
+                /><small>{% trans '80' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p130"
+                  autocomplete="off"
+                  value="130"
+                /><small>{% trans '130' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p210"
+                  autocomplete="off"
+                  value="210"
+                /><small>{% trans '210' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p350"
+                  autocomplete="off"
+                  value="350"
+                /><small>{% trans '350' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="period"
+                  id="p560"
+                  autocomplete="off"
+                  value="560"
+                /><small>{% trans '560' %}</small>
+              </label>
+            </div>
+            <div
+              id="updownByPeriodChart"
+              class="mt-2"
+              style="width: 100%; height: 600px"
+            ></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12">
+            <hr />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-12">
+            <div
+              id="pctPeriodBtnGroupStock"
+              class="btn-group btn-group-sm btn-group-toggle mb-2"
+              data-toggle="buttons"
+            >
+              <span class="mt-1 mr-1 small">{% trans '预期涨幅' %}</span>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct10_period"
+                /><small>{% trans '10%' %}</small>
+              </label>
+              <label class="btn btn-light active">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct20_period"
+                  checked
+                /><small>{% trans '20%' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct30_period"
+                /><small>{% trans '30%' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct50_period"
+                /><small>{% trans '50%' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct80_period"
+                /><small>{% trans '80%' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct100_period"
+                /><small>{% trans '100%' %}</small>
+              </label>
+              <label class="btn btn-light">
+                <input
+                  type="radio"
+                  name="pct_period"
+                  autocomplete="off"
+                  value="pct130_period"
+                /><small>{% trans '130%' %}</small>
+              </label>
+            </div>
+
+            <div
+              id="periodByUpRangeChart"
+              class="mt-2"
+              style="width: 100%; height: 600px"
+            ></div>
+          </div>
+        </div>
+        <!-- 股票基本信息
+                df = pro.stock_company(ts_code='000001.SZ',exchange='SZSE',
+                fields='ts_code,chairman,manager,secretary,reg_capital,setup_date,province,main_business')
+                df.head() # pro = ts.pro_api() df = pro.daily_basic(ts_code='000001.SZ',
+                start_date='20100113', end_date='20200113',
+                fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb') df.head()
+                #获取单个公司高管全部数据 df = pro.stk_managers(ts_code='000001.SZ') -->
+        <!-- 价格预测 -->
+
+        <!-- 大盘实时
+                df = pro.index_dailybasic(ts_code='000001.SH', start_date='20181018',
+                end_date='20200114', fields='ts_code,trade_date,turnover_rate,pe')
+                df.head() -->
+      </div>
+    </div>
+    <div class="col-lg-2">
+      <div class="row">
+        <div class="col-lg-12">
+          <span class="font-weight-bold">{% trans '趋势过滤器(开发中)' %}</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <hr />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+            <span class="font-weight-bold">{% trans '大盘过滤器' %}</span>
+            <div class="row">
+                <div class="col-lg-12 mt-2">
+                    <div class="row">
+                        <span class="col-lg-8">{% trans '25日均线趋势' %}</span>
+                        <div class="form-group col-lg-4">
+                            <div class="col-lg-6 custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
+                                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group col-lg-12">
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA25Up" name="radioIndexMA25" class="custom-control-input" checked="">
+                            <label class="custom-control-label" for="radioIndexMA25Up">{% trans '升' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA25Flat" name="radioIndexMA25" class="custom-control-input">
+                            <label class="custom-control-label" for="radioIndexMA25Flat">{% trans '平' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA25Down" name="radioIndexMA25" class="custom-control-input">
+                            <label class="custom-control-label" for="radioIndexMA25Down">{% trans '降' %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="row">
+                        <span class="col-lg-8">{% trans '60日均线趋势' %}</span>
+                        <div class="form-group col-lg-4">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchIndexMA60" >
+                                <label class="custom-control-label" for="switchIndexMA60">{% trans '关' %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group col-lg-12">
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA60Up" name="radioIndexMA60" class="custom-control-input" checked="">
+                            <label class="custom-control-label" for="radioIndexMA60Up">{% trans '升' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA60Flat" name="radioIndexMA60" class="custom-control-input">
+                            <label class="custom-control-label" for="radioIndexMA60Flat">{% trans '平' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA60Down" name="radioIndexMA60" class="custom-control-input">
+                            <label class="custom-control-label" for="radioIndexMA60Down">{% trans '降' %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="row">
+                        <span class="col-lg-8">{% trans '200日均线趋势' %}</span>
+                        <div class="form-group col-lg-4">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchIndexMA200" >
+                                <label class="custom-control-label" for="switchIndexMA200">{% trans '关' %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group col-lg-12">
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA200Up" name="radioIndexMA200" class="custom-control-input" checked="">
+                            <label class="custom-control-label" for="radioIndexMA200Up">{% trans '升' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA200Flat" name="radioIndexMA200" class="custom-control-input">
+                            <label class="custom-control-label" for="radioIndexMA200Flat">{% trans '平' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioIndexMA200Down" name="radioIndexMA200" class="custom-control-input">
+                            <label class="custom-control-label" for="radioIndexMA200Down">{% trans '降' %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+      <div class="row">
+        <fieldset class="col-lg-8 form-group">
+            <label class="font-weight-bold" for="rangeIndexVolume">{% trans '大盘成交量' %}</label>
+            <input type="range" class="custom-range" id="rangeIndexVolume">
+        </fieldset>
+        <div class="form-group col-lg-4">
+            <div class="col-lg-6 custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
+                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+            </div>
+        </div>
+        <span class="font-weight-bold" id="indexVolume"></span>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <hr />
+        </div>
+      </div>
+        <div class="row">
+        <div class="col-lg-12">
+            <span class="font-weight-bold">{% trans '个股过滤器' %}</span>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="row mt-2">
+                        <span class="col-lg-8">{% trans '25日均线趋势' %}</span>
+                        <div class="form-group col-lg-4">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchStockMA25" >
+                                <label class="custom-control-label" for="switchStockMA25">{% trans '关' %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group col-lg-12">
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA25Up" name="radioStockMA25" class="custom-control-input" checked="">
+                            <label class="custom-control-label" for="radioStockMA25Up">{% trans '升' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA25Flat" name="radioStockMA25" class="custom-control-input">
+                            <label class="custom-control-label" for="radioStockMA25Flat">{% trans '平' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA25Down" name="radioStockMA25" class="custom-control-input">
+                            <label class="custom-control-label" for="radioStockMA25Down">{% trans '降' %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="row">
+                        <span class="col-lg-8">{% trans '60日均线趋势' %}</span>
+                        <div class="form-group col-lg-4">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchStockMA60" >
+                                <label class="custom-control-label" for="switchStockMA60">{% trans '关' %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group col-lg-12">
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA60Up" name="radioStockMA60" class="custom-control-input" checked="">
+                            <label class="custom-control-label" for="radioStockMA60Up">{% trans '升' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA60Flat" name="radioStockMA60" class="custom-control-input">
+                            <label class="custom-control-label" for="radioStockMA60Flat">{% trans '平' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA60Down" name="radioStockMA60" class="custom-control-input">
+                            <label class="custom-control-label" for="radioStockMA60Down">{% trans '降' %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="row">
+                        <span class="col-lg-8">{% trans '200日均线趋势' %}</span>
+                        <div class="form-group col-lg-4">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchStockMA200" >
+                                <label class="custom-control-label" for="switchStockMA200">{% trans '关' %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row form-group col-lg-12">
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA200Up" name="radioStockMA200" class="custom-control-input" checked="">
+                            <label class="custom-control-label" for="radioStockMA200Up">{% trans '升' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA200Flat" name="radioStockMA200" class="custom-control-input">
+                            <label class="custom-control-label" for="radioStockMA200Flat">{% trans '平' %}</label>
+                        </div>
+                        <div class="custom-control custom-radio col-lg-4">
+                            <input type="radio" id="radioStockMA200Down" name="radioStockMA200" class="custom-control-input">
+                            <label class="custom-control-label" for="radioStockMA200Down">{% trans '降' %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+      <div class="row">
+        <fieldset class="col-lg-8 form-group">
+            <label class="font-weight-bold" for="rangeStock">{% trans '个股成交量' %}</label>
+            <input type="range" class="custom-range" id="rangeStock">
+        </fieldset>
+        <div class="form-group col-lg-4">
+            <div class="col-lg-6 custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
+                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+            </div>
+        </div>
+        <span class="font-weight-bold" id="stockVolume"></span>
+      </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="row">
+            <div class="col-lg-12">
+                <span class="font-weight-bold">{% trans '基本信息' %}</span>
+          </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+            <hr />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="row col-lg-12">
+                    <span class="font-weight-bold mr-1" id="companyName">{% trans '公司名称' %}</span>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="setupDate">{% trans '成立日期' %}</span>
+                    </div>
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="capital">{% trans '注册资金' %}</span>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <span class="font-weight-bold mr-1" id="website">{% trans '公司主页' %}</span>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="chairman">{% trans '法人代表' %}</span>
+                    </div>
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="manager">{% trans '总经理' %}</span>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="province">{% trans '所在省' %}</span>
+                    </div>
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="city">{% trans '所在城市' %}</span>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="employees">{% trans '员工数量' %}</span>
+                    </div>
+                </div>
+                
+                <div class="row col-lg-12">
+                    <span class="row col-lg-12 font-weight-bold" id="industry">{% trans '主营业务' %}</span>
+                </div>
+          </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+            <hr />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div id="closeChart" style="width: 100%; height: 300px"></div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-lg-12">
+                <div id="peChart" style="width: 100%; height: 300px"></div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-lg-12">
+                <div id="pbChart" style="width: 100%; height: 300px"></div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-lg-12">
+                <div id="psChart" style="width: 100%; height: 300px"></div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-lg-12">
+                <div id="toChart" style="width: 100%; height: 300px"></div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-lg-12">
+                <div id="vrChart" style="width: 100%; height: 300px"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+<input type="hidden" id="currentTsCode" value="{{search_single.ts_code}}" />
+{% endblock content %} 
+
+{% block javascript %} {{ block.super }}
+<script type="text/javascript" charset="utf-8">
+  var imgRoot = "{% static 'img/' %}";
+</script>
+<script src="{% static 'js/common.js' %}"></script>
+<script
+  src="{% static 'js/search_result.js' %}"
+  type="text/javascript"
+></script>
+{% endblock javascript %}

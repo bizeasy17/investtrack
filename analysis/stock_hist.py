@@ -7,7 +7,7 @@ from stockmarket.models import StockNameCodeMap
 
 from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
                             get_event_status, last_download_date,
-                            log_download_hist, set_event_completed, generate_event)
+                            log_download_hist, set_event_completed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
 
@@ -32,17 +32,19 @@ def process_stock_download(ts_code, start_date, end_date, asset='E', freq='D', s
             print("previous downloading is still ongoing")
         elif evt_status == 1:
             print("history has been downloaded today")
-        else: # event not exist, can run today
+        else:  # event not exist, can run today
             if ts_code is None:
                 init_eventlog('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
             handle_hist_download(ts_code, start_date, end_date,
-                                asset, freq, sys_event_list)
+                                 asset, freq, sys_event_list)
             if ts_code is None:
-                set_event_completed('HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+                set_event_completed(
+                    'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
             print("history has been downloaded successfully")
     else:
         handle_hist_download(ts_code, start_date, end_date,
                              asset, freq, sys_event_list)
+
 
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
     '''
@@ -54,7 +56,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
     freq：周期，D，W（未实现），M（未实现），60分钟（为实现）
     system event list：完成下载后
     '''
-    download_type = 0 # 首次
+    download_type = 0  # 首次
     start_date = None
     end_date = None
     today = date.today()
@@ -84,7 +86,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                 else:  # 根据日志记录下载相应历史记录
 
                     if last_date is not None:
-                        if last_date[1] < today: #如果有差异就下载，不然就退出
+                        if last_date[1] < today:  # 如果有差异就下载，不然就退出
                             # 已完成首次下载
                             download_type = 1
                             print('update hist')
@@ -128,21 +130,38 @@ def split_trade_cal(start_date, end_date):
     if end_year - start_year <= 10:
         split_date_list.append([start_date, end_date])
     elif end_year - start_year <= 20:
-        mid_date = start_date + timedelta(days=365 * 10)
+        # mid_date = start_date + timedelta(days=365 * 10)
         split_date_list.append(
-            [start_date, mid_date])
+            [start_date, start_date + timedelta(days=365 * 10)])
         split_date_list.append(
-            [mid_date + timedelta(days=1), end_date] #fix issue of 年份分割错误 start_date -> end_date
+            # fix issue of 年份分割错误 start_date -> end_date
+            [start_date + timedelta(days=365 * 10) + \
+             timedelta(days=1), end_date]
         )
     elif end_year - start_year <= 30:
-        mid_date = start_date + timedelta(days=365*10)
+        # mid_date = start_date + timedelta(days=365*10)
         split_date_list.append(
-            [start_date, mid_date])
+            [start_date, start_date + timedelta(days=365 * 10)])
         split_date_list.append(
-            [mid_date + timedelta(days=1), mid_date +
-             timedelta(days=365*10) + timedelta(days=1)])
+            [start_date + timedelta(days=365 * 10) + timedelta(days=1),
+             start_date + timedelta(days=365 * 20)])
         split_date_list.append(
-            [mid_date + timedelta(days=365*10) + timedelta(days=2),
+            [start_date + timedelta(days=365*20) + timedelta(days=1),
+             end_date],
+        )
+    elif end_year - start_year <= 40:
+        # mid_date = start_date + timedelta(days=365*10)
+        split_date_list.append(
+            [start_date, start_date + timedelta(days=365*10)])
+        split_date_list.append(
+            [start_date + timedelta(days=365*10) + timedelta(days=1),
+             start_date + timedelta(days=365*20)])
+        split_date_list.append(
+            [start_date + timedelta(days=365*20) + timedelta(days=1),
+             start_date + timedelta(days=365*30)],
+        )
+        split_date_list.append(
+            [start_date + timedelta(days=365*30) + timedelta(days=1),
              end_date],
         )
     return split_date_list

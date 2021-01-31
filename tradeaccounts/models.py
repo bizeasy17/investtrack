@@ -415,7 +415,7 @@ class StockPositionSnapshot(models.Model):
 
     def __str__(self):
         return str(self.trade_account)
-    
+
     class Meta:
         ordering = ['-snap_date']
         verbose_name = _('股票收益快照')
@@ -441,11 +441,12 @@ class StockPositionSnapshot(models.Model):
         self.stock_name = stock_position.stock_name
         self.stock_code = stock_position.stock_code
         self.profit = stock_position.profit
-        self.profit_ratio = decimal.Decimal(stock_position.profit_ratio[:-1])
+        self.profit_ratio = round(decimal.Decimal(stock_position.profit_ratio[:-1]) *
+                                  stock_position.lots / stock_position.target_position, 2)
         self.target_chg_pct = stock_position.target_chg_pct
         # 与上一snapshot day环比的变化
         last_snapshot = StockPositionSnapshot.objects.filter(trader=stock_position.trader,
-            trade_account=stock_position.trade_account, snap_date=last_snap_date, applied_period='d')
+                                                             trade_account=stock_position.trade_account, snap_date=last_snap_date, applied_period='d')
         if last_snapshot is not None and len(last_snapshot) >= 1:
             self.profit_chg = stock_position.profit - \
                 last_snapshot[0].profit
@@ -459,20 +460,19 @@ class StockPositionSnapshot(models.Model):
         if snap_date.weekday() == calendar.FRIDAY:
             print("gen week data")
             last_friday = snap_date - timedelta(days=7)  # 前一周周五
-            relative_snapshot = StockPositionSnapshot.objects.filter(p_id=stock_position.id, 
-                trader=stock_position.trader,trade_account=stock_position.trade_account, 
-                snap_date=last_friday, applied_period='w')
+            relative_snapshot = StockPositionSnapshot.objects.filter(p_id=stock_position.id,
+                                                                     trader=stock_position.trader, trade_account=stock_position.trade_account,
+                                                                     snap_date=last_friday, applied_period='w')
             if relative_snapshot is not None and len(relative_snapshot) >= 1:
                 profit_chg = stock_position.profit - \
                     relative_snapshot[0].profit
             else:
                 profit_chg = stock_position.profit
             week_snapshot = StockPositionSnapshot(p_id=stock_position.id,
-                trader=stock_position.trader, trade_account=stock_position.trade_account,
-                stock_name=stock_position.stock_name, stock_code=stock_position.stock_code,
-                profit=stock_position.profit, profit_chg=profit_chg, profit_ratio=decimal.Decimal(
-                    stock_position.profit_ratio[:-1]), target_chg_pct=stock_position.target_chg_pct,
-                applied_period='w')
+                                                  trader=stock_position.trader, trade_account=stock_position.trade_account,
+                                                  stock_name=stock_position.stock_name, stock_code=stock_position.stock_code,
+                                                  profit=stock_position.profit, profit_chg=profit_chg, profit_ratio=self.profit_ratio, target_chg_pct=stock_position.target_chg_pct,
+                                                  applied_period='w')
             week_snapshot.save()
         # 如果每月最后一天，需要多生成一条月'm'快照
         mon_range = calendar.monthrange(
@@ -490,19 +490,19 @@ class StockPositionSnapshot(models.Model):
                 last_year = year
                 last_mon = month - 1
             relative_snapshot = StockPositionSnapshot.objects.filter(p_id=stock_position.id,
-                trader=stock_position.trader, trade_account=stock_position.trade_account,
-                snap_date__year=last_year, snap_date__month=last_mon, applied_period='m')
+                                                                     trader=stock_position.trader, trade_account=stock_position.trade_account,
+                                                                     snap_date__year=last_year, snap_date__month=last_mon, applied_period='m')
             if relative_snapshot is not None and len(relative_snapshot) >= 1:
-                profit_chg = stock_position.profit - relative_snapshot[0].profit
+                profit_chg = stock_position.profit - \
+                    relative_snapshot[0].profit
             else:
                 profit_chg = stock_position.profit
             # last_day = snap_date - timedelta(days=7)  # 前一周周五
             mon_snapshot = StockPositionSnapshot(p_id=stock_position.id,
-                trader=stock_position.trader, trade_account=stock_position.trade_account,
-                stock_name=stock_position.stock_name, stock_code=stock_position.stock_code,
-                profit=stock_position.profit, profit_chg=profit_chg, profit_ratio=decimal.Decimal(
-                    stock_position.profit_ratio[:-1]), target_chg_pct=stock_position.target_chg_pct,
-                applied_period='m')
+                                                 trader=stock_position.trader, trade_account=stock_position.trade_account,
+                                                 stock_name=stock_position.stock_name, stock_code=stock_position.stock_code,
+                                                 profit=stock_position.profit, profit_chg=profit_chg, profit_ratio=self.profit_ratio, target_chg_pct=stock_position.target_chg_pct,
+                                                 applied_period='m')
             mon_snapshot.save()
 
 
@@ -513,7 +513,7 @@ class PositionComments(BaseModel):
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
                                on_delete=models.CASCADE)
     position = models.ForeignKey(Positions, verbose_name=_('持仓编号'), blank=False, null=False,
-                                      on_delete=models.DO_NOTHING)
+                                 on_delete=models.DO_NOTHING)
     stock_name = models.CharField(
         _('股票名称'), max_length=50, blank=False, null=False)
     stock_code = models.CharField(

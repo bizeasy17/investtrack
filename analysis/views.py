@@ -405,7 +405,7 @@ def low_pct_data(request, strategy, stock_symbol, test_period):
 
 
 @login_required
-def stock_history(request, strategy, stock_symbol, freq, type, period):
+def stock_history(request, ts_code, freq, type, period):
     '''
     用户需要授权可以使用策略
     '''
@@ -424,7 +424,7 @@ def stock_history(request, strategy, stock_symbol, freq, type, period):
             quantile = []
             start_date = end_date - timedelta(days=365 * period)
             results = StockHistoryDaily.objects.filter(
-                ts_code=stock_symbol, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+                ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
             # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
                 ma25_result.append(result.ma25)
@@ -442,7 +442,7 @@ def stock_history(request, strategy, stock_symbol, freq, type, period):
                 lbl_trade_date.append(result.trade_date)
             if type == 'ticks':
                 return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-            else:
+            if type == 'close':
                 return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except Exception as err:
             logging.error(err)

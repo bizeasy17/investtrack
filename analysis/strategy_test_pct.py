@@ -31,7 +31,8 @@ def btest_period_on_pct(strategy_code, ts_code, freq='D'):
                 print(listed_company.ts_code + ' for strategy ' +
                       strategy_code + ' pct has started')
                 for task in tasks:
-                    if ready2btest(listed_company.ts_code, 'MARK_CP', strategy_code, task.start_date, task.end_date, freq):
+                    # if ready2btest(listed_company.ts_code, 'MARK_CP', strategy_code, task.start_date, task.end_date, freq):
+                    if days_between(task.start_date, task.end_date) >= 365 * 3: #分析至少需要三年的数据
                         test_exp_pct(strategy_code, listed_company.ts_code,
                                     task.start_date, task.end_date, freq)
                         set_task_completed(listed_company.ts_code, 'EXP_PCT_TEST',

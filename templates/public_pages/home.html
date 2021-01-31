@@ -1,0 +1,155 @@
+{% extends 'base_public.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}
+{% trans '投呗 - 首页' %}
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+
+<!-- /.container -->
+<header class="masthead text-white text-center">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
+          <form id="searchForm" action="{% url 'search:home' %}">
+            <div class="form-row">
+              <div class="col-12 col-md-12 mb-2 mb-md-0">
+                <input type="text" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称,代码或首字母' %}">
+              </div>
+              <!-- <div class="col-12 col-md-3">
+                <button type="submit" class="btn btn-block btn-lg btn-primary">{% trans '查看' %}</button>
+              </div> -->
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="row">
+            <div class="col-lg-12 grid-margin stretch-card mt-3">
+                <hr>
+                <div class="row flex-grow small">
+                    <div class="mt-3 col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <p class="card-title"><a class="text-muted" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上证 - 000001' %}</a></p>
+                                    <p class="font-weight-medium small">
+                                        <!-- <span class="text-muted mr-1"></span> -->
+                                        <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
+                                    </p>
+                                    
+                                </div>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
+                                    </div>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="shPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="shVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="shAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center
+                                    justify-content-between flex-wrap">
+                                    <p class="card-title text-muted"><a class="text-muted" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深证 - 399001' %}</a></p>
+                                    <p class="text-danger font-weight-medium small">
+                                        <!-- <span class="text-muted small mr-1"></span> -->
+                                        <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>
+                                    </p>
+                                </div>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
+                                    </div>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="szPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="szVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="szAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center
+                                    justify-content-between flex-wrap">
+                                    <p class="card-title text-muted"><a class="text-muted" href="?q=399006.SZ"><i class="fa fa-chart-line"></i> {% trans '创业 - 399006' %}</a></p>
+                                    <p class="text-danger font-weight-medium small">
+                                        <!-- <span class="text-muted small mr-1"></span> -->
+                                        <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
+                                    </p>
+                                </div>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
+                                    </div>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="cybPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="cybVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="cybAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 col-md-3 stretch-card">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center
+                                    justify-content-between flex-wrap">
+                                    <p class="card-title text-muted"><a class="text-muted" href="?q=000300.SH"><i class="fa fa-chart-line"></i> {% trans '沪深 - 000300' %}</a></p>
+                                    <p class="text-danger font-weight-medium small">
+                                        <!-- <span class="text-muted small mr-1"></span> -->
+                                        <span class="text-danger" id="hsPrice"></span><span id="hsChange" class="ml-1"></span>
+                                    </p>
+                                </div>
+                                <div class="small">
+                                    <div class="row">
+                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
+                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
+                                    </div>
+                                    <div class="row">
+                                        <p class="col-lg-4 text-muted" id="hsPreClose"></p>
+                                        <p class="col-lg-4 text-muted" id="hsVolume"></p>
+                                        <p class="col-lg-4 text-muted" id="hsAmount"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- 新股IPO -->
+<!-- df = pro.new_share(start_date='20180901', end_date='20181018') -->
+
+<!-- content-wrapper ends -->
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript" charset="utf-8">var imgRoot = "{% static 'img/' %}"</script>
+<script src="{% static 'js/search.js' %}" type="text/javascript"></script>
+{% endblock javascript %}

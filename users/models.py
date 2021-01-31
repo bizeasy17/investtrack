@@ -10,10 +10,24 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 
+class BaseModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    created_time = models.DateTimeField(_('创建时间'), default=now)
+    last_mod_time = models.DateTimeField(_('更新时间'), default=now)
+
+    class Meta:
+        abstract = True
+
+    @abstractmethod
+    def get_absolute_url(self):
+        pass
+
 # Create your models here.
+
+
 class User(AbstractUser):
     # First Name and Last Name do not cover name patterns around the globe.
-    name = models.CharField(_("姓名"), blank=True, max_length=255)
+    name = models.CharField(_('姓名'), blank=True, max_length=255)
     picture = models.ImageField(
         _('个人头像'), upload_to='profile_pics/', null=True, blank=True)
     location = models.CharField(
@@ -54,4 +68,50 @@ class User(AbstractUser):
         verbose_name = _('网站用户')
 
 
+# Create your models here.
+class UserActionTrace(BaseModel):
+    # First Name and Last Name do not cover name patterns around the globe.
+    action_name = models.CharField(_('操作名称'), blank=True, max_length=255)
+    request_url = models.CharField(_('请求的url'), blank=True, max_length=255)
+    ip_addr = models.CharField(
+        _('访问ip'), max_length=50, null=True, blank=True)
+    uid = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('用户id'), blank=True, null=True,
+                            on_delete=models.CASCADE)
 
+# Create your models here.
+
+
+class UserQueryTrace(BaseModel):
+    # First Name and Last Name do not cover name patterns around the globe.
+    query_string = models.CharField(_('查询内容'), blank=True, max_length=255)
+    request_url = models.CharField(_('请求的url'), blank=True, max_length=255)
+    ip_addr = models.CharField(
+        _('访问ip'), max_length=50, null=True, blank=True)
+    uid = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('用户id'), blank=True, null=True,
+                            on_delete=models.CASCADE)
+
+
+class UserBackTestTrace(BaseModel):
+    # First Name and Last Name do not cover name patterns around the globe.
+    ts_code = models.CharField(_('股票代码'), blank=True, max_length=255)
+    strategy_code = models.CharField(_('策略代码'), blank=True, max_length=255)
+    btest_type = models.CharField(_('回测类型'), blank=True, max_length=255)
+    btest_param = models.CharField(_('回测参数'), blank=True, max_length=255)
+    request_url = models.CharField(_('请求的url'), blank=True, max_length=255)
+    ip_addr = models.CharField(
+        _('访问ip'), max_length=50, null=True, blank=True)
+    uid = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('用户id'), blank=True, null=True,
+                            on_delete=models.CASCADE)
+
+
+class UserBackTestFilterTrace(BaseModel):
+    # First Name and Last Name do not cover name patterns around the globe.
+    ts_code = models.CharField(_('股票代码'), blank=True, max_length=255)
+    backtest_id = models.ForeignKey(
+        UserBackTestTrace, verbose_name=_('回测id'), blank=False, null=False,
+        on_delete=models.DO_NOTHING)
+    filter_category = models.CharField(_('过滤器类别'), blank=True, max_length=255)
+    filter_name = models.CharField(_('过滤器名称'), blank=True, max_length=255)
+    filter_val = models.CharField(_('过滤器值'), blank=True, max_length=255)
+    uid = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('用户id'), blank=True, null=True,
+                            on_delete=models.CASCADE)

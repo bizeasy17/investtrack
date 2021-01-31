@@ -1,0 +1,168 @@
+{% load static i18n thumbnail %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Machine Learning, Deep Learning, 机器学习，股票投资">
+  <meta name="author" content="Data Science Digitalization Lab - DSDL">
+
+  <title>{% block title %}{% trans '投呗' %}{% endblock title %}</title>
+
+
+  <!-- Bootstrap core CSS -->
+  {% block css %}
+
+  <link href="{% static 'css/bootstrap.css' %}" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.ico' %}">
+
+  <!-- Custom fonts for this template -->
+  <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/simple-line-icons/css/simple-line-icons.css' %}" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+
+  <!-- Custom styles for this template -->
+  <!-- <link href="{% static 'css/landing-page.min.css' %}" rel="stylesheet"> -->
+  {% endblock css %}
+
+  {% block head %}{% endblock head %}
+
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar static-top">
+    <div class="container-fluid">
+      <div class="col-lg-6 row align-items-center">
+        <div class="col-lg-1">
+          <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+          <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
+          </a>
+        </div>
+        <div class="col-lg-11">
+          <form id="searchForm" action="{% url 'search:home' %}">
+            <input type="text" class="form-control form-control-sm" id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}" value="{{search_single.ts_code}}">
+          </form>
+        </div>
+      </div>
+      <a class="btn btn-primary" href="#">{% trans '微信扫码登录' %}</a>
+    </div>
+  </nav>
+  {% block content %}
+    <p>Use this document as a way to quick start any new project.</p>
+  {% endblock content %}
+  <!-- Footer -->
+  <hr/>
+  <footer class="footer mb-2">
+    <div class="container-fluid">
+      <div class="row col-lg-12">
+        <div class="col-lg-6 h-100 text-center text-lg-left my-auto">
+          <ul class="list-inline mb-2">
+            <li class="list-inline-item">
+              <a class="text-secondary" href="#">{% trans '关于' %}</a>
+            </li>
+            <li class="list-inline-item">&sdot;</li>
+            <li class="list-inline-item">
+              <a class="text-secondary" href="#">{% trans '联系我们' %}</a>
+            </li>
+            <li class="list-inline-item">&sdot;</li>
+            <li class="list-inline-item">
+              <a class="text-secondary" href="#">{% trans '使用规范' %}</a>
+            </li>
+            <li class="list-inline-item">&sdot;</li>
+            <li class="list-inline-item">
+              <a class="text-secondary" href="#">{% trans '隐私策略' %}</a>
+            </li>
+            <li class="list-inline-item">&sdot;</li>
+            <li class="list-inline-item">
+              <a class="text-secondary" href="http://www.beian.miit.gov.cn/?spm=a2c4g.11186623.2.16.31bf7dc6aTLr4u">{% trans '苏ICP备20021061号-1' %}</a> 
+            </li>
+          </ul>
+          <p class="text-muted small mb-lg-0 mb-2">{% trans '版权所有'%} &copy; {% trans '投呗'%} {% now "Y" %} </p>
+        </div>
+        <div class="col-lg-6 h-100 text-center text-lg-right my-auto">
+          <ul class="list-inline mb-2">
+            <li class="list-inline-item mr-3">
+              <a href="#">
+                <i class="fab fa-linkedin fa-2x fa-fw"></i>
+              </a>
+            </li>
+            <li class="list-inline-item mr-3">
+              <a href="#">
+                <i class="fab fa-qq fa-2x fa-fw"></i>
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a href="#">
+                <i class="fab fa-weibo fa-2x fa-fw"></i>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap core JavaScript -->
+  {% block javascript %}
+  <script language="javascript">
+    function formatDate(date, conn) {
+      var dayNames = [
+          "01", "02", "03",
+          "04", "05", "06", "07",
+          "08", "09", "10",
+          "11", "12", "13", "14",
+          "15", "16", "17", "18",
+          "19", "20", "21", "22",
+          "23", "24", "25", "26",
+          "27", "28", "29", "30", "31"
+      ];
+
+      var monthNames = [
+          "01", "02", "03",
+          "04", "05", "06", "07",
+          "08", "09", "10",
+          "11", "12"
+      ];
+
+      var dayIndex = date.getDate();
+      var monthIndex = date.getMonth();
+      var year = date.getFullYear();
+
+      return year + conn + monthNames[monthIndex] + conn + dayNames[dayIndex - 1];
+    }
+    var isOpenForTrade = function (inputDatetime) {
+      // var dateAndTime = inputDatetime.split(" ");
+      var date = formatDate(inputDatetime, "-");
+      var openTime = new Date(date + " 9:30:00");
+      var morningCloseTime = new Date(date + " 11:30:00");
+      var afternoonOpenTime = new Date(date + " 13:00:00");
+      var closeTime = new Date(date + " 15:00:00");
+      var day = inputDatetime.getDay();
+      var hour = inputDatetime.getHours();
+      var min = inputDatetime.getMinutes();
+      if (day == 0 || day == 6) return false; //周六周日不需要刷新
+      if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
+          return true;
+      }
+      if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
+          return true;
+      }
+      if (inputDatetime > date) {
+          return false;
+      }
+      return false;
+    }
+  </script>
+  <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/echarts.min.js"></script>
+  {% endblock javascript %}
+
+</body>
+
+</html>
