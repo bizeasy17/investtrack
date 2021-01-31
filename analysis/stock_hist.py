@@ -7,7 +7,7 @@ from stockmarket.models import StockNameCodeMap
 
 from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
                             get_event_status, last_download_date,
-                            log_download_hist, set_event_completed, generate_event)
+                            log_download_hist, set_event_completed)
 
 from .models import StockHistoryDaily, StockStrategyTestLog
 

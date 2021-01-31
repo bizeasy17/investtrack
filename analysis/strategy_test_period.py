@@ -11,6 +11,7 @@ from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
 from .utils import get_analysis_task, set_task_completed, generate_task, ready2btest
+from dashboard.utils import days_between
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,12 @@ def btest_pct_on_period(ts_code, freq, strategy_code, ):
                 listed_company.ts_code, 'PERIOD_TEST', strategy_code, freq)
             if tasks is not None and len(tasks) > 0:
                 for task in tasks:
-                    if ready2btest(listed_company.ts_code, 'MARK_CP', strategy_code, task.start_date, task.end_date, freq):
+                    # if ready2btest(listed_company.ts_code, 'MARK_CP', strategy_code, task.start_date, task.end_date, freq):
+                    if days_between(task.start_date, task.end_date) >= 365 * 3: #分析至少需要三年的数据
                         test_by_period(strategy_code, listed_company.ts_code,
-                                       task.start_date, task.end_date, freq)
+                                    task.start_date, task.end_date, freq)
                         set_task_completed(listed_company.ts_code, 'PERIOD_TEST',
-                                           freq, strategy_code, task.start_date, task.end_date)
+                                        freq, strategy_code, task.start_date, task.end_date)
                         # generate_task(listed_company.ts_code,
                         #             test_freq, task.start_date, task.end_date, event_list=['UPDN_PCT_QTN'], strategy_list=[strategy_code])
             else:
