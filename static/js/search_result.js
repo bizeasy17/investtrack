@@ -39,6 +39,7 @@ $(function () {
         updownPctPeriod = $('input:radio[name="period"]:checked').val();
         strategyCode = $('input:radio[name="bstrategy"]:checked').val();
         strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
+        bstr =  $('input:radio[name="bstrategy"]:checked');
 
         startDate = formatDate(new Date(today.getTime() - (365 * histPeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
