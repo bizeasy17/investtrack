@@ -765,7 +765,7 @@ $(function () {
                 option = {
                     title: {
                         text: '固定天数涨跌%',
-                        subtext: '数据来自西安兰特水电测控技术有限公司',
+                        // subtext: '数据来自西安兰特水电测控技术有限公司',
                         // left: 10
                     },
                     tooltip: {
@@ -880,7 +880,7 @@ $(function () {
 
                 },
                 404: function () {
-
+                    $("#updownPctSubtitle").text("上市时间小于3年，暂无回测记录！");
                 },
                 500: function () {
 
@@ -967,7 +967,7 @@ $(function () {
 
                 },
                 404: function () {
-
+                    $("#targetPctSubtitle").text("上市时间小于3年，暂无回测记录！");
                 },
                 500: function () {
 
