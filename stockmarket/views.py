@@ -149,7 +149,7 @@ def get_company_basic(request, ts_code):
                     query_trace = UserQueryTrace(
                         query_string=code, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
                     query_trace.save()
-                    
+
                     company_basic = StockNameCodeMap.objects.filter(
                         ts_code=code)
                     if company_basic is not None and len(company_basic) > 0:
@@ -268,7 +268,7 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     date_label.append(row['trade_date'])
                     to_list.append(row['turnover_rate']
                                    if row['turnover_rate'] is not None and not np.isnan(row['turnover_rate']) else 0)
-                    vr_list.append(row['volume_ratio'] if row['volume_ratio']is not None and not np.isnan(
+                    vr_list.append(row['volume_ratio'] if row['volume_ratio'] is not None and not np.isnan(
                         row['volume_ratio']) else 0)
                     pe_list.append(
                         row['pe'] if row['pe'] is not None and not np.isnan(row['pe']) else 0)
@@ -346,7 +346,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
                     up_50qt.append(up_qt[2])
                     down_50qt.append(down_qt[2])
                     date_label.append(result.trade_date)
-                
+
                 if req_user.is_anonymous:
                     req_user = None
 
@@ -376,26 +376,40 @@ def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D
             results = BStrategyOnFixedPctTest.objects.filter(
                 strategy_code=strategy, ts_code=ts_code,
                 test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
-            df = pd.DataFrame(results.values())
-            qtiles = df[exp_pct].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            # for qtile in qtiles.values():
-            for index, value in qtiles.items():
-                quantile.append(value)
-            quantile.append(round(df[exp_pct].mean(), 3))
-            for rst in results:
-                if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
-                    data_label.append(rst['trade_date'])
-                    exp_pct_data.append(rst[exp_pct])
-                    qt_50.append(quantile[2])
-            
-            if req_user.is_anonymous:
-                req_user = None
-            query_trace = UserBackTestTrace(
-                ts_code=ts_code, strategy_code=strategy, btest_type='EXP_PCT_TEST', btest_param=exp_pct, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
-            query_trace.save()
+            if results is not None and len(results) > 0:
+                df = pd.DataFrame(results.values())
+                qtiles = df[exp_pct].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+                # for qtile in qtiles.values():
+                for index, value in qtiles.items():
+                    quantile.append(value)
+                quantile.append(round(df[exp_pct].mean(), 3))
+                for rst in results:
+                    if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
+                        data_label.append(rst['trade_date'])
+                        exp_pct_data.append(rst[exp_pct])
+                        qt_50.append(quantile[2])
 
-            return JsonResponse({'exp_pct': exp_pct_data, 'date_label': data_label, 'quantile': quantile, 'qt_50': qt_50}, safe=False)
+                if req_user.is_anonymous:
+                    req_user = None
+                query_trace = UserBackTestTrace(
+                    ts_code=ts_code, strategy_code=strategy, btest_type='EXP_PCT_TEST', btest_param=exp_pct,
+                    request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
+                query_trace.save()
+
+                return JsonResponse({'exp_pct': exp_pct_data, 'date_label': data_label, 'quantile': quantile,
+                                     'qt_50': qt_50}, safe=False)
+            else:
+                return HttpResponse(status=404)
         except Exception as err:
             print(err)
             logging.error(err)
             return HttpResponse(status=500)
+
+def manual_btest():
+    pass
+
+def get_user_expected_pct():
+    pass
+
+def get_user_updown_pct():
+    pass
