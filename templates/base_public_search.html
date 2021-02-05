@@ -44,7 +44,7 @@
         </div>
         <div class="col-lg-11">
           <form id="searchForm" action="{% url 'search:home' %}">
-            <input type="text" class="form-control form-control-sm" id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}" value="{{search_single.ts_code}}">
+            <input type="text" class="form-control form-control-sm" autocomplete="off"  id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}" value="{{search_single.ts_code}}">
           </form>
         </div>
       </div>

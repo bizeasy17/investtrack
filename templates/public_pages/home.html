@@ -20,7 +20,7 @@
           <form id="searchForm" action="{% url 'search:home' %}">
             <div class="form-row">
               <div class="col-12 col-md-12 mb-2 mb-md-0">
-                <input type="text" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称,代码或首字母' %}">
+                <input type="text" autocomplete="off" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称,代码或首字母' %}">
               </div>
               <!-- <div class="col-12 col-md-3">
                 <button type="submit" class="btn btn-block btn-lg btn-primary">{% trans '查看' %}</button>
