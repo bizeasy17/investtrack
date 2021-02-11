@@ -12,6 +12,7 @@ from analysis.models import StockHistoryDaily, StrategyTestLowHigh, BStrategyOnF
 from django.db.models import Q
 from users.models import UserActionTrace, UserQueryTrace, UserBackTestTrace
 from analysis.utils import get_ip
+from analysis.trend_filters import pct_on_period_filter, period_on_pct_filter
 
 # Create your views here.
 
@@ -304,7 +305,7 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
             return HttpResponse(status=500)
 
 
-def get_updown_pct(request, strategy, ts_code, test_period=80):
+def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters=''):
     '''
     用户需要授权可以使用策略
     '''
@@ -320,7 +321,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
             down_50qt = []
             down_qt = []
             results = StrategyTestLowHigh.objects.filter(
-                strategy_code=strategy, ts_code=ts_code, test_period=test_period).order_by('trade_date')
+                strategy_code=strategy, ts_code=ts_code, test_period=test_period, trade_date__in=pct_on_period_filter(filters)).order_by('trade_date')
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values(
                     'stage_high_pct', 'stage_low_pct'))
@@ -365,7 +366,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80):
             return HttpResponse(status=500)
 
 
-def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D',):
+def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D', filters=''):
     req_user = request.user
     if request.method == 'GET':
         try:

@@ -15,8 +15,8 @@ urlpatterns = [
          views.get_single_daily_basic),
     path('stock-hist/<ts_code>/<freq>/<type>/<int:period>/',
          views.stock_close_hist),  # ??
-    path('updown-pct/<ts_code>/<strategy>/<test_period>/',
+    path('updown-pct/<ts_code>/<strategy>/<test_period>/<freq>/<filters>/',
          views.get_updown_pct),
-    path('exp-pct/<ts_code>/<strategy>/<exp_pct>/<freq>/',
+    path('exp-pct/<ts_code>/<strategy>/<exp_pct>/<freq>/<filters>/',
          views.get_expected_pct),
 ]
