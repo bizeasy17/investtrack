@@ -122,7 +122,10 @@ def test_exp_pct(strategy_code, ts_code, start_date, end_date, test_freq='D', li
                                             # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount,
                                             pct10_period=pct_list[0], pct20_period=pct_list[1], pct30_period=pct_list[2],
                                             pct50_period=pct_list[3], pct80_period=pct_list[4], pct100_period=pct_list[5],
-                                            pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq)
+                                            pct130_period=pct_list[6], strategy_code=strategy_code, test_freq=test_freq,
+                                            ma25_slope=b['ma25_slope'], ma60_slope=b['ma60_slope'], 
+                                            ma200_slope=b['ma200_slope'], vol=b['vol'], 
+                                            amount=b['amount'], )
             strategy_test_list.append(b_tnx)
         if len(strategy_test_list) > 0:
             BStrategyOnFixedPctTest.objects.bulk_create(strategy_test_list)

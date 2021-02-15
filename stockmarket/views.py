@@ -1,18 +1,22 @@
-import tushare as ts
+import logging
+from datetime import date, datetime, timedelta
+
 import numpy as np
 import pandas as pd
-import logging
-
-from django.contrib.auth.models import AnonymousUser
-from django.shortcuts import render
-from datetime import date, datetime, timedelta
-from django.http import HttpResponse, JsonResponse
-from stockmarket.models import StockNameCodeMap
-from analysis.models import StockHistoryDaily, StrategyTestLowHigh, BStrategyOnFixedPctTest
-from django.db.models import Q
-from users.models import UserActionTrace, UserQueryTrace, UserBackTestTrace
-from analysis.utils import get_ip
+import tushare as ts
+from analysis.models import (BStrategyOnFixedPctTest, StockHistoryDaily,
+                             StrategyTestLowHigh, StockIndexHistory)
 from analysis.trend_filters import pct_on_period_filter, period_on_pct_filter
+from analysis.utils import get_ip
+from django.contrib.auth.models import AnonymousUser
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
+
+from stockmarket.models import StockNameCodeMap
+
+from .utils import str2dict
 
 # Create your views here.
 
@@ -305,6 +309,23 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
             return HttpResponse(status=500)
 
 
+def get_updown_pct_dates(strategy, ts_code, test_period=80, freq='D'):
+    '''
+    用户需要授权可以使用策略
+    '''
+    try:
+        date_list = []
+        results = StrategyTestLowHigh.objects.filter(
+            strategy_code=strategy, ts_code=ts_code, test_period=test_period)
+        if results is not None and len(results) > 0:
+            for r in results:
+                date_list.append(r.trade_date)
+            return date_list
+    except Exception as err:
+        logging.error(err)
+        return None
+
+
 def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters=''):
     '''
     用户需要授权可以使用策略
@@ -320,11 +341,23 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             up_50qt = []
             down_50qt = []
             down_qt = []
-            results = StrategyTestLowHigh.objects.filter(
-                strategy_code=strategy, ts_code=ts_code, test_period=test_period, trade_date__in=pct_on_period_filter(filters)).order_by('trade_date')
+            index_vol = []
+            stk_vol = []
+
+
+            filters = str2dict(filters)
+            all_dates = get_updown_pct_dates(strategy, ts_code, test_period, freq)
+            if len(filters['I']) == 0 and len(filters['E']) == 0:
+                results = StrategyTestLowHigh.objects.filter(
+                    strategy_code=strategy, ts_code=ts_code, test_period=test_period,).order_by('trade_date')
+            else:
+                filtered_dates = pct_on_period_filter(ts_code, all_dates, filters)
+                results = StrategyTestLowHigh.objects.filter(
+                    strategy_code=strategy, ts_code=ts_code, test_period=test_period,
+                    trade_date__in=filtered_dates).order_by('trade_date')
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values(
-                    'stage_high_pct', 'stage_low_pct'))
+                    'stage_high_pct', 'stage_low_pct',))
                 up_qtiles = df.stage_high_pct.quantile(
                     [0.1, 0.25, 0.5, 0.75, 0.9])
                 down_qtiles = df.stage_low_pct.quantile(
@@ -337,6 +370,8 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                 up_qt.append(round(df.max().stage_high_pct, 3))
                 down_qt.append(round(df.mean().stage_low_pct, 3))
                 down_qt.append(round(df.min().stage_low_pct, 3))
+                index_vol = get_index_vol_range(all_dates, freq)
+                stk_vol = get_stock_vol_range(all_dates, freq)
 
                 up_max_rounded = int(
                     np.around(df['stage_high_pct'].max() / 100)) * 100 + 50
@@ -358,7 +393,8 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                 return JsonResponse({'date_label': date_label, 'up_pct': up_pct_list,
                                      'up_qt': up_qt, 'up_50qt': up_50qt,
                                      'down_pct': down_pct_list, 'down_qt': down_qt,
-                                     'down_50qt': down_50qt, 'up_max': up_max_rounded}, safe=False)
+                                     'down_50qt': down_50qt, 'up_max': up_max_rounded,
+                                     'index_vol': index_vol,'stock_vol': stk_vol,}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
@@ -366,7 +402,25 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             return HttpResponse(status=500)
 
 
-def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D', filters=''):
+def get_expected_pct_dates(request, strategy, ts_code, exp_pct='pct20_period', freq='D'):
+    req_user = request.user
+    if request.method == 'GET':
+        try:
+            date_label = []
+            results = BStrategyOnFixedPctTest.objects.filter(
+                strategy_code=strategy, ts_code=ts_code, test_freq=freq)  # [:int(freq_count)]
+            if results is not None and len(results) > 0:
+                for rst in results:
+                    if rst[exp_pct] > 0 and rst[exp_pct] <= 480:
+                        date_label.append(rst.trade_date)
+            else:
+                return HttpResponse(status=404)
+        except Exception as err:
+            logging.error(err)
+            return HttpResponse(status=500)
+
+
+def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D', trade_dates='', filters=''):
     req_user = request.user
     if request.method == 'GET':
         try:
@@ -376,7 +430,7 @@ def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D
             qt_50 = []
             results = BStrategyOnFixedPctTest.objects.filter(
                 strategy_code=strategy, ts_code=ts_code,
-                test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
+                test_freq=freq, trade_date__in=period_on_pct_filter(trade_dates.split(','), str2dict(filters))).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values())
                 qtiles = df[exp_pct].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
@@ -402,15 +456,54 @@ def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D
             else:
                 return HttpResponse(status=404)
         except Exception as err:
-            print(err)
             logging.error(err)
             return HttpResponse(status=500)
+
+
+def get_stock_vol_range(trade_date_list, freq='D'):
+    try:
+        vol_min_max = []
+        results = StrategyTestLowHigh.objects.filter(
+            trade_date__in=trade_date_list, freq=freq)  # [:int(freq_count)]
+        if results is not None and len(results) > 0:
+            df = pd.DataFrame(results.values('vol', 'amount'))
+            vol_min_max.append(df.min().vol)
+            vol_min_max.append(df.max().vol)
+            return vol_min_max
+        else:
+            return []
+    except Exception as err:
+        logging.error(err)
+        return None
+
+
+def get_index_vol_range(trade_date_list, freq='D'):
+    '''
+    用户需要授权可以使用策略
+    '''
+    try:
+        vol_min_max = []
+        results = StockIndexHistory.objects.filter(
+            trade_date__in=trade_date_list, freq=freq)
+        if results is not None and len(results) > 0:
+            df = pd.DataFrame(results.values('vol', 'amount'))
+            vol_min_max.append(df.min().vol)
+            vol_min_max.append(df.max().vol)
+            return vol_min_max
+        else:
+            return []
+    except Exception as err:
+        logging.error(err)
+        return None
+
 
 def manual_btest():
     pass
 
+
 def get_user_expected_pct():
     pass
+
 
 def get_user_updown_pct():
     pass

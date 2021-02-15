@@ -11,17 +11,16 @@ results = StrategyTestLowHigh.objects.filter(
 '''
 import pandas as pd
 from analysis.models import StockIndexHistory,StrategyTestLowHigh, BStrategyOnFixedPctTest
+from .utils import get_market_code
 
-def build_condition(filter_params={}):
+def build_condition(filter_params=[]):
     # column = cond_list[0] #['vol', 'ma25_slope', 'ma60_slope']
     # ops = cond_list[1] #['>', '>', '<']
     # condition = cond_list[2] # [4, 0, '0']
-    c = ''
-    for i in filter_params:
-        c = ' & '.join(k for k in filter_params[i])
+    c = ' & '.join(filter_params)
     return c 
-
-def pct_on_period_filter(trade_date_list, filter_params=[]):
+ 
+def pct_on_period_filter(ts_code, trade_date_list, filter_params=[]):
     '''
     filter_param_list = {'ma25':'1','ma60':'0','ma200':'1','vol':'25670'}
     指数
@@ -63,20 +62,26 @@ def pct_on_period_filter(trade_date_list, filter_params=[]):
     df_stock = None
     for key in filter_params:
         if key == 'I':
-            results = StockIndexHistory.objects.filter(trade_date__in=trade_date_list).order_by('trade_date')
-            df = pd.DataFrame(results)
-            if df is not None and len(df) > 0:
-                query = build_condition(filter_params[key])
-                df_index = df.query(query)
+            if len(filter_params[key]) > 0:
+                results = StockIndexHistory.objects.filter(ts_code=get_market_code(ts_code), trade_date__in=trade_date_list).order_by('trade_date')
+                df = pd.DataFrame(results.values('trade_date','ma25_slope','ma60_slope','ma200_slope','vol','amount'))
+                if df is not None and len(df) > 0:
+                    query = build_condition(filter_params[key])
+                    df_index = df.query(query)
 
         if key == 'E':
-            results = StrategyTestLowHigh.objects.filter(trade_date__in=trade_date_list).order_by('trade_date')
-            df = pd.DataFrame(results)
-            if df is not None and len(df) > 0:
-                query = build_condition(filter_params[key])
-                df_stock = df.query(query) 
+            if len(filter_params[key]) > 0:
+                results = StrategyTestLowHigh.objects.filter(ts_code=ts_code, trade_date__in=trade_date_list).order_by('trade_date')
+                df = pd.DataFrame(results.values(
+                    'trade_date', 'ma25_slope', 'ma60_slope', 'ma200_slope', 'vol', 'amount'))
+                if df is not None and len(df) > 0:
+                    query = build_condition(filter_params[key])
+                    df_stock = df.query(query)
     
-    return list(set(df_index['trade_date']).intersection(set(df_stock['trade_date'])))
+    if df_index is not None and df_stock is not None:
+        return list(set(df_index['trade_date']).intersection(set(df_stock['trade_date'])))
+    else:
+        return df_index['trade_date'].tolist() if df_index is not None else df_stock['trade_date'].tolist()
 
 def period_on_pct_filter(trade_date_list, filter_params=[]):
     df_index = None

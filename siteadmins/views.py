@@ -18,7 +18,7 @@ from stocktrade.models import Transactions
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.analysis_jiuzhuan_cp import test_mark, mark_jiuzhuan
+from analysis.analysis_jiuzhuan_cp import mark_jiuzhuan
 from analysis.strategy_test_pct import test_exp_pct
 from analysis.strategy_test_period import test_by_period
 # from analysis.analysis_dingdi import mark_dingdi_listed

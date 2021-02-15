@@ -147,7 +147,10 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
                     found_min = df.iloc[idx_min]
                     # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
                     test_by_day = StrategyTestLowHigh(ts_code=critical_point.ts_code, trade_date=critical_point.trade_date, test_period=test_period,
-                                                      stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, stage_low_pct=pct_down, strategy_code=strategy_code)
+                                                      stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, 
+                                                      stage_low_pct=pct_down, strategy_code=strategy_code, ma25_slope=df.iloc[idx]['ma25_slope'], 
+                                                      ma60_slope=df.iloc[idx]['ma60_slope'], ma200_slope=df.iloc[idx]['ma200_slope'], 
+                                                      vol=df.iloc[idx]['vol'], amount=df.iloc[idx]['amount'], freq= freq)
                     # test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period,
                     #                                         # open=min.open, high=min.high, low=min.low, close=min.close, pre_close=min.pre_close,
                     #                                         # change=min.change, pct_chg=min.pct_chg, vol=min.vol, amount=min.amount,
