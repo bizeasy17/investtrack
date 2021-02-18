@@ -38,9 +38,11 @@ urlpatterns = [
     path('txnvis/', include('txnvisibility.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('analysis/', include('analysis.urls')),
+    path('hongguan/', include('hongguan.urls')),
+    path('zixuan/', include('zixuan.urls')),
+    path('xuangu/', include('xuangu.urls')),
+    path('paiming/', include('paiming.urls')),
     re_path(r'^', include('search.urls')),
-
-
 
     # home pages
     # re_path(r'^$',
