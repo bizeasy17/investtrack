@@ -21,6 +21,6 @@ urlpatterns = [
 #          views.get_index_vol_range),
 #     path('updown-stock-vol/<ts_code>/<strategy>/<exp_pct>/<freq>/',
 #          views.get_stock_vol_range),
-    path('exp-pct/<ts_code>/<strategy>/<exp_pct>/<freq>/<filters>/',
+    path('exp-pct/<ts_code>/<strategy>/<exp_pct>/<freq>/',
          views.get_expected_pct),
 ]

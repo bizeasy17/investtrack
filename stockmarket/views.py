@@ -344,9 +344,9 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             index_vol = []
             stk_vol = []
 
-
             filters = str2dict(filters)
             all_dates = get_updown_pct_dates(strategy, ts_code, test_period, freq)
+
             if len(filters['I']) == 0 and len(filters['E']) == 0:
                 results = StrategyTestLowHigh.objects.filter(
                     strategy_code=strategy, ts_code=ts_code, test_period=test_period,).order_by('trade_date')
@@ -390,6 +390,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                     ts_code=ts_code, strategy_code=strategy, btest_type='PERIOD_TEST', btest_param=test_period, request_url=request.environ['HTTP_REFERER'], ip_addr=get_ip(request), uid=req_user)
                 query_trace.save()
 
+                # if json inlcude NaN then client will not proceed anything
                 return JsonResponse({'date_label': date_label, 'up_pct': up_pct_list,
                                      'up_qt': up_qt, 'up_50qt': up_50qt,
                                      'down_pct': down_pct_list, 'down_qt': down_qt,
@@ -420,7 +421,7 @@ def get_expected_pct_dates(request, strategy, ts_code, exp_pct='pct20_period', f
             return HttpResponse(status=500)
 
 
-def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D', trade_dates='', filters=''):
+def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D', trade_dates=''):
     req_user = request.user
     if request.method == 'GET':
         try:
@@ -430,7 +431,7 @@ def get_expected_pct(request, strategy, ts_code, exp_pct='pct20_period', freq='D
             qt_50 = []
             results = BStrategyOnFixedPctTest.objects.filter(
                 strategy_code=strategy, ts_code=ts_code,
-                test_freq=freq, trade_date__in=period_on_pct_filter(trade_dates.split(','), str2dict(filters))).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
+                test_freq=freq).order_by('trade_date').values('trade_date', exp_pct)  # [:int(freq_count)]
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values())
                 qtiles = df[exp_pct].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
@@ -467,8 +468,8 @@ def get_stock_vol_range(trade_date_list, freq='D'):
             trade_date__in=trade_date_list, freq=freq)  # [:int(freq_count)]
         if results is not None and len(results) > 0:
             df = pd.DataFrame(results.values('vol', 'amount'))
-            vol_min_max.append(df.min().vol)
-            vol_min_max.append(df.max().vol)
+            vol_min_max.append(df.min().vol if not np.isnan(df.min().vol) else 0)
+            vol_min_max.append(df.max().vol if not np.isnan(df.max().vol) else 0)
             return vol_min_max
         else:
             return []
@@ -487,8 +488,8 @@ def get_index_vol_range(trade_date_list, freq='D'):
             trade_date__in=trade_date_list, freq=freq)
         if results is not None and len(results) > 0:
             df = pd.DataFrame(results.values('vol', 'amount'))
-            vol_min_max.append(df.min().vol)
-            vol_min_max.append(df.max().vol)
+            vol_min_max.append(df.min().vol if not np.isnan(df.min().vol) else 0)
+            vol_min_max.append(df.max().vol if not np.isnan(df.max().vol) else 0)
             return vol_min_max
         else:
             return []
