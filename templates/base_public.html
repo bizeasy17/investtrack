@@ -33,16 +33,8 @@
 </head>
 <body>
 
-  <!-- Navigation -->
-  <nav class="navbar static-top">
-    <div class="container">
-      <div>
-        <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
-        <a class="navbar-brand text-muted" href="{% url 'search:home' %}">{% trans '投呗 - 股票投资小助手' %}</a>
-      </div>
-      <a class="btn btn-primary" href="#">{% trans '微信扫码登录' %}</a>
-    </div>
-  </nav>
+  {% block navbar %}
+  {% endblock navbar %}
   {% block content %}
     <p>Use this document as a way to quick start any new project.</p>
   {% endblock content %}

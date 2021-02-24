@@ -1,5 +1,6 @@
 import decimal
 from datetime import datetime
+import ast
 
 import tushare as ts
 from .models import StockNameCodeMap
@@ -80,3 +81,10 @@ def get_stocknames(stock_symbols=[]):
             map = StockNameCodeMap.objects.get(ts_code=stock_symbol)
             stocknames[stock_symbol] = map.stock_name
     return stocknames
+
+def str2dict(str):
+    '''
+    逗号分隔，转成dict
+    '''
+    dict = ast.literal_eval(str)
+    return dict

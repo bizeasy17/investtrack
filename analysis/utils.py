@@ -16,6 +16,23 @@ strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingd
                  'junxian60_bs': {'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo'},
                  'junxian200_bs': {'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo', }}
 
+
+def get_market_code(ts_code):
+    indexes = {'6': '000001.SH', '0': '399001.SZ',
+               '3': '399006.SZ', '688': '000688.SH'}
+    try:
+        if ts_code[0] == '3':
+            return indexes['3']
+        elif ts_code[0] == '0':
+            return indexes['0']
+        else:
+            if ts_code[:3] == '688':
+                return indexes['688']
+            else:
+                return indexes['6']
+    except Exception as err:
+        print(err)
+
 # X-Forwarded-For:简称XFF头，它代表客户端，也就是HTTP的请求端真实的IP，只有在通过了HTTP 代理或者负载均衡服务器时才会添加该项。
 
 
@@ -47,6 +64,7 @@ def log_test_status(ts_code, event, freq, strategy_list=[]):
             # except Exception as e:
             #     print(e)
         mark_log.save()
+
 
 def ready2proceed(strategy_code, freq='D'):
     exec_date = date.today()
@@ -149,7 +167,7 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
                     task = StockStrategyTestLog(ts_code=listed_company.ts_code,
                                                 analysis_code=strategy,
                                                 event_type=event, freq=freq, start_date=start_date, end_date=end_date)
-                    listed_company.last_analyze_date = end_date      
+                    listed_company.last_analyze_date = end_date
                     task.save()
                     # listed_company.save()
                 # else:

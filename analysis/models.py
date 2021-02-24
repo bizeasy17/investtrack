@@ -60,6 +60,123 @@ class AnalysisEventLog(BaseModel):
     def __str__(self):
         return self.event_type
 
+class StockIndexHistory(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    open	float	开盘价
+    high	float	最高价
+    low	float	最低价
+    close	float	收盘价
+    pre_close	float	昨收价
+    change	float	涨跌额
+    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    vol	float	成交量 （手）
+    amount	float	成交额 （千元）
+    '''
+
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    open = models.FloatField(
+        _('开盘价'), blank=True, null=True)
+    high = models.FloatField(
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
+    pre_close = models.FloatField(
+        _('前日收盘价'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'), blank=True, null=True)
+    change = models.FloatField(
+        _('价格变化'), blank=True, null=True)
+    pct_chg = models.FloatField(
+        _('价格变化%'), blank=True, null=True)
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    chg4 = models.FloatField(
+        _('与4日前变化'), blank=True, null=True)
+    jiuzhuan_count_b = models.FloatField(
+        _('九转序列B'),  blank=True, null=True)
+    jiuzhuan_count_s = models.FloatField(
+        _('九转序列S'),  blank=True, null=True)
+    ma25 = models.FloatField(
+        _('MA25'),  blank=True, null=True)
+    ma25_slope = models.FloatField(
+        _('MA25斜率'),  blank=True, null=True)
+    ma60 = models.FloatField(
+        _('MA60'),  blank=True, null=True)
+    ma60_slope = models.FloatField(
+        _('MA60斜率'),  blank=True, null=True)
+    ma200 = models.FloatField(
+        _('MA200'),  blank=True, null=True)
+    ma200_slope = models.FloatField(
+        _('MA200斜率'),  blank=True, null=True)
+    slope = models.FloatField(
+        _('斜率'), blank=True, null=True)
+    dingdi_count = models.IntegerField(
+        _('顶底序列'),  blank=True, null=True)
+    dibu_b = models.IntegerField(
+        _('底部B?'),  blank=True, null=True)
+    di_min = models.IntegerField(
+        _('底部最低价?'),  blank=True, null=True)
+    w_di = models.IntegerField(
+        _('W底部?'),  blank=True, null=True)
+    dingbu_s = models.IntegerField(
+        _('顶部S?'),  blank=True, null=True)
+    ding_max = models.IntegerField(
+        _('顶部最高价?'),  blank=True, null=True)
+    m_ding = models.IntegerField(
+        _('M顶部?'),  blank=True, null=True)
+    is_dingdi_end = models.IntegerField(
+        _('顶底结束点?'),  blank=True, null=True)
+    tupo_b = models.IntegerField(
+        _('突破压力位B?'),  blank=True, null=True)
+    diepo_s = models.IntegerField(
+        _('跌破支撑位S?'),  blank=True, null=True)
+    # MA25
+    ma25_zhicheng = models.IntegerField(
+        _('MA25均线支撑'),  blank=True, null=True)
+    ma25_tupo = models.IntegerField(
+        _('MA25均线突破'),  blank=True, null=True)
+    ma25_diepo = models.IntegerField(
+        _('MA25均线跌破'),  blank=True, null=True)
+    ma25_yali = models.IntegerField(
+        _('MA25压力'),  blank=True, null=True)
+    # MA60
+    ma60_zhicheng = models.IntegerField(
+        _('MA60均线支撑B?'),  blank=True, null=True)
+    ma60_tupo = models.IntegerField(
+        _('MA60均线突破B?'),  blank=True, null=True)
+    ma60_diepo = models.IntegerField(
+        _('MA60均线跌破S?'),  blank=True, null=True)
+    ma60_yali = models.IntegerField(
+        _('MA60压力S?'),  blank=True, null=True)
+    # MA200
+    ma200_zhicheng = models.IntegerField(
+        _('MA200均线支撑B?'),  blank=True, null=True)
+    ma200_tupo = models.IntegerField(
+        _('MA200均线突破B?'),  blank=True, null=True)
+    ma200_diepo = models.IntegerField(
+        _('MA200均线跌破S?'),  blank=True, null=True)
+    ma200_yali = models.IntegerField(
+        _('MA200压力S?'),  blank=True, null=True)
+
+    freq = models.CharField(
+        _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
+
+    def __str__(self):
+        return self.ts_code
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('股票代码表')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
 
 class StockHistoryDaily(BaseModel):
     '''
@@ -293,6 +410,19 @@ class StrategyTestLowHigh(models.Model):
     #                                   on_delete=models.CASCADE)
     strategy_code = models.CharField(
         _('策略代码'), max_length=25, blank=True, null=True)
+    # 过滤器冗余字段
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    ma25_slope = models.FloatField(
+        _('MA25斜率'),  blank=True, null=True)
+    ma60_slope = models.FloatField(
+        _('MA60斜率'),  blank=True, null=True)
+    ma200_slope = models.FloatField(
+        _('MA200斜率'),  blank=True, null=True)
+    freq = models.CharField(
+        _('测试周期'), max_length=5, blank=False, null=False, default='D')  
 
     def __str__(self):
         return self.ts_code
@@ -375,24 +505,6 @@ class BStrategyOnFixedPctTest(BaseModel):
         _('股票代码'), max_length=15, blank=False, null=False)  # e.g. 000001.SZ
     trade_date = models.DateField(
         _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
-    # new fields
-    # open = models.FloatField(
-    #     _('开盘价'), blank=True, null=True)
-    # high = models.FloatField(
-    #     _('最高价'), blank=True, null=True)
-    # low = models.FloatField(
-    #     _('最低价'), blank=True, null=True)
-    # pre_close = models.FloatField(
-    #     _('前日收盘价'), blank=True, null=True)
-    # close = models.FloatField(_('收盘价'), blank=True, null=True)
-    # change = models.FloatField(
-    #     _('价格变化'), blank=True, null=True)
-    # pct_chg = models.FloatField(
-    #     _('涨幅%'), blank=True, null=True)
-    # vol = models.FloatField(
-    #     _('交易量'), blank=True, null=True)
-    # amount = models.FloatField(
-    #     _('金额'), blank=True, null=True)
     pct10_period = models.FloatField(
         _('+10%最小周期'), blank=True, null=True, default=-1)
     pct20_period = models.FloatField(
@@ -409,6 +521,18 @@ class BStrategyOnFixedPctTest(BaseModel):
         _('+130%最小周期'), blank=True, null=True, default=-1)
     test_freq = models.CharField(
         _('测试周期'), max_length=5, blank=False, null=False, default='D')
+    
+    # 过滤器冗余字段
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    ma25_slope = models.FloatField(
+        _('MA25斜率'),  blank=True, null=True)
+    ma60_slope = models.FloatField(
+        _('MA60斜率'),  blank=True, null=True)
+    ma200_slope = models.FloatField(
+        _('MA200斜率'),  blank=True, null=True)
 
     def __str__(self):
         return self.ts_code

@@ -9,6 +9,8 @@ $(function () {
     var tsCodeNoSfx = "";
     var stockName = "";
     var market = "";
+    var pctOnPeriodDates = "";
+    var periodOnPctDates = "";
 
     var bstr;
     var sstr;
@@ -39,11 +41,39 @@ $(function () {
         updownPctPeriod = $('input:radio[name="period"]:checked').val();
         strategyCode = $('input:radio[name="bstrategy"]:checked').val();
         strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
-        bstr =  $('input:radio[name="bstrategy"]:checked');
+        bstr = $('input:radio[name="bstrategy"]:checked');
+        
+        idxMa25Filter = $('input:radio[name="radioIndexMA25"]:checked').val();
+        idxMa60Filter = $('input:radio[name="radioIndexMA60"]:checked').val();
+        idxMa200Filter = $('input:radio[name="radioIndexMA200"]:checked').val();
+        // idxVolFilter = $('#rangeIndexVolume').val();
+
+        stkMa25Filter = $('input:radio[name="radioStockMA25"]:checked').val();
+        stkMa60Filter = $('input:radio[name="radioStockMA60"]:checked').val();
+        stkMa200Filter = $('input:radio[name="radioStockMA200"]:checked').val();
+        // stkVolFilter = $('#rangeStockVolume').val();
 
         startDate = formatDate(new Date(today.getTime() - (365 * histPeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
+
+        // initBTestDates();
     }
+
+    // var initVolRange = function() {
+    //     $.ajax({
+    //         url: stockmarketEndpoint + "updown-pct-dates/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/" + freq + "/",
+    //         success: function (data) {
+    //             pctOnPeriodDates = data;
+    //         }
+    //     });
+
+    //     $.ajax({
+    //         url: stockmarketEndpoint + "exp-pct-dates/" + tsCode + "/" + strategyCode + "/" + expdPctPeriod + "/" + freq + "/",
+    //         success: function (data) {
+    //             periodOnPctDates = data;
+    //         }
+    //     });
+    // }
 
     var renderChart = function () {
         showCompanyBasic(tsCode);
@@ -759,13 +789,14 @@ $(function () {
     }
 
     var renderUpdownByPeriodChart = function () {
+        var filters = buildBTestFilter();
         $.ajax({
-            url: stockmarketEndpoint + "updown-pct/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/",
+            url: stockmarketEndpoint + "updown-pct/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/" + freq + "/" + filters + "/",
             success: function (data) {
                 option = {
                     title: {
                         text: '固定天数涨跌%',
-                        subtext: '数据来自西安兰特水电测控技术有限公司',
+                        // subtext: '数据来自西安兰特水电测控技术有限公司',
                         // left: 10
                     },
                     tooltip: {
@@ -872,15 +903,21 @@ $(function () {
 
                 };
 
-
                 updownByPeriodChart.setOption(option);
+                
+                idxVolFilter = data.index_vol[0];
+                stkVolFilter = data.stock_vol[0];
+                $('#rangeIndexVolume').attr("min", data.index_vol[0]);
+                $('#rangeIndexVolume').attr("max", data.index_vol[1]);
+                $('#rangeStockVolume').attr("min", data.stock_vol[0]);
+                $('#rangeStockVolume').attr("max", data.stock_vol[1]);
             },
             statusCode: {
                 403: function () {
 
                 },
                 404: function () {
-
+                    $("#updownPctSubtitle").text("上市时间小于3年，暂无回测记录！");
                 },
                 500: function () {
 
@@ -967,7 +1004,7 @@ $(function () {
 
                 },
                 404: function () {
-
+                    $("#targetPctSubtitle").text("上市时间小于3年，暂无回测记录！");
                 },
                 500: function () {
 
@@ -1015,7 +1052,171 @@ $(function () {
         });
     }
 
+    var idxMa25FilterOn = false, idxMa60FilterOn = false, idxMa200FilterOn = false, idxVolFilterOn = false;
+    var idxMa25Filter = "", idxMa60Filter = "", idxMa200Filter = "", idxVolFilter = "";
+    var stkMa25FilterOn = false, stkMa60FilterOn = false, stkMa200FilterOn = false, stkVolFilterOn = false;
+    var stkMa25Filter = "", stkMa60Filter = "", stkMa200Filter = "", stkVolFilter = "";
+    var idxKey = "I", stkKey = "E";
+    
+    var buildBTestFilter = function() {
+        var filter = "";
+        filter += "{'" + idxKey + "':[";
+        if (idxMa25FilterOn){
+            filter += "'" + idxMa25Filter + "',";
+        }
+        if (idxMa60FilterOn) {
+            filter += "'" + idxMa60Filter + "',";
+        }
+        if (idxMa200FilterOn) {
+            filter += "'" + idxMa200Filter + "',";
+        }
+        if (idxVolFilterOn) {
+            filter += "'vol > " + idxVolFilter + "',";
+        }
+        filter += "]";
 
+        filter += ",'" + stkKey + "':[";
+        if (stkMa25FilterOn) {
+            filter += "'" + stkMa25Filter + "',";
+        }
+        if (stkMa60FilterOn) {
+            filter += "'" + stkMa60Filter + "',";
+        }
+        if (stkMa200FilterOn) {
+            filter += "'" + stkMa200Filter + "',";
+        }
+        if (stkVolFilterOn) {
+            filter += "'vol > " + stkVolFilter + "',";
+        }
+        filter += "]}";
+
+        return filter;
+    }
+
+    $('#switchIndexMA25').change(function () {
+        // alert($(this).is(":checked"));
+        idxMa25FilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchIndexMA60').change(function () {
+        idxMa60FilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchIndexMA200').change(function () {
+        idxMa200FilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchIndexVol').change(function () {
+        idxVolFilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchStockMA25').change(function () {
+        stkMa25FilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchStockMA60').change(function () {
+        stkMa60FilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchStockMA200').change(function () {
+        stkMa200FilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    $('#switchStockVol').change(function () {
+        stkVolFilterOn = $(this).is(":checked");
+        renderUpdownByPeriodChart();
+        renderPeriodByUpRangeChart();
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="radioIndexMA25"]').change(function () {
+        // alert($(this).val());
+        if (idxMa25FilterOn) {
+            idxMa25Filter = $(this).val();
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $('input:radio[name="radioIndexMA60"]').change(function () {
+        // alert($(this).val());
+        if (idxMa60FilterOn) {
+            idxMa60Filter = $(this).val();
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $('input:radio[name="radioIndexMA200"]').change(function () {
+        // alert($(this).val());
+        if (idxMa200FilterOn) {
+            idxMa200Filter = $(this).val();
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $("#rangeIndexVolume").change(function () {
+        // alert($(this).val());
+        idxVolFilter = $(this).val();
+        
+        if (idxVolFilterOn) {
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $('input:radio[name="radioStockMA25"]').change(function () {
+        // alert($(this).val());
+        if (stkMa25FilterOn) {
+            stkMa25Filter = $(this).val();
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $('input:radio[name="radioStockMA60"]').change(function () {
+        // alert($(this).val());
+        if (stkMa60FilterOn) {
+            stkMa25Filter = $(this).val();
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $('input:radio[name="radioStockMA200"]').change(function () {
+        // alert($(this).val());
+        if (stkMa200FilterOn) {
+            stkMa200Filter = $(this).val();
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+
+    $("#rangeStockVolume").change(function () {
+        // alert($(this).val());
+        stkVolFilter = $(this).val();
+
+        if (stkVolFilterOn) {
+            renderUpdownByPeriodChart();
+            renderPeriodByUpRangeChart();
+        }
+    });
+    
     $('#searchText').autoComplete({
         resolver: 'custom',
         // preventEnter: true,
@@ -1047,7 +1248,7 @@ $(function () {
         stockName = item.text;
         market = item.market;
         $("#searchText").val(tsCode);
-        window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
+        // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
         renderChart();
     });
 

@@ -14,7 +14,7 @@ from analysis.utils import (generate_task, get_analysis_task,
                             get_event_status, set_event_completed,
                             set_task_completed, ready2proceed)
 
-from .models import StockHistoryDaily, StockStrategyTestLog
+from .models import StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
 from .stock_hist import download_hist_data
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                                 timedelta(days=get_trade_cal_diff(
                                     listed_company.ts_code, task.start_date))
 
-                    mark_jiuzhuan(listed_company.ts_code, freq, start_date,
+                    mark_jiuzhuan(listed_company.ts_code, listed_company.asset, freq, start_date,
                                   task.end_date, atype)
                     # print(task.start_date)
                     # print(task.end_date)
@@ -97,40 +97,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
         print(e)
 
 
-def test_mark(ts_code, start_date, end_date):
-    try:
-        hist_list = []
-        end_date = date.today()
-        df = download_hist_data(ts_code, start_date, end_date)
-        marked_df = pre_mark_jiuzhuan(df)
-        for v in marked_df.values:
-            hist_D = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                       low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                       amount=v[10], chg4=v[11], jiuzhuan_count_b=v[12], jiuzhuan_count_s=v[13])
-            '''
-            ts_code	str	股票代码
-            trade_date	str	交易日期
-            open	float	开盘价
-            high	float	最高价
-            low	float	最低价
-            close	float	收盘价
-            pre_close	float	昨收价
-            change	float	涨跌额
-            pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
-            vol	float	成交量 （手）
-            amount	float	成交额 （千元）
-            '''
-            # hist_D.save()
-            hist_list.append(hist_D)
-        StockHistoryDaily.objects.bulk_create(hist_list)
-    except Exception as e:
-        logger.error(e)
-        return False
-    else:
-        return True
-
-
-def mark_jiuzhuan(ts_code, freq, start_date, end_date, atype):
+def mark_jiuzhuan(ts_code, asset, freq, start_date, end_date, atype):
     '''
     对于未标注九转的上市股票运行一次九转序列标记，
     每次运行只是增量上市股票标记
@@ -142,8 +109,12 @@ def mark_jiuzhuan(ts_code, freq, start_date, end_date, atype):
           ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     # df = hist_since_listed(
     #     listed_company.ts_code, datetime.strptime(listed_company.list_date, '%Y%m%d'), end_date)
-    df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by(
-        'trade_date').values('id', 'close', 'chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'))
+    if asset == 'E':
+        df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by(
+            'trade_date').values('id', 'close', 'chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'))
+    else:
+        df = pd.DataFrame.from_records(StockIndexHistory.objects.filter(ts_code=ts_code, trade_date__gte=start_date, trade_date__lte=end_date).order_by(
+            'trade_date').values('id', 'close', 'chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'))
     # print(len(df))
     if df is not None and len(df) > 0:
         # df_close_diff4 = df['close'].diff(periods=4)
@@ -159,21 +130,23 @@ def mark_jiuzhuan(ts_code, freq, start_date, end_date, atype):
         df = df[start_index:]
         for index, row in df.iterrows():
             hist = None
-            if freq == 'D':
+            if asset == 'E':
                 hist = StockHistoryDaily(pk=row['id'])
             else:
-                pass
+                hist = StockIndexHistory(pk=row['id'])
+
             # print(row['chg4'])
             hist.chg4 = round(
                 row['chg4'], 3) if row['chg4'] is not np.nan else None
             hist.jiuzhuan_count_b = row['jiuzhuan_count_b'] if row['jiuzhuan_count_b'] != 0 else None
             hist.jiuzhuan_count_s = row['jiuzhuan_count_s'] if row['jiuzhuan_count_s'] != 0 else None
             hist_list.append(hist)
-        if freq == 'D':
+        if asset == 'E':
             StockHistoryDaily.objects.bulk_update(
                 hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
         else:
-            pass
+            StockIndexHistory.objects.bulk_update(
+                hist_list, ['chg4', 'jiuzhuan_count_b', 'jiuzhuan_count_s'])
         hist_list.clear()
         print(' marked jiuzhuan on end code - ' + ts_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

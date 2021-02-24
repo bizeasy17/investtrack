@@ -1,4 +1,52 @@
 {% extends 'base_public_search.html' %} {% load static i18n thumbnail %} 
+
+{% block navbar %}
+<!-- Navigation -->
+<!-- <nav class="navbar static-top">
+  <div class="container-fluid">
+    <div class="col-lg-6 row align-items-center">
+      <div class="col-lg-1">
+        <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+        <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
+        </a>
+      </div>
+      <div class="col-lg-11">
+        <form id="searchForm" action="{% url 'search:home' %}">
+          <input type="text" class="form-control form-control-sm" id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}" value="{{search_single.ts_code}}">
+        </form>
+      </div>
+    </div>
+    <a class="btn btn-primary" href="#">{% trans '微信扫码登录' %}</a>
+  </div>
+</nav> -->
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+    <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">      
+  </a>
+  <form class="col-lg-4" id="searchForm" >
+    <input type="text" class="form-control form-control-sm small" id="searchText" autocomplete="off" name="q" placeholder="{% trans '股票名称, 代码或首字母' %}" value="{{search_single.ts_code}}">
+  </form>
+  <div class="collapse navbar-collapse">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'hongguan:home' %}">{% trans '宏观数据' %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'paiming:home' %}">{% trans '市场排名' %}</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link" href="{% url 'xuangu:home' %}">{% trans '策略选股结果' %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'zixuan:home' %}">{% trans '我的自选股' %}</a>
+      </li>
+    </ul>
+    <a class="btn btn-primary" href="#">{% trans '手机快速登录' %}</a>
+  </div>
+</nav>
+{% endblock navbar %}
+
 {% block content %}
 <hr style="margin-top: 0rem; margin-bottom: 0.5rem" />
 <div class="container-fluid mt-4 small">
@@ -250,6 +298,9 @@
                 /><small>{% trans '560' %}</small>
               </label>
             </div>
+            <div>
+              <span class="font-weight-bold" id="updownPctSubtitle"></span>
+            </div>
             <div
               id="updownByPeriodChart"
               class="mt-2"
@@ -328,7 +379,9 @@
                 /><small>{% trans '130%' %}</small>
               </label>
             </div>
-
+            <div>
+              <span class="font-weight-bold" id="targetPctSubtitle"></span>
+            </div>
             <div
               id="periodByUpRangeChart"
               class="mt-2"
@@ -354,7 +407,7 @@
     <div class="col-lg-2">
       <div class="row">
         <div class="col-lg-12">
-          <span class="font-weight-bold">{% trans '趋势过滤器(开发中)' %}</span>
+          <span class="font-weight-bold">{% trans '趋势过滤器' %}</span>
         </div>
       </div>
       <div class="row">
@@ -378,15 +431,15 @@
                     </div>
                     <div class="row form-group col-lg-12">
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA25Up" name="radioIndexMA25" class="custom-control-input" checked="">
+                            <input type="radio" id="radioIndexMA25Up" name="radioIndexMA25" class="custom-control-input" value="ma25_slope >= 0.05241" checked="">
                             <label class="custom-control-label" for="radioIndexMA25Up">{% trans '升' %}</label>
                         </div>
-                        <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA25Flat" name="radioIndexMA25" class="custom-control-input">
+                        <div class="custom-control custom-radio col-lg-4"><!--slope_deg=0.05241-->
+                            <input type="radio" id="radioIndexMA25Flat" name="radioIndexMA25" value="ma25_slope < 0.05241 & ma25_slope > -0.05241" class="custom-control-input">
                             <label class="custom-control-label" for="radioIndexMA25Flat">{% trans '平' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA25Down" name="radioIndexMA25" class="custom-control-input">
+                            <input type="radio" id="radioIndexMA25Down" name="radioIndexMA25" value="ma25_slope <= -0.05241" class="custom-control-input">
                             <label class="custom-control-label" for="radioIndexMA25Down">{% trans '降' %}</label>
                         </div>
                     </div>
@@ -405,15 +458,15 @@
                     </div>
                     <div class="row form-group col-lg-12">
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA60Up" name="radioIndexMA60" class="custom-control-input" checked="">
+                            <input type="radio" id="radioIndexMA60Up" name="radioIndexMA60" class="custom-control-input"  value="ma60_slope >= 0.05241" checked="">
                             <label class="custom-control-label" for="radioIndexMA60Up">{% trans '升' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA60Flat" name="radioIndexMA60" class="custom-control-input">
+                            <input type="radio" id="radioIndexMA60Flat" name="radioIndexMA60" class="custom-control-input" value="ma60_slope < 0.05241 & ma60_slope > -0.05241" >
                             <label class="custom-control-label" for="radioIndexMA60Flat">{% trans '平' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA60Down" name="radioIndexMA60" class="custom-control-input">
+                            <input type="radio" id="radioIndexMA60Down" name="radioIndexMA60" class="custom-control-input" value="ma60_slope <= -0.05241">
                             <label class="custom-control-label" for="radioIndexMA60Down">{% trans '降' %}</label>
                         </div>
                     </div>
@@ -432,15 +485,15 @@
                     </div>
                     <div class="row form-group col-lg-12">
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA200Up" name="radioIndexMA200" class="custom-control-input" checked="">
+                            <input type="radio" id="radioIndexMA200Up" name="radioIndexMA200" class="custom-control-input" value="ma200_slope >= 0.05241" checked="">
                             <label class="custom-control-label" for="radioIndexMA200Up">{% trans '升' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA200Flat" name="radioIndexMA200" class="custom-control-input">
+                            <input type="radio" id="radioIndexMA200Flat" name="radioIndexMA200" class="custom-control-input" value="ma200slope < 0.05241 & ma200_slope > -0.05241" >
                             <label class="custom-control-label" for="radioIndexMA200Flat">{% trans '平' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioIndexMA200Down" name="radioIndexMA200" class="custom-control-input">
+                            <input type="radio" id="radioIndexMA200Down" name="radioIndexMA200" class="custom-control-input" value="ma200_slope <= -0.05241">
                             <label class="custom-control-label" for="radioIndexMA200Down">{% trans '降' %}</label>
                         </div>
                     </div>
@@ -455,8 +508,8 @@
         </fieldset>
         <div class="form-group col-lg-4">
             <div class="col-lg-6 custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
-                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+                <input type="checkbox" class="custom-control-input" id="switchIndexVol">
+                <label class="custom-control-label" for="switchIndexVol">{% trans '关' %}</label>
             </div>
         </div>
         <span class="font-weight-bold" id="indexVolume"></span>
@@ -482,15 +535,15 @@
                     </div>
                     <div class="row form-group col-lg-12">
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA25Up" name="radioStockMA25" class="custom-control-input" checked="">
+                            <input type="radio" id="radioStockMA25Up" name="radioStockMA25" class="custom-control-input" value="ma25_slope >= 0.05241" checked="">
                             <label class="custom-control-label" for="radioStockMA25Up">{% trans '升' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA25Flat" name="radioStockMA25" class="custom-control-input">
+                            <input type="radio" id="radioStockMA25Flat" name="radioStockMA25" class="custom-control-input" value="ma25_slope < 0.05241 & ma25_slope > -0.05241" >
                             <label class="custom-control-label" for="radioStockMA25Flat">{% trans '平' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA25Down" name="radioStockMA25" class="custom-control-input">
+                            <input type="radio" id="radioStockMA25Down" name="radioStockMA25" class="custom-control-input" value="ma25_slope <= -0.05241">
                             <label class="custom-control-label" for="radioStockMA25Down">{% trans '降' %}</label>
                         </div>
                     </div>
@@ -509,15 +562,15 @@
                     </div>
                     <div class="row form-group col-lg-12">
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA60Up" name="radioStockMA60" class="custom-control-input" checked="">
+                            <input type="radio" id="radioStockMA60Up" name="radioStockMA60" class="custom-control-input" value="ma60_slope >= 0.05241" checked="">
                             <label class="custom-control-label" for="radioStockMA60Up">{% trans '升' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA60Flat" name="radioStockMA60" class="custom-control-input">
+                            <input type="radio" id="radioStockMA60Flat" name="radioStockMA60" class="custom-control-input" value="ma60_slope < 0.05241 & ma60_slope > -0.05241" >
                             <label class="custom-control-label" for="radioStockMA60Flat">{% trans '平' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA60Down" name="radioStockMA60" class="custom-control-input">
+                            <input type="radio" id="radioStockMA60Down" name="radioStockMA60" class="custom-control-input" value="ma60_slope <= -0.05241">
                             <label class="custom-control-label" for="radioStockMA60Down">{% trans '降' %}</label>
                         </div>
                     </div>
@@ -536,15 +589,15 @@
                     </div>
                     <div class="row form-group col-lg-12">
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA200Up" name="radioStockMA200" class="custom-control-input" checked="">
+                            <input type="radio" id="radioStockMA200Up" name="radioStockMA200" class="custom-control-input" value="ma200_slope >= 0.05241" checked="">
                             <label class="custom-control-label" for="radioStockMA200Up">{% trans '升' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA200Flat" name="radioStockMA200" class="custom-control-input">
+                            <input type="radio" id="radioStockMA200Flat" name="radioStockMA200" class="custom-control-input" value="ma200_slope < 0.05241 & ma200_slope > -0.05241" >
                             <label class="custom-control-label" for="radioStockMA200Flat">{% trans '平' %}</label>
                         </div>
                         <div class="custom-control custom-radio col-lg-4">
-                            <input type="radio" id="radioStockMA200Down" name="radioStockMA200" class="custom-control-input">
+                            <input type="radio" id="radioStockMA200Down" name="radioStockMA200" class="custom-control-input" value="ma200_slope <= -0.05241">
                             <label class="custom-control-label" for="radioStockMA200Down">{% trans '降' %}</label>
                         </div>
                     </div>
@@ -555,12 +608,12 @@
       <div class="row">
         <fieldset class="col-lg-8 form-group">
             <label class="font-weight-bold" for="rangeStock">{% trans '个股成交量' %}</label>
-            <input type="range" class="custom-range" id="rangeStock">
+            <input type="range" class="custom-range" id="rangeStockVolume">
         </fieldset>
         <div class="form-group col-lg-4">
             <div class="col-lg-6 custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="switchIndexMA25">
-                <label class="custom-control-label" for="switchIndexMA25">{% trans '关' %}</label>
+                <input type="checkbox" class="custom-control-input" id="switchStockVol">
+                <label class="custom-control-label" for="switchStockVol">{% trans '关' %}</label>
             </div>
         </div>
         <span class="font-weight-bold" id="stockVolume"></span>

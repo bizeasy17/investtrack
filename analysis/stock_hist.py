@@ -9,7 +9,7 @@ from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
                             get_event_status, last_download_date,
                             log_download_hist, set_event_completed)
 
-from .models import StockHistoryDaily, StockStrategyTestLog
+from .models import StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
 
 '''
 check the missing history sql query
@@ -199,12 +199,15 @@ def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
     hist_list = []
     for v in df.values:
         hist = object
-        if freq == 'D':
+
+        if asset == 'E':
             hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
                                      low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
                                      amount=v[10], freq=freq)
-        else:
-            pass
+        else: # 指数信息
+            hist = StockIndexHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                                     amount=v[10], freq=freq)
         '''
         ts_code	str	股票代码
         trade_date	str	交易日期
@@ -219,9 +222,10 @@ def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
         amount	float	成交额 （千元）
         '''
         hist_list.append(hist)
-    if freq == 'D':
+    if asset == 'E':
         StockHistoryDaily.objects.bulk_create(hist_list)
-    else:
-        pass
+    else:  # 指数信息
+        StockIndexHistory.objects.bulk_create(hist_list)
+
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info downloaded.')

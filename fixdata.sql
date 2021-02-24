@@ -20,7 +20,7 @@ delete from public.analysis_stockstrategytestlog
 delete from public.analysis_analysiseventlog 
 -- 4. 重置public.stockmarket_stocknamecodemap 
 update public.stockmarket_stocknamecodemap
-set last_update_date = NULL
+set last_update_date = NULL,last_analyze_date = NULL
 
 delete from public.analysis_analysiseventlog
 delete from public.analysis_stockhistorydaily

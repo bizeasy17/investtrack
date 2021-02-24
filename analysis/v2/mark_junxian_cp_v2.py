@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 
 import numpy as np
 import pandas as pd
-from analysis.models import StockHistoryDaily, StockStrategyTestLog
+from analysis.models import StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
 from analysis.stock_hist import download_hist_data
 from analysis.utils import (generate_task, get_analysis_task, get_event_status,
                             get_trade_cal_diff, init_eventlog, ready2proceed,
@@ -62,8 +62,12 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
                 listed_companies = StockNameCodeMap.objects.filter(
                     ts_code__in=ts_code_list).order_by('-ts_code')
         for listed_company in listed_companies:
-            hist = StockHistoryDaily.objects.filter(
-                ts_code=listed_company.ts_code)
+            if listed_company.asset == 'E':
+                hist = StockHistoryDaily.objects.filter(
+                    ts_code=listed_company.ts_code)
+            else:
+                hist = StockIndexHistory.objects.filter(
+                    ts_code=listed_company.ts_code)
             if hist is not None and len(hist) < int(ma_freq):
                 print('stock hist to mark is less than required vol, will not proceed')
                 continue
@@ -92,7 +96,7 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
                                 timedelta(days=get_trade_cal_diff(
                                     listed_company.ts_code, task.start_date, period=int(ma_freq)+int(slope_offset) * 2))
 
-                    mark_junxian_cp(listed_company.ts_code, start_date,
+                    mark_junxian_cp(listed_company.ts_code, listed_company.asset, start_date,
                                     task.end_date, ma_freq=ma_freq, atype=atype, slope_offset=int(slope_offset))
 
                     # print(task.start_date)
@@ -107,7 +111,7 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
         print(e)
 
 
-def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, slope_offset=2, version='v2', done_by='system'):
+def mark_junxian_cp(ts_code, asset, start_date, end_date, atype='1', freq='D', ma_freq='25', price_chg_pct=0.03, slope_deg=0.05241, slope_offset=2, version='v2', done_by='system'):
     '''
     目标：
     参数化分析均线，可能对结果有影响的参数
@@ -120,12 +124,14 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
     try:
         df = None
         hist_list = []
-        if freq == 'D':
+        if asset == 'E':
             df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(ts_code=ts_code,
                                                                             trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date').values('id', 'ma'+ma_freq, 'trade_date', 'open', 'close', 'low', 'high', 'slope'))
             # print(df.head())
         else:
-            pass
+            df = pd.DataFrame.from_records(StockIndexHistory.objects.filter(ts_code=ts_code,
+                                                                            trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date').values('id', 'ma'+ma_freq, 'trade_date', 'open', 'close', 'low', 'high', 'slope'))
+
         if df is not None and len(df) > 0:
             # 标记均线
             mark_mov_avg(ts_code, df, ma_freq)
@@ -148,13 +154,10 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
             # print(len(df))
             for index, row in df.iterrows():
                 hist = object
-                if freq == 'D':
-                    if done_by == 'system':
-                        hist = StockHistoryDaily(pk=row['id'])
-                    else:
-                        pass
+                if asset == 'E':
+                    hist = StockHistoryDaily(pk=row['id'])
                 else:
-                    pass
+                    hist = StockIndexHistory(pk=row['id'])
                 # print(str(row['trade_date']) + ' ' + str(row['ma'+ma_freq+'_slope']))
                 setattr(hist, 'ma'+ma_freq, row['ma'+ma_freq] if not math.isnan(
                     row['ma'+ma_freq]) else None)
@@ -169,18 +172,21 @@ def mark_junxian_cp(ts_code, start_date, end_date, atype='1', freq='D', ma_freq=
                 setattr(hist, 'ma'+ma_freq+'_yali', round(row['ma'+ma_freq+'_yali'], 3) if not math.isnan(
                     row['ma'+ma_freq+'_yali']) else None)
                 hist_list.append(hist)
-            if freq == 'D':
-                if done_by == 'system':
-                    StockHistoryDaily.objects.bulk_update(hist_list, ['ma'+ma_freq,
-                                                                      'ma'+ma_freq+'_slope',
-                                                                      'ma'+ma_freq+'_zhicheng',
-                                                                      'ma'+ma_freq+'_tupo',
-                                                                      'ma'+ma_freq+'_diepo',
-                                                                      'ma'+ma_freq+'_yali'])
-                else:
-                    pass
+            
+            if asset == 'E':
+                StockHistoryDaily.objects.bulk_update(hist_list, ['ma'+ma_freq,
+                                                                    'ma'+ma_freq+'_slope',
+                                                                    'ma'+ma_freq+'_zhicheng',
+                                                                    'ma'+ma_freq+'_tupo',
+                                                                    'ma'+ma_freq+'_diepo',
+                                                                    'ma'+ma_freq+'_yali'])
             else:
-                pass
+                StockIndexHistory.objects.bulk_update(hist_list, ['ma'+ma_freq,
+                                                                    'ma'+ma_freq+'_slope',
+                                                                    'ma'+ma_freq+'_zhicheng',
+                                                                    'ma'+ma_freq+'_tupo',
+                                                                    'ma'+ma_freq+'_diepo',
+                                                                    'ma'+ma_freq+'_yali'])
             # listed_company.is_marked_junxian_bs = True
             # listed_company.save()
             print(' marked junxian bs on end code - ' + ts_code +
