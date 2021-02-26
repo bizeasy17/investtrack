@@ -137,7 +137,7 @@ def mark_jiuzhuan(ts_code, asset, freq, start_date, end_date, atype):
 
             # print(row['chg4'])
             hist.chg4 = round(
-                row['chg4'], 3) if row['chg4'] is not np.nan else None
+                row['chg4'], 3) if row['chg4'] is not np.isnan(row['chg4']) else None
             hist.jiuzhuan_count_b = row['jiuzhuan_count_b'] if row['jiuzhuan_count_b'] != 0 else None
             hist.jiuzhuan_count_s = row['jiuzhuan_count_s'] if row['jiuzhuan_count_s'] != 0 else None
             hist_list.append(hist)
