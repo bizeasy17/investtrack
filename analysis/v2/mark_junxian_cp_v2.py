@@ -94,7 +94,7 @@ def process_junxian_cp(ts_codes, freq='D', ma_freq='25', version='v1', slope_off
                         else:
                             start_date = task.start_date - \
                                 timedelta(days=get_trade_cal_diff(
-                                    listed_company.ts_code, task.start_date, period=int(ma_freq)+int(slope_offset) * 2))
+                                    listed_company.ts_code, task.start_date, listed_company.asset, period=int(ma_freq)+int(slope_offset) * 2))
 
                     mark_junxian_cp(listed_company.ts_code, listed_company.asset, start_date,
                                     task.end_date, ma_freq=ma_freq, atype=atype, slope_offset=int(slope_offset))

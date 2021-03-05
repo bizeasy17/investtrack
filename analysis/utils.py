@@ -8,7 +8,7 @@ from dashboard.utils import days_between
 from django.utils import timezone
 from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
                      StrategyTargetPctTestQuantiles,
-                     StrategyUpDownTestQuantiles, TradeStrategyStat)
+                     StrategyUpDownTestQuantiles, TradeStrategyStat, StockIndexHistory)
 
 strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingdi': {'dingbu_s', 'dibu_b'},
                  'tupo_yali_b': {'tupo_b'}, 'diepo_zhicheng_s': {'diepo_s'},  'wm_dingdi_bs': {'m_ding', 'w_di'},
@@ -357,7 +357,7 @@ def get_analysis_task(ts_code, event, strategy_code, freq='D'):
         return None
 
 
-def get_trade_cal_diff(ts_code, last_trade, exchange='SSE', period=4):
+def get_trade_cal_diff(ts_code, last_trade, asset='E', exchange='SSE', period=4):
     count = 0
     offset = 0
     # pro = ts.pro_api()
@@ -367,8 +367,12 @@ def get_trade_cal_diff(ts_code, last_trade, exchange='SSE', period=4):
         # if df['is_open'].iloc[0] == 1:
         #     count += 1
         try:
-            StockHistoryDaily.objects.get(
-                ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
+            if asset == 'E':
+                StockHistoryDaily.objects.get(
+                    ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
+            else:
+                StockIndexHistory.objects.get(
+                    ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
             count += 1
         except Exception as e:
             print(ts_code)

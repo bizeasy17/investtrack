@@ -128,3 +128,131 @@ class StockNameCodeMap(BaseModel):
         verbose_name = _('股票代码表')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
+
+
+class CompanyBasic(BaseModel):
+    
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+    exchange = models.CharField(
+        _('交易所代码'), max_length=10, blank=True, null=True)
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+    chairman = models.CharField(_('法人代表'), max_length=50,
+                            blank=True, null=True)
+    manager = models.CharField(
+        _('总经理'), max_length=50, blank=True, null=True)
+    secretary = models.CharField(
+        _('董秘'), max_length=50, blank=True, null=True)
+    reg_capital = models.FloatField(_('注册资本'),
+                               blank=True, null=True)
+    setup_date = models.DateField(
+        _('注册日期'), blank=True, null=True)
+    province = models.CharField(
+        _('所在省'), max_length=50, blank=True, null=True)
+    city = models.CharField(
+        _('城市'), max_length=50, blank=True, null=True)
+    introduction = models.CharField(
+        _('介绍'), max_length=500, blank=True, null=True)
+    website = models.CharField(
+        _('主页'), max_length=128, blank=True, null=True)
+    email = models.CharField(
+        _('邮件'), max_length=128, blank=True, null=True)
+    office = models.CharField(
+        _('办公地址'), max_length=100, blank=True, null=True)
+    employees = models.IntegerField(
+        _('员工数'), blank=True, null=True)  # name e.g. 平安银行
+    main_business = models.CharField(
+        _('主营业务'), max_length=500, blank=True, null=True)  # name e.g. 平安银行
+    business_scope = models.CharField(
+        _('经营范围'), max_length=500, blank=True, null=True)  # name e.g. 平安银行
+    
+    def __str__(self):
+        return self.stock_name
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('公司基本信息')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class CompanyManagers(BaseModel):
+    
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+    announce_date = models.DateField(_('公告日期'), blank=True, null=True)
+    name = models.CharField(
+        _('姓名'), max_length=50, blank=True, null=True)
+    gender = models.CharField(
+        _('性别'), max_length=10, blank=True, null=True)
+    level = models.CharField(_('岗位类别'), max_length=50,
+                               blank=True, null=True)
+    title = models.CharField(
+        _('岗位'), max_length=10, blank=True, null=True)
+    edu = models.CharField(
+        _('学历'), max_length=10, blank=True, null=True)
+    national = models.CharField(
+        _('国籍'), max_length=10, blank=True, null=True)
+    birthday = models.CharField(
+        _('出生年月'), max_length=10, blank=True, null=True)
+    begin_date = models.DateField(
+        _('上任日期'), blank=True, null=True)
+    end_date = models.DateField(
+        _('离任日期'), blank=True, null=True)
+    resume = models.CharField(
+        _('简历'), max_length=500, blank=True, null=True)
+    
+    def __str__(self):
+        return self.stock_name
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('公司管理层')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+
+class ManagerRewards(BaseModel):
+    
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+    announce_date = models.DateField(
+        _('公告日期'), blank=True, null=True)
+    end_date = models.DateField(
+        _('截至日期'), blank=True, null=True)
+    name = models.CharField(
+        _('姓名'), max_length=50, blank=True, null=True)
+    title = models.DateField(
+        _('职务'), max_length=50, blank=True, null=True)
+    reward = models.FloatField(
+        _('报酬'), blank=True, null=True)
+    hold_value = models.FloatField(
+        _('持股数'), blank=True, null=True)
+    
+    
+    def __str__(self):
+        return self.stock_name
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('管理层薪酬')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'

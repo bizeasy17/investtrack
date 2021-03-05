@@ -81,7 +81,7 @@ def process_jiuzhuan_cp(ts_code, freq='D'):
                         else:
                             start_date = task.start_date - \
                                 timedelta(days=get_trade_cal_diff(
-                                    listed_company.ts_code, task.start_date))
+                                    listed_company.ts_code, task.start_date, listed_company.asset))
 
                     mark_jiuzhuan(listed_company.ts_code, listed_company.asset, freq, start_date,
                                   task.end_date, atype)
