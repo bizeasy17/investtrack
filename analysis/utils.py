@@ -89,6 +89,21 @@ def ready2proceed(strategy_code, freq='D'):
     return True
 
 
+def is_hist_downloaded(freq='D'):
+    exec_date = date.today()
+    evt_dl_status = get_event_status(
+        'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
+
+    if evt_dl_status == 0:
+        print("previous downloading is still ongoing")
+        return False
+    elif evt_dl_status == -1:
+        print("history has not yet been downloaded today")
+        return False
+
+    return True
+
+
 def get_dict_key(dict, value):
     for (k, v) in dict.items():
         if value in v:
@@ -135,6 +150,7 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
                               'tupo_b', 'diepo_s', 'm_ding', 'w_di',
                               'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo']
     mark_cp_event_list = ['MARK_CP']
+    dl_daily_event_list = ['DAILY_DOWNLOAD']
     mark_strategy_set = {}
     mark_strategy_dict = {
         '25': {'junxian25_bs', 'jiuzhuan_bs'},
@@ -209,6 +225,20 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
                                             analysis_code=strategy,
                                             event_type=event, freq=freq, start_date=start_date, end_date=end_date)
             task.save()
+
+    for event in dl_daily_event_list:
+        try:
+            # tasks = get_analysis_task(ts_code, event, )
+            task = StockStrategyTestLog.objects.get(
+                ts_code=listed_company.ts_code, event_type=event, freq=freq, end_date=start_date - timedelta(days=1), is_done=False)
+            task.end_date = end_date
+            # mark_log.save()
+        except Exception as e:  # 未找到运行记录
+            # print(e)
+            # 未找到运行记录
+            task = StockStrategyTestLog(ts_code=listed_company.ts_code,
+                                        event_type=event, freq=freq, start_date=start_date, end_date=end_date)
+        task.save()
 
 
 def get_event_status(event, exec_date, strategy_code=None, freq='D'):
@@ -375,8 +405,7 @@ def get_trade_cal_diff(ts_code, last_trade, asset='E', exchange='SSE', period=4)
                     ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
             count += 1
         except Exception as e:
-            print(ts_code)
-            print(e)
+            pass
         offset += 1
     # print(last_trade-timedelta(days=offset))
     return offset
@@ -411,8 +440,7 @@ def get_trade_cal_by_attr(ts_code, last_trade, attr='jiuzhuan_count_b'):
             if getattr(hist, attr) == 1:
                 it_is = True
         except Exception as e:
-            print(ts_code)
-            print(e)
+            pass
         offset += 1
     # print(last_trade-timedelta(days=offset))
     return hist

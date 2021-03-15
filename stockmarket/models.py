@@ -28,6 +28,7 @@ class BaseModel(models.Model):
     def get_absolute_url(self):
         pass
 
+
 class StockNameCodeMap(BaseModel):
     STOCK_MARKET_CHOICES = (
         ('ZB', _('主板')),
@@ -115,7 +116,7 @@ class StockNameCodeMap(BaseModel):
     #     _('交易历史已更新？'), blank=False, null=False, default=False)
     # hist_update_date = models.DateField(
     #     _('更新日期？'), blank=True, null=True)
-    
+
     def __str__(self):
         return self.stock_name
 
@@ -131,21 +132,24 @@ class StockNameCodeMap(BaseModel):
 
 
 class CompanyBasic(BaseModel):
-    
+    company =  models.ForeignKey(StockNameCodeMap,blank=True, null=True, on_delete=models.SET_NULL)
+
     stock_code = models.CharField(
         _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
     exchange = models.CharField(
         _('交易所代码'), max_length=10, blank=True, null=True)
+    index_category = models.CharField(
+        _('板块'), max_length=10, blank=True, null=True)
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+        _('TS代码'), max_length=50, blank=True, null=False, unique=True)  # e.g. 000001.SZ
     chairman = models.CharField(_('法人代表'), max_length=50,
-                            blank=True, null=True)
+                                blank=True, null=True)
     manager = models.CharField(
         _('总经理'), max_length=50, blank=True, null=True)
     secretary = models.CharField(
         _('董秘'), max_length=50, blank=True, null=True)
     reg_capital = models.FloatField(_('注册资本'),
-                               blank=True, null=True)
+                                    blank=True, null=True)
     setup_date = models.DateField(
         _('注册日期'), blank=True, null=True)
     province = models.CharField(
@@ -153,7 +157,7 @@ class CompanyBasic(BaseModel):
     city = models.CharField(
         _('城市'), max_length=50, blank=True, null=True)
     introduction = models.CharField(
-        _('介绍'), max_length=500, blank=True, null=True)
+        _('介绍'), max_length=5000, blank=True, null=True)
     website = models.CharField(
         _('主页'), max_length=128, blank=True, null=True)
     email = models.CharField(
@@ -166,7 +170,7 @@ class CompanyBasic(BaseModel):
         _('主营业务'), max_length=500, blank=True, null=True)  # name e.g. 平安银行
     business_scope = models.CharField(
         _('经营范围'), max_length=500, blank=True, null=True)  # name e.g. 平安银行
-    
+
     def __str__(self):
         return self.stock_name
 
@@ -181,25 +185,124 @@ class CompanyBasic(BaseModel):
         get_latest_by = 'id'
 
 
-class CompanyManagers(BaseModel):
-    
-    stock_code = models.CharField(
-        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+class IndexDailyBasic(BaseModel):
+    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False, )  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日期'), blank=True, null=True)
+    turnover_rate = models.FloatField(
+        _('换手率'), max_length=50, blank=True, null=True)
+    turnover_rate_f = models.FloatField(
+        _('换手率(自由流通)'), max_length=50, blank=True, null=True)
+    pe = models.FloatField(
+        _('市盈率'), blank=True, null=True)
+    pe_ttm = models.FloatField(
+        _('市盈率TTM'), blank=True, null=True)
+    pb = models.FloatField(
+            _('市净率'), blank=True, null=True)
+    total_share = models.FloatField(
+        _('总股本'), blank=True, null=True)
+    float_share = models.FloatField(
+        _('流通股本'), blank=True, null=True)
+    free_share = models.FloatField(
+        _('自由流通股本'), blank=True, null=True)
+    total_mv = models.FloatField(
+        _('总市值'), blank=True, null=True)  # name e.g. 平安银行
+    float_mv = models.FloatField(
+        _('流通市值'), blank=True, null=True)  # name e.g. 平安银行
+
+    def __str__(self):
+        return self.ts_code
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('指数每日基本')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class CompanyDailyBasic(BaseModel):
+    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+
     ts_code = models.CharField(
         _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+    stock_code = models.CharField(
+        _('股票代码'), max_length=50, blank=False, null=False,)  # symbol, e.g. 000001
+    trade_date = models.DateField(
+        _('交易日期'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'),
+                              blank=True, null=True)
+    turnover_rate = models.FloatField(
+        _('换手率'), max_length=50, blank=True, null=True)
+    turnover_rate_f = models.FloatField(
+        _('换手率(自由流通)'), max_length=50, blank=True, null=True)
+    volume_ratio = models.FloatField(_('量比'),
+                                     blank=True, null=True)
+    pe = models.FloatField(
+        _('市盈率'), blank=True, null=True)
+    pe_ttm = models.FloatField(
+        _('市盈率TTM'), blank=True, null=True)
+    pb = models.FloatField(
+        _('市净率'), blank=True, null=True)
+    ps = models.FloatField(
+        _('市销率'), blank=True, null=True)
+    ps_ttm = models.FloatField(
+        _('市销率TTM'), blank=True, null=True)
+    dv_ratio = models.FloatField(
+        _('股息'), blank=True, null=True)
+    dv_ttm = models.FloatField(
+        _('股息率TTM'), blank=True, null=True)
+    total_share = models.FloatField(
+        _('总股本'), blank=True, null=True)
+    float_share = models.FloatField(
+        _('流通股本'), blank=True, null=True)
+    free_share = models.FloatField(
+        _('自由流通股本'), blank=True, null=True)
+    total_mv = models.FloatField(
+        _('总市值'), blank=True, null=True)  # name e.g. 平安银行
+    circ_mv = models.FloatField(
+        _('流通市值'), blank=True, null=True)  # name e.g. 平安银行
+
+    def __str__(self):
+        return self.ts_code
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('公司每日基本')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class CompanyManagers(BaseModel):
+    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+
+    # stock_code = models.CharField(
+    #     _('股票代码'), max_length=50, blank=False, null=False)  # symbol, e.g. 000001
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False,)  # e.g. 000001.SZ
     announce_date = models.DateField(_('公告日期'), blank=True, null=True)
     name = models.CharField(
         _('姓名'), max_length=50, blank=True, null=True)
     gender = models.CharField(
         _('性别'), max_length=10, blank=True, null=True)
     level = models.CharField(_('岗位类别'), max_length=50,
-                               blank=True, null=True)
+                             blank=True, null=True)
     title = models.CharField(
-        _('岗位'), max_length=10, blank=True, null=True)
+        _('岗位'), max_length=50, blank=True, null=True)
     edu = models.CharField(
         _('学历'), max_length=10, blank=True, null=True)
     national = models.CharField(
-        _('国籍'), max_length=10, blank=True, null=True)
+        _('国籍'), max_length=50, blank=True, null=True)
     birthday = models.CharField(
         _('出生年月'), max_length=10, blank=True, null=True)
     begin_date = models.DateField(
@@ -208,7 +311,7 @@ class CompanyManagers(BaseModel):
         _('离任日期'), blank=True, null=True)
     resume = models.CharField(
         _('简历'), max_length=500, blank=True, null=True)
-    
+
     def __str__(self):
         return self.stock_name
 
@@ -223,11 +326,11 @@ class CompanyManagers(BaseModel):
         get_latest_by = 'id'
 
 
-
 class ManagerRewards(BaseModel):
-    
-    stock_code = models.CharField(
-        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+
+    # stock_code = models.CharField(
+    #     _('股票代码'), max_length=50, blank=False, null=False,)  # symbol, e.g. 000001
     ts_code = models.CharField(
         _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
     announce_date = models.DateField(
@@ -236,14 +339,13 @@ class ManagerRewards(BaseModel):
         _('截至日期'), blank=True, null=True)
     name = models.CharField(
         _('姓名'), max_length=50, blank=True, null=True)
-    title = models.DateField(
+    title = models.CharField(
         _('职务'), max_length=50, blank=True, null=True)
     reward = models.FloatField(
         _('报酬'), blank=True, null=True)
     hold_value = models.FloatField(
         _('持股数'), blank=True, null=True)
-    
-    
+
     def __str__(self):
         return self.stock_name
 

@@ -10,6 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
 from analysis.utils import get_ip
+from analysis.models import StrategyUpDownTestRanking, StrategyTargetPctTestRanking
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -37,3 +38,32 @@ class HomeView(TemplateView):
                 return render(request, self.template_name)
         except Exception as err:
             logger.error(err)
+
+
+def get_btest_ranking(request, strategy_code, test_type, qt_pct, input_param, start_idx, end_idx):
+    ranked_list = []
+    if request.method == 'GET':
+        '''
+        1. Company Basic
+        2. Company Daily Basic
+        3. BTEST Quantile
+        '''
+        try:
+            if test_type == 'up_pct' or test_type == 'down_pct':
+                rankings = StrategyUpDownTestRanking.objects.filter(
+                    test_type=test_type, strategy_code=strategy_code, qt_pct=qt_pct, test_period=int(input_param)).order_by('ranking')[start_idx:end_idx]
+            elif test_type == 'target_pct':
+                rankings = StrategyTargetPctTestRanking.objects.filter(
+                    qt_pct=qt_pct, strategy_code=strategy_code, target_pct=input_param).order_by('ranking')[start_idx:end_idx]
+            if rankings is not None and len(rankings) > 0:
+                for ranking in rankings:
+                    ranked_list.append(
+                        {
+                            'qt_pct_val': ranking.qt_pct_val, 'rank': ranking.ranking, 'ts_code': ranking.ts_code, 'stock_name': ranking.stock_name,
+                        })
+                return JsonResponse(ranked_list, safe=False)
+            else:
+                return HttpResponse(status=400)
+        except Exception as err:
+            logger.error(err)
+            return HttpResponse(status=500)
