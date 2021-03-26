@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from investors.models import TradeStrategy
-from stockmarket.models import StockNameCodeMap
+from stockmarket.models import StockNameCodeMap, CompanyBasic
 # Create your models here.
 
 
@@ -579,6 +579,8 @@ class StrategyUpDownTestQuantiles(BaseModel):
         _('K线周期'), max_length=5, blank=False, null=False, default='D')
     company = models.ForeignKey(
         StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company_basic = models.ForeignKey(
+        CompanyBasic, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['ts_code']
@@ -615,6 +617,10 @@ class StrategyTargetPctTestQuantiles(BaseModel):
     #     _('排名'), blank=True, null=True, db_index=True)
     test_freq = models.CharField(
         _('K线周期'), max_length=5, blank=False, null=False, default='D')
+    company = models.ForeignKey(
+        StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company_basic = models.ForeignKey(
+        CompanyBasic, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['ts_code']

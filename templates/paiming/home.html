@@ -64,25 +64,34 @@
                     <label class="btn btn-light active">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestType"
                         id="p10"
                         autocomplete="off"
-                        value="10"
+                        value="up_pct"
                         checked
-                        />{% trans '持仓天数' %}
+                        />{% trans '涨幅' %}
                     </label>
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestType"
                         id="p20"
                         autocomplete="off"
-                        value="20"
-                        />{% trans '预期涨幅' %}
+                        value="down_pct"
+                        />{% trans '跌幅' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input
+                        type="radio"
+                        name="btestType"
+                        id="p20"
+                        autocomplete="off"
+                        value="exp_pct"
+                        />{% trans '天数' %}
                     </label>
                 </div>
             </div>
-            <div class="col-lg-10">
+            <div class="col-lg-8">
                 <div class="col-lg-12">
                     <div
                     id="periodBtnGroupStock"
@@ -93,7 +102,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p10"
                         autocomplete="off"
                         value="10"
@@ -102,7 +111,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p20"
                         autocomplete="off"
                         value="20"
@@ -111,7 +120,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p30"
                         autocomplete="off"
                         value="30"
@@ -120,7 +129,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p50"
                         autocomplete="off"
                         value="50"
@@ -129,7 +138,7 @@
                     <label class="btn btn-light active">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p80"
                         autocomplete="off"
                         value="80"
@@ -139,7 +148,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p130"
                         autocomplete="off"
                         value="130"
@@ -148,7 +157,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p210"
                         autocomplete="off"
                         value="210"
@@ -157,7 +166,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p350"
                         autocomplete="off"
                         value="340"
@@ -166,7 +175,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="period"
+                        name="btestVal"
                         id="p560"
                         autocomplete="off"
                         value="550"
@@ -184,24 +193,23 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct10_period"
                         />{% trans '10%' %}
                     </label>
-                    <label class="btn btn-light active">
+                    <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct20_period"
-                        checked
                         />{% trans '20%' %}
                     </label>
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct30_period"
                         />{% trans '30%' %}
@@ -209,7 +217,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct50_period"
                         />{% trans '50%' %}
@@ -217,7 +225,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct80_period"
                         />{% trans '80%' %}
@@ -225,7 +233,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct100_period"
                         />{% trans '100%' %}
@@ -233,7 +241,7 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="btestVal"
                         autocomplete="off"
                         value="pct130_period"
                         />{% trans '130%' %}
@@ -241,104 +249,50 @@
                     </div>
                 </div>
             </div>
-        </div>   
+            <div class="col-lg-2">
+                <div
+                class="btn-group btn-group-sm btn-group-toggle float-right"
+                data-toggle="buttons"
+                >
+                    <span class="mr-1 small">{% trans '' %}</span>
+                    <label class="btn btn-light active">
+                        <input
+                        type="radio"
+                        name="sortedBy"
+                        autocomplete="off"
+                        value="['qt_50pct']"
+                        checked
+                        />{% trans '中位数' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input
+                        type="radio"
+                        name="sortedBy"
+                        autocomplete="off"
+                        value="['mean_val']"
+                        />{% trans '平均值' %}
+                    </label>
+                </div>
+            </div>
+        </div> 
+        <div class="row"> 
+            <div class="col-lg-12" id="rankedResults">
+            </div>
+        </div>
         <!-- 策略回测信息，自动生成的报告 -->
         
+        <!-- sample 
         <div class="row">
           <div class="col-lg-12">
             <hr />
           </div>
         </div>
-        <div class="row">
+        <div class="row" id="">
             <div class="col-lg-1">
                 <span class="badge badge-pill badge-primary mt-3">华夏<br>银行</span>
             </div>
             <div class="col-lg-2">
                 <span class="text-primary small">600015.SH</span><br>
-                <!-- <span class="font-weight-bold text-primary">华夏银行</span><br> -->
-                <span class="font-weight-bold">市值 - 2000亿</span><br>
-                <span class="font-weight-bold">PE - 5倍</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">基本</span><br>
-                <span class="font-weight-bold">地区 - 北京</span><br>
-                <span class="font-weight-bold">行业 - 银行</span><br>
-                <span class="font-weight-bold">市场 - 沪市A</span>
-            </div>
-            <div class="col-lg-1">
-                <span class="text-muted small">排名</span><br>
-                <span class="font-weight-bold">1</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">策略</span><br>
-                <span class="font-weight-bold">M200突破</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收</span><br>
-                <span class="font-weight-bold text-danger">10.57</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收盘线</span><br>
-                <div
-                    id="closeChart"
-                    style="width: 100%; height: 100%"
-                    >
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <hr />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-1">
-                <span class="badge badge-pill badge-primary mt-3">深康<br>佳A</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-primary small">600015.SH</span><br>
-                <!-- <span class="font-weight-bold text-primary">华夏银行</span><br> -->
-                <span class="font-weight-bold">市值 - 2000亿</span><br>
-                <span class="font-weight-bold">PE - 5倍</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">基本</span><br>
-                <span class="font-weight-bold">地区 - 北京</span><br>
-                <span class="font-weight-bold">行业 - 银行</span><br>
-                <span class="font-weight-bold">市场 - 沪市A</span>
-            </div>
-            <div class="col-lg-1">
-                <span class="text-muted small">排名</span><br>
-                <span class="font-weight-bold">1</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">策略</span><br>
-                <span class="font-weight-bold">M200突破</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收</span><br>
-                <span class="font-weight-bold text-danger">10.57</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收盘线</span><br>
-                <div
-                    id="closeChart"
-                    style="width: 100%; height: 100%"
-                    >
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <hr />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-1">
-                <span class="btn btn-outline-primary">华</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">600015.SH</span><br>
                 <span class="font-weight-bold text-primary">华夏银行</span><br>
                 <span class="font-weight-bold">市值 - 2000亿</span><br>
                 <span class="font-weight-bold">PE - 5倍</span>
@@ -369,138 +323,8 @@
                     >
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <hr />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-1">
-                <span class="btn btn-outline-primary">华</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">600015.SH</span><br>
-                <span class="font-weight-bold text-primary">华夏银行</span><br>
-                <span class="font-weight-bold">市值 - 2000亿</span><br>
-                <span class="font-weight-bold">PE - 5倍</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">基本</span><br>
-                <span class="font-weight-bold">地区 - 北京</span><br>
-                <span class="font-weight-bold">行业 - 银行</span><br>
-                <span class="font-weight-bold">市场 - 沪市A</span>
-            </div>
-            <div class="col-lg-1">
-                <span class="text-muted small">排名</span><br>
-                <span class="font-weight-bold">1</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">策略</span><br>
-                <span class="font-weight-bold">M200突破</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收</span><br>
-                <span class="font-weight-bold text-danger">10.57</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收盘线</span><br>
-                <div
-                    id="closeChart"
-                    style="width: 100%; height: 100%"
-                    >
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <hr />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-1">
-                <span class="btn btn-outline-primary">华</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">600015.SH</span><br>
-                <span class="font-weight-bold text-primary">华夏银行</span><br>
-                <span class="font-weight-bold">市值 - 2000亿</span><br>
-                <span class="font-weight-bold">PE - 5倍</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">基本</span><br>
-                <span class="font-weight-bold">地区 - 北京</span><br>
-                <span class="font-weight-bold">行业 - 银行</span><br>
-                <span class="font-weight-bold">市场 - 沪市A</span>
-            </div>
-            <div class="col-lg-1">
-                <span class="text-muted small">排名</span><br>
-                <span class="font-weight-bold">1</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">策略</span><br>
-                <span class="font-weight-bold">M200突破</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收</span><br>
-                <span class="font-weight-bold text-danger">10.57</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收盘线</span><br>
-                <div
-                    id="closeChart"
-                    style="width: 100%; height: 100%"
-                    >
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <hr />
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-1">
-                <span class="btn btn-outline-primary">华</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">600015.SH</span><br>
-                <span class="font-weight-bold text-primary">华夏银行</span><br>
-                <span class="font-weight-bold">市值 - 2000亿</span><br>
-                <span class="font-weight-bold">PE - 5倍</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">基本</span><br>
-                <span class="font-weight-bold">地区 - 北京</span><br>
-                <span class="font-weight-bold">行业 - 银行</span><br>
-                <span class="font-weight-bold">市场 - 沪市A</span>
-            </div>
-            <div class="col-lg-1">
-                <span class="text-muted small">排名</span><br>
-                <span class="font-weight-bold">1</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">策略</span><br>
-                <span class="font-weight-bold">M200突破</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收</span><br>
-                <span class="font-weight-bold text-danger">10.57</span>
-            </div>
-            <div class="col-lg-2">
-                <span class="text-muted small">收盘线</span><br>
-                <div
-                    id="closeChart"
-                    style="width: 100%; height: 100%"
-                    >
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <hr />
-            </div>
-        </div>
+        </div> -->
+
         <!-- 股票基本信息
                 df = pro.stock_company(ts_code='000001.SZ',exchange='SZSE',
                 fields='ts_code,chairman,manager,secretary,reg_capital,setup_date,province,main_business')
@@ -527,7 +351,7 @@
             <hr />
             </div>
         </div>
-                <!-- 策略 -->
+        <!-- filter -->
         <div class="row align-items-center">
             <div class="col-lg-12">
                 <div
@@ -538,7 +362,7 @@
                 <label class="btn btn-light active">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="jiuzhuan_b"
                     autocomplete="off"
                     value="jiuzhuan_count_b"
@@ -548,7 +372,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="ma25_zhicheng"
                     autocomplete="off"
                     value="ma25_zhicheng"
@@ -557,7 +381,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="ma25_tupo"
                     autocomplete="off"
                     value="ma25_tupo"
@@ -566,7 +390,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="ma25_zhicheng"
                     autocomplete="off"
                     value="ma60_zhicheng"
@@ -575,7 +399,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="ma25_tupo"
                     autocomplete="off"
                     value="ma60_tupo"
@@ -584,7 +408,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="ma25_zhicheng"
                     autocomplete="off"
                     value="ma200_zhicheng"
@@ -593,7 +417,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="bstrategy"
+                    name="strategy"
                     id="ma25_tupo"
                     autocomplete="off"
                     value="ma200_tupo"
@@ -612,7 +436,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
                     id="jiuzhuan_count_s"
                     autocomplete="off"
                     value="jiuzhuan_count_s"
@@ -621,7 +445,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
                     id="ma25_diepo"
                     autocomplete="off"
                     value="ma25_diepo"
@@ -630,7 +454,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
                     id="ma25_yali"
                     autocomplete="off"
                     value="ma25_yali"
@@ -639,7 +463,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
                     id="ma60_diepo"
                     autocomplete="off"
                     value="ma60_diepo"
@@ -648,7 +472,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
                     id="ma60_yali"
                     autocomplete="off"
                     value="ma60_yali"
@@ -657,7 +481,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
                     id="ma200_diepo"
                     autocomplete="off"
                     value="ma200_diepo"
@@ -666,7 +490,102 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="sstrategy"
+                    name="strategy"
+                    id="ma200_yali"
+                    autocomplete="off"
+                    value="ma200_yali"
+                    />{% trans 'MA200压力' %}
+                </label>
+                </div>
+            </div>
+        </div>
+        {% for filter in filters %}
+        <div class="row">
+            <div class="col-lg-12 mt-1">
+                <div
+                class="btn-group btn-group-sm btn-group-toggle"
+                data-toggle="buttons"
+                >
+                    <span class="mt-1 mr-1 small">{% trans '' %}</span>
+                    {% for label in filter.labels %}
+                    <label class="btn btn-light">
+                        <input
+                        type="radio"
+                        name="{{ label.name }}"
+                        autocomplete="off"
+                        value="{{ label.value }}"
+                        />{{ label.text }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- <div class="row">
+            <div class="col-lg-12">
+                <div
+                class="btn-group btn-group-sm btn-group-toggle mt-1"
+                data-toggle="buttons"
+                >
+                <span class="mt-1 mr-1 small">{% trans '' %}</span>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
+                    id="jiuzhuan_count_s"
+                    autocomplete="off"
+                    value="jiuzhuan_count_s"
+                    />{% trans '九转卖' %}
+                </label>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
+                    id="ma25_diepo"
+                    autocomplete="off"
+                    value="ma25_diepo"
+                    />{% trans 'MA25跌破' %}
+                </label>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
+                    id="ma25_yali"
+                    autocomplete="off"
+                    value="ma25_yali"
+                    />{% trans 'MA25压力' %}
+                </label>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
+                    id="ma60_diepo"
+                    autocomplete="off"
+                    value="ma60_diepo"
+                    />{% trans 'MA60跌破' %}
+                </label>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
+                    id="ma60_yali"
+                    autocomplete="off"
+                    value="ma60_yali"
+                    />{% trans 'MA60压力' %}
+                </label>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
+                    id="ma200_diepo"
+                    autocomplete="off"
+                    value="ma200_diepo"
+                    />{% trans 'MA200跌破' %}
+                </label>
+                <label class="btn btn-light">
+                    <input
+                    type="radio"
+                    name="strategy"
                     id="ma200_yali"
                     autocomplete="off"
                     value="ma200_yali"
@@ -686,34 +605,34 @@
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="board"
                         autocomplete="off"
-                        value="pct10_period"
-                        />{% trans '沪市' %}
+                        value="shMainBoard"
+                        />{% trans '沪市主板' %}
                     </label>
                     <label class="btn btn-light active">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="board"
                         autocomplete="off"
-                        value="pct20_period"
+                        value="szMainBoard"
                         checked
-                        />{% trans '深市' %}
+                        />{% trans '深市主板' %}
                     </label>
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="board"
                         autocomplete="off"
-                        value="pct30_period"
+                        value="szGEM"
                         />{% trans '创业' %}
                     </label>
                     <label class="btn btn-light">
                         <input
                         type="radio"
-                        name="pct_period"
+                        name="board"
                         autocomplete="off"
-                        value="pct50_period"
+                        value="shSTAR"
                         />{% trans '科创' %}
                     </label>
                 </div>
@@ -730,7 +649,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="pct_period"
+                    name="industry"
                     autocomplete="off"
                     value="pct10_period"
                     />{% trans '银行' %}
@@ -738,7 +657,7 @@
                 <label class="btn btn-light active">
                     <input
                     type="radio"
-                    name="pct_period"
+                    name="industry"
                     autocomplete="off"
                     value="pct20_period"
                     checked
@@ -747,7 +666,7 @@
                 <label class="btn btn-light">
                     <input
                     type="radio"
-                    name="pct_period"
+                    name="industry"
                     autocomplete="off"
                     value="pct30_period"
                     />{% trans '旅游' %}
@@ -838,11 +757,11 @@
                 </label>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
   </div>
 </div>
-<input type="hidden" id="currentTsCode" value="{{search_single.ts_code}}" />
+<!-- <input type="hidden" id="currentTsCode" value="{{search_single.ts_code}}" /> -->
 {% endblock content %} 
 
 {% block javascript %} {{ block.super }}

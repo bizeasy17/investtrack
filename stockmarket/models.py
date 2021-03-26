@@ -167,9 +167,9 @@ class CompanyBasic(BaseModel):
     employees = models.IntegerField(
         _('员工数'), blank=True, null=True)  # name e.g. 平安银行
     main_business = models.CharField(
-        _('主营业务'), max_length=500, blank=True, null=True)  # name e.g. 平安银行
+        _('主营业务'), max_length=5000, blank=True, null=True)  # name e.g. 平安银行
     business_scope = models.CharField(
-        _('经营范围'), max_length=500, blank=True, null=True)  # name e.g. 平安银行
+        _('经营范围'), max_length=5000, blank=True, null=True)  # name e.g. 平安银行
 
     def __str__(self):
         return self.stock_name

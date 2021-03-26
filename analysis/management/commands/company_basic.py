@@ -7,7 +7,7 @@ from django.db import transaction
 from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
 from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
-from analysis.daily_basic import handle_daily_basic
+from analysis.dl_daily_basic import handle_daily_basic
 from stockmarket.models import CompanyBasic, CompanyDailyBasic, CompanyManagers, ManagerRewards, StockNameCodeMap
 # from analysis.utils import init_eventlog, set_event_completed, is_event_completed
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         basic_type = options['type']
 
         if basic_type == 'basic':
-            company_basic()
+            company_basic(ts_code)
         elif basic_type == 'manager':
             company_manager()
         elif basic_type == 'rewards':
@@ -91,61 +91,72 @@ def company_list():
         print(e)
 
 
-def company_basic():
+def company_basic(ts_code):
     try:
         pro = ts.pro_api()
 
         # 查询当前所有正常上市交易的股票列表
-        companies = StockNameCodeMap.objects.filter(asset='E')
-        for company in companies:
-            print('starting for ' + company.ts_code)
+        if ts_code is None:
+            companies = StockNameCodeMap.objects.filter(asset='E')
+            
+            for company in companies:
+                print('starting for ' + company.ts_code)
+                data = pro.stock_company(
+                    ts_code=company.ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
+                store_company_basic(company, data)
+
+                print('ending for ' + company.ts_code)
+                print('waiting for 12 sec')
+                time.sleep(12)
+        else:
+            print('starting for ' + ts_code)
+            company = StockNameCodeMap.objects.get(ts_code=ts_code)
             data = pro.stock_company(
-                ts_code=company.ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,city,introduction,website,email,office,employees,main_business,business_scope')
-
-            if data is not None and len(data) > 0:
-                for index, row in data.iterrows():
-                    try:
-                        if str(row['ts_code'])[0] == '3':
-                            index_ctg = 'CYB'
-                        elif str(row['ts_code'])[0] == '0':
-                            index_ctg = 'ZXB'
-                        else:
-                            if str(row['ts_code'])[:3] == '688':
-                                index_ctg = 'KCB'
-                            else:
-                                index_ctg = 'ZB'
-                        cb = CompanyBasic.objects.get(ts_code=row['ts_code'])
-                        cb.chairman = row['chairman']
-                        cb.manager = row['manager']
-                        cb.reg_capital = row['reg_capital']
-                        cb.setup_date = datetime.strptime(
-                            row['setup_date'], '%Y%m%d')
-                        cb.province = row['province']
-                        cb.city = row['city']
-                        cb.introduction = row['introduction']
-                        cb.website = row['website']
-                        cb.email = row['email']
-                        cb.office = row['office']
-                        cb.employees = row['employees']
-                        cb.main_business = row['main_business']
-                        cb.business_scope = row['business_scope']
-                    except Exception as e:
-                        # cn_tz = pytz.timezone("Asia/Shanghai")
-                        # print(e)
-                        cb = CompanyBasic(ts_code=row['ts_code'], stock_code=row['ts_code'].split('.')[0], chairman=row['chairman'], manager=row['manager'], reg_capital=row['reg_capital'],
-                                          setup_date=datetime.strptime(row['setup_date'], '%Y%m%d'), province=row['province'], city=row['city'], exchange=row['exchange'],
-                                          introduction=row['introduction'], website=row[
-                                              'website'], email=row['email'], office=row['office'],
-                                          employees=row['employees'], main_business=row['main_business'], business_scope=row['business_scope'],
-                                          index_category=index_ctg, company=company)
-                    cb.save()
-            print('ending for ' + company.ts_code)
-            print('waiting for 12 sec')
-            time.sleep(12)
-
+                ts_code=ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
+            store_company_basic(company, data)
+            print('ending for ' + ts_code)
     except Exception as e:
         print(e)
 
+def store_company_basic(company, data):
+    if data is not None and len(data) > 0:
+        for index, row in data.iterrows():
+            try:
+                if str(row['ts_code'])[0] == '3':
+                    index_ctg = 'CYB'
+                elif str(row['ts_code'])[0] == '0':
+                    index_ctg = 'ZXB'
+                else:
+                    if str(row['ts_code'])[:3] == '688':
+                        index_ctg = 'KCB'
+                    else:
+                        index_ctg = 'ZB'
+                cb = CompanyBasic.objects.get(ts_code=row['ts_code'])
+                cb.chairman = row['chairman']
+                cb.manager = row['manager']
+                cb.reg_capital = row['reg_capital']
+                cb.setup_date = datetime.strptime(
+                    row['setup_date'], '%Y%m%d')
+                cb.province = row['province']
+                cb.city = row['city']
+                cb.introduction = row['introduction']
+                cb.website = row['website']
+                cb.email = row['email']
+                cb.office = row['office']
+                cb.employees = row['employees']
+                cb.main_business = row['main_business']
+                cb.business_scope = row['business_scope']
+                cb.secretary = row['secretary']
+            except Exception as e:
+                # cn_tz = pytz.timezone("Asia/Shanghai")
+                # print(e)
+                cb = CompanyBasic(ts_code=row['ts_code'], stock_code=row['ts_code'].split('.')[0], chairman=row['chairman'], manager=row['manager'], reg_capital=row['reg_capital'],
+                                setup_date=datetime.strptime(row['setup_date'], '%Y%m%d'), province=row['province'], city=row['city'], exchange=row['exchange'],
+                                introduction=row['introduction'], website=row[
+                                    'website'], email=row['email'], office=row['office'],secretary=row['secretary'],
+                                employees=row['employees'], main_business=row['main_business'], business_scope=row['business_scope'],
+                                index_category=index_ctg, company=company)
+            cb.save()
 
 def company_manager():
     try:

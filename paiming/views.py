@@ -29,6 +29,13 @@ class HomeView(TemplateView):
         #     pass
         # else:
         #     pass
+        filters = []
+        province = []
+        area = []
+        board = []
+        degree = []
+        industry = []
+        pe = []
         try:
             if len(request.GET) > 0:
                 # query_trace = UserQueryTrace(query_string=request.GET['q'], request_url=request.path, ip_addr=get_ip(request), uid=req_user)
