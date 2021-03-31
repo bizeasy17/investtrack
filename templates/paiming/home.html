@@ -499,15 +499,16 @@
                 </div>
             </div>
         </div>
-        {% for filter in filters %}
+        {% for filter in paiming.filters %}
+
         <div class="row">
             <div class="col-lg-12 mt-1">
                 <div
                 class="btn-group btn-group-sm btn-group-toggle"
                 data-toggle="buttons"
                 >
-                    <span class="mt-1 mr-1 small">{% trans '' %}</span>
-                    {% for label in filter.labels %}
+                    <span class="mt-1 mr-1 small"></span>
+                    {% for label in filter %}
                     <label class="btn btn-light">
                         <input
                         type="radio"

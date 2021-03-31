@@ -1,6 +1,10 @@
-import pandas as pd
 import logging
+
+import pandas as pd
 import pytz
+from analysis.models import (StrategyTargetPctTestRanking,
+                             StrategyUpDownTestRanking)
+from analysis.utils import get_ip
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F
@@ -9,8 +13,10 @@ from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
-from analysis.utils import get_ip
-from analysis.models import StrategyUpDownTestRanking, StrategyTargetPctTestRanking
+
+from .utils import (build_area_label, build_board_label, build_degree_label,
+                    build_industry_label, build_province_label, build_marketval_label)
+
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -36,13 +42,29 @@ class HomeView(TemplateView):
         degree = []
         industry = []
         pe = []
+        mv = []
         try:
+            # board = ['深市主板','科创板']
+            build_board_label(board)
+            build_area_label(area)
+            build_industry_label(industry)
+            build_province_label(province)
+            build_degree_label(degree)
+            build_marketval_label(mv)
+            
+            filters.append(board)
+            filters.append(area)
+            filters.append(industry)
+            filters.append(province)
+            filters.append(degree)
+            filters.append(mv)
+
             if len(request.GET) > 0:
                 # query_trace = UserQueryTrace(query_string=request.GET['q'], request_url=request.path, ip_addr=get_ip(request), uid=req_user)
                 # query_trace.save()
-                return render(request, self.search_template, {self.context_object_name: {'ts_code':request.GET['q']}})
+                return render(request, self.search_template, {self.context_object_name: {'ts_code':request.GET['q'], 'filters': filters}})
             else:
-                return render(request, self.template_name)
+                return render(request, self.template_name, {self.context_object_name: {'filters': filters}})
         except Exception as err:
             logger.error(err)
 

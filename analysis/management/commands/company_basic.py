@@ -65,28 +65,41 @@ def company_list():
         companies = StockNameCodeMap.objects.all()
         if data is not None and len(data) > 0:
             if companies.count() != len(data):
-                for v in data.values:
-                    try:
-                        if str(v[1])[0] == '3':
-                            v[7] = 'CYB'
-                        elif str(v[1])[0] == '0':
-                            v[7] = 'ZXB'
+                for index,row in data.iterrows():
+                    print('starting for ' + row['ts_code'])
+                    ts_code = row['ts_code']
+                    market = ''
+
+                    if ts_code[1][0] == '3':
+                        market = 'CYB'
+                    elif ts_code[1][0] == '0':
+                        if ts_code[1][:3] == '002':
+                            market = 'ZXB'
                         else:
-                            if str(v[1])[:3] == '688':
-                                v[7] = 'KCB'
-                            else:
-                                v[7] = 'ZB'
-                        company = StockNameCodeMap.objects.get(ts_code=v[0])
-                        company.stock_name = v[2]
-                        company.list_status = v[9]
-                        company.delist_date = v[11]
+                            market = 'SZZB'
+                    else:
+                        if ts_code[:3] == '688':
+                            market = 'KCB'
+                        else:
+                            market = 'SHZB'
+                    try:
+                        company = StockNameCodeMap.objects.get(ts_code=ts_code)
+                        company.stock_name = row['name']
+                        company.list_status = row['list_status']
+                        company.delist_date = row['delist_date']
+                        company.market = market
+                        # company.save()
                     except Exception as e:
+                        print(row['symbol'] + ' does not exist, create new entry')
                         # cn_tz = pytz.timezone("Asia/Shanghai")
-                        company = StockNameCodeMap(ts_code=v[0], stock_code=v[1], stock_name=v[2], area=v[3],
-                                                   industry=v[4], fullname=v[5], en_name=v[6], market=v[7], exchange=v[8],
-                                                   list_status=v[9], list_date=datetime.strptime(v[10], '%Y%m%d'), delist_date=v[11],
-                                                   is_hs=v[12])
+                        company = StockNameCodeMap(ts_code=ts_code, stock_code=row['symbol'], stock_name=row['name'], area=row['area'],
+                                                   industry=row['industry'], fullname=row['fullname'], en_name=row['enname'], market=market, exchange=row['exchange'],
+                                                   list_status=row['list_status'], list_date=datetime.strptime(row['list_date'], '%Y%m%d'), delist_date=row['delist_date'],
+                                                   is_hs=row['is_hs'])
+                        print(row['symbol'] + ' created new object')
+                        
                     company.save()
+                    print('end for ' + row['symbol'])
     except Exception as e:
         print(e)
 

@@ -26,6 +26,7 @@ $(function () {
     var industry;
     var degree;
     var marketVal;
+    var province;
     var board;
     var container;
     // var updownPctPeriod = 80;
@@ -112,20 +113,23 @@ $(function () {
 
         filter += "[";
         if (board){
-            filter += "'company__market=='" + board + "',";
+            filter += "'company__market == \"" + board + "\"',";
         }
         if (area) {
-            filter += "company__area'" + area + "',";
+            filter += "'company__area == \"" + area + "\"',";
         }
         if (industry) {
-            filter += "company__industry'" + industry + "',";
+            filter += "'company__industry == \"" + industry + "\"',";
+        }
+        if (province) {
+            filter += "'company_basic__province == \"" + industry + "\"',";
         }
         // if (marketVal) {
         //     filter += "companydailybasic__market_val=='" + market + "',";
         // }
-        if (degree) {
-            filter += "companymanagers__edu'" + degree + "',";
-        }
+        // if (degree) {
+        //     filter += "companymanagers__edu=='" + degree + "',";
+        // }
         filter += "]";
 
         return filter;
@@ -269,6 +273,14 @@ $(function () {
         // 页面默认加载上证指数日K（D)
         // 页面默认加载上证指数日K（D)
         industry = $(this).val()
+        showRankedStocks();
+    });
+
+    // 根据选择的期望收益，显示达到期望收益的天数
+    $('input:radio[name="province"]').change(function () {
+        // 页面默认加载上证指数日K（D)
+        // 页面默认加载上证指数日K（D)
+        province = $(this).val()
         showRankedStocks();
     });
 

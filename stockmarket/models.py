@@ -63,9 +63,9 @@ class StockNameCodeMap(BaseModel):
     market = models.CharField(
         _('市场类型'), choices=STOCK_MARKET_CHOICES, max_length=50, blank=True, null=True)
     stock_name = models.CharField(
-        _('股票名称'), max_length=50, blank=False, null=False, unique=True)  # name e.g. 平安银行
+        _('股票名称'), max_length=50, blank=False, null=False)  # name e.g. 平安银行
     stock_code = models.CharField(
-        _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
+        _('股票代码'), max_length=50, blank=False, null=False, )  # symbol, e.g. 000001
     # is_valid = models.BooleanField(
     #     _('是否退市'), blank=False, null=False, default=False)
 
@@ -73,7 +73,7 @@ class StockNameCodeMap(BaseModel):
     exchange = models.CharField(
         _('交易所代码'), choices=EXCHANGE_CHOICES, max_length=10, blank=True, null=True)
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+        _('TS代码'), max_length=50, blank=True, null=False, unique=True)  # e.g. 000001.SZ
     area = models.CharField(_('所在地域'), max_length=50,
                             blank=True, null=True)
     industry = models.CharField(
