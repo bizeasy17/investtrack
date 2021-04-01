@@ -29,7 +29,7 @@
   </div>
 </nav> -->
 <!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light">
   <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
     <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
     <span>{% trans '投呗' %}</span>   
@@ -40,7 +40,7 @@
         <a class="nav-link" href="{% url 'hongguan:home' %}">{% trans '宏观数据' %}</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'paiming:home' %}">{% trans '市场排名' %}</a>
+        <a class="nav-link" href="{% url 'paiming:home' %}">{% trans '历史表现排名' %}</a>
       </li>
       <li class="nav-item dropdown">
         <a class="nav-link" href="{% url 'xuangu:home' %}">{% trans '策略选股结果' %}</a>

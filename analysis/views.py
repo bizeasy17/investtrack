@@ -20,6 +20,7 @@ from analysis.analysis_dingdi import pre_handle_dd
 from analysis.analysis_jiuzhuan_cp import handle_jiuzhuan_cp
 from analysis.analysis_junxian_bs_cp import mark_junxian_bs_listed
 from analysis.analysis_tupo_b_cp import handle_tupo_cp
+from analysis.dl_daily_basic import handle_daily_basic
 from analysis.stock_hist import process_stock_download
 from analysis.strategy_quantiles_stats import (StrategyTargetPctTestRanking,
                                                StrategyUpDownTestRanking)
@@ -647,6 +648,10 @@ def analysis_command(request, cmd, params):
                 plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else None, 
                 plist[2] if plist[2] != '' else None, plist[3] if plist[3] != '' else 'E', 
                 plist[4] if plist[4] != '' else 'D')
+        elif cmd == 'daily_basic':
+            handle_daily_basic(
+                plist[0] if plist[0] != '' else None, plist[1] if plist[1] != '' else None, 
+                plist[2] if plist[2] != '' else None, plist[3] if plist[4] != '' else 'D')
         elif cmd == 'pick':
             handle_stocks_pick(plist[0] if plist[0] != '' else None)
         return HttpResponse(status=200)

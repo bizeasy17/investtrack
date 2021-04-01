@@ -82,7 +82,7 @@ def get_stocknames(stock_symbols=[]):
             stocknames[stock_symbol] = map.stock_name
     return stocknames
 
-def str2dict(str):
+def str_eval(str):
     '''
     逗号分隔，转成dict
     '''

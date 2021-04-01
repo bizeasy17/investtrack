@@ -14,11 +14,14 @@ from analysis.models import StockIndexHistory,StrategyTestLowHigh, BStrategyOnFi
 from .utils import get_market_code
 
 def build_condition(filter_params=[]):
+    '''
+    return string filter connected by &
+    '''
     # column = cond_list[0] #['vol', 'ma25_slope', 'ma60_slope']
     # ops = cond_list[1] #['>', '>', '<']
     # condition = cond_list[2] # [4, 0, '0']
-    c = ' & '.join(filter_params)
-    return c 
+
+    return ' & '.join(filter_params)
  
 def pct_on_period_filter(ts_code, trade_date_list, filter_params=[]):
     '''

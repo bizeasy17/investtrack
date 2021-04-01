@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import tushare as ts
 from analysis.models import (BStrategyOnFixedPctTest, StockHistoryDaily,
-                             StrategyTestLowHigh, StockIndexHistory)
-from analysis.trend_filters import pct_on_period_filter, period_on_pct_filter
+                             StrategyTestLowHigh, StockIndexHistory, StrategyUpDownTestQuantiles, StrategyTargetPctTestQuantiles)
+from analysis.trend_filters import pct_on_period_filter, period_on_pct_filter, build_condition
 from analysis.utils import get_ip
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
@@ -14,9 +14,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 
-from stockmarket.models import StockNameCodeMap
+from stockmarket.models import StockNameCodeMap, CompanyBasic, CompanyDailyBasic, ManagerRewards
 
-from .utils import str2dict
+from .utils import str_eval
 
 # Create your views here.
 
@@ -220,6 +220,53 @@ def get_daily_basic(request, ts_code, start_date, end_date):
             return HttpResponse(status=500)
 
 
+def get_latest_daily_basic(request, ts_code):
+    if request.method == 'GET':
+        company_daily_list = []
+        pe_list = []
+        pe_range = []
+        pe_ttm_list = []
+        pb_list = []
+        pb_range = []
+        ps_list = []
+        ps_ttm_list = []
+        ps_range = []
+        try:
+            codes = ts_code.split(',')
+            for code in codes:
+                daily_basic = CompanyDailyBasic.objects.filter(ts_code=code).order_by('-trade_date')
+
+                if daily_basic is not None and len(daily_basic) > 0:
+                    company_daily_list.append(
+                        {
+                            'ts_code': code,
+                            'close': daily_basic[0].close,
+                            'trade_date': daily_basic[0].trade_date,
+                            'pe': daily_basic[0].pe,
+                            'pe_ttm': daily_basic[0].pe_ttm,
+                            'pb': daily_basic[0].pb,
+                            # 'pb_ttm': daily_basic.pb_ttm,
+                            'ps': daily_basic[0].ps,
+                            'ps_ttm': daily_basic[0].ps_ttm,
+                            'mv': daily_basic[0].total_mv,
+                            'circ_mv': daily_basic[0].circ_mv,
+                        }
+                    )
+                # pe_list.append(
+                #      if daily_basics.pe is not None and not np.isnan(daily_basics.pe) else 0)
+                # pe_ttm_list.append(
+                #     daily_basics.pe_ttm if daily_basics.pe_ttm is not None and not np.isnan(daily_basics.pe_ttm) else 0)
+                # pb_list.append(daily_basics.pb)
+                # ps_ttm_list.append(daily_basics.ps_ttm)
+                # ps_list.append(daily_basics.ps)
+            if len(company_daily_list) > 0:
+                return JsonResponse({'results': company_daily_list }, safe=False)
+            else:
+                return HttpResponse(status=404)
+        except Exception as err:
+            logger.error(err)
+            return HttpResponse(status=500) 
+
 def get_single_daily_basic(request, ts_code, start_date, end_date):
     if request.method == 'GET':
         pro = ts.pro_api()
@@ -344,14 +391,16 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             index_vol = []
             stk_vol = []
 
-            filters = str2dict(filters)
-            all_dates = get_updown_pct_dates(strategy, ts_code, test_period, freq)
+            filters = str_eval(filters)
+            all_dates = get_updown_pct_dates(
+                strategy, ts_code, test_period, freq)
 
             if len(filters['I']) == 0 and len(filters['E']) == 0:
                 results = StrategyTestLowHigh.objects.filter(
                     strategy_code=strategy, ts_code=ts_code, test_period=test_period,).order_by('trade_date')
             else:
-                filtered_dates = pct_on_period_filter(ts_code, all_dates, filters)
+                filtered_dates = pct_on_period_filter(
+                    ts_code, all_dates, filters)
                 results = StrategyTestLowHigh.objects.filter(
                     strategy_code=strategy, ts_code=ts_code, test_period=test_period,
                     trade_date__in=filtered_dates).order_by('trade_date')
@@ -395,7 +444,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                                      'up_qt': up_qt, 'up_50qt': up_50qt,
                                      'down_pct': down_pct_list, 'down_qt': down_qt,
                                      'down_50qt': down_50qt, 'up_max': up_max_rounded,
-                                     'index_vol': index_vol,'stock_vol': stk_vol,}, safe=False)
+                                     'index_vol': index_vol, 'stock_vol': stk_vol, }, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
@@ -468,8 +517,10 @@ def get_stock_vol_range(trade_date_list, freq='D'):
             trade_date__in=trade_date_list, freq=freq)  # [:int(freq_count)]
         if results is not None and len(results) > 0:
             df = pd.DataFrame(results.values('vol', 'amount'))
-            vol_min_max.append(df.min().vol if not np.isnan(df.min().vol) else 0)
-            vol_min_max.append(df.max().vol if not np.isnan(df.max().vol) else 0)
+            vol_min_max.append(
+                df.min().vol if not np.isnan(df.min().vol) else 0)
+            vol_min_max.append(
+                df.max().vol if not np.isnan(df.max().vol) else 0)
             return vol_min_max
         else:
             return []
@@ -488,14 +539,91 @@ def get_index_vol_range(trade_date_list, freq='D'):
             trade_date__in=trade_date_list, freq=freq)
         if results is not None and len(results) > 0:
             df = pd.DataFrame(results.values('vol', 'amount'))
-            vol_min_max.append(df.min().vol if not np.isnan(df.min().vol) else 0)
-            vol_min_max.append(df.max().vol if not np.isnan(df.max().vol) else 0)
+            vol_min_max.append(
+                df.min().vol if not np.isnan(df.min().vol) else 0)
+            vol_min_max.append(
+                df.max().vol if not np.isnan(df.max().vol) else 0)
             return vol_min_max
         else:
             return []
     except Exception as err:
         logging.error(err)
         return None
+
+
+def get_btest_ranking(request, btest_type='up_pct', btest_value=80, strategy='jiuzhuan_count_b', sorted_by='["qt_50pct"]', filters='', freq='D', start_idx=0, end_idx=5):
+    '''
+    需要关联的表
+    stockmarket_companybasic (company_id fk), 
+    stockmarket_companydailybasic(company_id fk), 
+    maybe stockmarket_companymanagers(company_id fk)
+
+    filters
+    ['exchange'='sh','industry'='bank','area'='zhejiang']
+    '''
+    ranking_results = []
+    code_list = []
+    code_sfx_list = []
+    try:
+        filters = str_eval(filters)
+        sorted_by = str_eval(sorted_by)
+        if btest_type in  ['up_pct', 'down_pct']:
+            rankings = StrategyUpDownTestQuantiles.objects.filter(
+                strategy_code=strategy, test_period=int(btest_value), test_freq=freq, test_type=btest_type).select_related('company', 'company_basic').values('company__market', 'company__id', 'company__area',
+                                                                                                                                                         'company__industry', 'company_basic__index_category', 'company_basic__chairman', 'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date',
+                                                                                                                                                         'company_basic__province', 'company_basic__website', 'company_basic__main_business')
+        elif btest_type == 'exp_pct':
+            rankings = StrategyTargetPctTestQuantiles.objects.filter(
+                strategy_code=strategy, target_pct=btest_value, test_freq=freq).select_related('company', 'company_basic').values('company__market', 'company__id', 'company__area', 'company__industry',
+                                                                                                                                  'company_basic__index_category', 'company_basic__chairman', 'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date', 'company_basic__province',
+                                                                                                                                  'company_basic__website', 'company_basic__main_business')
+
+        ranking_df = pd.DataFrame(rankings.values('ts_code', 'company__area', 'company__industry', 'company__market', 
+                                                  'company__exchange', 'company__stock_name', 'qt_50pct', 'mean_val', 'company_basic__index_category', 'company_basic__chairman',
+                                                  'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date', 'company_basic__province', 'company_basic__website',
+                                                  'company_basic__main_business'))
+
+        if ranking_df is not None and len(ranking_df) > 0:
+            filtered_df = ranking_df
+            if len(filters) > 0:
+                query = build_condition(filters)
+                filtered_df = ranking_df.query(query)
+
+            if btest_type in ['up_pct', 'down_pct']:
+                filtered_df = filtered_df.sort_values(
+                    by=sorted_by, ascending=False)
+            else:
+                filtered_df = filtered_df.sort_values(
+                    by=sorted_by)
+            ranked_df = filtered_df.reset_index(drop=True)
+            ranked_df['ranking'] = ranked_df.index
+
+            for index, row in ranked_df[start_idx:end_idx].iterrows():
+                ranking_results.append({
+                    'ranking': row['ranking']+1,
+                    'ts_code': row['ts_code'],
+                    'area': row['company__area'],
+                    'industry': row['company__industry'],
+                    'market': row['company__market'],
+                    'exchange': row['company__exchange'],
+                    'stock_name': row['company__stock_name'],
+                    # 'index_ctg': row['company_basic__index_category'],
+                    'chairman': row['company_basic__chairman'],
+                    'manager': row['company_basic__manager'],
+                    'reg_capital': row['company_basic__reg_capital'],
+                    'setup_date': row['company_basic__setup_date'],
+                    'province': row['company_basic__province'],
+                    'website': row['company_basic__website'],
+                    'main_business': row['company_basic__main_business'],
+                    'median': row['qt_50pct'],
+                    'mean': row['mean_val'],
+                })
+            return JsonResponse({'value': ranking_results, 'row_count': len(ranking_results)}, safe=False)
+        else:
+            return HttpResponse(status=404)
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=500)
 
 
 def manual_btest():

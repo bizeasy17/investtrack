@@ -14,6 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from investors.models import TradeStrategy
+from stockmarket.models import StockNameCodeMap, CompanyBasic
 # Create your models here.
 
 
@@ -52,13 +53,15 @@ class AnalysisEventLog(BaseModel):
     exec_date = models.DateField(
         _('执行日期'),  blank=False, null=False)
     status = models.IntegerField(
-        _('状态'),  blank=False, null=False, default=0) # 0 - in progress, 1 - done, 2 - with exception, 
+        _('状态'),  blank=False, null=False, default=0)  # 0 - in progress, 1 - done, 2 - with exception,
     freq = models.CharField(
         _('k线频率'), max_length=5, blank=False, null=False, default='D')
     exception_tscode = models.CharField(
         _('日志类型'), max_length=30000, blank=True, null=True)  # e.g. 000001.SZ
+
     def __str__(self):
         return self.event_type
+
 
 class StockIndexHistory(BaseModel):
     '''
@@ -422,7 +425,7 @@ class StrategyTestLowHigh(models.Model):
     ma200_slope = models.FloatField(
         _('MA200斜率'),  blank=True, null=True)
     freq = models.CharField(
-        _('测试周期'), max_length=5, blank=False, null=False, default='D')  
+        _('测试周期'), max_length=5, blank=False, null=False, default='D')
 
     def __str__(self):
         return self.ts_code
@@ -521,7 +524,7 @@ class BStrategyOnFixedPctTest(BaseModel):
         _('+130%最小周期'), blank=True, null=True, default=-1)
     test_freq = models.CharField(
         _('测试周期'), max_length=5, blank=False, null=False, default='D')
-    
+
     # 过滤器冗余字段
     vol = models.FloatField(
         _('交易量'), blank=True, null=True)
@@ -574,6 +577,10 @@ class StrategyUpDownTestQuantiles(BaseModel):
     #     _('排名'), blank=True, null=True, db_index=True)
     test_freq = models.CharField(
         _('K线周期'), max_length=5, blank=False, null=False, default='D')
+    company = models.ForeignKey(
+        StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company_basic = models.ForeignKey(
+        CompanyBasic, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['ts_code']
@@ -610,6 +617,10 @@ class StrategyTargetPctTestQuantiles(BaseModel):
     #     _('排名'), blank=True, null=True, db_index=True)
     test_freq = models.CharField(
         _('K线周期'), max_length=5, blank=False, null=False, default='D')
+    company = models.ForeignKey(
+        StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company_basic = models.ForeignKey(
+        CompanyBasic, blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['ts_code']
