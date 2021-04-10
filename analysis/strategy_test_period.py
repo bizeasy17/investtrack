@@ -58,7 +58,7 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
     4. 测试结果存入表
     '''
     # end_date = date.today()
-    periods = [10, 20, 30, 50, 80, 130, 210, 350, 560]
+    periods = [10, 20, 30, 50, 80, 130, 210, 340, 550]
     # periods = [130, 210, 350, 560]
 
     # if strategy_code.startswith('jiuzhuan_'):

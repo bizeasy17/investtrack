@@ -102,7 +102,8 @@ def listed_companies(request, name_or_code):
     根据输入获得上市公司信息
     '''
     market_exch_map = {
-        'ZB': '主板',
+        'SHZB': '上海主板',
+        'SZZB': '深圳主板',
         'ZXB': '中小板',
         'CYB': '创业板',
         'KCB': '科创板',
@@ -392,17 +393,18 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             stk_vol = []
 
             filters = str_eval(filters)
-            all_dates = get_updown_pct_dates(
-                strategy, ts_code, test_period, freq)
+            all_dates = get_updown_pct_dates(strategy, ts_code, test_period, freq)
 
+            filter_enabled = False
             if len(filters['I']) == 0 and len(filters['E']) == 0:
                 results = StrategyTestLowHigh.objects.filter(
-                    strategy_code=strategy, ts_code=ts_code, test_period=test_period,).order_by('trade_date')
+                    ts_code=ts_code, strategy_code=strategy, test_period=test_period,).order_by('trade_date')
             else:
+                filter_enabled = True
                 filtered_dates = pct_on_period_filter(
                     ts_code, all_dates, filters)
                 results = StrategyTestLowHigh.objects.filter(
-                    strategy_code=strategy, ts_code=ts_code, test_period=test_period,
+                    ts_code=ts_code, strategy_code=strategy,test_period=test_period,
                     trade_date__in=filtered_dates).order_by('trade_date')
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values(
@@ -419,8 +421,8 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                 up_qt.append(round(df.max().stage_high_pct, 3))
                 down_qt.append(round(df.mean().stage_low_pct, 3))
                 down_qt.append(round(df.min().stage_low_pct, 3))
-                index_vol = get_index_vol_range(all_dates, freq)
-                stk_vol = get_stock_vol_range(all_dates, freq)
+                index_vol = get_index_vol_range(all_dates, freq) if filter_enabled else []
+                stk_vol = get_stock_vol_range(all_dates, freq) if filter_enabled else []
 
                 up_max_rounded = int(
                     np.around(df['stage_high_pct'].max() / 100)) * 100 + 50

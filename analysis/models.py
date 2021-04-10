@@ -398,9 +398,9 @@ class StrategyTestLowHigh(models.Model):
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     trade_date = models.DateField(
-        _('交易日'), blank=False, null=False)  # symbol, e.g. 20200505
+        _('交易日'), blank=False, null=False, db_index=True)  # symbol, e.g. 20200505
     test_period = models.IntegerField(
-        _('测试周期长度'), blank=True, null=False, default=10)
+        _('测试周期长度'), blank=True, null=False, default=10, db_index=True)
     stage_low_date = models.DateField(
         _('低点日期'), blank=True, null=True)
     stage_low_pct = models.FloatField(
@@ -412,7 +412,7 @@ class StrategyTestLowHigh(models.Model):
     # test_strategy = models.ForeignKey(TradeStrategy, verbose_name=_('测试策略'), blank=False, null=False,
     #                                   on_delete=models.CASCADE)
     strategy_code = models.CharField(
-        _('策略代码'), max_length=25, blank=True, null=True)
+        _('策略代码'), max_length=25, blank=True, null=True, db_index=True)
     # 过滤器冗余字段
     vol = models.FloatField(
         _('交易量'), blank=True, null=True)
