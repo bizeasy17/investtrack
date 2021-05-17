@@ -19,12 +19,4 @@ urlpatterns = [
          views.get_updown_pct),
     path('daily-basic-latest/companies/<ts_code>/',
          views.get_latest_daily_basic),
-    path('btest-ranking/<btest_type>/<btest_value>/<strategy>/<sorted_by>/<filters>/<freq>/<int:start_idx>/<int:end_idx>/',
-         views.get_btest_ranking),
-    #     path('updown-index-vol/<test_period>/<freq>/',
-    #          views.get_index_vol_range),
-    #     path('updown-stock-vol/<ts_code>/<strategy>/<exp_pct>/<freq>/',
-    #          views.get_stock_vol_range),
-    path('exp-pct/<ts_code>/<strategy>/<exp_pct>/<freq>/',
-         views.get_expected_pct),
 ]
