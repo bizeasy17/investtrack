@@ -97,11 +97,23 @@ def realtime_quotes(request, symbols):
             return HttpResponse(status=404)
 
 
-def listed_companies(request, name_or_code):
+def get_companies(request, input_text):
     '''
     根据输入获得上市公司信息
+    需要更新板块，SQL如下
+    update public.stockmarket_stocknamecodemap
+    set market='SHZB'
+    where market='ZB'
+
+    update  public.stockmarket_stocknamecodemap
+    set market='SZZB'
+    where market='ZXB'
+
+    update  public.stockmarket_stocknamecodemap
+    set market='ZXB'
+    where stock_code like '002%'
     '''
-    market_exch_map = {
+    board_list = {
         'SHZB': '上海主板',
         'SZZB': '深圳主板',
         'ZXB': '中小板',
@@ -110,12 +122,12 @@ def listed_companies(request, name_or_code):
     }
     if request.method == 'GET':
         try:
-            if not name_or_code.isnumeric():
+            if not input_text.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    Q(stock_name__startswith=name_or_code) | Q(stock_name_pinyin__contains=name_or_code)).order_by('list_date')[:10]
-            elif name_or_code.isnumeric():
+                    Q(stock_name__contains=input_text) | Q(stock_name_pinyin__contains=input_text)).order_by('list_date')[:10]
+            elif input_text.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    stock_code__startswith=name_or_code).order_by('list_date')[:10]
+                    stock_code__contains=input_text).order_by('list_date')[:10]
             else:  # 输入条件是拼音首字母
                 pass
             company_list = []
@@ -126,7 +138,7 @@ def listed_companies(request, name_or_code):
                         'id': c.stock_code,
                         'ts_code': c.ts_code,
                         'text': c.stock_name,
-                        'market': market_exch_map[c.market],
+                        'market': board_list[c.market],
                         'industry': c.industry,
                         'list_date': c.list_date,
                         'area': c.area,
