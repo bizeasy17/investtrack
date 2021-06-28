@@ -141,3 +141,4 @@ collectedstatic/
 # log
 .log
 
+.vscode/settings.json
