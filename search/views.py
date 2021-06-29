@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SearchView(TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'public_pages/home.html'
-    search_template = 'public_pages/search_result_single.html'
+    search_template = 'public_pages/stock_dashboard.html'
     search_template_list = 'public_pages/search_result_list.html'
 
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）

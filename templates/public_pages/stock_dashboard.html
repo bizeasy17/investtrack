@@ -1,0 +1,226 @@
+{% extends 'base_public_search.html' %} {% load static i18n thumbnail %} 
+
+{% block navbar %}
+<!-- Navigation -->
+<!-- <nav class="navbar static-top">
+  <div class="container-fluid">
+    <div class="col-lg-6 row align-items-center">
+      <div class="col-lg-1">
+        <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+        <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
+        </a>
+      </div>
+      <div class="col-lg-11">
+        <form id="searchForm" action="{% url 'search:home' %}">
+          <input type="text" class="form-control form-control-sm" id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}" value="{{search_single.ts_code}}">
+        </form>
+      </div>
+    </div>
+    <a class="btn btn-primary" href="#">{% trans '微信扫码登录' %}</a>
+  </div>
+</nav> -->
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light">
+  <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+    <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">      
+  </a>
+  <form class="col-lg-4" id="searchForm" >
+    <input type="text" class="form-control form-control-sm small" id="searchText" autocomplete="off" name="q" placeholder="{% trans '股票名称, 代码或首字母' %}" value="{{search_single.ts_code}}">
+  </form>
+  <!-- <div class="collapse navbar-collapse">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'hongguan:home' %}">{% trans '宏观数据' %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'paiming:home' %}">{% trans '历史表现排名' %}</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link" href="{% url 'xuangu:home' %}">{% trans '策略选股结果' %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'zixuan:home' %}">{% trans '我的自选股' %}</a>
+      </li>
+    </ul>
+    <a class="btn btn-primary" href="#">{% trans '手机快速登录' %}</a>
+  </div> -->
+</nav>
+{% endblock navbar %}
+
+{% block content %}
+<hr style="margin-top: 0rem; margin-bottom: 0.5rem" />
+<div class="container-fluid mt-4 small">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="row">
+          <div class="col-lg-12">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">收盘线</h6>
+                    <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
+                        <label class="btn btn-light active">
+                            <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="closePeriod" autocomplete="off" value="3">{% trans '3年' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="closePeriod" autocomplete="off" value="5">{% trans '5年' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="closePeriod" autocomplete="off" value="10">{% trans '10年' %} 
+                        </label>
+                        <label class="btn btn-light">
+                            <input type="radio" name="closePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+                        </label>
+                    </div>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                      <div id="closeChart" style="height: 400px"></div>
+                    </div>
+                </div>
+            </div>
+          </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">市盈率</h6>
+            </div>
+            <div class="card-body">
+              <div class="col-lg-12">
+                  <div id="peChart" style="height: 400px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+          <div class="col-lg-12">
+            <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">市净率</h6>
+            </div>
+            <div class="card-body">
+              <div id="pbChart" style="height: 400px"></div>
+            </div>
+            </div>
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">市销率</h6>
+            </div>
+            <div class="card-body">
+              <div id="psChart" style="height: 400px"></div>
+            </div>
+          </div>
+          </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+              <h6 class="m-0 font-weight-bold text-primary">换手率</h6>
+          </div>
+          <div class="card-body">
+            <div class="col-lg-12">
+                <div id="toChart" style="height: 300px"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+              <h6 class="m-0 font-weight-bold text-primary">量比</h6>
+          </div>
+          <div class="card-body">
+            <div id="vrChart" style="height: 300px"></div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="row">
+            <div class="col-lg-12">
+                <span class="font-weight-bold">{% trans '基本信息' %}</span>
+          </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+            <hr />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="row col-lg-12">
+                    <span class="font-weight-bold mr-1" id="companyName">{% trans '公司名称' %}</span>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="setupDate">{% trans '成立日期' %}</span>
+                    </div>
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="capital">{% trans '注册资金' %}</span>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <span class="font-weight-bold mr-1" id="website">{% trans '公司主页' %}</span>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="chairman">{% trans '法人代表' %}</span>
+                    </div>
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="manager">{% trans '总经理' %}</span>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="province">{% trans '所在省' %}</span>
+                    </div>
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="city">{% trans '所在城市' %}</span>
+                    </div>
+                </div>
+                <div class="row col-lg-12">
+                    <div class="row col-lg-6">
+                        <span class="font-weight-bold mr-1" id="employees">{% trans '员工数量' %}</span>
+                    </div>
+                </div>
+                
+                <div class="row col-lg-12">
+                    <span class="row col-lg-12 font-weight-bold" id="industry">{% trans '主营业务' %}</span>
+                </div>
+          </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+            <hr />
+            </div>
+        </div>
+        
+    </div>
+  </div>
+</div>
+<input type="hidden" id="currentTsCode" value="{{search_single.ts_code}}" />
+{% endblock content %} 
+
+{% block javascript %} {{ block.super }}
+<script type="text/javascript" charset="utf-8">
+  var imgRoot = "{% static 'img/' %}";
+</script>
+<script src="{% static 'js/common.js' %}"></script>
+<script
+  src="{% static 'js/search_result.js' %}"
+  type="text/javascript"
+></script>
+{% endblock javascript %}

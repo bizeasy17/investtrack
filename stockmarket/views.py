@@ -23,7 +23,7 @@ from .utils import str_eval
 logger = logging.getLogger(__name__)
 
 
-def stock_close_hist(request, ts_code, freq='D', type='close', period=3):
+def stock_close_hist(request, ts_code, freq='D', period=3):
     '''
     用户需要授权可以使用策略
     '''
@@ -31,35 +31,51 @@ def stock_close_hist(request, ts_code, freq='D', type='close', period=3):
     if request.method == 'GET':
         end_date = date.today()
         try:
+            quantile = []
+            qt_10 = []
+            qt_90 = []
             close_result = []
-            ticks_result = []
+            # ticks_result = []
             ma25_result = []
             ma60_result = []
             ma200_result = []
             amount_result = []
             lbl_trade_date = []
-            start_date = end_date - timedelta(days=365 * period)
-            results = StockHistoryDaily.objects.filter(
-                ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+
+            if period != 0:
+                start_date = end_date - timedelta(days=365 * period)
+                results = StockHistoryDaily.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+            else: # period = 0 means all stock history
+                results = StockHistoryDaily.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__lte=end_date).order_by('trade_date')
             # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
                 ma25_result.append(result.ma25)
                 ma60_result.append(result.ma60)
                 ma200_result.append(result.ma200)
                 close_result.append(result.close)
-                ticks_result.append(
-                    {
-                        't': result.trade_date, 'o': result.open, 'h': result.high,
-                        'l': result.low, 'c': result.close, 'd': '',
-                        'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
-                    }
-                )
+                # ticks_result.append(
+                #     {
+                #         't': result.trade_date, 'o': result.open, 'h': result.high,
+                #         'l': result.low, 'c': result.close, 'd': '',
+                #         'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
+                #     }
+                # )
                 amount_result.append(result.amount)
                 lbl_trade_date.append(result.trade_date)
-            if type == 'ticks':
-                return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-            if type == 'close':
-                return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            df = pd.DataFrame(close_result, columns=['close'])
+            close_qtiles = df.close.quantile(
+                [0.1, 0.25, 0.5, 0.75, 0.9])
+            for index, value in close_qtiles.items():
+                quantile.append(round(value, 2))
+            for rst in close_result:
+                qt_10.append(quantile[0]) # 低价格的前10%
+                qt_90.append(quantile[4]) # 高价格的前10%
+
+            # if type == 'ticks':
+            #     return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            return JsonResponse({'close': close_result, 'close10': qt_10, 'close90': qt_90, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except Exception as err:
             logging.error(err)
             return HttpResponse(status=500)
@@ -152,6 +168,14 @@ def get_companies(request, input_text):
             logger.error(e)
             return HttpResponse(status=500)
 
+def get_fcf(request, ts_code):
+    '''
+    第一种：自由现金流＝息税前利润－税金 + 折旧与摊销－资本支出－营运资本追加
+    pro = ts.pro_api()
+    df = pro.income(ts_code='600000.SH', start_date='20180101', end_date='20180730', 
+        fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps')
+    df = pro.cashflow(ts_code='600000.SH', start_date='20180101', end_date='20180730')
+    '''
 
 def get_company_basic(request, ts_code):
     if request.method == 'GET':

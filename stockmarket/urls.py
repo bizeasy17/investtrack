@@ -13,7 +13,7 @@ urlpatterns = [
          views.get_daily_basic),
     path('daily-basic/company/<ts_code>/<start_date>/<end_date>/',
          views.get_single_daily_basic),
-    path('stock-hist/<ts_code>/<freq>/<type>/<int:period>/',
+    path('close/<ts_code>/<freq>/<int:period>/',
          views.stock_close_hist),  # ??
     path('updown-pct/<ts_code>/<strategy>/<test_period>/<freq>/<filters>/',
          views.get_updown_pct),

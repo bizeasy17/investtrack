@@ -3,7 +3,7 @@ $(function () {
     var homeEndpoint = '/';
     var indexList = "sh,sz,cyb,hs300"
     var freq = "D";
-    var histPeriod = 5;
+    var closePeriod = 5;
     var histType = "close";
     var tsCode = "";
     var tsCodeNoSfx = "";
@@ -31,17 +31,20 @@ $(function () {
     var pbChart = echarts.init(document.getElementById('pbChart'));
     var toChart = echarts.init(document.getElementById('toChart'));
     var vrChart = echarts.init(document.getElementById('vrChart'));
-    var updownByPeriodChart = echarts.init(document.getElementById('updownByPeriodChart'));
-    var periodByUpRangeChart = echarts.init(document.getElementById('periodByUpRangeChart'));
+    // var updownByPeriodChart = echarts.init(document.getElementById('updownByPeriodChart'));
+    // var periodByUpRangeChart = echarts.init(document.getElementById('periodByUpRangeChart'));
 
 
     var initParam = function () {
         tsCode = $("#currentTsCode").val();
-        expdPctPeriod = $('input:radio[name="pct_period"]:checked').val();
-        updownPctPeriod = $('input:radio[name="period"]:checked').val();
-        strategyCode = $('input:radio[name="bstrategy"]:checked').val();
-        strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
-        bstr = $('input:radio[name="bstrategy"]:checked');
+        // expdPctPeriod = $('input:radio[name="pct_period"]:checked').val();
+        // updownPctPeriod = $('input:radio[name="period"]:checked').val();
+        // strategyCode = $('input:radio[name="bstrategy"]:checked').val();
+        // strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
+        // bstr = $('input:radio[name="bstrategy"]:checked');
+        
+        closePeriod = $('input:radio[name="closePeriod"]:checked').val();
+
         
         idxMa25Filter = $('input:radio[name="radioIndexMA25"]:checked').val();
         idxMa60Filter = $('input:radio[name="radioIndexMA60"]:checked').val();
@@ -53,7 +56,7 @@ $(function () {
         stkMa200Filter = $('input:radio[name="radioStockMA200"]:checked').val();
         // stkVolFilter = $('#rangeStockVolume').val();
 
-        startDate = formatDate(new Date(today.getTime() - (365 * histPeriod * 24 * 60 * 60 * 1000)), "");
+        startDate = formatDate(new Date(today.getTime() - (365 * closePeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
 
         // initBTestDates();
@@ -79,8 +82,8 @@ $(function () {
         showCompanyBasic(tsCode);
         renderCloseChart(tsCode);
         renderCompanyBasicChart(tsCode, startDate, endDate);
-        renderUpdownByPeriodChart();
-        renderPeriodByUpRangeChart();
+        // renderUpdownByPeriodChart();
+        // renderPeriodByUpRangeChart();
     }
 
     var showCompanyBasic = function (tsCode) {
@@ -144,7 +147,7 @@ $(function () {
 
     var renderCloseChart = function (tsCode) {
         $.ajax({
-            url: stockmarketEndpoint + "stock-hist/" + tsCode + "/" + freq + "/" + histType + "/" + histPeriod + "/",
+            url: stockmarketEndpoint + "close/" + tsCode + "/" + freq + "/" + closePeriod + "/",
             success: function (data) {
                 option = {
                     tooltip: {
@@ -156,18 +159,19 @@ $(function () {
                     legend: {
                         data: ['收', '25', '60', '200']
                     },
-                    title: {
-                        text: '收盘线',
-                    },
-                    toolbox: {
-                        feature: {
-                            dataZoom: {
-                                yAxisIndex: 'none'
-                            },
-                            restore: {},
-                            saveAsImage: {}
-                        }
-                    },
+                    // title: {
+                    //     text: '收盘线',
+                    //     left: '5%',
+                    // },
+                    // toolbox: {
+                    //     feature: {
+                    //         dataZoom: {
+                    //             yAxisIndex: 'none'
+                    //         },
+                    //         restore: {},
+                    //         saveAsImage: {}
+                    //     }
+                    // },
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
@@ -207,8 +211,8 @@ $(function () {
                             data: data.close,
                             markPoint: {
                                 data: [
-                                    { type: 'max', name: '最大值' }
-                                    // { type: 'min', name: '最小值' }
+                                    { type: 'max', name: '最大值' },
+                                    { type: 'min', name: '最小值' }
                                 ]
                             },
                             markLine: {
@@ -249,6 +253,26 @@ $(function () {
                                 color: 'rgb(25, 0, 31)'
                             },
                             data: data.ma200
+                        },
+                        {
+                            name: '10分位',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'none',
+                            itemStyle: {
+                                color: 'rgb(0, 255, 0)'
+                            },
+                            data: data.close10
+                        },
+                        {
+                            name: '90分位',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'none',
+                            itemStyle: {
+                                color: 'rgb(255, 0, 0)'
+                            },
+                            data: data.close90
                         }
                     ]
                 };
@@ -293,9 +317,10 @@ $(function () {
             legend: {
                 data: ['PE', 'PE(动)', 'PE中位', 'PE(动)中位']
             },
-            title: {
-                text: '市盈',
-            },
+            // title: {
+            //     text: '市盈',
+            //     left: '5%',
+            // },
             toolbox: {
                 feature: {
                     dataZoom: {
@@ -404,9 +429,10 @@ $(function () {
             legend: {
                 data: ['PS', 'PS(动)', 'PS中位', 'PS(动)中位']
             },
-            title: {
-                text: '市销',
-            },
+            // title: {
+            //     text: '市销',
+            //     left: '5%',
+            // },
             toolbox: {
                 feature: {
                     dataZoom: {
@@ -519,9 +545,10 @@ $(function () {
             legend: {
                 data: ['PB','PB中位']
             },
-            title: {
-                text: '市净',
-            },
+            // title: {
+            //     text: '市净',
+            //     left: '5%',
+            // },
             toolbox: {
                 feature: {
                     dataZoom: {
@@ -610,9 +637,9 @@ $(function () {
             legend: {
                 data: ['换手','换手中位']
             },
-            title: {
-                text: '换手率',
-            },
+            // title: {
+            //     text: '换手率',
+            // },
             toolbox: {
                 feature: {
                     dataZoom: {
@@ -705,9 +732,9 @@ $(function () {
             legend: {
                 data: ['量比','量比中位']
             },
-            title: {
-                text: '量比',
-            },
+            // title: {
+            //     text: '量比',
+            // },
             toolbox: {
                 feature: {
                     dataZoom: {
@@ -788,231 +815,231 @@ $(function () {
         vrChart.setOption(option);
     }
 
-    var renderUpdownByPeriodChart = function () {
-        var filters = buildBTestFilter();
-        $.ajax({
-            url: stockmarketEndpoint + "updown-pct/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/" + freq + "/" + filters + "/",
-            success: function (data) {
-                option = {
-                    title: {
-                        text: '固定天数涨跌%',
-                        // subtext: '数据来自西安兰特水电测控技术有限公司',
-                        // left: 10
-                    },
-                    tooltip: {
-                        trigger: 'axis',
-                        position: function (pt) {
-                            return [pt[0], '10%'];
-                        }
-                    },
-                    legend: {
-                        data: ['涨%', '涨中位%', '跌%', '跌中位%'],
-                        left: 'center'
-                    },
-                    toolbox: {
-                        feature: {
-                            dataZoom: {
-                                yAxisIndex: 'none'
-                            },
-                            restore: {},
-                            saveAsImage: {}
-                        }
-                    },
-                    xAxis: {
-                        type: 'category',
-                        boundaryGap: false,
-                        data: data.date_label
-                    },
-                    yAxis: {
-                        type: 'value',
-                        max: data.up_max,
-                        axisLabel: {
-                            formatter: '{value} %'
-                        },
-                        boundaryGap: [0, '100%']
-                    },
-                    dataZoom: [{
-                        type: 'inside',
-                        start: 0,
-                        end: 1000
-                    }, {
-                        start: 0,
-                        end: 10,
-                        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                        handleSize: '100%',
-                        handleStyle: {
-                            color: '#fff',
-                            shadowBlur: 3,
-                            shadowColor: 'rgba(0, 0, 0, 0.6)',
-                            shadowOffsetX: 2,
-                            shadowOffsetY: 2
-                        }
-                    }],
-                    series: [
-                        {
-                            name: '涨%',
-                            type: 'line',
-                            symbolSize: 8,
-                            hoverAnimation: false,
-                            data: data.up_pct,
-                            markPoint: {
-                                data: [
-                                    { type: 'max', name: '最大值' }
-                                    // { type: 'min', name: '最小值' }
-                                ]
-                            },
-                            markLine: {
-                                data: [
-                                    { type: 'average', name: '平均值' }
-                                ]
-                            }
-                        },
-                        {
-                            name: '涨中位%',
-                            type: 'line',
-                            symbolSize: 8,
-                            hoverAnimation: false,
-                            data: data.up_50qt
-                        },
-                        {
-                            name: '跌%',
-                            type: 'line',
-                            symbolSize: 8,
-                            hoverAnimation: false,
-                            data: data.down_pct,
-                            markPoint: {
-                                data: [
-                                    // { type: 'max', name: '最大值' }
-                                    { type: 'min', name: '最小值' }
-                                ]
-                            },
-                            markLine: {
-                                data: [
-                                    { type: 'average', name: '平均值' }
-                                ]
-                            }
-                        },
-                        {
-                            name: '跌中位%',
-                            type: 'line',
-                            symbolSize: 8,
-                            hoverAnimation: false,
-                            data: data.down_50qt
-                        },
-                    ]
+    // var renderUpdownByPeriodChart = function () {
+    //     var filters = buildBTestFilter();
+    //     $.ajax({
+    //         url: stockmarketEndpoint + "updown-pct/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/" + freq + "/" + filters + "/",
+    //         success: function (data) {
+    //             option = {
+    //                 title: {
+    //                     text: '固定天数涨跌%',
+    //                     // subtext: '数据来自西安兰特水电测控技术有限公司',
+    //                     // left: 10
+    //                 },
+    //                 tooltip: {
+    //                     trigger: 'axis',
+    //                     position: function (pt) {
+    //                         return [pt[0], '10%'];
+    //                     }
+    //                 },
+    //                 legend: {
+    //                     data: ['涨%', '涨中位%', '跌%', '跌中位%'],
+    //                     left: 'center'
+    //                 },
+    //                 toolbox: {
+    //                     feature: {
+    //                         dataZoom: {
+    //                             yAxisIndex: 'none'
+    //                         },
+    //                         restore: {},
+    //                         saveAsImage: {}
+    //                     }
+    //                 },
+    //                 xAxis: {
+    //                     type: 'category',
+    //                     boundaryGap: false,
+    //                     data: data.date_label
+    //                 },
+    //                 yAxis: {
+    //                     type: 'value',
+    //                     max: data.up_max,
+    //                     axisLabel: {
+    //                         formatter: '{value} %'
+    //                     },
+    //                     boundaryGap: [0, '100%']
+    //                 },
+    //                 dataZoom: [{
+    //                     type: 'inside',
+    //                     start: 0,
+    //                     end: 1000
+    //                 }, {
+    //                     start: 0,
+    //                     end: 10,
+    //                     handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+    //                     handleSize: '100%',
+    //                     handleStyle: {
+    //                         color: '#fff',
+    //                         shadowBlur: 3,
+    //                         shadowColor: 'rgba(0, 0, 0, 0.6)',
+    //                         shadowOffsetX: 2,
+    //                         shadowOffsetY: 2
+    //                     }
+    //                 }],
+    //                 series: [
+    //                     {
+    //                         name: '涨%',
+    //                         type: 'line',
+    //                         symbolSize: 8,
+    //                         hoverAnimation: false,
+    //                         data: data.up_pct,
+    //                         markPoint: {
+    //                             data: [
+    //                                 { type: 'max', name: '最大值' }
+    //                                 // { type: 'min', name: '最小值' }
+    //                             ]
+    //                         },
+    //                         markLine: {
+    //                             data: [
+    //                                 { type: 'average', name: '平均值' }
+    //                             ]
+    //                         }
+    //                     },
+    //                     {
+    //                         name: '涨中位%',
+    //                         type: 'line',
+    //                         symbolSize: 8,
+    //                         hoverAnimation: false,
+    //                         data: data.up_50qt
+    //                     },
+    //                     {
+    //                         name: '跌%',
+    //                         type: 'line',
+    //                         symbolSize: 8,
+    //                         hoverAnimation: false,
+    //                         data: data.down_pct,
+    //                         markPoint: {
+    //                             data: [
+    //                                 // { type: 'max', name: '最大值' }
+    //                                 { type: 'min', name: '最小值' }
+    //                             ]
+    //                         },
+    //                         markLine: {
+    //                             data: [
+    //                                 { type: 'average', name: '平均值' }
+    //                             ]
+    //                         }
+    //                     },
+    //                     {
+    //                         name: '跌中位%',
+    //                         type: 'line',
+    //                         symbolSize: 8,
+    //                         hoverAnimation: false,
+    //                         data: data.down_50qt
+    //                     },
+    //                 ]
 
-                };
+    //             };
 
-                updownByPeriodChart.setOption(option);
+    //             updownByPeriodChart.setOption(option);
                 
-                idxVolFilter = data.index_vol[0];
-                stkVolFilter = data.stock_vol[0];
-                $('#rangeIndexVolume').attr("min", data.index_vol[0]);
-                $('#rangeIndexVolume').attr("max", data.index_vol[1]);
-                $('#rangeStockVolume').attr("min", data.stock_vol[0]);
-                $('#rangeStockVolume').attr("max", data.stock_vol[1]);
-            },
-            statusCode: {
-                403: function () {
+    //             idxVolFilter = data.index_vol[0];
+    //             stkVolFilter = data.stock_vol[0];
+    //             $('#rangeIndexVolume').attr("min", data.index_vol[0]);
+    //             $('#rangeIndexVolume').attr("max", data.index_vol[1]);
+    //             $('#rangeStockVolume').attr("min", data.stock_vol[0]);
+    //             $('#rangeStockVolume').attr("max", data.stock_vol[1]);
+    //         },
+    //         statusCode: {
+    //             403: function () {
 
-                },
-                404: function () {
-                    $("#updownPctSubtitle").text("上市时间小于3年，暂无回测记录！");
-                },
-                500: function () {
+    //             },
+    //             404: function () {
+    //                 $("#updownPctSubtitle").text("上市时间小于3年，暂无回测记录！");
+    //             },
+    //             500: function () {
 
-                }
-            }
-        });
-    }
+    //             }
+    //         }
+    //     });
+    // }
 
-    var renderPeriodByUpRangeChart = function () {
-        $.ajax({
-            url: stockmarketEndpoint + "exp-pct/" + tsCode + "/" + strategyCode + "/" + expdPctPeriod + "/" + freq + "/",
-            success: function (data) {
-                option = {
-                    title: {
-                        text: '期望涨幅所需天数'
-                        // subtext: 'Feature Sample: Gradient Color, Shadow, Click Zoom'
-                    },
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: {
-                            type: 'cross',
-                            crossStyle: {
-                                color: '#999'
-                            }
-                        }
-                    },
-                    toolbox: {
-                        feature: {
-                            dataView: { show: true, readOnly: false },
-                            magicType: { show: true, type: ['line', 'bar'] },
-                            restore: { show: true },
-                            saveAsImage: { show: true }
-                        }
-                    },
-                    legend: {
-                        data: ['%天数', '%中位天数']//, '降水量', '平均温度']
-                    },
-                    xAxis: [
-                        {
-                            type: 'category',
-                            data: data.date_label,
-                            axisPointer: {
-                                type: 'shadow'
-                            }
-                        }
-                    ],
-                    yAxis: [
-                        {
-                            type: 'value',
-                            name: '天数',
-                            min: 0,
-                            // max: 250,
-                            interval: 50
-                        }
-                        // {
-                        //     type: 'value',
-                        //     name: '温度',
-                        //     min: 0,
-                        //     max: 25,
-                        //     interval: 5,
-                        //     axisLabel: {
-                        //         formatter: '{value} °C'
-                        //     }
-                        // }
-                    ],
-                    series: [
-                        {
-                            name: '%天数',
-                            type: 'bar',
-                            data: data.exp_pct
-                        },
-                        {
-                            name: '%中位天数',
-                            type: 'line',
-                            data: data.qt_50
-                        }
-                    ]
-                };
+    // var renderPeriodByUpRangeChart = function () {
+    //     $.ajax({
+    //         url: stockmarketEndpoint + "exp-pct/" + tsCode + "/" + strategyCode + "/" + expdPctPeriod + "/" + freq + "/",
+    //         success: function (data) {
+    //             option = {
+    //                 title: {
+    //                     text: '期望涨幅所需天数'
+    //                     // subtext: 'Feature Sample: Gradient Color, Shadow, Click Zoom'
+    //                 },
+    //                 tooltip: {
+    //                     trigger: 'axis',
+    //                     axisPointer: {
+    //                         type: 'cross',
+    //                         crossStyle: {
+    //                             color: '#999'
+    //                         }
+    //                     }
+    //                 },
+    //                 toolbox: {
+    //                     feature: {
+    //                         dataView: { show: true, readOnly: false },
+    //                         magicType: { show: true, type: ['line', 'bar'] },
+    //                         restore: { show: true },
+    //                         saveAsImage: { show: true }
+    //                     }
+    //                 },
+    //                 legend: {
+    //                     data: ['%天数', '%中位天数']//, '降水量', '平均温度']
+    //                 },
+    //                 xAxis: [
+    //                     {
+    //                         type: 'category',
+    //                         data: data.date_label,
+    //                         axisPointer: {
+    //                             type: 'shadow'
+    //                         }
+    //                     }
+    //                 ],
+    //                 yAxis: [
+    //                     {
+    //                         type: 'value',
+    //                         name: '天数',
+    //                         min: 0,
+    //                         // max: 250,
+    //                         interval: 50
+    //                     }
+    //                     // {
+    //                     //     type: 'value',
+    //                     //     name: '温度',
+    //                     //     min: 0,
+    //                     //     max: 25,
+    //                     //     interval: 5,
+    //                     //     axisLabel: {
+    //                     //         formatter: '{value} °C'
+    //                     //     }
+    //                     // }
+    //                 ],
+    //                 series: [
+    //                     {
+    //                         name: '%天数',
+    //                         type: 'bar',
+    //                         data: data.exp_pct
+    //                     },
+    //                     {
+    //                         name: '%中位天数',
+    //                         type: 'line',
+    //                         data: data.qt_50
+    //                     }
+    //                 ]
+    //             };
 
-                periodByUpRangeChart.setOption(option);
-            },
-            statusCode: {
-                403: function () {
+    //             periodByUpRangeChart.setOption(option);
+    //         },
+    //         statusCode: {
+    //             403: function () {
 
-                },
-                404: function () {
-                    $("#targetPctSubtitle").text("上市时间小于3年，暂无回测记录！");
-                },
-                500: function () {
+    //             },
+    //             404: function () {
+    //                 $("#targetPctSubtitle").text("上市时间小于3年，暂无回测记录！");
+    //             },
+    //             500: function () {
 
-                }
-            }
-        });
+    //             }
+    //         }
+    //     });
 
-    }
+    // }
 
     var refreshCompanyClose = function (tsCode, startDate, endDate) {
         $.ajax({
@@ -1092,6 +1119,16 @@ $(function () {
 
         return filter;
     }
+
+    $('input:radio[name="closePeriod"]').change(function () {
+        // alert($(this).val());
+        closePeriod = $(this).val();
+        closeChart.clear();
+        closeChart.showLoading();
+        renderCloseChart(tsCode);
+        closeChart.hideLoading();
+        // closeChart.resize();
+    });
 
     $('#switchIndexMA25').change(function () {
         // alert($(this).is(":checked"));
