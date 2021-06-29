@@ -1270,7 +1270,7 @@ $(function () {
             search: function (qry, callback) {
                 // let's do a custom ajax call
                 $.ajax(
-                    stockmarketEndpoint + 'listed_companies/' + $('#searchText').val(),
+                    stockmarketEndpoint + 'companies/' + $('#searchText').val(),
                 ).done(function (res) {
                     callback(res.results)
                 });
