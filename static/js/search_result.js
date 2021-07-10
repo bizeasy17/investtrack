@@ -848,9 +848,9 @@ $(function () {
                     smooth: true,
                     symbol: 'none',
                     // sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(255, 0, 0)'
-                    // },
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
 
                     data: pb10qt
                 },
@@ -860,9 +860,9 @@ $(function () {
                     smooth: true,
                     symbol: 'none',
                     // sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(255, 0, 0)'
-                    // },
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
 
                     data: pb90qt
                 }

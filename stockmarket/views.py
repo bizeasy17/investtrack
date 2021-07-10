@@ -108,9 +108,9 @@ def realtime_quotes(request, symbols):
                     }
                 )
             return JsonResponse(quote_list, safe=False)
-        except IndexError as err:
+        except Exception as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
 
 
 def get_companies(request, input_text):
