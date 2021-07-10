@@ -70,10 +70,10 @@ def company_list():
                     ts_code = row['ts_code']
                     market = ''
 
-                    if ts_code[1][0] == '3':
+                    if ts_code[0] == '3':
                         market = 'CYB'
-                    elif ts_code[1][0] == '0':
-                        if ts_code[1][:3] == '002':
+                    elif ts_code[0] == '0':
+                        if ts_code[:3] == '002':
                             market = 'ZXB'
                         else:
                             market = 'SZZB'

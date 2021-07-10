@@ -58,7 +58,7 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
     4. 测试结果存入表
     '''
     # end_date = date.today()
-    periods = [10, 20, 30, 50, 80, 130, 210, 350, 560]
+    periods = [10, 20, 30, 50, 80, 130, 210, 340, 550]
     # periods = [130, 210, 350, 560]
 
     # if strategy_code.startswith('jiuzhuan_'):
@@ -71,7 +71,7 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
     # if strategy_code.endswith('_b'): not needed, 20200617
     if freq == 'D':
         df = pd.DataFrame.from_records(StockHistoryDaily.objects.filter(
-            ts_code=ts_code).order_by('trade_date').values())
+            ts_code=ts_code).order_by('trade_date').values(strategy_code, 'trade_date','ts_code','close','ma25_slope','ma60_slope','ma200_slope','vol','amount'))
     else:
         pass
     if df is not None and len(df) >= list_days:
@@ -109,55 +109,34 @@ def test_by_period(strategy_code, ts_code, start_date, end_date, freq, list_days
 
         for test_period in periods:
             for idx in idx_list:
-                idx_list_period = [id for id in range(
-                    idx, idx + int(test_period))]
-                if idx + int(test_period) <= len(df.index):
-                    cp_close = df.iloc[idx]['close']
-                    critical_point = df.iloc[idx]
-                    idx_max = df.iloc[idx_list_period]['close'].idxmax(
-                        axis=0)
-                    idx_min = df.iloc[idx_list_period]['close'].idxmin(
-                        axis=0)
-                    max_c = df.iloc[idx_list_period]['close'].max(
-                        axis=0)
-                    min_c = df.iloc[idx_list_period]['close'].min(
-                        axis=0)
+                try:
+                    idx_list_period = [id for id in range(
+                        idx, idx + int(test_period))]
+                    sliced = df.loc[idx:idx+int(test_period), ['close','trade_date', 'ma25_slope','ma60_slope','ma200_slope','vol','amount']]
+                    cp_close = sliced.iloc[0]['close']
+                    cp_trade_date = sliced.iloc[0]['trade_date']
+                    idx_max = sliced['close'].idxmax()
+                    idx_min = sliced['close'].idxmin()
+                    max_c = sliced.loc[idx_max]['close']
+                    min_c = sliced.loc[idx_min]['close']
+                    max_d = sliced.loc[idx_max]['trade_date']
+                    min_d = sliced.loc[idx_min]['trade_date']
                     pct_up = round(
                         (max_c - cp_close) / cp_close * 100, 3)
                     pct_down = round(
                         (min_c - cp_close) / cp_close * 100, 3)
 
-                    # print('Jiu zhuan buy...')
-                    # print(b)
-                    # print('Jiu zhuan min...')
-                    # print(df.iloc[idx_min])
-                    # print('Jiu zhuan max...')mayiant
-                    # print(df.iloc[idx_max])
-
-                    # 买入点
-                    # for v in b.values:
-                    # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                    # b_tnx = BStrategyTestResultOnDays(ts_code=b.ts_code, trade_date=b.trade_date, test_period=test_period,
-                    #                                     # open=b.open, high=b.high, low=b.low, close=b.close, pre_close=b.pre_close,
-                    #                                     # change=b.change, pct_chg=b.pct_chg, vol=b.vol, amount=b.amount,
-                    #                                     tnx_point=True, strategy_code=strategy_code)
-                    # 查询周期内最高价
-                    found_max = df.iloc[idx_max]
-                    # 查询周期内最低价
-                    found_min = df.iloc[idx_min]
-                    # 	ts_code	trade_date	open	high	low	close	pre_close	change	pct_chg	vol	amount
-                    test_by_day = StrategyTestLowHigh(ts_code=critical_point.ts_code, trade_date=critical_point.trade_date, test_period=test_period,
-                                                      stage_high_date=found_max.trade_date, stage_high_pct=pct_up, stage_low_date=found_min.trade_date, 
-                                                      stage_low_pct=pct_down, strategy_code=strategy_code, ma25_slope=df.iloc[idx]['ma25_slope'], 
-                                                      ma60_slope=df.iloc[idx]['ma60_slope'], ma200_slope=df.iloc[idx]['ma200_slope'], 
-                                                      vol=df.iloc[idx]['vol'], amount=df.iloc[idx]['amount'], freq= freq)
-                    # test_min = BStrategyTestResultOnDays(ts_code=min.ts_code, trade_date=min.trade_date, test_period=test_period,
-                    #                                         # open=min.open, high=min.high, low=min.low, close=min.close, pre_close=min.pre_close,
-                    #                                         # change=min.change, pct_chg=min.pct_chg, vol=min.vol, amount=min.amount,
-                    #                                         stage_low=True, stage_low_pct=pct_down, strategy_code=strategy_code)
-                    # strategy_test_list.append(b_tnx)
-                    # strategy_test_list.append(test_min)
+                    test_by_day = StrategyTestLowHigh(ts_code=ts_code, trade_date=cp_trade_date, test_period=test_period,
+                                                      stage_high_date=max_d, stage_high_pct=pct_up, stage_low_date=min_d, 
+                                                      stage_low_pct=pct_down, strategy_code=strategy_code, ma25_slope=sliced.iloc[0]['ma25_slope'], 
+                                                      ma60_slope=sliced.iloc[0]['ma60_slope'], ma200_slope=sliced.iloc[0]['ma200_slope'], 
+                                                      vol=sliced.iloc[0]['vol'], amount=sliced.iloc[0]['amount'], freq= freq)
                     strategy_test_list.append(test_by_day)
+                    # print('cp close:'+str(cp_close))
+                    # print('max:' + str(max_c)+',min_c:'+str(min_c)+',pct_up:'+str(pct_up)+',pct_down:'+str(pct_down)  )
+                except Exception as error:
+                    print(error)
+                
         if len(strategy_test_list) > 0:
             StrategyTestLowHigh.objects.bulk_create(strategy_test_list)
     else:

@@ -28,6 +28,7 @@ from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
                             get_qt_updownpct)
 from analysis.v2.mark_junxian_cp_v2 import pre_handle_jx
 from analysis.xuangu.pick_stocks import handle_stocks_pick
+from analysis.strategy_test_period import btest_pct_on_period
 
 from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      PickedStocksMeetStrategy, StockHistoryDaily,
@@ -654,6 +655,8 @@ def analysis_command(request, cmd, params):
                 plist[2] if plist[2] != '' else None, plist[3] if plist[4] != '' else 'D')
         elif cmd == 'pick':
             handle_stocks_pick(plist[0] if plist[0] != '' else None)
+        elif cmd == 'btest_pct':
+            btest_pct_on_period(plist[0] if plist[0] != '' else None, 'D', plist[2])
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)

@@ -23,7 +23,7 @@ from .utils import str_eval
 logger = logging.getLogger(__name__)
 
 
-def stock_close_hist(request, ts_code, freq='D', type='close', period=3):
+def stock_close_hist(request, ts_code, freq='D', period=3):
     '''
     用户需要授权可以使用策略
     '''
@@ -31,35 +31,51 @@ def stock_close_hist(request, ts_code, freq='D', type='close', period=3):
     if request.method == 'GET':
         end_date = date.today()
         try:
+            quantile = []
+            qt_10 = []
+            qt_90 = []
             close_result = []
-            ticks_result = []
+            # ticks_result = []
             ma25_result = []
             ma60_result = []
             ma200_result = []
             amount_result = []
             lbl_trade_date = []
-            start_date = end_date - timedelta(days=365 * period)
-            results = StockHistoryDaily.objects.filter(
-                ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+
+            if period != 0:
+                start_date = end_date - timedelta(days=365 * period)
+                results = StockHistoryDaily.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
+            else: # period = 0 means all stock history
+                results = StockHistoryDaily.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__lte=end_date).order_by('trade_date')
             # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
                 ma25_result.append(result.ma25)
                 ma60_result.append(result.ma60)
                 ma200_result.append(result.ma200)
                 close_result.append(result.close)
-                ticks_result.append(
-                    {
-                        't': result.trade_date, 'o': result.open, 'h': result.high,
-                        'l': result.low, 'c': result.close, 'd': '',
-                        'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
-                    }
-                )
+                # ticks_result.append(
+                #     {
+                #         't': result.trade_date, 'o': result.open, 'h': result.high,
+                #         'l': result.low, 'c': result.close, 'd': '',
+                #         'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
+                #     }
+                # )
                 amount_result.append(result.amount)
                 lbl_trade_date.append(result.trade_date)
-            if type == 'ticks':
-                return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-            if type == 'close':
-                return JsonResponse({'close': close_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            df = pd.DataFrame(close_result, columns=['close'])
+            close_qtiles = df.close.quantile(
+                [0.1, 0.25, 0.5, 0.75, 0.9])
+            for index, value in close_qtiles.items():
+                quantile.append(round(value, 2))
+            for rst in close_result:
+                qt_10.append(quantile[0]) # 低价格的前10%
+                qt_90.append(quantile[4]) # 高价格的前10%
+
+            # if type == 'ticks':
+            #     return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            return JsonResponse({'close': close_result, 'close10': qt_10, 'close90': qt_90, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except Exception as err:
             logging.error(err)
             return HttpResponse(status=500)
@@ -92,29 +108,42 @@ def realtime_quotes(request, symbols):
                     }
                 )
             return JsonResponse(quote_list, safe=False)
-        except IndexError as err:
+        except Exception as err:
             logging.error(err)
-            return HttpResponse(status=404)
+            return HttpResponse(status=500)
 
 
-def listed_companies(request, name_or_code):
+def get_companies(request, input_text):
     '''
     根据输入获得上市公司信息
+    需要更新板块，SQL如下
+    update public.stockmarket_stocknamecodemap
+    set market='SHZB'
+    where market='ZB'
+
+    update  public.stockmarket_stocknamecodemap
+    set market='SZZB'
+    where market='ZXB'
+
+    update  public.stockmarket_stocknamecodemap
+    set market='ZXB'
+    where stock_code like '002%'
     '''
-    market_exch_map = {
-        'ZB': '主板',
+    board_list = {
+        'SHZB': '上海主板',
+        'SZZB': '深圳主板',
         'ZXB': '中小板',
         'CYB': '创业板',
         'KCB': '科创板',
     }
     if request.method == 'GET':
         try:
-            if not name_or_code.isnumeric():
+            if not input_text.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    Q(stock_name__startswith=name_or_code) | Q(stock_name_pinyin__contains=name_or_code)).order_by('list_date')[:10]
-            elif name_or_code.isnumeric():
+                    Q(stock_name__contains=input_text) | Q(stock_name_pinyin__contains=input_text)).order_by('list_date')[:10]
+            elif input_text.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    stock_code__startswith=name_or_code).order_by('list_date')[:10]
+                    stock_code__contains=input_text).order_by('list_date')[:10]
             else:  # 输入条件是拼音首字母
                 pass
             company_list = []
@@ -125,7 +154,7 @@ def listed_companies(request, name_or_code):
                         'id': c.stock_code,
                         'ts_code': c.ts_code,
                         'text': c.stock_name,
-                        'market': market_exch_map[c.market],
+                        'market': board_list[c.market],
                         'industry': c.industry,
                         'list_date': c.list_date,
                         'area': c.area,
@@ -139,6 +168,14 @@ def listed_companies(request, name_or_code):
             logger.error(e)
             return HttpResponse(status=500)
 
+def get_fcf(request, ts_code):
+    '''
+    第一种：自由现金流＝息税前利润－税金 + 折旧与摊销－资本支出－营运资本追加
+    pro = ts.pro_api()
+    df = pro.income(ts_code='600000.SH', start_date='20180101', end_date='20180730', 
+        fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps')
+    df = pro.cashflow(ts_code='600000.SH', start_date='20180101', end_date='20180730')
+    '''
 
 def get_company_basic(request, ts_code):
     if request.method == 'GET':
@@ -285,12 +322,27 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         ps_range = []
         date_label = []
         pe_50qt_list = []
+        pe_10qt_list = []
+        pe_90qt_list = []
         pe_ttm_50qt_list = []
+        pe_ttm_10qt_list = []
+        pe_ttm_90qt_list = []
         ps_50qt_list = []
+        ps_10qt_list = []
+        ps_90qt_list = []
         ps_ttm_50qt_list = []
+        ps_ttm_10qt_list = []
+        ps_ttm_90qt_list = []
         to_50qt_list = []
+        to_10qt_list = []
+        to_90qt_list = []
         vr_50qt_list = []
+        vr_10qt_list = []
+        vr_90qt_list = []
         pb_50qt_list = []
+        pb_10qt_list = []
+        pb_90qt_list = []
+
         try:
             df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
                                  fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
@@ -303,6 +355,14 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
             to_50qt = df['turnover_rate'].quantile()
             vr_50qt = df['volume_ratio'].quantile()
             pb_50qt = df['pb'].quantile()
+
+            pe_qt = df['pe'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            pe_ttm_qt = df['pe_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            ps_qt = df['ps'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            ps_ttm_qt = df['ps_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            to_qt = df['turnover_rate'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            vr_qt = df['volume_ratio'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            pb_qt = df['pb'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
 
             pe_range.append(75)
             pe_range.append(100)
@@ -330,22 +390,49 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])
 
-                    pe_50qt_list.append(pe_50qt)
-                    pe_ttm_50qt_list.append(pe_ttm_50qt)
-                    ps_50qt_list.append(ps_50qt)
-                    ps_ttm_50qt_list.append(ps_ttm_50qt)
-                    to_50qt_list.append(to_50qt)
-                    vr_50qt_list.append(vr_50qt)
-                    pb_50qt_list.append(pb_50qt)
+                    pe_10qt_list.append(round(pe_qt.values[0],3))
+                    pe_50qt_list.append(round(pe_qt.values[2],3))
+                    pe_90qt_list.append(round(pe_qt.values[4],3))
+
+                    pe_ttm_10qt_list.append(round(pe_ttm_qt.values[0],3))
+                    pe_ttm_50qt_list.append(round(pe_ttm_qt.values[2],3))
+                    pe_ttm_90qt_list.append(round(pe_ttm_qt.values[4],3))
+
+                    ps_10qt_list.append(round(ps_qt.values[0],3))
+                    ps_50qt_list.append(round(ps_qt.values[2],3))
+                    ps_90qt_list.append(round(ps_qt.values[4],3))
+
+                    ps_ttm_10qt_list.append(round(ps_ttm_qt.values[0],3))
+                    ps_ttm_50qt_list.append(round(ps_ttm_qt.values[2],3))
+                    ps_ttm_90qt_list.append(round(ps_ttm_qt.values[4],3))
+
+                    to_10qt_list.append(round(to_qt.values[0],3))
+                    to_50qt_list.append(round(to_qt.values[2],3))
+                    to_90qt_list.append(round(to_qt.values[4],3))
+
+                    vr_10qt_list.append(round(vr_qt.values[0],3))
+                    vr_50qt_list.append(round(vr_qt.values[2],3))
+                    vr_90qt_list.append(round(vr_qt.values[4],3))
+
+                    pb_10qt_list.append(round(pb_qt.values[0],3))
+                    pb_50qt_list.append(round(pb_qt.values[2],3))
+                    pb_90qt_list.append(round(pb_qt.values[4],3))
 
                 return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1],
                                      'volume_ratio': vr_list[::-1],
                                      'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1],
                                      'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1],
-                                     'ps': ps_list[::-1], 'pe_50qt': pe_50qt_list,
-                                     'pe_ttm_50qt': pe_ttm_50qt_list, 'ps_50qt': ps_50qt_list,
-                                     'ps_ttm_50qt': ps_ttm_50qt_list, 'to_50qt': to_50qt_list,
-                                     'vr_50qt': vr_50qt_list, 'pb_50qt': pb_50qt_list,
+                                     'ps': ps_list[::-1], 'pe_10qt': pe_10qt_list,  
+                                     'pe_50qt': pe_50qt_list, 'pe_90qt': pe_90qt_list,
+                                     'pe_ttm_10qt': pe_ttm_10qt_list, 'pe_ttm_50qt': pe_ttm_50qt_list, 
+                                     'pe_ttm_90qt': pe_ttm_90qt_list, 'ps_10qt': ps_10qt_list,
+                                     'ps_50qt': ps_50qt_list, 'ps_90qt': ps_90qt_list,
+                                     'ps_ttm_10qt': ps_ttm_10qt_list, 'ps_ttm_50qt': ps_ttm_50qt_list, 
+                                     'ps_ttm_90qt': ps_ttm_90qt_list, 'to_10qt': to_10qt_list,
+                                     'to_50qt': to_50qt_list, 'to_90qt': to_90qt_list,
+                                     'vr_10qt': vr_10qt_list, 'vr_50qt': vr_50qt_list, 
+                                     'vr_90qt': vr_90qt_list, 'pb_10qt': pb_10qt_list,
+                                     'pb_50qt': pb_50qt_list, 'pb_90qt': pb_90qt_list,
                                      'pe_range': pe_range, 'ps_range': ps_range,
                                      'pb_range': pb_range, 'to_range': to_range,
                                      'vr_range': vr_range}, safe=False)
@@ -392,17 +479,18 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             stk_vol = []
 
             filters = str_eval(filters)
-            all_dates = get_updown_pct_dates(
-                strategy, ts_code, test_period, freq)
+            all_dates = get_updown_pct_dates(strategy, ts_code, test_period, freq)
 
+            filter_enabled = False
             if len(filters['I']) == 0 and len(filters['E']) == 0:
                 results = StrategyTestLowHigh.objects.filter(
-                    strategy_code=strategy, ts_code=ts_code, test_period=test_period,).order_by('trade_date')
+                    ts_code=ts_code, strategy_code=strategy, test_period=test_period,).order_by('trade_date')
             else:
+                filter_enabled = True
                 filtered_dates = pct_on_period_filter(
                     ts_code, all_dates, filters)
                 results = StrategyTestLowHigh.objects.filter(
-                    strategy_code=strategy, ts_code=ts_code, test_period=test_period,
+                    ts_code=ts_code, strategy_code=strategy,test_period=test_period,
                     trade_date__in=filtered_dates).order_by('trade_date')
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values(
@@ -419,8 +507,8 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                 up_qt.append(round(df.max().stage_high_pct, 3))
                 down_qt.append(round(df.mean().stage_low_pct, 3))
                 down_qt.append(round(df.min().stage_low_pct, 3))
-                index_vol = get_index_vol_range(all_dates, freq)
-                stk_vol = get_stock_vol_range(all_dates, freq)
+                index_vol = get_index_vol_range(all_dates, freq) if filter_enabled else []
+                stk_vol = get_stock_vol_range(all_dates, freq) if filter_enabled else []
 
                 up_max_rounded = int(
                     np.around(df['stage_high_pct'].max() / 100)) * 100 + 50

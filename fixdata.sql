@@ -11,7 +11,7 @@ update public.analysis_stockstrategytestlog set end_date='2020-11-19' where even
 update public.analysis_stockstrategytestlog set end_date='2020-11-19' where event_type='HIST_DOWNLOAD' and end_date='2020-11-20'
 
 
--- 清理历史数据
+-- 清理历史数据  
 -- 1. 清理public.analysis_stockhistorydaily
 delete from public.analysis_stockhistorydaily
 -- 2. 清理public.analysis_stockstrategytestlog

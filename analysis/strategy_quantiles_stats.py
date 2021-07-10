@@ -76,7 +76,7 @@ def target_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
 
 def updown_pct_quantiles_stat(strategy_code, ts_code, stock_name, freq='D'):
     # test_period_list = [10,20,30,50,80,130,210,340,550] 正确的序列应该为340, 550
-    test_period_list = [10, 20, 30, 50, 80, 130, 210, 350, 560]
+    test_period_list = [10, 20, 30, 50, 80, 130, 210, 340, 550]
     # strategy_codes = ['jiuzhuan_b', 'jiuzhuan_s', 'dibu_b', 'dingbu_s', 'w_di', 'm_ding', 'tupo_yali_b',
     #                      'diepo_zhicheng_s', 'ma25_zhicheng_b', 'ma25_tupo_b', 'ma25_diepo_s', 'ma25_yali_s']
     test_type = ['up_pct', 'down_pct']
@@ -156,7 +156,7 @@ def rank_updown_test(strategy_code, freq='D'):
     try:
         print('updown pct ranking on start - ' + strategy_code +
               ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        test_period_list = [10, 20, 30, 50, 80, 130, 210, 350, 560]
+        test_period_list = [10, 20, 30, 50, 80, 130, 210, 340, 550]
         quantile_list = ['qt_10pct', 'qt_25pct', 'qt_50pct',
                          'qt_75pct', 'qt_90pct', 'mean_val', 'min_val', 'max_val']
         test_type_list = ['up_pct', 'down_pct']
