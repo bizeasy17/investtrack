@@ -322,12 +322,27 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         ps_range = []
         date_label = []
         pe_50qt_list = []
+        pe_10qt_list = []
+        pe_90qt_list = []
         pe_ttm_50qt_list = []
+        pe_ttm_10qt_list = []
+        pe_ttm_90qt_list = []
         ps_50qt_list = []
+        ps_10qt_list = []
+        ps_90qt_list = []
         ps_ttm_50qt_list = []
+        ps_ttm_10qt_list = []
+        ps_ttm_90qt_list = []
         to_50qt_list = []
+        to_10qt_list = []
+        to_90qt_list = []
         vr_50qt_list = []
+        vr_10qt_list = []
+        vr_90qt_list = []
         pb_50qt_list = []
+        pb_10qt_list = []
+        pb_90qt_list = []
+
         try:
             df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
                                  fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
@@ -340,6 +355,14 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
             to_50qt = df['turnover_rate'].quantile()
             vr_50qt = df['volume_ratio'].quantile()
             pb_50qt = df['pb'].quantile()
+
+            pe_qt = df['pe'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            pe_ttm_qt = df['pe_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            ps_qt = df['ps'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            ps_ttm_qt = df['ps_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            to_qt = df['turnover_rate'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            vr_qt = df['volume_ratio'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
+            pb_qt = df['pb'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
 
             pe_range.append(75)
             pe_range.append(100)
@@ -367,22 +390,49 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])
 
-                    pe_50qt_list.append(pe_50qt)
-                    pe_ttm_50qt_list.append(pe_ttm_50qt)
-                    ps_50qt_list.append(ps_50qt)
-                    ps_ttm_50qt_list.append(ps_ttm_50qt)
-                    to_50qt_list.append(to_50qt)
-                    vr_50qt_list.append(vr_50qt)
-                    pb_50qt_list.append(pb_50qt)
+                    pe_10qt_list.append(round(pe_qt.values[0],3))
+                    pe_50qt_list.append(round(pe_qt.values[2],3))
+                    pe_90qt_list.append(round(pe_qt.values[4],3))
+
+                    pe_ttm_10qt_list.append(round(pe_ttm_qt.values[0],3))
+                    pe_ttm_50qt_list.append(round(pe_ttm_qt.values[2],3))
+                    pe_ttm_90qt_list.append(round(pe_ttm_qt.values[4],3))
+
+                    ps_10qt_list.append(round(ps_qt.values[0],3))
+                    ps_50qt_list.append(round(ps_qt.values[2],3))
+                    ps_90qt_list.append(round(ps_qt.values[4],3))
+
+                    ps_ttm_10qt_list.append(round(ps_ttm_qt.values[0],3))
+                    ps_ttm_50qt_list.append(round(ps_ttm_qt.values[2],3))
+                    ps_ttm_90qt_list.append(round(ps_ttm_qt.values[4],3))
+
+                    to_10qt_list.append(round(to_qt.values[0],3))
+                    to_50qt_list.append(round(to_qt.values[2],3))
+                    to_90qt_list.append(round(to_qt.values[4],3))
+
+                    vr_10qt_list.append(round(vr_qt.values[0],3))
+                    vr_50qt_list.append(round(vr_qt.values[2],3))
+                    vr_90qt_list.append(round(vr_qt.values[4],3))
+
+                    pb_10qt_list.append(round(pb_qt.values[0],3))
+                    pb_50qt_list.append(round(pb_qt.values[2],3))
+                    pb_90qt_list.append(round(pb_qt.values[4],3))
 
                 return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1],
                                      'volume_ratio': vr_list[::-1],
                                      'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1],
                                      'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1],
-                                     'ps': ps_list[::-1], 'pe_50qt': pe_50qt_list,
-                                     'pe_ttm_50qt': pe_ttm_50qt_list, 'ps_50qt': ps_50qt_list,
-                                     'ps_ttm_50qt': ps_ttm_50qt_list, 'to_50qt': to_50qt_list,
-                                     'vr_50qt': vr_50qt_list, 'pb_50qt': pb_50qt_list,
+                                     'ps': ps_list[::-1], 'pe_10qt': pe_10qt_list,  
+                                     'pe_50qt': pe_50qt_list, 'pe_90qt': pe_90qt_list,
+                                     'pe_ttm_10qt': pe_ttm_10qt_list, 'pe_ttm_50qt': pe_ttm_50qt_list, 
+                                     'pe_ttm_90qt': pe_ttm_90qt_list, 'ps_10qt': ps_10qt_list,
+                                     'ps_50qt': ps_50qt_list, 'ps_90qt': ps_90qt_list,
+                                     'ps_ttm_10qt': ps_ttm_10qt_list, 'ps_ttm_50qt': ps_ttm_50qt_list, 
+                                     'ps_ttm_90qt': ps_ttm_90qt_list, 'to_10qt': to_10qt_list,
+                                     'to_50qt': to_50qt_list, 'to_90qt': to_90qt_list,
+                                     'vr_10qt': vr_10qt_list, 'vr_50qt': vr_50qt_list, 
+                                     'vr_90qt': vr_90qt_list, 'pb_10qt': pb_10qt_list,
+                                     'pb_50qt': pb_50qt_list, 'pb_90qt': pb_90qt_list,
                                      'pe_range': pe_range, 'ps_range': ps_range,
                                      'pb_range': pb_range, 'to_range': to_range,
                                      'vr_range': vr_range}, safe=False)

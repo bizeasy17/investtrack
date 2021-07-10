@@ -57,7 +57,7 @@
               <div class="card shadow mb-4">
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">收盘线</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">收盘线 - {{search_single.stock_name}}</h6>
                     <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                         <label class="btn btn-light active">
                             <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -89,7 +89,7 @@
         <div class="col-lg-12">
           <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市盈率</h6>
+                <h6 class="m-0 font-weight-bold text-primary">市盈率 - {{search_single.stock_name}}</h6>
             </div>
             <div class="card-body">
               <div class="col-lg-12">
@@ -100,10 +100,24 @@
         </div>
       </div>
       <div class="row">
+        <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">市盈率(动) - {{search_single.stock_name}}</h6>
+            </div>
+            <div class="card-body">
+              <div class="col-lg-12">
+                  <div id="peTTMChart" style="height: 400px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
           <div class="col-lg-12">
             <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市净率</h6>
+                <h6 class="m-0 font-weight-bold text-primary">市净率 - {{search_single.stock_name}}</h6>
             </div>
             <div class="card-body">
               <div id="pbChart" style="height: 400px"></div>
@@ -115,7 +129,7 @@
           <div class="col-lg-12">
           <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市销率</h6>
+                <h6 class="m-0 font-weight-bold text-primary">市销率 - {{search_single.stock_name}}</h6>
             </div>
             <div class="card-body">
               <div id="psChart" style="height: 400px"></div>
@@ -124,10 +138,22 @@
           </div>
       </div>
       <div class="row">
+          <div class="col-lg-12">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">市销率(动) - {{search_single.stock_name}}</h6>
+            </div>
+            <div class="card-body">
+              <div id="psTTMChart" style="height: 400px"></div>
+            </div>
+          </div>
+          </div>
+      </div>
+      <div class="row">
         <div class="col-lg-6">
         <div class="card shadow mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">换手率</h6>
+              <h6 class="m-0 font-weight-bold text-primary">换手率 - {{search_single.stock_name}}</h6>
           </div>
           <div class="card-body">
             <div class="col-lg-12">
@@ -139,7 +165,7 @@
         <div class="col-lg-6">
         <div class="card shadow mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">量比</h6>
+              <h6 class="m-0 font-weight-bold text-primary">量比 - {{search_single.stock_name}}</h6>
           </div>
           <div class="card-body">
             <div id="vrChart" style="height: 300px"></div>
