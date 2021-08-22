@@ -1,5 +1,6 @@
 $(function () {
     var stockmarketEndpoint = '/stockmarket/';
+    var investorEndpoint = "/investors/";
     var homeEndpoint = '/';
     var indexList = "sh,sz,cyb,hs300"
     var freq = "D";
@@ -1288,6 +1289,51 @@ $(function () {
     //     });
 
     // }
+
+    var followStock = function (tsCode, btn) {
+        var methodUrl = "";
+        var method = "POST";
+        if ($(btn).text() == "+") {
+            methodUrl = "follow-stock/";
+            mehod = "POST";
+        } else {
+            methodUrl = "unfollow-stock/";
+            method = "DELETE";
+        }
+        $.ajax(
+            {
+                url: investorEndpoint + methodUrl + tsCode + "/",
+                headers: { 'X-CSRFToken': csrftoken },
+                method: method,
+                success: function (data) {
+                    if (data.code == "aok") {
+                        $(btn).text("-");
+                    }else{
+                        $(btn).text("+");
+                    }
+                },
+                statusCode: {
+                    403: function () {
+                        log("403 forbidden");
+                    },
+                    404: function () {
+                        log("404 page not found");
+                    },
+                    500: function () {
+                        log("500 internal server error");
+                    }
+                }
+            }
+        );
+    }
+
+    $("#followStock").click(function () {
+        followStock($("#currentTsCode").val(), this);
+    });
+
+    $("#unfollowStock").click(function () {
+        followStock($("#currentTsCode").val(), "delete", this);
+    });
 
     var refreshCompanyClose = function (tsCode, startDate, endDate) {
         $.ajax({

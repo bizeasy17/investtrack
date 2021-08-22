@@ -199,6 +199,14 @@ class StockFollowing(BaseModel):
         _('股票代码'), max_length=50, blank=False, null=False)
     stock_name = models.CharField(
         _('股票名称'), max_length=50, blank=True, null=True)  # name e.g. 平安银行
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+    area = models.CharField(_('所在地域'), max_length=50,
+                            blank=True, null=True)
+    industry = models.CharField(
+        _('所属行业'), max_length=50, blank=True, null=True)
+    fullname = models.CharField(
+        _('股票全称'), max_length=100, blank=True, null=True)
     trader = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('持仓人'), blank=False, null=False,
                                on_delete=models.CASCADE)
     is_following = models.BooleanField(

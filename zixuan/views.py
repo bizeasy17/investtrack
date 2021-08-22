@@ -10,6 +10,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
 from analysis.utils import get_ip
+from stockmarket.models import StockNameCodeMap
+from investors.models import StockFollowing
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -17,12 +19,10 @@ logger = logging.getLogger(__name__)
 
 class HomeView(TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'public_pages/home.html'
-    search_template = 'public_pages/search_result_single.html'
-    search_template_list = 'public_pages/search_result_list.html'
+    template_name = 'zixuan/home.html'
 
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'search_single'
+    context_object_name = 'zixuan'
 
     def get(self, request, *args, **kwargs):
         req_user = request.user
@@ -30,12 +30,21 @@ class HomeView(TemplateView):
         #     pass
         # else:
         #     pass
+        stk_ind_dic = {}
+        stk_dic = {}
         try:
-            if len(request.GET) > 0:
-                # query_trace = UserQueryTrace(query_string=request.GET['q'], request_url=request.path, ip_addr=get_ip(request), uid=req_user)
-                # query_trace.save()
-                return render(request, self.search_template, {self.context_object_name: {'ts_code':request.GET['q']}})
-            else:
-                return render(request, self.template_name)
+            industries = StockFollowing.objects.order_by().values('industry').distinct()
+            if len(industries) > 0:
+                for ind in industries:
+                    stocks = StockFollowing.objects.filter(
+                        industry=ind['industry'])
+                    for stk in stocks:
+                        stk_dic[stk.ts_code] = stk.stock_name
+                    stk_ind_dic[ind['industry']] = stk_dic
+                    stk_dic = {}
         except Exception as err:
-            logger.error(err)
+            logger.err(err)
+
+        return render(request, self.template_name, {self.context_object_name: stk_ind_dic})
+
+        

@@ -92,6 +92,7 @@
 
   <!-- Bootstrap core JavaScript -->
   {% block javascript %}
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
   <script language="javascript">
     function formatDate(date, conn) {
       var dayNames = [
@@ -140,6 +141,9 @@
       }
       return false;
     }
+
+    // var currentUser = "{{ request.user.username }}"
+    var csrftoken = Cookies.get('csrftoken');
   </script>
   <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
