@@ -1,3 +1,4 @@
+from analysis.models import StockHistoryDaily
 import pandas as pd
 import logging
 import pytz
@@ -48,3 +49,24 @@ class HomeView(TemplateView):
         return render(request, self.template_name, {self.context_object_name: stk_ind_dic})
 
         
+@login_required
+def get_selected_latest_price(request):
+    selected_stk = {}
+    
+    try:
+        req_user = request.user
+        picked_stocks = StockFollowing.objects.filter(
+            trader=req_user)
+        
+        if picked_stocks is not None and len(picked_stocks) > 0:
+            for picked_stock in picked_stocks:
+                stock_hist = StockHistoryDaily.objects.filter(ts_code=picked_stock.ts_code).values('ts_code', 'close','pct_chg','jiuzhuan_count_b','jiuzhuan_count_s').order_by('-trade_date')[:1]
+                if stock_hist is not None and len(stock_hist) > 0:
+                    for stk in stock_hist:
+                        selected_stk[stk['ts_code']] = [stk['close'], stk['pct_chg'], stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s']]
+            return JsonResponse({'content': selected_stk}, safe=False)
+        else:
+            return HttpResponse(status=404)
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=500)

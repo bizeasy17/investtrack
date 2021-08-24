@@ -106,7 +106,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                    <div class="card-title"><a class="text-primary" href="?q={{ind}}"><h6>{{ind}}</h6></a></div>
+                                    <div class="card-title"><a class="text-muted" href="?q={{ind}}"><h6>{{ind}}</h6></a></div>
                                     <p class="font-weight-medium small">
                                         <!-- <span class="text-muted mr-1"></span> -->
                                         <span class="badge badge-pill badge-primary">{{stk.items|length}}</span>
@@ -114,20 +114,20 @@
                                     </p>
                                 </div>
                                 <!-- <hr class="row"/> -->
-                                <div class="container small">
-                                    <div class="d-flex align-items-left justify-content-between flex-wrap row">
+                                <div class="container small mt-2">
+                                    <!-- <div class="d-flex align-items-left justify-content-between flex-wrap row">
                                         <span class="text-muted">{% trans '股票代码(EXG)' %}</span>
                                         <span class="text-muted">{% trans '股票名称' %}</span>
                                         <span class="text-muted">{% trans '价格' %}</span>
                                         <span class="text-muted">{% trans '%' %}</span>
-                                    </div>
-                                    <hr class="row"/>
+                                    </div> -->
+                                    <!-- <hr/> -->
                                     {% for k,v in stk.items %}
                                     <div class="d-flex align-items-left justify-content-between flex-wrap row">
                                         <span class="text-muted" id=""><a href="/?q={{k}}">{{k}}</a></span>
                                         <span class="text-muted" id=""><a href="/?q={{k}}">{{v}}</a></span>
-                                        <span class="text-muted" id="{{k}}p">-</span>
-                                        <span class="text-muted" id="{{k}}pct">-</span>
+                                        <span class="text-muted" id="p{{k}}">-</span>
+                                        <span class="text-muted" id="pct{{k}}">-</span>
                                     </div>
                                     {% endfor %}
                                 </div>
@@ -151,5 +151,5 @@
 {% block javascript %}
 {{ block.super }}
 <script type="text/javascript" charset="utf-8">var imgRoot = "{% static 'img/' %}"</script>
-<script src="{% static 'js/search.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/zixuan.js' %}" type="text/javascript"></script>
 {% endblock javascript %}
