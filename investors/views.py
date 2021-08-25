@@ -63,7 +63,7 @@ def unfollow_stock(request, symbol):
     if request.method == 'DELETE':
         investor = request.user
         following = StockFollowing.objects.filter(
-            trader=investor, stock_code=symbol)
+            trader=investor, ts_code=symbol)
         following.delete()
         return JsonResponse({'code': 'dok', 'message': _('删除成功')}, safe=False)
     return JsonResponse({'code': 'error', 'message': _('删除失败')}, safe=False)
