@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
 from analysis.utils import get_ip
+from investors.models import StockFollowing
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -33,11 +34,18 @@ class SearchView(TemplateView):
         #     pass
         try:
             if len(request.GET) > 0:
+                selected = False
+
+                sel_stocks = StockFollowing.objects.filter(
+                    trader=req_user, ts_code=request.GET['q'])
+                if sel_stocks is not None and len(sel_stocks) > 0:
+                    selected = True
+                
                 # query_trace = UserQueryTrace(query_string=request.GET['q'], request_url=request.path, ip_addr=get_ip(request), uid=req_user)
                 # query_trace.save()
                 company = StockNameCodeMap.objects.get(
                     ts_code=request.GET['q'])
-                return render(request, self.search_template, {self.context_object_name: {'ts_code':request.GET['q'], 'stock_name': company.stock_name}})
+                return render(request, self.search_template, {self.context_object_name: {'ts_code':request.GET['q'], 'stock_name': company.stock_name, 'selected': selected}})
             else:
                 return render(request, self.template_name)
         except Exception as err:

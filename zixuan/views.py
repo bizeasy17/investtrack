@@ -35,6 +35,7 @@ class HomeView(TemplateView):
         stk_dic = {}
         try:
             industries = StockFollowing.objects.order_by().values('industry').distinct()
+            
             if len(industries) > 0:
                 for ind in industries:
                     stocks = StockFollowing.objects.filter(
