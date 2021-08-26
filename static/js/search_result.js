@@ -1293,7 +1293,7 @@ $(function () {
     var followStock = function (tsCode, btn) {
         var methodUrl = "";
         var method = "POST";
-        if ($(btn).text() == "+") {
+        if ($.trim($(btn).text()) == "+") {
             methodUrl = "follow-stock/";
             mehod = "POST";
         } else {
