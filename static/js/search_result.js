@@ -1,5 +1,6 @@
 $(function () {
     var stockmarketEndpoint = '/stockmarket/';
+    var investorEndpoint = "/investors/";
     var homeEndpoint = '/';
     var indexList = "sh,sz,cyb,hs300"
     var freq = "D";
@@ -44,10 +45,10 @@ $(function () {
         // strategyCode = $('input:radio[name="bstrategy"]:checked').val();
         // strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
         // bstr = $('input:radio[name="bstrategy"]:checked');
-        
+
         closePeriod = $('input:radio[name="closePeriod"]:checked').val();
 
-        
+
         idxMa25Filter = $('input:radio[name="radioIndexMA25"]:checked').val();
         idxMa60Filter = $('input:radio[name="radioIndexMA60"]:checked').val();
         idxMa200Filter = $('input:radio[name="radioIndexMA200"]:checked').val();
@@ -92,7 +93,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "company-basic/" + tsCode + "/",
             success: function (data) {
-                if($("#companyName").parent().children().length>1){
+                if ($("#companyName").parent().children().length > 1) {
                     $("#companyName").parent().children().last().remove();
                 }
                 if ($("#setupDate").parent().children().length > 1) {
@@ -148,6 +149,8 @@ $(function () {
     }
 
     var renderCloseChart = function (tsCode) {
+        var zoomMin = 75;
+        var zoomMax = 100;
         $.ajax({
             url: stockmarketEndpoint + "close/" + tsCode + "/" + freq + "/" + closePeriod + "/",
             success: function (data) {
@@ -185,8 +188,8 @@ $(function () {
                     },
                     dataZoom: [{
                         type: 'inside',
-                        start: 100,
-                        end: 200
+                        start: zoomMin,
+                        end: zoomMax
                     }, {
                         start: 0,
                         end: 10,
@@ -405,7 +408,7 @@ $(function () {
                     data: pe50qt
                 },
                 {
-                    name: 'PE(动)中位',
+                    name: '高位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -765,7 +768,7 @@ $(function () {
                 }
             },
             legend: {
-                data: ['PB','PB中位']
+                data: ['PB', 'PB中位']
             },
             // title: {
             //     text: '市净',
@@ -813,9 +816,9 @@ $(function () {
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(25, 70, 131)'
-                    // },
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
 
                     data: pb,
                     markPoint: {
@@ -836,9 +839,9 @@ $(function () {
                     smooth: true,
                     symbol: 'none',
                     // sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(255, 0, 0)'
-                    // },
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
 
                     data: pb50qt
                 },
@@ -881,7 +884,7 @@ $(function () {
                 }
             },
             legend: {
-                data: ['换手','换手中位']
+                data: ['换手', '换手中位']
             },
             // title: {
             //     text: '换手率',
@@ -976,7 +979,7 @@ $(function () {
                 }
             },
             legend: {
-                data: ['量比','量比中位']
+                data: ['量比', '量比中位']
             },
             // title: {
             //     text: '量比',
@@ -1177,7 +1180,7 @@ $(function () {
     //             };
 
     //             updownByPeriodChart.setOption(option);
-                
+
     //             idxVolFilter = data.index_vol[0];
     //             stkVolFilter = data.stock_vol[0];
     //             $('#rangeIndexVolume').attr("min", data.index_vol[0]);
@@ -1287,6 +1290,51 @@ $(function () {
 
     // }
 
+    var followStock = function (tsCode, btn) {
+        var methodUrl = "";
+        var method = "POST";
+        if ($.trim($(btn).text()) == "+") {
+            methodUrl = "follow-stock/";
+            mehod = "POST";
+        } else {
+            methodUrl = "unfollow-stock/";
+            method = "DELETE";
+        }
+        $.ajax(
+            {
+                url: investorEndpoint + methodUrl + tsCode + "/",
+                headers: { 'X-CSRFToken': csrftoken },
+                method: method,
+                success: function (data) {
+                    if (data.code == "aok") {
+                        $(btn).text("-");
+                    }else{
+                        $(btn).text("+");
+                    }
+                },
+                statusCode: {
+                    403: function () {
+                        log("403 forbidden");
+                    },
+                    404: function () {
+                        log("404 page not found");
+                    },
+                    500: function () {
+                        log("500 internal server error");
+                    }
+                }
+            }
+        );
+    }
+
+    $("#followStock").click(function () {
+        followStock($("#currentTsCode").val(), this);
+    });
+
+    $("#unfollowStock").click(function () {
+        followStock($("#currentTsCode").val(), "delete", this);
+    });
+
     var refreshCompanyClose = function (tsCode, startDate, endDate) {
         $.ajax({
             url: stockmarketEndpoint + "company-daily-basic/" + tsCode + "/" + startDate + "/" + endDate + "/",
@@ -1330,11 +1378,11 @@ $(function () {
     var stkMa25FilterOn = false, stkMa60FilterOn = false, stkMa200FilterOn = false, stkVolFilterOn = false;
     var stkMa25Filter = "", stkMa60Filter = "", stkMa200Filter = "", stkVolFilter = "";
     var idxKey = "I", stkKey = "E";
-    
-    var buildBTestFilter = function() {
+
+    var buildBTestFilter = function () {
         var filter = "";
         filter += "{'" + idxKey + "':[";
-        if (idxMa25FilterOn){
+        if (idxMa25FilterOn) {
             filter += "'" + idxMa25Filter + "',";
         }
         if (idxMa60FilterOn) {
@@ -1369,10 +1417,24 @@ $(function () {
     $('input:radio[name="closePeriod"]').change(function () {
         // alert($(this).val());
         closePeriod = $(this).val();
-        closeChart.clear();
+        // closeChart.clear();
         closeChart.showLoading();
         renderCloseChart(tsCode);
         closeChart.hideLoading();
+        // closeChart.resize();
+    });
+
+    $('input:radio[name="pePeriod"]').change(function () {
+        // alert($(this).val());
+        var basicInfoPeriod = parseInt($(this).val());
+        // peChart.clear();
+        // peChart.showLoading();
+        if (basicInfoPeriod == 0) {
+            basicInfoPeriod = 30;
+        }
+        startDate = formatDate(new Date(today.getTime() - (365 * basicInfoPeriod * 24 * 60 * 60 * 1000)), "");
+        renderCompanyBasicChart(tsCode, startDate, endDate);
+        // peChart.hideLoading();
         // closeChart.resize();
     });
 
@@ -1456,7 +1518,7 @@ $(function () {
     $("#rangeIndexVolume").change(function () {
         // alert($(this).val());
         idxVolFilter = $(this).val();
-        
+
         if (idxVolFilterOn) {
             renderUpdownByPeriodChart();
             renderPeriodByUpRangeChart();
@@ -1499,7 +1561,7 @@ $(function () {
             renderPeriodByUpRangeChart();
         }
     });
-    
+
     $('#searchText').autoComplete({
         resolver: 'custom',
         // preventEnter: true,

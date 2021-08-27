@@ -6,4 +6,6 @@ app_name = 'zixuan'
 urlpatterns = [
     path('',
          views.HomeView.as_view(), name='home'),  # ??
+    path('selected-stk-price/',
+         views.get_selected_latest_price),
 ]

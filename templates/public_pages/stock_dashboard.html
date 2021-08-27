@@ -27,9 +27,9 @@
   <form class="col-lg-4" id="searchForm" >
     <input type="text" class="form-control form-control-sm small" id="searchText" autocomplete="off" name="q" placeholder="{% trans '股票名称, 代码或首字母' %}" value="{{search_single.ts_code}}">
   </form>
-  <!-- <div class="collapse navbar-collapse">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item">
+  <div class="collapse navbar-collapse">
+    <ul class="nav navbar-nav">
+      <!-- <li class="nav-item">
         <a class="nav-link" href="{% url 'hongguan:home' %}">{% trans '宏观数据' %}</a>
       </li>
       <li class="nav-item">
@@ -37,13 +37,32 @@
       </li>
       <li class="nav-item dropdown">
         <a class="nav-link" href="{% url 'xuangu:home' %}">{% trans '策略选股结果' %}</a>
-      </li>
+      </li> -->
       <li class="nav-item">
         <a class="nav-link" href="{% url 'zixuan:home' %}">{% trans '我的自选股' %}</a>
       </li>
+    {% if request.user.is_authenticated %}
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {% if request.user.picture %}
+          <img src="/media/{{ request.user.picture }}" height="30" width="30" style="border-radius: 50%;" class="user-image">
+          {% else %} 
+          <img src="{% static 'img/user.png' %}" height="30" alt="{% trans '无个人头像' %}" />
+          {% endif %}
+          {{ request.user.name }}
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="{% url 'user:get_profile' %}"><i class="fa fa-cogs fa-fw" aria-hidden="true"></i>&nbsp; {% trans '个人信息设置' %}</a>
+          <a class="dropdown-item" href="{% url 'trade_account:index' %}"><i class="fa fa-piggy-bank fa-fw" aria-hidden="true"></i>&nbsp; {% trans '交易账户管理' %}</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{%url 'account:logout'%}" id="logout"><i class="fa fa-sign-out-alt fa-fw" aria-hidden="true"></i>&nbsp; {% trans '注销' %}</a>
+        </div>
+      </li>
+    {% else %}
+      <li><a class="btn btn-primary" href="#">{% trans '快速登录' %}</a></li>
+    {% endif %}
     </ul>
-    <a class="btn btn-primary" href="#">{% trans '手机快速登录' %}</a>
-  </div> -->
+  </div>
 </nav>
 {% endblock navbar %}
 
@@ -54,10 +73,10 @@
     <div class="col-lg-8">
       <div class="row">
           <div class="col-lg-12">
-              <div class="card shadow mb-4">
+              <div class="card mb-4">
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">收盘线 - {{search_single.stock_name}}</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">收盘 - {{search_single.stock_name}}</h6>
                     <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                         <label class="btn btn-light active">
                             <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -86,10 +105,33 @@
           </div>
       </div>
       <div class="row">
+        <div class="col-lg-12 d-flex flex-row justify-content-between">
+          <div><h6 class="m-0 font-weight-bold text-primary">股票基本面指标</h6></div>
+          <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
+              <label class="btn btn-light active">
+                  <input type="radio" name="pePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+              </label>
+              <label class="btn btn-light">
+                  <input type="radio" name="pePeriod" autocomplete="off" value="3">{% trans '3年' %} 
+              </label>
+              <label class="btn btn-light">
+                  <input type="radio" name="pePeriod" autocomplete="off" value="5">{% trans '5年' %} 
+              </label>
+              <label class="btn btn-light">
+                  <input type="radio" name="pePeriod" autocomplete="off" value="10">{% trans '10年' %} 
+              </label>
+              <label class="btn btn-light">
+                  <input type="radio" name="pePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+              </label>
+          </div>
+        </div>
+      </div>
+      <div class="row">
         <div class="col-lg-12">
-          <div class="card shadow mb-4">
+          <div class="card mt-4 mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">市盈率 - {{search_single.stock_name}}</h6>
+                
             </div>
             <div class="card-body">
               <div class="col-lg-12">
@@ -101,9 +143,26 @@
       </div>
       <div class="row">
         <div class="col-lg-12">
-          <div class="card shadow mb-4">
+          <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">市盈率(动) - {{search_single.stock_name}}</h6>
+                <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
+                    <label class="btn btn-light active">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="3">{% trans '3年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="5">{% trans '5年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="10">{% trans '10年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+                    </label>
+                </div>
             </div>
             <div class="card-body">
               <div class="col-lg-12">
@@ -115,9 +174,26 @@
       </div>
       <div class="row">
           <div class="col-lg-12">
-            <div class="card shadow mb-4">
+            <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">市净率 - {{search_single.stock_name}}</h6>
+                <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
+                    <label class="btn btn-light active">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="3">{% trans '3年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="5">{% trans '5年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="10">{% trans '10年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+                    </label>
+                </div>
             </div>
             <div class="card-body">
               <div id="pbChart" style="height: 400px"></div>
@@ -127,9 +203,26 @@
       </div>
       <div class="row">
           <div class="col-lg-12">
-          <div class="card shadow mb-4">
+          <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">市销率 - {{search_single.stock_name}}</h6>
+                <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
+                    <label class="btn btn-light active">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="3">{% trans '3年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="5">{% trans '5年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="10">{% trans '10年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+                    </label>
+                </div>
             </div>
             <div class="card-body">
               <div id="psChart" style="height: 400px"></div>
@@ -139,9 +232,26 @@
       </div>
       <div class="row">
           <div class="col-lg-12">
-          <div class="card shadow mb-4">
+          <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">市销率(动) - {{search_single.stock_name}}</h6>
+                <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
+                    <label class="btn btn-light active">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="3">{% trans '3年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="5">{% trans '5年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="10">{% trans '10年' %} 
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="closePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+                    </label>
+                </div>
             </div>
             <div class="card-body">
               <div id="psTTMChart" style="height: 400px"></div>
@@ -151,7 +261,7 @@
       </div>
       <div class="row">
         <div class="col-lg-6">
-        <div class="card shadow mb-4">
+        <div class="card mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
               <h6 class="m-0 font-weight-bold text-primary">换手率 - {{search_single.stock_name}}</h6>
           </div>
@@ -163,7 +273,7 @@
         </div>
         </div>
         <div class="col-lg-6">
-        <div class="card shadow mb-4">
+        <div class="card mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
               <h6 class="m-0 font-weight-bold text-primary">量比 - {{search_single.stock_name}}</h6>
           </div>
@@ -176,8 +286,8 @@
     </div>
     <div class="col-lg-4">
         <div class="row">
-            <div class="col-lg-12">
-                <span class="font-weight-bold">{% trans '基本信息' %}</span>
+            <div class="col-lg-12 justify-content-between">
+                <span class="font-weight-bold">{% trans '基本信息' %}</span><button class="btn btn-sm btn-primary float-right" href="#follow" id="followStock">{% if search_single.selected %}{% trans '-' %}{% else %}{% trans '+' %}{%endif%}</button>
           </div>
         </div>
         <div class="row">
