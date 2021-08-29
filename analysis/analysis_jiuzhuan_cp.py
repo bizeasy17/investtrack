@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
-from dashboard.utils import days_between
+# from dashboard.utils import days_between
 from analysis.utils import (generate_task, get_analysis_task,
                             get_trade_cal_diff, init_eventlog,
                             get_event_status, set_event_completed,

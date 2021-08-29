@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 # from investors.models import TradeStrategy
 import tushare as ts
-from dashboard.utils import days_between
+# from dashboard.utils import days_between
 from django.utils import timezone
 from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
                      StrategyTargetPctTestQuantiles,

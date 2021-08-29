@@ -10,46 +10,19 @@
 {% endblock %}
 
 {% block navbar %}
-<!-- Navigation -->
-<!-- <nav class="navbar static-top">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
-    <div class="col-lg-6 row align-items-center">
-      <div class="col-lg-1">
-        <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
-        <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="mr-1">      
-        </a>
-      </div>
-      <div class="col-lg-11">
-        <form id="searchForm" action="{% url 'search:home' %}">
-          <input type="text" class="form-control form-control-sm" id="searchText" name="q" placeholder="{% trans '股票名称,代码或首字母' %}" value="{{search_single.ts_code}}">
-        </form>
-      </div>
-    </div>
-    <a class="btn btn-primary" href="#">{% trans '微信扫码登录' %}</a>
-  </div>
-</nav> -->
-<!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light">
-  <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
-    <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
-    <span>{% trans '投呗' %}</span>   
-  </a>
-  <div class="collapse navbar-collapse">
-    <ul class="navbar-nav mr-auto">
-      <!-- <li class="nav-item">
-        <a class="nav-link" href="{% url 'hongguan:home' %}">{% trans '宏观数据' %}</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'paiming:home' %}">{% trans '历史表现排名' %}</a>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link" href="{% url 'xuangu:home' %}">{% trans '策略选股结果' %}</a>
-      </li> -->
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'zixuan:home' %}">{% trans '我的自选股' %}</a>
-      </li>
-    
-    {% if request.user.is_authenticated %}
+    <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+      <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
+      <span class="text-white">{% trans '投呗' %}</span>   
+    </a>
+
+    <div class="collapse navbar-collapse" id="navbarColor01">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'zixuan:home' %}">{% trans '自选股' %}</a>
+        </li>
+        {% if request.user.is_authenticated %}
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {% if request.user.picture %}
@@ -68,9 +41,10 @@
       </li>
     {% else %}
     <!-- <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a> -->
-    <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a>
+    <a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a>
     {% endif %}
-    </ul>
+      </ul>
+    </div>
   </div>
 </nav>
 {% endblock navbar %}
@@ -82,130 +56,25 @@
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
+        <!-- <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+          <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
+          <span>{% trans '投呗' %}</span>   
+        </a> -->
+      </div>
+      <div class="row mt-5">
+        <div class="col-xl-9 mt-5 mb-4">
           <form id="searchForm" action="{% url 'search:home' %}">
             <div class="form-row">
-              <div class="col-12 col-md-12 mb-2 mb-md-0">
-                <input type="text" autocomplete="off" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称,代码或首字母' %}">
+              <div class="col-lg-8 mb-5">
+                <input type="text" autocomplete="off" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称，代码或首字母' %}">
               </div>
-              <!-- <div class="col-12 col-md-3">
+              <div class="col-lg-4 ">
                 <button type="submit" class="btn btn-block btn-lg btn-primary">{% trans '查看' %}</button>
-              </div> -->
+              </div>
             </div>
           </form>
         </div>
       </div>
-      <div class="row">
-            <div class="col-lg-12 grid-margin stretch-card mt-3">
-                <hr>
-                <div class="row flex-grow small">
-                    <div class="mt-3 col-md-3 stretch-card">
-                        <div class="card shadow">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                    <p class="card-title"><a class="text-muted" href="?q=000001.SH"><i class="fa fa-chart-line"></i> {% trans '上证 - 000001' %}</a></p>
-                                    <p class="font-weight-medium small">
-                                        <!-- <span class="text-muted mr-1"></span> -->
-                                        <span class="text-danger" id="shPrice"></span><span id="shChange" class="ml-1"></span>
-                                    </p>
-                                    
-                                </div>
-                                <div class="small">
-                                    <div class="row">
-                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
-                                    </div>
-                                    <div class="row">
-                                        <p class="col-lg-4 text-muted" id="shPreClose"></p>
-                                        <p class="col-lg-4 text-muted" id="shVolume"></p>
-                                        <p class="col-lg-4 text-muted" id="shAmount"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3 col-md-3 stretch-card">
-                        <div class="card shadow">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center
-                                    justify-content-between flex-wrap">
-                                    <p class="card-title text-muted"><a class="text-muted" href="?q=399001.SZ"><i class="fa fa-chart-line"></i> {% trans '深证 - 399001' %}</a></p>
-                                    <p class="text-danger font-weight-medium small">
-                                        <!-- <span class="text-muted small mr-1"></span> -->
-                                        <span class="text-danger" id="szPrice"></span><span id="szChange" class="ml-1"></span>
-                                    </p>
-                                </div>
-                                <div class="small">
-                                    <div class="row">
-                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
-                                    </div>
-                                    <div class="row">
-                                        <p class="col-lg-4 text-muted" id="szPreClose"></p>
-                                        <p class="col-lg-4 text-muted" id="szVolume"></p>
-                                        <p class="col-lg-4 text-muted" id="szAmount"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3 col-md-3 stretch-card">
-                        <div class="card shadow">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center
-                                    justify-content-between flex-wrap">
-                                    <p class="card-title text-muted"><a class="text-muted" href="?q=399006.SZ"><i class="fa fa-chart-line"></i> {% trans '创业 - 399006' %}</a></p>
-                                    <p class="text-danger font-weight-medium small">
-                                        <!-- <span class="text-muted small mr-1"></span> -->
-                                        <span class="text-danger" id="cybPrice"></span><span id="cybChange" class="ml-1"></span>
-                                    </p>
-                                </div>
-                                <div class="small">
-                                    <div class="row">
-                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
-                                    </div>
-                                    <div class="row">
-                                        <p class="col-lg-4 text-muted" id="cybPreClose"></p>
-                                        <p class="col-lg-4 text-muted" id="cybVolume"></p>
-                                        <p class="col-lg-4 text-muted" id="cybAmount"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3 col-md-3 stretch-card">
-                        <div class="card shadow">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center
-                                    justify-content-between flex-wrap">
-                                    <p class="card-title text-muted"><a class="text-muted" href="?q=000300.SH"><i class="fa fa-chart-line"></i> {% trans '沪深 - 000300' %}</a></p>
-                                    <p class="text-danger font-weight-medium small">
-                                        <!-- <span class="text-muted small mr-1"></span> -->
-                                        <span class="text-danger" id="hsPrice"></span><span id="hsChange" class="ml-1"></span>
-                                    </p>
-                                </div>
-                                <div class="small">
-                                    <div class="row">
-                                        <span class="col-lg-4 text-muted">{% trans '昨收' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交量' %}</span>
-                                        <span class="col-lg-4 text-muted">{% trans '成交额' %}</span>
-                                    </div>
-                                    <div class="row">
-                                        <p class="col-lg-4 text-muted" id="hsPreClose"></p>
-                                        <p class="col-lg-4 text-muted" id="hsVolume"></p>
-                                        <p class="col-lg-4 text-muted" id="hsAmount"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </header>
 <!-- 新股IPO -->

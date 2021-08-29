@@ -14,9 +14,9 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView, V
 
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
-from stocktrade.models import Transactions
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
-from tradeaccounts.utils import calibrate_realtime_position
+# from stocktrade.models import Transactions
+# from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+# from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 from analysis.analysis_jiuzhuan_cp import mark_jiuzhuan
 from analysis.strategy_test_pct import test_exp_pct

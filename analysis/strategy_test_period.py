@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 import pandas as pd
 
-from dashboard.utils import days_between
+# from dashboard.utils import days_between
 from investors.models import TradeStrategy
 from stockmarket.models import StockNameCodeMap
 
@@ -11,7 +11,7 @@ from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
                      StrategyTestLowHigh, StockHistoryDaily,
                      TradeStrategyStat)
 from .utils import get_analysis_task, set_task_completed, generate_task, ready2btest
-from dashboard.utils import days_between
+# from dashboard.utils import days_between
 
 logger = logging.getLogger(__name__)
 

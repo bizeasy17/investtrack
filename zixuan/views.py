@@ -46,7 +46,7 @@ class HomeView(TemplateView):
                     stk_ind_dic[ind['industry']] = stk_dic
                     stk_dic = {}
         except Exception as err:
-            logger.err(err)
+            logger.error(err)
 
         return render(request, self.template_name, {self.context_object_name: stk_ind_dic})
 

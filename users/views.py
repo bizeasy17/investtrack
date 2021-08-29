@@ -23,11 +23,11 @@ from django.contrib.auth.password_validation import validate_password
 
 from investors.models import StockFollowing, TradeStrategy
 from stockmarket.models import StockNameCodeMap
-from stocktrade.models import Transactions
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
-from tradeaccounts.utils import calibrate_realtime_position
+# from stocktrade.models import Transactions
+# from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
+# from tradeaccounts.utils import calibrate_realtime_position
 
-from .forms import UserTradeForm
+# from .forms import UserTradeForm
 from .models import User
 
 locale.setlocale(locale.LC_ALL, '')

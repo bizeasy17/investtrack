@@ -20,12 +20,13 @@
   <link rel="icon" type="image/png" href="{% static 'img/favicon.ico' %}">
 
   <!-- Custom fonts for this template -->
-  <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/simple-line-icons/css/simple-line-icons.css' %}" rel="stylesheet" type="text/css">
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
 
   <!-- Custom styles for this template -->
   <link href="{% static 'css/landing-page.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
+
   {% endblock css %}
 
   {% block head %}{% endblock head %}
@@ -39,86 +40,58 @@
     <p>Use this document as a way to quick start any new project.</p>
   {% endblock content %}
   <!-- Footer -->
-  <!-- <footer class="footer">
-    <div class="container">
-      <hr class="tight-hr">
+<footer class="footer">
+  <div class="container">
+    <hr class="tight-hr">
 
-      <div class="row">
-        <div class="col-lg-6 h-100 text-center text-lg-left my-auto">
-          <ul class="list-inline mb-2">
-            <li class="list-inline-item">
-              <a class="text-secondary" href="#">{% trans '关于' %}</a>
-            </li>
-            <li class="list-inline-item">&sdot;</li>
-            <li class="list-inline-item">
-              <a class="text-secondary" href="#">{% trans '联系我们' %}</a>
-            </li>
-            <li class="list-inline-item">&sdot;</li>
-            <li class="list-inline-item">
-              <a class="text-secondary" href="#">{% trans '使用规范' %}</a>
-            </li>
-            <li class="list-inline-item">&sdot;</li>
-            <li class="list-inline-item">
-              <a class="text-secondary" href="#">{% trans '隐私策略' %}</a>
-            </li>
-            <li class="list-inline-item">&sdot;</li>
-            <li class="list-inline-item">
-              <a class="text-secondary" href="http://www.beian.miit.gov.cn/?spm=a2c4g.11186623.2.16.31bf7dc6aTLr4u">{% trans '苏ICP备20021061号-1' %}</a> 
-            </li>
-          </ul>
-          <p class="text-muted small mb-lg-0">{% trans '版权所有'%} &copy; {% trans '投呗'%} {% now "Y" %} </p>
-        </div>
-        <div class="col-lg-6 h-100 text-center text-lg-right my-auto">
-          <ul class="list-inline mb-0">
-            <li class="list-inline-item mr-3">
-              <a href="#">
-                <i class="fab fa-linkedin fa-2x fa-fw"></i>
-              </a>
-            </li>
-            <li class="list-inline-item mr-3">
-              <a href="#">
-                <i class="fab fa-qq fa-2x fa-fw"></i>
-              </a>
-            </li>
-            <li class="list-inline-item">
-              <a href="#">
-                <i class="fab fa-weibo fa-2x fa-fw"></i>
-              </a>
-            </li>
-            
-          </ul>
-        </div>
+    <div class="row">
+      <div class="col-lg-6 h-100 text-center text-lg-left my-auto">
+        <ul class="list-inline mb-2">
+          <li class="list-inline-item">
+            <a class="text-secondary" href="#">{% trans '关于' %}</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+            <a class="text-secondary" href="#">{% trans '规范' %}</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+            <a class="text-secondary" href="#">{% trans '隐私' %}</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+           <a class="text-secondary" href="https://waditu.com/">{% trans '感谢挖地兔提供数据'%}</a>
+          </li>
+          <li class="list-inline-item">&sdot;</li>
+          <li class="list-inline-item">
+            <a class="text-secondary" href="http://www.beian.miit.gov.cn/?spm=a2c4g.11186623.2.16.31bf7dc6aTLr4u">{% trans '苏ICP备20021061号-1' %}</a> 
+          </li>
+
+        </ul>
+        <p class="text-secondary small mb-lg-0">{% trans '版权所有'%} &copy; {% trans '投呗'%} {% now "Y" %} </p>
+      </div>
+      <div class="col-lg-6 h-100 text-center text-lg-right my-auto">
+        <ul class="list-inline mb-0">
+          <li class="list-inline-item mr-3">
+            <a href="https://www.linkedin.com/in/%E6%8D%B7-jay-%E9%9F%A9-48424138/">
+              <i class="fab fa-linkedin fa-2x fa-fw"></i>
+            </a>
+          </li>
+          <li class="list-inline-item mr-3">
+            <img src="{% static 'img/1593927687078.png' %}" height="85" width="85" style="border-radius: 1%;" class="mr-1">
+          </li>
+          <!-- <li class="list-inline-item">
+            <a href="#">
+              <i class="fab fa-weibo fa-2x fa-fw"></i>
+            </a>
+          </li> -->
+          
+        </ul>
       </div>
     </div>
-  </footer> -->
-<div class="o3j99 c93Gbe">
-<style data-iml="1622278792541">.c93Gbe{background:#ffffff}.uU7dJb{padding:15px 30px;border-bottom:1px solid #dadce0;font-size:15px;color:rgba(0,0,0,.54)}.SSwjIe{padding:0 20px}.KxwPGc{display:flex;flex-wrap:wrap;justify-content:space-between}@media only screen and (max-width:1200px){.KxwPGc{justify-content:space-evenly}}.pHiOh{display:block;padding:15px;white-space:nowrap}a.pHiOh{color:#70757a}
-</style>
-<div class="uU7dJb">中国</div>
-<div jscontroller="BLvsRb" class="KxwPGc SSwjIe" data-sfe="false" data-sfsw="1200" jsaction="rcuQ6b:npT2md">
-<div class="KxwPGc AghGtd">
-<a class="pHiOh" href="/about">{% trans '关于' %}</a>
-<a class="pHiOh" href="/contact" >{% trans '联系我们' %}</a>
-<a class="pHiOh" href="http://www.beian.miit.gov.cn/?spm=a2c4g.11186623.2.16.31bf7dc6aTLr4u">{% trans '苏ICP备20021061号-1' %}</a>
-<!-- <a class="pHiOh" href="https://google.com/search/howsearchworks/?fg=1">  Google 搜索的运作方式 </a> -->
-</div>
-<div class="KxwPGc iTjxkf"><a class="pHiOh" href="/privacy">{% trans '隐私权' %}</a>
-<a class="pHiOh" href="/policies" >{% trans '条款' %}</a>
-<div jscontroller="HFyn5c" class="ayzqOc">
-<style data-iml="1622278792541">.ayzqOc{position:relative}.EzVRq{display:block;padding:15px;white-space:nowrap}a.EzVRq,button.EzVRq{color:#70757a}button.EzVRq{cursor:pointer;width:100%;text-align:left}button.EzVRq:hover,button.EzVRq:active{text-decoration:underline}.Qff0zd{display:none;position:absolute;list-style:none;background:#fff;border:1px solid #70757a}</style>
-<!-- <button jsname="pzCKEc" class="EzVRq" aria-controls="dEjpnf" aria-haspopup="true" id="Mses6b" jsaction="mousedown:lgs1Pb;FwYIgd;keydown:QXPedb">设置</button> -->
-<ul jsname="xl07Ob" class="Qff0zd" aria-labelledby="Mses6b" id="dEjpnf" role="menu" jsaction="keydown:OEXC3c;focusout:Y48pVb">
-<li role="none"><a class="EzVRq" href="https://www.google.com/preferences?hl=zh-CN&amp;fg=1" role="menuitem" tabindex="-1">搜索设置</a></li>
-<li role="none"><a class="EzVRq" href="/advanced_search?hl=zh-CN&amp;fg=1" role="menuitem" tabindex="-1">高级搜索</a></li>
-<!-- <li role="none"><a class="EzVRq" href="https://myactivity.google.com/privacyadvisor/search?utm_source=googlemenu&amp;fg=1" role="menuitem" tabindex="-1">您在 Google 搜索中的数据</a></li> -->
-<li role="none"><a class="EzVRq" href="https://myactivity.google.com/product/search?utm_source=google&amp;hl=zh-CN&amp;fg=1" role="menuitem" tabindex="-1">搜索记录</a></li>
-<li role="none"><a class="EzVRq" href="https://support.google.com/websearch/?p=ws_results_help&amp;hl=zh-CN&amp;fg=1" role="menuitem" tabindex="-1">搜索帮助</a></li>
-<li role="none"><button class="EzVRq" data-bucket="websearch" role="menuitem" tabindex="-1" jsaction="trigger.YcfJ">发送反馈</button></li>
-</ul>
-</div>
-</div>
-</div>
-</div>
+  </div>
+</footer>
+
   <!-- Bootstrap core JavaScript -->
   {% block javascript %}
   <script language="javascript">
