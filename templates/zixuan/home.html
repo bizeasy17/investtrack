@@ -29,18 +29,21 @@
   </div>
 </nav> -->
 <!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light">
-  <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
-    <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
-    <span>{% trans '投呗' %}</span>   
-  </a>
-  <div class="collapse navbar-collapse">
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'zixuan:home' %}">{% trans '我的自选股' %}</a>
-      </li>
-    
-    {% if request.user.is_authenticated %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+      <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
+      <span class="text-white">{% trans '投呗' %}</span>   
+    </a>
+    <form class="col-lg-4" id="searchForm" >
+      <input type="text" class="form-control form-control-sm small" id="searchText" autocomplete="off" name="q" placeholder="{% trans '股票名称, 代码或首字母' %}" value="{{search_single.ts_code}}">
+    </form>
+    <div class="collapse navbar-collapse" id="navbarColor01">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'zixuan:home' %}">{% trans '自选股' %}</a>
+        </li>
+        {% if request.user.is_authenticated %}
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {% if request.user.picture %}
@@ -52,16 +55,16 @@
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="{% url 'user:get_profile' %}"><i class="fa fa-cogs fa-fw" aria-hidden="true"></i>&nbsp; {% trans '个人信息设置' %}</a>
-          <a class="dropdown-item" href="{% url 'trade_account:index' %}"><i class="fa fa-piggy-bank fa-fw" aria-hidden="true"></i>&nbsp; {% trans '交易账户管理' %}</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="{%url 'account:logout'%}" id="logout"><i class="fa fa-sign-out-alt fa-fw" aria-hidden="true"></i>&nbsp; {% trans '注销' %}</a>
         </div>
       </li>
     {% else %}
     <!-- <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a> -->
-    <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a>
+    <a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a>
     {% endif %}
-    </ul>
+      </ul>
+    </div>
   </div>
 </nav>
 {% endblock navbar %}
@@ -69,68 +72,58 @@
 {% block content %}
 
 <!-- /.container -->
-<header class="masthead text-white text-center">
+<header class="masthead text-center">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
-          <form id="searchForm" action="{% url 'search:home' %}">
-            <div class="form-row">
-              <div class="col-12 col-md-12 mb-2 mb-md-0">
-                <input type="text" autocomplete="off" class="form-control form-control-lg" id="searchText" name="q" placeholder="{% trans '请输入股票名称,代码或首字母' %}">
-              </div>
-              <!-- <div class="col-12 col-md-3">
-                <button type="submit" class="btn btn-block btn-lg btn-primary">{% trans '查看' %}</button>
-              </div> -->
-            </div>
-          </form>
-        </div>
+        <div class="col-lg-12"><span class="text-muted">{% trans '您总共关注了' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span></div>
       </div>
+      <hr class="row">
       <div class="row">
-            <div class="col-lg-12 grid-margin stretch-card mt-3">
-                <hr>
-                <div class="row flex-grow small">
-                  {% if zixuan %}
-                    {% for ind,stk in zixuan.items %}
-                    
-                    <div class="mt-3 col-md-4 stretch-card">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                    <div class="card-title"><a class="text-muted" href="?q={{ind}}"><h6>{{ind}}</h6></a></div>
-                                    <p class="font-weight-medium small">
-                                        <!-- <span class="text-muted mr-1"></span> -->
-                                        <span class="badge badge-pill badge-primary">{{stk.items|length}}</span>
-                                        <!-- <span id="shChange" class="ml-1"></span> -->
-                                    </p>
-                                </div>
-                                <!-- <hr class="row"/> -->
-                                <div class="container small mt-2">
-                                    <!-- <div class="d-flex align-items-left justify-content-between flex-wrap row">
-                                        <span class="text-muted">{% trans '股票代码(EXG)' %}</span>
-                                        <span class="text-muted">{% trans '股票名称' %}</span>
-                                        <span class="text-muted">{% trans '价格' %}</span>
-                                        <span class="text-muted">{% trans '%' %}</span>
-                                    </div> -->
-                                    <!-- <hr/> -->
-                                    {% for k,v in stk.items %}
-                                    <div class="d-flex align-items-left justify-content-between flex-wrap row">
-                                        <span class="text-muted" id=""><a href="/?q={{k}}">{{k}}</a></span>
-                                        <span class="text-muted" id=""><a href="/?q={{k}}">{{v}}</a></span>
-                                        <span class="text-muted" id="p{{k}}">-</span>
-                                        <span class="text-muted" id="pct{{k}}">-</span>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {% endfor %}
-                  {% endif %}
-                </div>
-            </div>
-        </div>
+          <div class="col-lg-12 grid-margin stretch-card mt-3">
+              
+              <div class="row flex-grow small">
+                {% if zixuan %}
+                  {% for ind,stk in zixuan.items %}
+                  
+                  <div class="mt-3 col-md-4 stretch-card">
+                      <div class="card">
+                          <div class="card-body">
+                              <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                  <div class="card-title"><a class="text-muted" href="?q={{ind}}"><h6>{{ind}}</h6></a></div>
+                                  <p class="font-weight-medium small">
+                                      <!-- <span class="text-muted mr-1"></span> -->
+                                      <span class="badge badge-pill badge-primary">{{stk.items|length}}</span>
+                                      <!-- <span id="shChange" class="ml-1"></span> -->
+                                  </p>
+                              </div>
+                              <!-- <hr class="row"/> -->
+                              <div class="container small mt-2">
+                                  <!-- <div class="d-flex align-items-left justify-content-between flex-wrap row">
+                                      <span class="text-muted">{% trans '股票代码(EXG)' %}</span>
+                                      <span class="text-muted">{% trans '股票名称' %}</span>
+                                      <span class="text-muted">{% trans '价格' %}</span>
+                                      <span class="text-muted">{% trans '%' %}</span>
+                                  </div> -->
+                                  <!-- <hr/> -->
+                                  {% for k,v in stk.items %}
+                                  <div class="d-flex align-items-left justify-content-between flex-wrap row">
+                                      <span class="text-muted" id=""><a href="/?q={{k}}">{{k}}</a></span>
+                                      <span class="text-muted" id=""><a href="/?q={{k}}">{{v}}</a></span>
+                                      <span class="text-muted" id="p{{k}}">-</span>
+                                      <span class="text-muted" id="pct{{k}}">-</span>
+                                  </div>
+                                  {% endfor %}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  {% endfor %}
+                {% endif %}
+              </div>
+          </div>
+      </div>
     </div>
 </header>
 <!-- 新股IPO -->

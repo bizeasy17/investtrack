@@ -50,3 +50,4 @@ class SearchView(TemplateView):
                 return render(request, self.template_name)
         except Exception as err:
             logger.error(err)
+            return render(request, self.search_template, {self.context_object_name: {'err_message': _('抱歉，未查询到相关股票，请重试！'), 'd_none': 'd-none'}})

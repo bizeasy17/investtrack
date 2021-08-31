@@ -32,6 +32,14 @@
   {% block head %}{% endblock head %}
 
 </head>
+<style>
+.pb-3, .py-3 {
+    padding-bottom: 0.65rem!important;
+}
+.pt-3, .py-3 {
+    padding-top: 0.65rem!important;
+}
+</style>
 <body>
 
   {% block navbar %}
@@ -146,6 +154,11 @@
   <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
   <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+  <!-- <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script> -->
+  <!-- <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script> -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/echarts.min.js"></script>
+  
   {% endblock javascript %}
 
 </body>
