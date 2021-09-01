@@ -4,8 +4,6 @@ import tushare as ts
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
-from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 from analysis.dl_daily_basic import handle_daily_basic
 from stockmarket.models import CompanyBasic, CompanyDailyBasic, CompanyManagers, ManagerRewards, StockNameCodeMap
@@ -62,11 +60,12 @@ def company_list():
         data = pro.stock_basic(
             fields='ts_code,symbol,name,area,industry,fullname,enname,market,exchange,list_status,list_date,delist_date,is_hs')
 
-        companies = StockNameCodeMap.objects.all()
+        companies = StockNameCodeMap.objects.filter(
+            asset='E').order_by('ts_code')
         if data is not None and len(data) > 0:
             if companies.count() != len(data):
                 for index,row in data.iterrows():
-                    print('starting for ' + row['ts_code'])
+                    print('starting  for ' + row['ts_code'])
                     ts_code = row['ts_code']
                     market = ''
 
@@ -103,31 +102,31 @@ def company_list():
     except Exception as e:
         print(e)
 
-
 def company_basic(ts_code):
     try:
         pro = ts.pro_api()
 
         # 查询当前所有正常上市交易的股票列表
         if ts_code is None:
-            companies = StockNameCodeMap.objects.filter(asset='E')
+            companies = StockNameCodeMap.objects.filter(
+                asset='E').order_by('ts_code')
             
             for company in companies:
-                print('starting for ' + company.ts_code)
+                print('starting all company basic for ' + company.ts_code)
                 data = pro.stock_company(
                     ts_code=company.ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
                 store_company_basic(company, data)
 
-                print('ending for ' + company.ts_code)
+                print('ending company for ' + company.ts_code)
                 print('waiting for 12 sec')
                 time.sleep(12)
         else:
-            print('starting for ' + ts_code)
+            print('starting company basic for ' + ts_code)
             company = StockNameCodeMap.objects.get(ts_code=ts_code)
             data = pro.stock_company(
                 ts_code=ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
             store_company_basic(company, data)
-            print('ending for ' + ts_code)
+            print('ending company basic for ' + ts_code)
     except Exception as e:
         print(e)
 
@@ -175,43 +174,45 @@ def company_manager():
     try:
         pro = ts.pro_api()
 
-        companies = StockNameCodeMap.objects.filter(asset='E')
+        companies = StockNameCodeMap.objects.filter(asset='E').order_by('ts_code')
         for company in companies:
-            print('starting for ' + company.ts_code)
+            print('starting company mgr for ' + company.ts_code)
 
             # 查询当前所有正常上市交易的股票列表
             managers = pro.stk_managers(ts_code=company.ts_code)
             cur_managers = CompanyManagers.objects.filter(
                 ts_code=company.ts_code)
             if len(managers) != len(cur_managers):
+                print(len(managers))
+                print(len(cur_managers))
                 for index, row in managers.iterrows():
                     try:
-                        entry = CompanyManagers.objects.filter(
+                        entry = CompanyManagers.objects.get(
                             ts_code=row['ts_code'], begin_date=row['begin_date'], end_date=row['end_date'], name=row['name'])
                         pass
                     except Exception as e:
                         # cn_tz = pytz.timezone("Asia/Shanghai")
                         # print(row['end_date'])
-                        managers = CompanyManagers(ts_code=row['ts_code'], announce_date=datetime.strptime(row['ann_date'], '%Y%m%d') if row['ann_date'] is not None else row['ann_date'], name=row['name'], gender=row['gender'],
+                        entry = CompanyManagers(ts_code=row['ts_code'], announce_date=datetime.strptime(row['ann_date'], '%Y%m%d') if row['ann_date'] is not None else row['ann_date'], name=row['name'], gender=row['gender'],
                                                    level=row['lev'], title=row['title'], edu=row[
                                                        'edu'], national=row['national'], birthday=row['birthday'],
                                                    begin_date=datetime.strptime(row['begin_date'], '%Y%m%d') if row['begin_date'] is not None else row['begin_date'], end_date=datetime.strptime(row['end_date'], '%Y%m%d') if row['end_date'] is not None else row['end_date'], company=company)
-                    managers.save()
+                    entry.save()
 
-            print('ending for ' + company.ts_code)
+            print('ending company mgr for ' + company.ts_code)
             print('waiting for 12 sec')
             time.sleep(12)
     except Exception as e:
         print(e)
 
-
 def manager_rewards():
     try:
         pro = ts.pro_api()
 
-        companies = StockNameCodeMap.objects.filter(asset='E')
+        companies = StockNameCodeMap.objects.filter(
+            asset='E').order_by('ts_code')
         for company in companies:
-            print('starting for ' + company.ts_code)
+            print('starting company rewards for ' + company.ts_code)
             # 查询当前所有正常上市交易的股票列表
             rewards = pro.stk_rewards(ts_code=company.ts_code)
             cur_rewards = ManagerRewards.objects.filter(
@@ -221,15 +222,15 @@ def manager_rewards():
                 if cur_rewards.count() != len(rewards):
                     for index,row in rewards.iterrows():
                         try:
-                            cur_reward = ManagerRewards.objects.get(
+                            mr = ManagerRewards.objects.get(
                                 ts_code=row['ts_code'], announce_date=row['ann_date'], end_date=row['end_date'], name=row['name'])
                             pass
                         except Exception as e:
                             # cn_tz = pytz.timezone("Asia/Shanghai")
-                            cur_reward = ManagerRewards(ts_code=row['ts_code'], announce_date=datetime.strptime(row['ann_date'], '%Y%m%d') if row['ann_date'] is not None else row['ann_date'], end_date=datetime.strptime(row['end_date'], '%Y%m%d') if row['end_date'] is not None else row['end_date'], name=row['name'],
+                            mr = ManagerRewards(ts_code=row['ts_code'], announce_date=datetime.strptime(row['ann_date'], '%Y%m%d') if row['ann_date'] is not None else row['ann_date'], end_date=datetime.strptime(row['end_date'], '%Y%m%d') if row['end_date'] is not None else row['end_date'], name=row['name'],
                                                         title=row['title'], reward=row['reward'], hold_value=row['hold_vol'])
-                        cur_reward.save()
-            print('ending for ' + company.ts_code)
+                        mr.save()
+            print('ending company rewards for ' + company.ts_code)
             print('waiting for 12 sec')
             time.sleep(12)
     except Exception as e:

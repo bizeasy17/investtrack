@@ -28,7 +28,7 @@ urlpatterns = [
     # path('invest/', include('investmgr.urls')),
     path('account/', include('accounts.urls')),
     # retro1
-    path('auth/', include('authentication.urls')),
+    # path('auth/', include('authentication.urls')),
     path('investors/', include('investors.urls')),
     # path('notifications/', include('notifications.urls')),
     # path('stocktrade/', include('stocktrade.urls')),

@@ -4,9 +4,8 @@ from datetime import date, datetime, timedelta
 import numpy as np
 import pandas as pd
 import tushare as ts
-from analysis.models import (BStrategyOnFixedPctTest, StockHistoryDaily,
-                             StrategyTestLowHigh, StockIndexHistory, StrategyUpDownTestQuantiles, StrategyTargetPctTestQuantiles)
-from analysis.trend_filters import pct_on_period_filter, period_on_pct_filter, build_condition
+from analysis.models import (StockHistoryDaily,
+                             StockIndexHistory)
 from analysis.utils import get_ip
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
@@ -46,7 +45,7 @@ def stock_close_hist(request, ts_code, freq='D', period=3):
                 start_date = end_date - timedelta(days=365 * period)
                 results = StockHistoryDaily.objects.filter(
                     ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
-            else: # period = 0 means all stock history
+            else:  # period = 0 means all stock history
                 results = StockHistoryDaily.objects.filter(
                     ts_code=ts_code, freq=freq, trade_date__lte=end_date).order_by('trade_date')
             # df = pd.DataFrame(results.values('stage_low_pct'))
@@ -70,8 +69,8 @@ def stock_close_hist(request, ts_code, freq='D', period=3):
             for index, value in close_qtiles.items():
                 quantile.append(round(value, 2))
             for rst in close_result:
-                qt_10.append(quantile[0]) # 低价格的前10%
-                qt_90.append(quantile[4]) # 高价格的前10%
+                qt_10.append(quantile[0])  # 低价格的前10%
+                qt_90.append(quantile[4])  # 高价格的前10%
 
             # if type == 'ticks':
             #     return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
@@ -168,6 +167,7 @@ def get_companies(request, input_text):
             logger.error(e)
             return HttpResponse(status=500)
 
+
 def get_fcf(request, ts_code):
     '''
     第一种：自由现金流＝息税前利润－税金 + 折旧与摊销－资本支出－营运资本追加
@@ -176,6 +176,7 @@ def get_fcf(request, ts_code):
         fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps')
     df = pro.cashflow(ts_code='600000.SH', start_date='20180101', end_date='20180730')
     '''
+
 
 def get_company_basic(request, ts_code):
     if request.method == 'GET':
@@ -271,7 +272,8 @@ def get_latest_daily_basic(request, ts_code):
         try:
             codes = ts_code.split(',')
             for code in codes:
-                daily_basic = CompanyDailyBasic.objects.filter(ts_code=code).order_by('-trade_date')
+                daily_basic = CompanyDailyBasic.objects.filter(
+                    ts_code=code).order_by('-trade_date')
 
                 if daily_basic is not None and len(daily_basic) > 0:
                     company_daily_list.append(
@@ -297,12 +299,13 @@ def get_latest_daily_basic(request, ts_code):
                 # ps_ttm_list.append(daily_basics.ps_ttm)
                 # ps_list.append(daily_basics.ps)
             if len(company_daily_list) > 0:
-                return JsonResponse({'results': company_daily_list }, safe=False)
+                return JsonResponse({'results': company_daily_list}, safe=False)
             else:
                 return HttpResponse(status=404)
         except Exception as err:
             logger.error(err)
-            return HttpResponse(status=500) 
+            return HttpResponse(status=500)
+
 
 def get_single_daily_basic(request, ts_code, start_date, end_date):
     if request.method == 'GET':
@@ -390,47 +393,47 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])
 
-                    pe_10qt_list.append(round(pe_qt.values[0],3))
-                    pe_50qt_list.append(round(pe_qt.values[2],3))
-                    pe_90qt_list.append(round(pe_qt.values[4],3))
+                    pe_10qt_list.append(round(pe_qt.values[0], 3))
+                    pe_50qt_list.append(round(pe_qt.values[2], 3))
+                    pe_90qt_list.append(round(pe_qt.values[4], 3))
 
-                    pe_ttm_10qt_list.append(round(pe_ttm_qt.values[0],3))
-                    pe_ttm_50qt_list.append(round(pe_ttm_qt.values[2],3))
-                    pe_ttm_90qt_list.append(round(pe_ttm_qt.values[4],3))
+                    pe_ttm_10qt_list.append(round(pe_ttm_qt.values[0], 3))
+                    pe_ttm_50qt_list.append(round(pe_ttm_qt.values[2], 3))
+                    pe_ttm_90qt_list.append(round(pe_ttm_qt.values[4], 3))
 
-                    ps_10qt_list.append(round(ps_qt.values[0],3))
-                    ps_50qt_list.append(round(ps_qt.values[2],3))
-                    ps_90qt_list.append(round(ps_qt.values[4],3))
+                    ps_10qt_list.append(round(ps_qt.values[0], 3))
+                    ps_50qt_list.append(round(ps_qt.values[2], 3))
+                    ps_90qt_list.append(round(ps_qt.values[4], 3))
 
-                    ps_ttm_10qt_list.append(round(ps_ttm_qt.values[0],3))
-                    ps_ttm_50qt_list.append(round(ps_ttm_qt.values[2],3))
-                    ps_ttm_90qt_list.append(round(ps_ttm_qt.values[4],3))
+                    ps_ttm_10qt_list.append(round(ps_ttm_qt.values[0], 3))
+                    ps_ttm_50qt_list.append(round(ps_ttm_qt.values[2], 3))
+                    ps_ttm_90qt_list.append(round(ps_ttm_qt.values[4], 3))
 
-                    to_10qt_list.append(round(to_qt.values[0],3))
-                    to_50qt_list.append(round(to_qt.values[2],3))
-                    to_90qt_list.append(round(to_qt.values[4],3))
+                    to_10qt_list.append(round(to_qt.values[0], 3))
+                    to_50qt_list.append(round(to_qt.values[2], 3))
+                    to_90qt_list.append(round(to_qt.values[4], 3))
 
-                    vr_10qt_list.append(round(vr_qt.values[0],3))
-                    vr_50qt_list.append(round(vr_qt.values[2],3))
-                    vr_90qt_list.append(round(vr_qt.values[4],3))
+                    vr_10qt_list.append(round(vr_qt.values[0], 3))
+                    vr_50qt_list.append(round(vr_qt.values[2], 3))
+                    vr_90qt_list.append(round(vr_qt.values[4], 3))
 
-                    pb_10qt_list.append(round(pb_qt.values[0],3))
-                    pb_50qt_list.append(round(pb_qt.values[2],3))
-                    pb_90qt_list.append(round(pb_qt.values[4],3))
+                    pb_10qt_list.append(round(pb_qt.values[0], 3))
+                    pb_50qt_list.append(round(pb_qt.values[2], 3))
+                    pb_90qt_list.append(round(pb_qt.values[4], 3))
 
                 return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1],
                                      'volume_ratio': vr_list[::-1],
                                      'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1],
                                      'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1],
-                                     'ps': ps_list[::-1], 'pe_10qt': pe_10qt_list,  
+                                     'ps': ps_list[::-1], 'pe_10qt': pe_10qt_list,
                                      'pe_50qt': pe_50qt_list, 'pe_90qt': pe_90qt_list,
-                                     'pe_ttm_10qt': pe_ttm_10qt_list, 'pe_ttm_50qt': pe_ttm_50qt_list, 
+                                     'pe_ttm_10qt': pe_ttm_10qt_list, 'pe_ttm_50qt': pe_ttm_50qt_list,
                                      'pe_ttm_90qt': pe_ttm_90qt_list, 'ps_10qt': ps_10qt_list,
                                      'ps_50qt': ps_50qt_list, 'ps_90qt': ps_90qt_list,
-                                     'ps_ttm_10qt': ps_ttm_10qt_list, 'ps_ttm_50qt': ps_ttm_50qt_list, 
+                                     'ps_ttm_10qt': ps_ttm_10qt_list, 'ps_ttm_50qt': ps_ttm_50qt_list,
                                      'ps_ttm_90qt': ps_ttm_90qt_list, 'to_10qt': to_10qt_list,
                                      'to_50qt': to_50qt_list, 'to_90qt': to_90qt_list,
-                                     'vr_10qt': vr_10qt_list, 'vr_50qt': vr_50qt_list, 
+                                     'vr_10qt': vr_10qt_list, 'vr_50qt': vr_50qt_list,
                                      'vr_90qt': vr_90qt_list, 'pb_10qt': pb_10qt_list,
                                      'pb_50qt': pb_50qt_list, 'pb_90qt': pb_90qt_list,
                                      'pe_range': pe_range, 'ps_range': ps_range,
@@ -479,7 +482,8 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
             stk_vol = []
 
             filters = str_eval(filters)
-            all_dates = get_updown_pct_dates(strategy, ts_code, test_period, freq)
+            all_dates = get_updown_pct_dates(
+                strategy, ts_code, test_period, freq)
 
             filter_enabled = False
             if len(filters['I']) == 0 and len(filters['E']) == 0:
@@ -490,7 +494,7 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                 filtered_dates = pct_on_period_filter(
                     ts_code, all_dates, filters)
                 results = StrategyTestLowHigh.objects.filter(
-                    ts_code=ts_code, strategy_code=strategy,test_period=test_period,
+                    ts_code=ts_code, strategy_code=strategy, test_period=test_period,
                     trade_date__in=filtered_dates).order_by('trade_date')
             if results is not None and len(results) > 0:
                 df = pd.DataFrame(results.values(
@@ -507,8 +511,10 @@ def get_updown_pct(request, strategy, ts_code, test_period=80, freq='D', filters
                 up_qt.append(round(df.max().stage_high_pct, 3))
                 down_qt.append(round(df.mean().stage_low_pct, 3))
                 down_qt.append(round(df.min().stage_low_pct, 3))
-                index_vol = get_index_vol_range(all_dates, freq) if filter_enabled else []
-                stk_vol = get_stock_vol_range(all_dates, freq) if filter_enabled else []
+                index_vol = get_index_vol_range(
+                    all_dates, freq) if filter_enabled else []
+                stk_vol = get_stock_vol_range(
+                    all_dates, freq) if filter_enabled else []
 
                 up_max_rounded = int(
                     np.around(df['stage_high_pct'].max() / 100)) * 100 + 50
@@ -655,18 +661,18 @@ def get_btest_ranking(request, btest_type='up_pct', btest_value=80, strategy='ji
     try:
         filters = str_eval(filters)
         sorted_by = str_eval(sorted_by)
-        if btest_type in  ['up_pct', 'down_pct']:
+        if btest_type in ['up_pct', 'down_pct']:
             rankings = StrategyUpDownTestQuantiles.objects.filter(
                 strategy_code=strategy, test_period=int(btest_value), test_freq=freq, test_type=btest_type).select_related('company', 'company_basic').values('company__market', 'company__id', 'company__area',
-                                                                                                                                                         'company__industry', 'company_basic__index_category', 'company_basic__chairman', 'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date',
-                                                                                                                                                         'company_basic__province', 'company_basic__website', 'company_basic__main_business')
+                                                                                                                                                              'company__industry', 'company_basic__index_category', 'company_basic__chairman', 'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date',
+                                                                                                                                                              'company_basic__province', 'company_basic__website', 'company_basic__main_business')
         elif btest_type == 'exp_pct':
             rankings = StrategyTargetPctTestQuantiles.objects.filter(
                 strategy_code=strategy, target_pct=btest_value, test_freq=freq).select_related('company', 'company_basic').values('company__market', 'company__id', 'company__area', 'company__industry',
                                                                                                                                   'company_basic__index_category', 'company_basic__chairman', 'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date', 'company_basic__province',
                                                                                                                                   'company_basic__website', 'company_basic__main_business')
 
-        ranking_df = pd.DataFrame(rankings.values('ts_code', 'company__area', 'company__industry', 'company__market', 
+        ranking_df = pd.DataFrame(rankings.values('ts_code', 'company__area', 'company__industry', 'company__market',
                                                   'company__exchange', 'company__stock_name', 'qt_50pct', 'mean_val', 'company_basic__index_category', 'company_basic__chairman',
                                                   'company_basic__manager', 'company_basic__reg_capital', 'company_basic__setup_date', 'company_basic__province', 'company_basic__website',
                                                   'company_basic__main_business'))

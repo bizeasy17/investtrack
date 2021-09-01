@@ -3,8 +3,6 @@ from datetime import date, datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from tradeaccounts.models import Positions, TradeAccount, TradeAccountSnapshot
-from tradeaccounts.utils import calibrate_realtime_position
 from users.models import User
 from analysis.dl_daily_basic import handle_daily_basic
 # from analysis.utils import init_eventlog, set_event_completed, is_event_completed

@@ -7,8 +7,7 @@ import tushare as ts
 # from dashboard.utils import days_between
 from django.utils import timezone
 from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
-                     StrategyTargetPctTestQuantiles,
-                     StrategyUpDownTestQuantiles, TradeStrategyStat, StockIndexHistory)
+                     StockIndexHistory)
 
 strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingdi': {'dingbu_s', 'dibu_b'},
                  'tupo_yali_b': {'tupo_b'}, 'diepo_zhicheng_s': {'diepo_s'},  'wm_dingdi_bs': {'m_ding', 'w_di'},
@@ -16,6 +15,16 @@ strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingd
                  'junxian60_bs': {'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo'},
                  'junxian200_bs': {'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo', }}
 
+
+def days_between(d1, d2):
+  # d1 = datetime.strptime(d1, "%Y-%m-%d")
+  # d2 = datetime.strptime(d2, "%Y-%m-%d")
+  return abs((d2 - d1).days)
+
+
+def days_to_now(d1):
+  d2 = datetime.now(tz=timezone.utc)
+  return abs((d2 - d1).days)
 
 def get_market_code(ts_code):
     indexes = {'6': '000001.SH', '0': '399001.SZ',
@@ -450,43 +459,6 @@ def get_pct_val_from(pct_str):
     pct_arr = pct_str.split('_')
     pct_val = pct_arr[0][3:]
     return pct_val
-
-
-def get_qt_updownpct(ts_code, strategy_code, period, test_type):
-    result_qt = []
-    results = StrategyUpDownTestQuantiles.objects.filter(
-        strategy_code=strategy_code, ts_code=ts_code, test_period=period, test_type=test_type).order_by('test_period')
-    for result in results:
-        result_qt.append(
-            {
-                'period': result.test_period,
-                'qt25ile': round(result.qt_10pct, 2),
-                'qt50ile': round(result.qt_50pct, 2),
-                'qt75ile': round(result.qt_75pct, 2),
-                'max': round(result.max_val, 2),
-                'min': round(result.min_val, 2),
-                'mean': round(result.mean_val, 2),
-            }
-        )
-    return result_qt
-
-
-def get_qt_period_on_exppct(ts_code, strategy_code, exp_pct):
-    result_qt = []
-    results = StrategyTargetPctTestQuantiles.objects.filter(
-        strategy_code=strategy_code, ts_code=ts_code, target_pct=exp_pct).order_by('test_freq')
-    for result in results:
-        result_qt.append(
-            {
-                'pct': get_pct_val_from(result.target_pct) + '%',
-                'qt25ile': round(result.qt_10pct, 2),
-                'qt50ile': round(result.qt_50pct, 2),
-                'qt75ile': round(result.qt_75pct, 2),
-                'min': round(result.min_val, 2),
-                'mean': round(result.mean_val, 2),
-            }
-        )
-    return result_qt
 
 
 def get_pkdays_by_year_month(year, month):

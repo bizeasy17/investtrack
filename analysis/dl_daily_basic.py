@@ -10,7 +10,7 @@ from analysis.utils import (generate_task, get_analysis_task,
                             get_event_status, set_event_completed,
                             set_task_completed, is_hist_downloaded, last_download_date, log_download_hist)
 
-from .models import StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
+# from .models import StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
 from stockmarket.models import CompanyDailyBasic, IndexDailyBasic
 from .stock_hist import split_trade_cal
 '''
