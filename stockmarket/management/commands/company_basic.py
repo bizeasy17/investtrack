@@ -41,10 +41,9 @@ class Command(BaseCommand):
         elif basic_type == 'rewards':
             manager_rewards()
         elif basic_type == 'list':
-            company_list(), 
+            company_list(),
         else:
             basic_bundle()
-            
 
 
 def basic_bundle():
@@ -65,7 +64,7 @@ def company_list():
         companies = StockNameCodeMap.objects.all()
         if data is not None and len(data) > 0:
             if companies.count() != len(data):
-                for index,row in data.iterrows():
+                for index, row in data.iterrows():
                     print('starting for ' + row['ts_code'])
                     ts_code = row['ts_code']
                     market = ''
@@ -90,14 +89,16 @@ def company_list():
                         company.market = market
                         # company.save()
                     except Exception as e:
-                        print(row['symbol'] + ' does not exist, create new entry')
+                        print(row['symbol'] +
+                              ' does not exist, create new entry')
                         # cn_tz = pytz.timezone("Asia/Shanghai")
                         company = StockNameCodeMap(ts_code=ts_code, stock_code=row['symbol'], stock_name=row['name'], area=row['area'],
-                                                   industry=row['industry'], fullname=row['fullname'], en_name=row['enname'], market=market, exchange=row['exchange'],
+                                                   industry=row['industry'], fullname=row['fullname'], en_name=row[
+                                                       'enname'], market=market, exchange=row['exchange'],
                                                    list_status=row['list_status'], list_date=datetime.strptime(row['list_date'], '%Y%m%d'), delist_date=row['delist_date'],
                                                    is_hs=row['is_hs'])
                         print(row['symbol'] + ' created new object')
-                        
+
                     company.save()
                     print('end for ' + row['symbol'])
     except Exception as e:
@@ -111,7 +112,7 @@ def company_basic(ts_code):
         # 查询当前所有正常上市交易的股票列表
         if ts_code is None:
             companies = StockNameCodeMap.objects.filter(asset='E')
-            
+
             for company in companies:
                 print('starting for ' + company.ts_code)
                 data = pro.stock_company(
@@ -130,6 +131,7 @@ def company_basic(ts_code):
             print('ending for ' + ts_code)
     except Exception as e:
         print(e)
+
 
 def store_company_basic(company, data):
     if data is not None and len(data) > 0:
@@ -164,12 +166,13 @@ def store_company_basic(company, data):
                 # cn_tz = pytz.timezone("Asia/Shanghai")
                 # print(e)
                 cb = CompanyBasic(ts_code=row['ts_code'], stock_code=row['ts_code'].split('.')[0], chairman=row['chairman'], manager=row['manager'], reg_capital=row['reg_capital'],
-                                setup_date=datetime.strptime(row['setup_date'], '%Y%m%d'), province=row['province'], city=row['city'], exchange=row['exchange'],
-                                introduction=row['introduction'], website=row[
-                                    'website'], email=row['email'], office=row['office'],secretary=row['secretary'],
-                                employees=row['employees'], main_business=row['main_business'], business_scope=row['business_scope'],
-                                index_category=index_ctg, company=company)
+                                  setup_date=datetime.strptime(row['setup_date'], '%Y%m%d'), province=row['province'], city=row['city'], exchange=row['exchange'],
+                                  introduction=row['introduction'], website=row[
+                    'website'], email=row['email'], office=row['office'], secretary=row['secretary'],
+                    employees=row['employees'], main_business=row['main_business'], business_scope=row['business_scope'],
+                    index_category=index_ctg, company=company)
             cb.save()
+
 
 def company_manager():
     try:
@@ -219,7 +222,7 @@ def manager_rewards():
 
             if rewards is not None and len(rewards) > 0:
                 if cur_rewards.count() != len(rewards):
-                    for index,row in rewards.iterrows():
+                    for index, row in rewards.iterrows():
                         try:
                             cur_reward = ManagerRewards.objects.get(
                                 ts_code=row['ts_code'], announce_date=row['ann_date'], end_date=row['end_date'], name=row['name'])

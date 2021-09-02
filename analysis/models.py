@@ -212,6 +212,7 @@ class StockStrategyTestLog(BaseModel):
     def __str__(self):
         return self.ts_code
 
+
 class StockHistoryDaily(BaseModel):
     '''
     ts_code	str	股票代码

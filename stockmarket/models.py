@@ -305,10 +305,10 @@ class CompanyManagers(BaseModel):
         _('国籍'), max_length=50, blank=True, null=True)
     birthday = models.CharField(
         _('出生年月'), max_length=10, blank=True, null=True)
-    begin_date = models.DateField(
-        _('上任日期'), blank=True, null=True)
-    end_date = models.DateField(
-        _('离任日期'), blank=True, null=True)
+    begin_date = models.CharField(
+        _('上任日期'), max_length=10, blank=True, null=True)
+    end_date = models.CharField(
+        _('离任日期'), max_length=10, blank=True, null=True)
     resume = models.CharField(
         _('简历'), max_length=500, blank=True, null=True)
 
