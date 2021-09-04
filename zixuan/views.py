@@ -35,23 +35,28 @@ class HomeView(TemplateView):
         stk_dic = {}
         count_ind = 0
         count_stk = 0
-        try:
-            industries = StockFollowing.objects.filter(
-                trader=req_user).order_by().values('industry').distinct()
-            count_ind = len(industries)
-            if len(industries) > 0:
-                for ind in industries:
-                    stocks = StockFollowing.objects.filter(trader=req_user,
-                                                           industry=ind['industry'])
-                    for stk in stocks:
-                        stk_dic[stk.ts_code] = stk.stock_name
-                        count_stk += 1
-                    stk_ind_dic[ind['industry']] = stk_dic
-                    stk_dic = {}
-        except Exception as err:
-            logger.error(err)
+        login_url = reverse("account:login")
 
-        return render(request, self.template_name, {self.context_object_name: stk_ind_dic, 'cnt_ind': count_ind, 'cnt_stk': count_stk})
+        if not req_user.is_anonymous:
+            try:
+                industries = StockFollowing.objects.filter(
+                    trader=req_user).order_by().values('industry').distinct()
+                count_ind = len(industries)
+                if len(industries) > 0:
+                    for ind in industries:
+                        stocks = StockFollowing.objects.filter(trader=req_user,
+                                                            industry=ind['industry'])
+                        for stk in stocks:
+                            stk_dic[stk.ts_code] = stk.stock_name
+                            count_stk += 1
+                        stk_ind_dic[ind['industry']] = stk_dic
+                        stk_dic = {}
+            except Exception as err:
+                logger.error(err)
+
+            return render(request, self.template_name, {self.context_object_name: stk_ind_dic, 'cnt_ind': count_ind, 'cnt_stk': count_stk})
+        else:
+            return render(request, self.template_name, {'cnt_ind': count_ind, 'cnt_stk': count_stk})
 
 
 @login_required

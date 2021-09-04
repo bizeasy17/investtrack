@@ -102,7 +102,23 @@
 
   <!-- Bootstrap core JavaScript -->
   {% block javascript %}
+  <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
+  <!-- <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script> -->
+  <!-- <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script> -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.js"></script>
+  
   <script language="javascript">
+    var currentUser = "{{ request.user.username }}"
+    var csrftoken = Cookies.get('csrftoken');
+    var authBaseEndpoint = '/account/'; 
+    var loginEndpoint = '{% url "account:login" %}';
+
+    var homeEndpoint = '{% url "search:home" %}';
+
     function formatDate(date, conn) {
       var dayNames = [
           "01", "02", "03",
@@ -128,37 +144,42 @@
 
       return year + conn + monthNames[monthIndex] + conn + dayNames[dayIndex - 1];
     }
-    var isOpenForTrade = function (inputDatetime) {
-      // var dateAndTime = inputDatetime.split(" ");
-      var date = formatDate(inputDatetime, "-");
-      var openTime = new Date(date + " 9:30:00");
-      var morningCloseTime = new Date(date + " 11:30:00");
-      var afternoonOpenTime = new Date(date + " 13:00:00");
-      var closeTime = new Date(date + " 15:00:00");
-      var day = inputDatetime.getDay();
-      var hour = inputDatetime.getHours();
-      var min = inputDatetime.getMinutes();
-      if (day == 0 || day == 6) return false; //周六周日不需要刷新
-      if (inputDatetime >= openTime && inputDatetime <= morningCloseTime) {
-          return true;
-      }
-      if (inputDatetime >= afternoonOpenTime && inputDatetime <= closeTime) {
-          return true;
-      }
-      if (inputDatetime > date) {
-          return false;
-      }
-      return false;
+
+    var logout = function(event) {
+      event.preventDefault();
+      $.ajax({
+        url: authBaseEndpoint + 'logout/',
+        enctype: 'multipart/form-data',
+        headers: { 'X-CSRFToken': csrftoken },
+        method: 'POST',
+        processData: false,
+        contentType: false,
+        // dataType: 'json',
+        // data: formData,
+        success: function (data) {
+            if(data.code=="ok"){
+              window.location.href = "/";
+            }else{
+              alert("系统错误，请稍后再试");
+            }
+        },
+        statusCode: {
+            403: function () {
+                $("#messageText").html('<strong>403 forbidden</strong>.');
+            },
+            404: function () {
+                $("#messageText").html('<strong>404 page not found</strong>.');
+            },
+            500: function () {
+                $("#messageText").html('<strong>500 internal server error</strong>.');
+            }
+        }
+      });
+    }
+    if(document.getElementById("logout")) {
+      document.getElementById("logout").addEventListener("click", logout, event);
     }
   </script>
-  <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
-  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script>
-  <!-- <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script> -->
-  <!-- <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script> -->
-  <!-- <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.7/dist/latest/bootstrap-autocomplete.min.js"></script> -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/echarts.min.js"></script>
-  
   {% endblock javascript %}
 
 </body>

@@ -1,7 +1,6 @@
 $(function () {
     var stockmarketEndpoint = '/stockmarket/';
     var zixuanEndpoint = '/zixuan/';
-    var homeEndpoint = '/';
     var indexList = "sh,sz,cyb,hs300"
 
     $(window).keydown(function (event) {
@@ -42,7 +41,10 @@ $(function () {
         var stockName = item.text;
         var market = item.market;
         $("#searchText").val(tsCode);
-        window.location.href = homeEndpoint + "?q=" + tsCode;
+        // var curUrl = window.document.location.href;
+        // var PERFIX;
+        // PERFIX = curUrl.substring(0, curUrl.indexOf("web"));
+        window.location.href = "/?q=" + tsCode;
         // alert(
         //     tsCode + " " + stockName + " " + stockCode + " " + market
         // );

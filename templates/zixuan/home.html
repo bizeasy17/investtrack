@@ -76,7 +76,7 @@
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-12"><span class="text-muted">{% trans '您总共关注了' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span></div>
+        <div class="col-lg-12"><span class="text-muted">{% trans '您总共关注了' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>{% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%}</div>
       </div>
       <hr class="row">
       <div class="row">
@@ -90,7 +90,7 @@
                       <div class="card">
                           <div class="card-body">
                               <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                  <div class="card-title"><a class="text-muted" href="?q={{ind}}"><h6>{{ind}}</h6></a></div>
+                                  <div class="card-title"><a class="text-muted" href="{% url 'search:home' %}/?q={{ind}}"><h6>{{ind}}</h6></a></div>
                                   <p class="font-weight-medium small">
                                       <!-- <span class="text-muted mr-1"></span> -->
                                       <span class="badge badge-pill badge-primary">{{stk.items|length}}</span>

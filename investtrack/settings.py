@@ -107,8 +107,8 @@ AUTH_USER_MODEL = 'users.User'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = 'account:login'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = 'investor:kanpan'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'search:home'
+LOGOUT_REDIRECT_URL = 'search:home'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 # ACCOUNT_EMAIL_VERIFICATION = 'none'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html

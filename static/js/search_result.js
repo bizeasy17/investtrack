@@ -136,13 +136,13 @@ $(function () {
             },
             statusCode: {
                 403: function () {
-                    alert(403);
+                    console.info(403);
                 },
                 404: function () {
-                    alert(404);
+                    console.info(404);
                 },
                 500: function () {
-                    alert(500);
+                    console.info(500);
                 }
             }
         });
@@ -301,13 +301,13 @@ $(function () {
             },
             statusCode: {
                 403: function () {
-                    alert(403);
+                    console.info(403);
                 },
                 404: function () {
-                    alert(404);
+                    console.info(404);
                 },
                 500: function () {
-                    alert(500);
+                    console.info(500);
                 }
             }
         });
@@ -1291,6 +1291,9 @@ $(function () {
     // }
 
     var followStock = function (tsCode, btn) {
+        if (currentUser==""){
+            window.location.href = loginEndpoint + "?next=/?q=" + $("#currentTsCode").val();
+        }
         var methodUrl = "";
         var method = "POST";
         if ($.trim($(btn).text()) == "+") {
@@ -1314,13 +1317,13 @@ $(function () {
                 },
                 statusCode: {
                     403: function () {
-                        log("403 forbidden");
+                        console.info("403 forbidden");
                     },
                     404: function () {
-                        log("404 page not found");
+                        console.info("404 page not found");
                     },
                     500: function () {
-                        log("500 internal server error");
+                        console.info("500 internal server error");
                     }
                 }
             }
