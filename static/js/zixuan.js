@@ -41,13 +41,18 @@ $(function () {
         var stockName = item.text;
         var market = item.market;
         $("#searchText").val(tsCode);
+        $("#searchForm").submit();
         // var curUrl = window.document.location.href;
         // var PERFIX;
         // PERFIX = curUrl.substring(0, curUrl.indexOf("web"));
-        window.location.href = "/?q=" + tsCode;
-        // alert(
-        //     tsCode + " " + stockName + " " + stockCode + " " + market
-        // );
+        // window.location.replace(location.protocol + "//" + location.host + "/?q=" + tsCode);
+
+        // $.ajax({
+        //     url: zixuanEndpoint + 'selected-stk-price/',
+        //     success: function (data) {
+
+        //     }
+        // });
     });
 
     var showSelectedPrice = function () {
