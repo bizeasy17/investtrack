@@ -16,35 +16,38 @@
       <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
       <span class="text-white">{% trans '投呗' %}</span>   
     </a>
-
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="navbarColor01">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
           <a class="nav-link text-white" href="{% url 'zixuan:home' %}">{% trans '自选股' %}</a>
         </li>
-        {% if request.user.is_authenticated %}
-      <li class="nav-item dropdown">
+      </ul>
+      </div>
+      {% if request.user.is_authenticated %}
+      <div class="">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {% if request.user.picture %}
           <img src="/media/{{ request.user.picture }}" height="30" width="30" style="border-radius: 50%;" class="user-image">
           {% else %} 
           <img src="{% static 'img/user.png' %}" height="30" alt="{% trans '无个人头像' %}" />
           {% endif %}
-          {{ request.user.name }}
+          <span class="text-white">{{ request.user.name }}</span>
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="{% url 'user:get_profile' %}"><i class="fa fa-cogs fa-fw" aria-hidden="true"></i>&nbsp; {% trans '个人信息设置' %}</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="{%url 'account:logout'%}" id="logout"><i class="fa fa-sign-out-alt fa-fw" aria-hidden="true"></i>&nbsp; {% trans '注销' %}</a>
         </div>
-      </li>
+      </div>
     {% else %}
     <!-- <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a> -->
-    <a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a>
+    <div><a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a></div>
     {% endif %}
-      </ul>
     </div>
-  </div>
+  
 </nav>
 {% endblock navbar %}
 

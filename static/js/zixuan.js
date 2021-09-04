@@ -73,5 +73,13 @@ $(function () {
         });
     }
 
+    // $(".navbar-toggler").click(function(){
+    //     if($(this).next().is(":visible")){
+    //         $(this).next().slideUp();
+    //     }else{
+    //         $(this).next().slideDown();
+    //     }
+    // });
+
     showSelectedPrice();
 });
