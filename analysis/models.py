@@ -340,3 +340,44 @@ class StockHistoryDaily(BaseModel):
         verbose_name = _('股票代码表')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
+
+
+class StockQuantileStat(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+
+    000001.SZ CLOSE 1yr 10分位 10.5 D
+    000001.SZ CLOSE 1yr 90分位 20.5 D
+    000001.SZ CLOSE 1yr 50分位 15.5 D
+
+    000001.SZ CLOSE 3yr 10分位 8.5 D
+    000001.SZ CLOSE 3yr 90分位 25.5 D
+    000001.SZ CLOSE 3yr 50分位 13.5 D
+    '''
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    # new fields
+    stat_type = models.CharField(
+        _('统计类型'), max_length=10, blank=True, null=True) # close
+    period = models.IntegerField(
+        _('统计周期'), blank=True, null=True) # 1yr
+    quantile = models.FloatField(
+        _('分位数'), blank=True, null=True) # 10分位
+    price = models.FloatField(
+        _('股价'), blank=True, null=True) # 10.5
+    freq = models.CharField(
+        _('分析周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
+
+    def __str__(self):
+        return self.ts_code
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-last_mod_time']
+        verbose_name = _('股票高低分位统计')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'

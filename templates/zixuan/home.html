@@ -91,11 +91,19 @@
                                   </div> -->
                                   <!-- <hr/> -->
                                   {% for k,v in stk.items %}
-                                  <div class="d-flex align-items-left justify-content-between flex-wrap row">
-                                      <span class="text-muted" id=""><a href="/?q={{k}}">{{k}}</a></span>
-                                      <span class="text-muted" id=""><a href="/?q={{k}}">{{v}}</a></span>
+                                  <div class="d-flex align-items-left justify-content-between flex-wrap row ">
+                                      <div class="text-muted" id="cd{{k}}"><a href="/?q={{k}}">{{k}}</a></div>
+                                      <span class="text-muted" id="nm{{k}}"><a href="/?q={{k}}">{{v}}</a></span>
                                       <span class="text-muted" id="p{{k}}">-</span>
                                       <span class="text-muted" id="pct{{k}}">-</span>
+                                      <div class="dropdown">
+                                        <a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
+                                          <i class="fa fa-circle text-muted" aria-hidden="true" id="tl{{k}}"></i>
+                                        </a>
+                                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                          <a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">{%trans '无消息'%}</a>
+                                        </div>
+                                      </div>
                                   </div>
                                   {% endfor %}
                               </div>

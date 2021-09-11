@@ -1,3 +1,5 @@
+from os import stat
+from investtrack.settings import NEAREST_THRESHOLD
 from analysis.models import StockHistoryDaily
 import pandas as pd
 import logging
@@ -11,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
 from analysis.utils import get_ip
+from analysis.models import StockQuantileStat
 from stockmarket.models import StockNameCodeMap
 from investors.models import StockFollowing
 # Create your views here.
@@ -75,10 +78,48 @@ def get_selected_latest_price(request):
                 if stock_hist is not None and len(stock_hist) > 0:
                     for stk in stock_hist:
                         selected_stk[stk['ts_code']] = [
-                            stk['close'], stk['pct_chg'], stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s']]
+                            stk['close'], stk['pct_chg'], stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s'], get_stock_nearest_qtpct(ts_code=stk['ts_code'], close=stk['close'])]
             return JsonResponse({'content': selected_stk}, safe=False)
         else:
             return HttpResponse(status=404)
     except Exception as e:
         print(e)
         return HttpResponse(status=500)
+
+
+def get_stock_nearest_qtpct(ts_code, close):
+    stat_list = []
+    stats = StockQuantileStat.objects.filter(ts_code=ts_code).order_by('period')
+    if stats is not None:
+        for stat in stats:
+            if stat.quantile == 0.5 and abs(close-stat.price)/stat.price <= NEAREST_THRESHOLD:
+                stat_list.append({
+                    'traffic_light': 'Y',
+                    'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年中位',
+                    'type': stat.stat_type,
+                    'period': stat.period,
+                    'qt': stat.quantile,
+                    'price': stat.price
+                })
+            
+            if stat.quantile == 0.1 and close <= stat.price * (1 + NEAREST_THRESHOLD):
+                stat_list.append({
+                    'traffic_light': 'G',
+                    'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年低位',
+                    'type': stat.stat_type,
+                    'period': stat.period,
+                    'qt': stat.quantile,
+                    'price': stat.price
+                })
+
+            if stat.quantile == 0.9 and close >= stat.price * (1 + NEAREST_THRESHOLD):
+                stat_list.append({
+                    'traffic_light': 'R',
+                    'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年高位',
+                    'type': stat.stat_type,
+                    'period': stat.period,
+                    'qt': stat.quantile,
+                    'price': stat.price
+                })
+    return stat_list
+    # pass
