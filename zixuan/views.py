@@ -121,5 +121,8 @@ def get_stock_nearest_qtpct(ts_code, close):
                     'qt': stat.quantile,
                     'price': stat.price
                 })
-    return stat_list
+            
+            if len(stat_list) > 0:
+                return stat_list
+    return None
     # pass
