@@ -79,24 +79,61 @@ $(function () {
                         $("[id='p" + key + "']").addClass("text-success");
                         $("[id='pct" + key + "']").addClass("text-success");
                     }
+
+                    showSelectedTraffic(key);
+                    // if (content[key][4] != undefined && content[key][4].length > 0 && content[key][4][0].hasOwnProperty("traffic_light")) {
+                    //     if (content[key][4][0].traffic_light == "G") {
+                    //         $("[id='tl" + key + "']").removeClass("text-muted");
+                    //         $("[id='tl" + key + "']").addClass("text-success");
+                    //         $("[id='tlmsg" + key + "']").text(content[key][4][0].msg);
+                    //     }
+
+                    //     if (content[key][4][0].traffic_light == "Y") {
+                    //         $("[id='tl" + key + "']").removeClass("text-muted");
+                    //         $("[id='tl" + key + "']").addClass("text-warning");
+                    //         $("[id='tlmsg" + key + "']").text(content[key][4][0].msg);
+                    //     }
+
+                    //     if (content[key][4][0].traffic_light == "R") {
+                    //         $("[id='tl" + key + "']").removeClass("text-muted");
+                    //         $("[id='tl" + key + "']").addClass("text-danger");
+                    //         $("[id='tlmsg" + key + "']").text(content[key][4][0].msg);
+                    //     }
+                    // }
+                }
+            }
+        });
+    }
+
+    var showSelectedTraffic = function (tsCode) {
+        $.ajax({
+            url: zixuanEndpoint + 'selected-stk-traffic/' + tsCode + "/",
+            success: function (data) {
+                // $(data.content).each(function (idx, obj) {
+                //     // alert(idx);
+                //     $("#p" + idx).text(obj[0]);
+                //     $("#pct" + idx).text(obj[1]+"%");
+                // });
+                var content = data.content;
+                for (var key in content) {
                     // $("[id='pct" + key + "'").append("<span class='badge badge-pill badge-danger'>9</span>");
-                    if (content[key][4] != undefined && content[key][4].length > 0 && content[key][4][0].hasOwnProperty("traffic_light")) {
-                        if (content[key][4][0].traffic_light == "G") {
-                            $("[id='tl" + key + "']").removeClass("text-muted");
-                            $("[id='tl" + key + "']").addClass("text-success");
-                            $("[id='tlmsg" + key + "']").text(content[key][4][0].msg);
+                    if (content[key] != undefined && content[key].hasOwnProperty("traffic_light")) {
+                        if (content[key].traffic_light == "G") {
+                            $("[id='tl" + content[key].ts_code + "']").removeClass("text-muted");
+                            $("[id='tl" + content[key].ts_code + "']").addClass("text-success");
+                            $("[id='tlmsg" + content[key].ts_code + "']").text(content[key].msg);
                         }
 
-                        if (content[key][4][0].traffic_light == "Y") {
-                            $("[id='tl" + key + "']").removeClass("text-muted");
-                            $("[id='tl" + key + "']").addClass("text-warning");
-                            $("[id='tlmsg" + key + "']").text(content[key][4][0].msg);
+                        if (content[key].traffic_light == "Y") {
+                            $("[id='tl" + content[key].ts_code + "']").removeClass("text-muted");
+                            $("[id='tl" + content[key].ts_code + "']").addClass("text-warning");
+                            $("[id='tlmsg" + content[key].ts_code + "']").text(content[key].msg);
                         }
 
-                        if (content[key][4][0].traffic_light == "R") {
-                            $("[id='tl" + key + "']").removeClass("text-muted");
-                            $("[id='tl" + key + "']").addClass("text-danger");
-                            $("[id='tlmsg" + key + "']").text(content[key][4][0].msg);
+                        if (content[key].traffic_light == "R") {
+                            $("[id='tl" + content[key].ts_code + "']").removeClass("text-muted");
+                            $("[id='tl" + content[key].ts_code + "']").addClass("text-danger");
+                            $("[id='tlmsg" + content[key].ts_code + "']").text(content[key].msg);
                         }
                     }
                 }

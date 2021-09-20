@@ -114,8 +114,8 @@ class StockNameCodeMap(BaseModel):
     #     _('交易历史已下载？'), blank=False, null=False, default=False)
     # is_hist_updated = models.BooleanField(
     #     _('交易历史已更新？'), blank=False, null=False, default=False)
-    # hist_update_date = models.DateField(
-    #     _('更新日期？'), blank=True, null=True)
+    dailybasic_date = models.DateField(
+        _('基本面下载日期'), blank=True, null=True)
 
     def __str__(self):
         return self.stock_name
@@ -231,7 +231,7 @@ class CompanyDailyBasic(BaseModel):
     company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
 
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
     stock_code = models.CharField(
         _('股票代码'), max_length=50, blank=False, null=False,)  # symbol, e.g. 000001
     trade_date = models.DateField(
@@ -281,6 +281,7 @@ class CompanyDailyBasic(BaseModel):
         verbose_name = _('公司每日基本')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
+        unique_together = ('ts_code', 'trade_date',)
 
 
 class CompanyManagers(BaseModel):

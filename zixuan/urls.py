@@ -8,4 +8,6 @@ urlpatterns = [
          views.HomeView.as_view(), name='home'),  # ??
     path('selected-stk-price/',
          views.get_selected_latest_price),
+    path('selected-stk-traffic/<ts_code>/',
+         views.get_selected_traffic),
 ]

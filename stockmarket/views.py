@@ -226,55 +226,6 @@ def get_daily_basic(request, ts_code, start_date, end_date):
             return HttpResponse(status=500)
 
 
-def get_latest_daily_basic(request, ts_code):
-    if request.method == 'GET':
-        company_daily_list = []
-        pe_list = []
-        pe_range = []
-        pe_ttm_list = []
-        pb_list = []
-        pb_range = []
-        ps_list = []
-        ps_ttm_list = []
-        ps_range = []
-        try:
-            codes = ts_code.split(',')
-            for code in codes:
-                daily_basic = CompanyDailyBasic.objects.filter(
-                    ts_code=code).order_by('-trade_date')
-
-                if daily_basic is not None and len(daily_basic) > 0:
-                    company_daily_list.append(
-                        {
-                            'ts_code': code,
-                            'close': daily_basic[0].close,
-                            'trade_date': daily_basic[0].trade_date,
-                            'pe': daily_basic[0].pe,
-                            'pe_ttm': daily_basic[0].pe_ttm,
-                            'pb': daily_basic[0].pb,
-                            # 'pb_ttm': daily_basic.pb_ttm,
-                            'ps': daily_basic[0].ps,
-                            'ps_ttm': daily_basic[0].ps_ttm,
-                            'mv': daily_basic[0].total_mv,
-                            'circ_mv': daily_basic[0].circ_mv,
-                        }
-                    )
-                # pe_list.append(
-                #      if daily_basics.pe is not None and not np.isnan(daily_basics.pe) else 0)
-                # pe_ttm_list.append(
-                #     daily_basics.pe_ttm if daily_basics.pe_ttm is not None and not np.isnan(daily_basics.pe_ttm) else 0)
-                # pb_list.append(daily_basics.pb)
-                # ps_ttm_list.append(daily_basics.ps_ttm)
-                # ps_list.append(daily_basics.ps)
-            if len(company_daily_list) > 0:
-                return JsonResponse({'results': company_daily_list}, safe=False)
-            else:
-                return HttpResponse(status=404)
-        except Exception as err:
-            logger.error(err)
-            return HttpResponse(status=500)
-
-
 def get_single_daily_basic(request, ts_code, start_date, end_date):
     if request.method == 'GET':
         pro = ts.pro_api()
@@ -315,17 +266,20 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         pb_90qt_list = []
 
         try:
-            df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
-                                 fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
-            pe_50qt = df['pe'].quantile() if df['pe'].quantile(
-            ) is not None and not np.isnan(df['pe'].quantile()) else 0
-            pe_ttm_50qt = df['pe_ttm'].quantile() if df['pe_ttm'].quantile(
-            ) is not None and not np.isnan(df['pe_ttm'].quantile()) else 0
-            ps_50qt = df['ps'].quantile()
-            ps_ttm_50qt = df['ps_ttm'].quantile()
-            to_50qt = df['turnover_rate'].quantile()
-            vr_50qt = df['volume_ratio'].quantile()
-            pb_50qt = df['pb'].quantile()
+            cdb = CompanyDailyBasic.objects.filter(
+                ts_code=ts_code, trade_date__gte=datetime.strptime(start_date, '%Y%m%d'), trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).order_by('-trade_date')
+            df = pd.DataFrame(cdb.values('pe','pe_ttm','ps','ps_ttm','turnover_rate','volume_ratio','pb','trade_date','total_mv','circ_mv','total_share','free_share','float_share'))
+            # df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
+            #                      fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
+            # pe_50qt = df['pe'].quantile() if df['pe'].quantile(
+            # ) is not None and not np.isnan(df['pe'].quantile()) else 0
+            # pe_ttm_50qt = df['pe_ttm'].quantile() if df['pe_ttm'].quantile(
+            # ) is not None and not np.isnan(df['pe_ttm'].quantile()) else 0
+            # ps_50qt = df['ps'].quantile()
+            # ps_ttm_50qt = df['ps_ttm'].quantile()
+            # to_50qt = df['turnover_rate'].quantile()
+            # vr_50qt = df['volume_ratio'].quantile()
+            # pb_50qt = df['pb'].quantile()
 
             pe_qt = df['pe'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
             pe_ttm_qt = df['pe_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
@@ -361,13 +315,17 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
                     ps_ttm_list.append(row['ps_ttm'])
                     ps_list.append(row['ps'])
 
-                    pe_10qt_list.append(round(pe_qt.values[0] if not np.isnan(pe_qt.values[0]) else 0, 3))
-                    pe_50qt_list.append(round(pe_qt.values[2] if not np.isnan(pe_qt.values[2]) else 0, 3))
-                    pe_90qt_list.append(round(pe_qt.values[4] if not np.isnan(pe_qt.values[4]) else 0, 3))
+                    pe_10qt_list.append(
+                        round(pe_qt.values[0] if not np.isnan(pe_qt.values[0]) else 0, 3))
+                    pe_50qt_list.append(
+                        round(pe_qt.values[2] if not np.isnan(pe_qt.values[2]) else 0, 3))
+                    pe_90qt_list.append(
+                        round(pe_qt.values[4] if not np.isnan(pe_qt.values[4]) else 0, 3))
 
                     pe_ttm_10qt_list.append(
                         round(pe_ttm_qt.values[0] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
-                    pe_ttm_50qt_list.append(round(pe_ttm_qt.values[2] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
+                    pe_ttm_50qt_list.append(
+                        round(pe_ttm_qt.values[2] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
                     pe_ttm_90qt_list.append(
                         round(pe_ttm_qt.values[4] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
 
@@ -414,5 +372,3 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         except Exception as err:
             logger.error(err)
             return HttpResponse(status=500)
-
-

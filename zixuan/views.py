@@ -78,7 +78,7 @@ def get_selected_latest_price(request):
                 if stock_hist is not None and len(stock_hist) > 0:
                     for stk in stock_hist:
                         selected_stk[stk['ts_code']] = [
-                            stk['close'], stk['pct_chg'], stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s'], get_stock_nearest_qtpct(ts_code=stk['ts_code'], close=stk['close'])]
+                            stk['close'], stk['pct_chg'], stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s']]
             return JsonResponse({'content': selected_stk}, safe=False)
         else:
             return HttpResponse(status=404)
@@ -87,9 +87,62 @@ def get_selected_latest_price(request):
         return HttpResponse(status=500)
 
 
+@login_required
+def get_selected_traffic(request, ts_code):
+    try:
+        req_user = request.user
+        stock_hist = StockHistoryDaily.objects.filter(ts_code=ts_code).values('close').order_by('-trade_date')[:1]
+
+        if len(stock_hist) > 0:
+            stat_list = []
+            stats = StockQuantileStat.objects.filter(ts_code=ts_code).order_by('period')
+            if stats is not None:
+                for stat in stats:
+                    if stat.quantile == 0.5 and abs(stock_hist[0]['close']-stat.price)/stat.price <= NEAREST_THRESHOLD:
+                        stat_list.append({
+                            'ts_code': ts_code,
+                            'traffic_light': 'Y',
+                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年中位',
+                            'type': stat.stat_type,
+                            'period': stat.period,
+                            'qt': stat.quantile,
+                            'price': stat.price
+                        })
+                    
+                    if stat.quantile == 0.1 and stock_hist[0]['close'] <= stat.price * (1 + NEAREST_THRESHOLD):
+                        stat_list.append({
+                            'ts_code': ts_code,
+                            'traffic_light': 'G',
+                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年低位',
+                            'type': stat.stat_type,
+                            'period': stat.period,
+                            'qt': stat.quantile,
+                            'price': stat.price
+                        })
+
+                    if stat.quantile == 0.9 and stock_hist[0]['close'] >= stat.price * (1 + NEAREST_THRESHOLD):
+                        stat_list.append({
+                            'ts_code': ts_code,
+                            'traffic_light': 'R',
+                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年高位',
+                            'type': stat.stat_type,
+                            'period': stat.period,
+                            'qt': stat.quantile,
+                            'price': stat.price
+                        })
+            return JsonResponse({'content': stat_list}, safe=False)
+        return HttpResponse(status=404)
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=500)
+    # get_stock_nearest_qtpct(ts_code=stk['ts_code'], close=stk['close'])
+    # pass
+
+
 def get_stock_nearest_qtpct(ts_code, close):
     stat_list = []
-    stats = StockQuantileStat.objects.filter(ts_code=ts_code).order_by('period')
+    stats = StockQuantileStat.objects.filter(
+        ts_code=ts_code).order_by('period')
     if stats is not None:
         for stat in stats:
             if stat.quantile == 0.5 and abs(close-stat.price)/stat.price <= NEAREST_THRESHOLD:
@@ -101,7 +154,7 @@ def get_stock_nearest_qtpct(ts_code, close):
                     'qt': stat.quantile,
                     'price': stat.price
                 })
-            
+
             if stat.quantile == 0.1 and close <= stat.price * (1 + NEAREST_THRESHOLD):
                 stat_list.append({
                     'traffic_light': 'G',
@@ -121,8 +174,7 @@ def get_stock_nearest_qtpct(ts_code, close):
                     'qt': stat.quantile,
                     'price': stat.price
                 })
-            
+
             if len(stat_list) > 0:
                 return stat_list
     return None
-    # pass

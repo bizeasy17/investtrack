@@ -17,14 +17,15 @@ strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingd
 
 
 def days_between(d1, d2):
-  # d1 = datetime.strptime(d1, "%Y-%m-%d")
-  # d2 = datetime.strptime(d2, "%Y-%m-%d")
-  return abs((d2 - d1).days)
+    # d1 = datetime.strptime(d1, "%Y-%m-%d")
+    # d2 = datetime.strptime(d2, "%Y-%m-%d")
+    return abs((d2 - d1).days)
 
 
 def days_to_now(d1):
-  d2 = datetime.now(tz=timezone.utc)
-  return abs((d2 - d1).days)
+    d2 = datetime.now(tz=timezone.utc)
+    return abs((d2 - d1).days)
+
 
 def get_market_code(ts_code):
     indexes = {'6': '000001.SH', '0': '399001.SZ',
@@ -151,21 +152,28 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
     analysis_start_date = listed_company.last_analyze_date if listed_company.last_analyze_date is not None else listed_company.list_date
     mark_start_date = listed_company.list_date
 
-    analysis_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST',
-                           'TGT_PCT_QTN', 'UPDN_PCT_QTN', 'UPDN_PCT_RK', 'TGT_PCT_RK']
-    analysis_strategy_list = ['ma25_zhicheng', 'ma25_diepo', 'ma25_yali', 'ma25_tupo',
-                              'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo',
-                              'jiuzhuan_count_b', 'jiuzhuan_count_s', 'dingbu_s', 'dibu_b',
-                              'tupo_b', 'diepo_s', 'm_ding', 'w_di',
-                              'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo']
+    # analysis_event_list = ['EXP_PCT_TEST', 'PERIOD_TEST',
+    #                        'TGT_PCT_QTN', 'UPDN_PCT_QTN', 'UPDN_PCT_RK', 'TGT_PCT_RK']
+    analysis_event_list = []
+    # analysis_strategy_list = ['ma25_zhicheng', 'ma25_diepo', 'ma25_yali', 'ma25_tupo',
+    #                           'ma60_zhicheng', 'ma60_diepo', 'ma60_yali', 'ma60_tupo',
+    #                           'jiuzhuan_count_b', 'jiuzhuan_count_s', 'dingbu_s', 'dibu_b',
+    #                           'tupo_b', 'diepo_s', 'm_ding', 'w_di',
+    #                           'ma200_zhicheng', 'ma200_diepo', 'ma200_yali', 'ma200_tupo']
+    analysis_strategy_list = ['jiuzhuan_count_b', 'jiuzhuan_count_s']
     mark_cp_event_list = ['MARK_CP']
-    dl_daily_event_list = ['DAILY_DOWNLOAD']
+    # dl_daily_event_list = ['DAILY_DOWNLOAD']
+    dl_daily_event_list = []
+
     mark_strategy_set = {}
+    # mark_strategy_dict = {
+    #     '25': {'junxian25_bs', 'jiuzhuan_bs'},
+    #     '60': {'junxian60_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
+    #            'wm_dingdi_bs', },
+    #     '200': {'junxian200_bs'}
+    # }
     mark_strategy_dict = {
-        '25': {'junxian25_bs', 'jiuzhuan_bs'},
-        '60': {'junxian60_bs', 'dingdi', 'tupo_yali_b', 'diepo_zhicheng_s',
-               'wm_dingdi_bs', },
-        '200': {'junxian200_bs'}
+        '25': {'jiuzhuan_bs'}
     }
 
     # analysis_hist = StockHistoryDaily.objects.filter(
@@ -217,7 +225,9 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
                 #                 mark_strategy_set = mark_strategy_dict['25']
 
     mark_strategy_set = set.union(
-        mark_strategy_dict['200'], mark_strategy_dict['60'], mark_strategy_dict['25'])
+        # mark_strategy_dict['200'], mark_strategy_dict['60'], mark_strategy_dict['25'])
+        mark_strategy_dict['25'])
+
 
     for event in mark_cp_event_list:
         for strategy in mark_strategy_set:
@@ -360,19 +370,6 @@ def hist_downloaded(ts_code, event, freq):
         return False
 
 
-def last_download_date(ts_code, event, freq):
-    try:
-        # 获得上一次下载记录
-        log = StockStrategyTestLog.objects.filter(
-            ts_code=ts_code, event_type=event, freq=freq).order_by('-end_date')[0]
-        # print(log.start_date)
-        # print(log.end_date)
-        return [log.start_date, log.end_date]
-    except Exception as e:
-        print(e)
-        return None
-
-
 def log_download_hist(ts_code, event, start_date, end_date, freq):
     try:
         mark_log = StockStrategyTestLog(ts_code=ts_code,
@@ -463,3 +460,63 @@ def get_pct_val_from(pct_str):
 
 def get_pkdays_by_year_month(year, month):
     pass
+
+
+# 20210918
+def init_log(ts_code, start_date, end_date, freq, log_type):
+    '''
+    exec_date = today()
+    opt1:
+
+    opt2:
+    opt3:
+    '''
+    # exec_date = date.today()
+    try:
+        log = StockStrategyTestLog.objects.get(
+            ts_code=ts_code, start_date=start_date, end_date=end_date, event_type=log_type, freq=freq)
+    except :  # 下载任务全部完成，创建新任务
+        log = StockStrategyTestLog(ts_code=ts_code,
+                                    event_type=log_type, freq=freq, start_date=start_date, end_date=end_date)
+        log.save()
+    return log
+
+def complete_download(ts_code, exec_date, log_type, freq='D'):
+    '''
+    前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
+    1. 如果存在，就更新end date
+    2. 如果不存在，就创建新的
+    '''
+    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
+    exec_date = date.today()
+
+    try:
+        log = StockStrategyTestLog.objects.get(
+                ts_code=ts_code, log_type=log_type, freq=freq, exec_date=exec_date)
+        log.is_done = True
+        log.save()
+    except Exception as e:  # 未找到event log记录
+        return False
+
+def ready2_download(ts_code, end_date, log_type, freq='D'):
+    exec_date = date.today()
+
+    try:
+        StockStrategyTestLog.objects.get(
+            ts_code=ts_code, event_type=log_type, end_date__gte=end_date, freq=freq, is_done=True)
+        return False
+    except:
+        return True
+
+
+def last_download_date(ts_code, log_type, freq):
+    try:
+        # 获得上一次下载记录
+        log = StockStrategyTestLog.objects.filter(
+            ts_code=ts_code, event_type=log_type, freq=freq, is_done=True).order_by('-end_date')[0]
+        # print(log.start_date)
+        # print(log.end_date)
+        return [log.start_date, log.end_date]
+    except Exception as e:
+        print(e)
+        return None
