@@ -54,14 +54,17 @@ def download_dailybasic(ts_code=None, start_date=None, end_date=None, freq='D'):
 
     listed_companies = get_listed_companies(ts_code)
 
-    try:
-        for company in listed_companies:
-            if start_date is None:
-                if company.dailybasic_date is None:
-                    start_date = company.list_date
-                else:
-                    start_date = company.dailybasic_date + timedelta(days=1)
-
+    # print(reset_start)
+    
+    for company in listed_companies:
+        if start_date is None:
+            # print(company.ts_code)
+            # print(start_date)
+            if company.dailybasic_date is None:
+                start_date = company.list_date
+            else:
+                start_date = company.dailybasic_date + timedelta(days=1)
+        try:
             if ready2_download(company.ts_code, end_date, DOWNLOAD_TYPE, freq):
                 log = init_log(
                     company.ts_code, start_date, end_date, freq, DOWNLOAD_TYPE)
@@ -72,13 +75,15 @@ def download_dailybasic(ts_code=None, start_date=None, end_date=None, freq='D'):
                 company.dailybasic_date = end_date
                 company.save()
                 # complete_download(company.ts_code, end_date, DOWNLOAD_TYPE, freq)
-                if reset_start:
-                    start_date = None # fix bug，所有股票的下载开始日会默认为第一个list_date
             else:
                 print(company.ts_code +
-                      ' not ready for download / already completed')
-    except Exception as err:
-        print(err)
+                    ' not ready for download / already completed')
+        except Exception as err:
+            print(err)
+        
+        if reset_start:
+            print('reset start date')
+            start_date = None  # fix bug，所有股票的下载开始日会默认为第一个list_date
 
 
 def store_daily_basic(company, start_date, end_date):
