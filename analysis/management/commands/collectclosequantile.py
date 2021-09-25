@@ -56,7 +56,7 @@ class Command(BaseCommand):
             freq = 'D'
 
         if ts_code is None:
-            stocks = StockFollowing.objects.filter().values('ts_code').distinct()
+            stocks = StockFollowing.objects.order_by('ts_code').values('ts_code').distinct()
             if stocks is not None and len(stocks) > 0:
                 for stock in stocks:
                     collect_close_quantile(stock['ts_code'], period, quantile,

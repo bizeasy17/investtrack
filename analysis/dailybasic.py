@@ -7,8 +7,8 @@ from django.db.models import Q
 from stockmarket.models import (CompanyDailyBasic, IndexDailyBasic,
                                 StockNameCodeMap)
 
-from analysis.utils import (complete_download, init_log,
-                            ready2_download)
+from analysis.models import IndustryBasicQuantileStat
+from analysis.utils import apply_analysis_date, init_log, ready2_download
 
 from .stock_hist import split_trade_cal
 
@@ -22,7 +22,7 @@ WHERE  NOT EXISTS (
    WHERE  ts_code = code.ts_code
    );
 '''
-DOWNLOAD_TYPE = 'DAILY_BASIC'
+DAILYBASIC_TYPE = 'DAILY_BASIC'
 
 
 def get_listed_companies(ts_code):
@@ -55,7 +55,7 @@ def download_dailybasic(ts_code=None, start_date=None, end_date=None, freq='D'):
     listed_companies = get_listed_companies(ts_code)
 
     # print(reset_start)
-    
+
     for company in listed_companies:
         if start_date is None:
             # print(company.ts_code)
@@ -65,9 +65,9 @@ def download_dailybasic(ts_code=None, start_date=None, end_date=None, freq='D'):
             else:
                 start_date = company.dailybasic_date + timedelta(days=1)
         try:
-            if ready2_download(company.ts_code, end_date, DOWNLOAD_TYPE, freq):
+            if ready2_download(company.ts_code, end_date, DAILYBASIC_TYPE, freq):
                 log = init_log(
-                    company.ts_code, start_date, end_date, freq, DOWNLOAD_TYPE)
+                    company.ts_code, start_date, end_date, freq, DAILYBASIC_TYPE)
                 store_daily_basic(company, start_date, end_date)
                 log.is_done = True
                 log.save()
@@ -77,10 +77,10 @@ def download_dailybasic(ts_code=None, start_date=None, end_date=None, freq='D'):
                 # complete_download(company.ts_code, end_date, DOWNLOAD_TYPE, freq)
             else:
                 print(company.ts_code +
-                    ' not ready for download / already completed')
+                      ' not ready for download / already completed')
         except Exception as err:
             print(err)
-        
+
         if reset_start:
             print('reset start date')
             start_date = None  # fix bug，所有股票的下载开始日会默认为第一个list_date
@@ -162,3 +162,70 @@ def download_basic_data(ts_code, start_date, end_date, asset):
             # df = df.iloc[::-1]  # 将数据按照时间顺序排列
             dailybasic_list.append(df)
         return pd.concat(dailybasic_list)
+
+
+def process_industrybasic_quantile(quantile, next_dates, analysis_type='INDUSTRY_BASIC_QUANTILE'):
+    # now = date.today()
+    if next_dates is not None and len(next_dates) > 0:
+        company = StockNameCodeMap.objects.order_by('industry').values('industry').distinct()
+        if company is not None and len(company) > 0:
+            for date in next_dates:
+                for c in company:
+                    try:
+                        # print(date)
+                        log = init_log(
+                            c['industry'], date.analysis_date, date.analysis_date, 'D', analysis_type)
+                        collect_industrybasic_quantile(
+                            c['industry'], quantile, date.analysis_date)
+                        log.is_done = True
+                        log.save()
+                        # complete_download(company.ts_code, end_date, DOWNLOAD_TYPE, freq)
+                    except Exception as err:
+                        print('process_industrybasic_quantile')
+                        print(err)
+                    print(c['industry'] + ' completed for date')
+                    print(date.analysis_date)
+                apply_analysis_date(analysis_type, date.analysis_date)
+    else:
+        print('not ready for calculate quantile / already completed')
+
+
+def collect_industrybasic_quantile(industry, quantile, snap_date):
+    '''
+    1. 获取所有该行业下所有股票的daily basic
+    2. 对每项基本面指标进行%统计
+    3. 从当前start date循环到开盘后的第一个月的快照日
+    '''
+
+    cdb = CompanyDailyBasic.objects.filter(
+        company__industry=industry, trade_date=snap_date).values('pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm')
+
+    if len(cdb) > 0:
+        # print(industry)
+        df = pd.DataFrame(cdb)
+
+        basic_qtile = df.quantile(quantile)
+        # pe_ttm_qtile = df.pe_ttm.quantile(quantile)
+        # pb_qtile = df.pb.quantile(quantile)
+        # ps_qtile = df.ps.quantile(quantile)
+        # ps_ttm_qtile = df.ps_ttm.quantile(quantile)
+
+        for index, row in basic_qtile.iterrows():
+            # print(index)
+            for col, val in row.items():
+                try:
+                    # print(col)
+                    # print(val)
+                    new_ibqs = IndustryBasicQuantileStat(
+                        industry=industry, basic_type=col, quantile=index, quantile_val=round(val,2),stk_quantity=len(cdb), snap_date=snap_date)
+                    new_ibqs.save()
+                except Exception as err:
+                    print('collect_industrybasic_quantile')
+                    print(err)
+                    # print('new calculation quantile ' +
+                    #       quantile + ' for ' + industry)
+                    # new_ibqs = IndustryBasicQuantileStat(
+                    #     industry=industry, basic_type=col, quantile=index, stk_quantity=len(cdb), snap_date=snap_date)
+                    # new_ibqs.save()
+    else:
+        print('no stock in ' + industry)

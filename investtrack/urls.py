@@ -37,7 +37,7 @@ urlpatterns = [
     # path('tradeaccounts/', include('tradeaccounts.urls')),
     # path('txnvis/', include('txnvisibility.urls')),
     # path('dashboard/', include('dashboard.urls')),
-    # path('analysis/', include('analysis.urls')),
+    path('analysis/', include('analysis.urls')),
     # path('hongguan/', include('hongguan.urls')),
     path('zixuan/', include('zixuan.urls')),
     # path('xuangu/', include('xuangu.urls')),

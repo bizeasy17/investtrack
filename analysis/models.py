@@ -381,3 +381,68 @@ class StockQuantileStat(BaseModel):
         verbose_name = _('股票高低分位统计')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
+
+
+class IndustryBasicQuantileStat(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+
+    银行 PE 0.1 10 2000-01-31
+    软件 PE 0.5 15.5 2000-01-31
+
+    '''
+    industry = models.CharField(
+        _('行业'), max_length=25, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    # new fields
+    basic_type = models.CharField(
+        _('统计类型'), max_length=10, blank=True, null=True)  # close
+    quantile = models.FloatField(
+        _('分位数'), blank=True, null=True)  # 10分位
+    quantile_val = models.FloatField(
+        _('分位值'), blank=True, null=True)  # 10分位
+    stk_quantity = models.IntegerField(
+        _('股票数'), blank=True, null=True)  # 股票数
+    snap_date = models.DateField(
+        _('分析时间'), blank=True, null=True)  # e.g. 000001.SZ
+
+    def __str__(self):
+        return self.industry
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('industry', 'basic_type', 'quantile', 'snap_date')
+        ordering = ['-last_mod_time']
+        verbose_name = _('行业高低分位统计')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class AnalysisDateSeq(BaseModel):
+    '''
+    
+    '''
+    seq_type = models.CharField(
+        _('统计类型'), max_length=25, blank=True, null=True, db_index=True)  # e.g. 000001.SZ
+    # new fields
+    analysis_date = models.DateField(
+        _('统计日期'), blank=True, null=True)  # close
+    applied = models.BooleanField(
+        _('已应用'),  blank=True, null=True, default=False)
+
+    def __str__(self):
+        return self.seq_type
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('seq_type', 'analysis_date',)
+        ordering = ['-last_mod_time']
+        verbose_name = _('分析日期')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'

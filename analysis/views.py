@@ -12,20 +12,25 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
-from investors.models import StockFollowing
-from stockmarket.models import StockNameCodeMap
-from stockmarket.utils import get_realtime_quotes, get_stocknames
 
-from analysis.dl_daily_basic import handle_daily_basic
-from analysis.stock_hist import process_stock_download
-from analysis.utils import (get_pct_val_from, get_qt_period_on_exppct,
-                            get_qt_updownpct)
+from analysis.dailybasic import process_industrybasic_quantile
+from analysis.utils import next_date
 
-from .models import (BStrategyOnFixedPctTest, BStrategyOnPctTest,
-                     PickedStocksMeetStrategy, StockHistoryDaily,
-                     StrategyTestLowHigh)
 
 logger = logging.getLogger(__name__)
 
 # Create your views here.
-
+def analysis_command(request, cmd, params):
+    p = params.split(',')
+    
+    try:
+        plist = params.split(',')
+        if cmd == 'ibq':
+            quantile = [.1, .25, .5, .75, .9]
+            # get last end date
+            next_dates = next_date()
+            process_industrybasic_quantile(
+                quantile, next_dates,)
+        return HttpResponse(status=200)
+    except Exception as e:
+        return HttpResponse(status=500)

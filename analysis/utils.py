@@ -1,13 +1,16 @@
+from calendar import monthrange
 from datetime import date, datetime, timedelta
-
+import time
+import calendar
 import numpy as np
 import pandas as pd
 # from investors.models import TradeStrategy
 import tushare as ts
 # from dashboard.utils import days_between
 from django.utils import timezone
-from .models import (AnalysisEventLog, StockHistoryDaily, StockStrategyTestLog,
-                     StockIndexHistory)
+
+from .models import (AnalysisEventLog, StockHistoryDaily, StockIndexHistory,
+                     StockStrategyTestLog, AnalysisDateSeq)
 
 strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingdi': {'dingbu_s', 'dibu_b'},
                  'tupo_yali_b': {'tupo_b'}, 'diepo_zhicheng_s': {'diepo_s'},  'wm_dingdi_bs': {'m_ding', 'w_di'},
@@ -228,7 +231,6 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
         # mark_strategy_dict['200'], mark_strategy_dict['60'], mark_strategy_dict['25'])
         mark_strategy_dict['25'])
 
-
     for event in mark_cp_event_list:
         for strategy in mark_strategy_set:
             try:
@@ -417,7 +419,7 @@ def get_trade_cal_diff(ts_code, last_trade, asset='E', exchange='SSE', period=4)
     return offset
 
 
-def get_closest_trade_cal(cur_date, exchange='SSE'):
+def get_nearest_trade_cal(cur_date, exchange='SSE'):
     # count = 0
     offset = 0
     pro = ts.pro_api()
@@ -475,11 +477,12 @@ def init_log(ts_code, start_date, end_date, freq, log_type):
     try:
         log = StockStrategyTestLog.objects.get(
             ts_code=ts_code, start_date=start_date, end_date=end_date, event_type=log_type, freq=freq)
-    except :  # 下载任务全部完成，创建新任务
+    except:  # 下载任务全部完成，创建新任务
         log = StockStrategyTestLog(ts_code=ts_code,
-                                    event_type=log_type, freq=freq, start_date=start_date, end_date=end_date)
+                                   event_type=log_type, freq=freq, start_date=start_date, end_date=end_date)
         log.save()
     return log
+
 
 def complete_download(ts_code, exec_date, log_type, freq='D'):
     '''
@@ -492,11 +495,12 @@ def complete_download(ts_code, exec_date, log_type, freq='D'):
 
     try:
         log = StockStrategyTestLog.objects.get(
-                ts_code=ts_code, log_type=log_type, freq=freq, exec_date=exec_date)
+            ts_code=ts_code, log_type=log_type, freq=freq, exec_date=exec_date)
         log.is_done = True
         log.save()
     except Exception as e:  # 未找到event log记录
         return False
+
 
 def ready2_download(ts_code, end_date, log_type, freq='D'):
     exec_date = date.today()
@@ -520,3 +524,94 @@ def last_download_date(ts_code, log_type, freq):
     except Exception as e:
         print(e)
         return None
+
+# 20210925
+
+
+def next_month(date):
+    """add one month to date, maybe falling to last day of month
+    :param datetime.datetime date: the date
+    ::
+      >>> add_month(datetime(2014,1,31))
+      datetime.datetime(2014, 2, 28, 0, 0)
+      >>> add_month(datetime(2014,12,30))
+      datetime.datetime(2015, 1, 30, 0, 0)
+    """
+    # number of days this month
+    month_days = calendar.monthrange(date.year, date.month)[1]
+    # print(month_days)
+    candidate = date + timedelta(days=month_days)
+    # but maybe we are a month too far
+    if candidate.day != date.day:
+        # go to last day of next month,
+        # by getting one day before begin of candidate month
+        return candidate.replace(day=1) - timedelta(days=1)
+    else:
+        return candidate
+
+
+def monthdelta(d1, d2):
+    delta = 0
+    while True:
+        mdays = monthrange(d1.year, d1.month)[1]
+        d1 += timedelta(days=mdays)
+        if d1 <= d2:
+            delta += 1
+        else:
+            break
+    return delta
+
+
+def generate_date_seq(type, freq, list_date):
+    now = date.today()
+    last_dateseq = AnalysisDateSeq.objects.filter(
+        seq_type=type).order_by('-analysis_date')
+    last_snap_date = last_dateseq[0].analysis_date if last_dateseq is not None and len(
+        last_dateseq) > 0 else list_date
+
+    try:
+        if freq == 'Y':
+            pass
+        elif freq == 'M':
+            print(last_snap_date)
+            md = monthdelta(last_snap_date, now)
+            print(md)
+            if md == 0:
+                return False
+            else:
+                for i in range(0, md):
+                    nearest_cal = get_nearest_trade_cal(
+                        next_month(last_snap_date))
+                    print(nearest_cal)
+                    date_seq = AnalysisDateSeq(
+                        seq_type=type, analysis_date=nearest_cal)
+                    date_seq.save()
+                    last_snap_date = nearest_cal
+                    time.sleep(2)
+                return True
+        elif freq == 'D':
+            pass
+    except Exception as err:
+        print(err)
+        return False
+
+
+def next_date(type='INDUSTRY_BASIC_QUANTILE'):
+    last_dateseq = AnalysisDateSeq.objects.filter(
+        seq_type=type, applied=False).order_by('-analysis_date')
+
+    if last_dateseq is not None and len(last_dateseq) > 0:
+        return last_dateseq
+    
+    return None
+
+def apply_analysis_date(type, date):
+    try:
+        dateseq = AnalysisDateSeq.objects.get(
+            seq_type=type, analysis_date=date, applied=False)
+        # if dateseq is not None and len(dateseq) > 0:
+        dateseq.applied = True
+        dateseq.save()
+    except Exception as err:
+        print(err)
+
