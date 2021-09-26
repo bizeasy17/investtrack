@@ -167,10 +167,11 @@ def download_basic_data(ts_code, start_date, end_date, asset):
 def process_industrybasic_quantile(quantile, next_dates, analysis_type='INDUSTRY_BASIC_QUANTILE'):
     # now = date.today()
     if next_dates is not None and len(next_dates) > 0:
-        company = StockNameCodeMap.objects.order_by('industry').values('industry').distinct()
+        company = StockNameCodeMap.objects.exclude(asset='I').order_by('industry').values('industry').distinct()
         if company is not None and len(company) > 0:
             for date in next_dates:
                 for c in company:
+                    # if c['industry'] is not None:
                     try:
                         # print(date)
                         log = init_log(
