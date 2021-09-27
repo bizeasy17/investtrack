@@ -14,7 +14,7 @@ from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
 from analysis.utils import get_ip
 from analysis.models import StockQuantileStat
-from stockmarket.models import StockNameCodeMap
+from stockmarket.models import CompanyDailyBasic, StockNameCodeMap
 from investors.models import StockFollowing
 # Create your views here.
 
@@ -48,7 +48,7 @@ class HomeView(TemplateView):
                 if len(industries) > 0:
                     for ind in industries:
                         stocks = StockFollowing.objects.filter(trader=req_user,
-                                                            industry=ind['industry'])
+                                                               industry=ind['industry'])
                         for stk in stocks:
                             stk_dic[stk.ts_code] = stk.stock_name
                             count_stk += 1
@@ -75,10 +75,19 @@ def get_selected_latest_price(request):
             for picked_stock in picked_stocks:
                 stock_hist = StockHistoryDaily.objects.filter(ts_code=picked_stock.ts_code).values(
                     'ts_code', 'close', 'pct_chg', 'jiuzhuan_count_b', 'jiuzhuan_count_s').order_by('-trade_date')[:1]
+                # cdb = CompanyDailyBasic.objects.filter(ts_code=picked_stock.ts_code).values(
+                #     'ts_code', 'pe', 'pb', 'ps', 'pe_ttm', 'ps_ttm').order_by('-trade_date')[:1]
+                # cdb[0]['pe'], cdb[0]['pe_ttm'], cdb[0]['pb'], cdb[0]['ps'], cdb[0]['ps_ttm']
                 if stock_hist is not None and len(stock_hist) > 0:
                     for stk in stock_hist:
-                        selected_stk[stk['ts_code']] = [
-                            stk['close'], stk['pct_chg'], stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s']]
+                        temp = [
+                            stk['close'], round(stk['pct_chg'], 2), stk['jiuzhuan_count_b'], stk['jiuzhuan_count_s'], ]
+                        cdb = CompanyDailyBasic.objects.filter(ts_code=stk['ts_code']).values(
+                            'ts_code', 'pe', 'pb', 'ps', 'pe_ttm', 'ps_ttm').order_by('-trade_date')[:1]
+                        if cdb is not None and len(cdb) > 0:
+                            for db in cdb:
+                                temp = temp + [round(db['pe']), round(db['pe_ttm']), round(db['pb']), round(db['ps']), round(db['ps_ttm'])]
+                        selected_stk[stk['ts_code']] = temp
             return JsonResponse({'content': selected_stk}, safe=False)
         else:
             return HttpResponse(status=404)
@@ -91,11 +100,13 @@ def get_selected_latest_price(request):
 def get_selected_traffic(request, ts_code):
     try:
         req_user = request.user
-        stock_hist = StockHistoryDaily.objects.filter(ts_code=ts_code).values('close').order_by('-trade_date')[:1]
+        stock_hist = StockHistoryDaily.objects.filter(
+            ts_code=ts_code).values('close').order_by('-trade_date')[:1]
 
         if len(stock_hist) > 0:
             stat_list = []
-            stats = StockQuantileStat.objects.filter(ts_code=ts_code).order_by('period')
+            stats = StockQuantileStat.objects.filter(
+                ts_code=ts_code).order_by('period')
             if stats is not None:
                 for stat in stats:
                     if stat.quantile == 0.5 and abs(stock_hist[0]['close']-stat.price)/stat.price <= NEAREST_THRESHOLD:
@@ -108,7 +119,7 @@ def get_selected_traffic(request, ts_code):
                             'qt': stat.quantile,
                             'price': stat.price
                         })
-                    
+
                     if stat.quantile == 0.1 and stock_hist[0]['close'] <= stat.price * (1 + NEAREST_THRESHOLD):
                         stat_list.append({
                             'ts_code': ts_code,

@@ -2,6 +2,7 @@ import logging
 from datetime import date, datetime, timedelta
 
 import numpy as np
+from numpy.lib.function_base import append
 import pandas as pd
 import tushare as ts
 from analysis.models import (StockHistoryDaily,
@@ -14,6 +15,7 @@ from django.shortcuts import render
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 
 from stockmarket.models import StockNameCodeMap, CompanyBasic, CompanyDailyBasic, ManagerRewards
+from analysis.models import IndustryBasicQuantileStat
 
 from .utils import str_eval
 
@@ -227,6 +229,9 @@ def get_daily_basic(request, ts_code, start_date, end_date):
 
 
 def get_single_daily_basic(request, ts_code, start_date, end_date):
+    '''
+    tbd 分隔成多个方法
+    '''
     if request.method == 'GET':
         pro = ts.pro_api()
         company_daily_list = []
@@ -268,7 +273,8 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         try:
             cdb = CompanyDailyBasic.objects.filter(
                 ts_code=ts_code, trade_date__gte=datetime.strptime(start_date, '%Y%m%d'), trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).order_by('-trade_date')
-            df = pd.DataFrame(cdb.values('pe','pe_ttm','ps','ps_ttm','turnover_rate','volume_ratio','pb','trade_date','total_mv','circ_mv','total_share','free_share','float_share'))
+            df = pd.DataFrame(cdb.values('pe', 'pe_ttm', 'ps', 'ps_ttm', 'turnover_rate', 'volume_ratio',
+                                         'pb', 'trade_date', 'total_mv', 'circ_mv', 'total_share', 'free_share', 'float_share'))
             # df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
             #                      fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
             # pe_50qt = df['pe'].quantile() if df['pe'].quantile(
@@ -372,3 +378,31 @@ def get_single_daily_basic(request, ts_code, start_date, end_date):
         except Exception as err:
             logger.error(err)
             return HttpResponse(status=500)
+
+
+def get_industry_basic(request, industry, type):
+    ind_dict = {}
+    ind_basic = []
+    industries = industry.split(',')
+
+    try:
+        req_user = request.user
+
+        for ind in industries:
+            ibqs = IndustryBasicQuantileStat.objects.filter(industry=ind, basic_type=type).exclude(quantile=.25).exclude(quantile=.75).order_by('-snap_date')[:3]
+
+            if ibqs is not None and len(ibqs) > 0:
+                for ibq in ibqs:
+                    ind_basic.append(
+                        {
+                            'type':ibq.basic_type,
+                            'qt':ibq.quantile,
+                            'val':ibq.quantile_val
+                        }
+                    )
+                ind_dict[ind] = ind_basic
+        return JsonResponse({'content': ind_dict}, safe=False)
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=500)
+    pass

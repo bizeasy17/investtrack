@@ -73,15 +73,21 @@
                   <div class="mt-3 col-md-4 stretch-card">
                       <div class="card">
                           <div class="card-body">
-                              <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                  <div class="card-title"><a class="text-muted" href="{% url 'search:home' %}/?q={{ind}}"><h6>{{ind}}</h6></a></div>
+                              <div class="container small col-lg-12 industry" name="{{ind}}">
+                                <span>{%trans '行业市盈率: '%}</span>
+                                <span><i class="fa fa-circle text-success small" aria-hidden="true" id="qt.1{{ind}}"></i> </span>
+                                <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="qt.5{{ind}}"></i> </span>
+                                <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="qt.9{{ind}}"></i> </span>
+                              </div>
+                              <div class="d-flex align-items-center justify-content-between flex-wrap mt-1">
+                                  <div class="card-title"><a class="text-muted" href="javascript:void(0);"><h6>{{ind}}</h6></a></div>
                                   <p class="font-weight-medium small">
                                       <!-- <span class="text-muted mr-1"></span> -->
                                       <span class="badge badge-pill badge-primary">{{stk.items|length}}</span>
                                       <!-- <span id="shChange" class="ml-1"></span> -->
                                   </p>
                               </div>
-                              <!-- <hr class="row"/> -->
+      
                               <div class="container small mt-2">
                                   <!-- <div class="d-flex align-items-left justify-content-between flex-wrap row">
                                       <span class="text-muted">{% trans '股票代码(EXG)' %}</span>
@@ -96,9 +102,10 @@
                                       <span class="text-muted" id="nm{{k}}"><a href="/?q={{k}}">{{v}}</a></span>
                                       <span class="text-muted" id="p{{k}}">-</span>
                                       <span class="text-muted" id="pct{{k}}">-</span>
+                                      <span class="text-primary" id="pe{{k}}">-</span>
                                       <div class="dropdown">
                                         <a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
-                                          <i class="fa fa-circle text-muted" aria-hidden="true" id="tl{{k}}"></i>
+                                          <i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>
                                         </a>
                                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                           <a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">{%trans '无消息'%}</a>

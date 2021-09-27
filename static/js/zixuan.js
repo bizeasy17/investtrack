@@ -68,6 +68,15 @@ $(function () {
                 for (var key in content) {
                     $("[id='p" + key + "']").text(content[key][0]);     //获取key值
                     $("[id='pct" + key + "']").text(content[key][1] + "%");
+                    if (content[key][4] != undefined) {
+                        $("[id='pe" + key + "']").text("PE(" + content[key][4] + ")");
+                        $("[id='pe" + key + "']").addClass("text-primary");
+                    }
+                    else {
+                        $("[id='pe" + key + "']").text("PE(-)");
+                        $("[id='pe" + key + "']").addClass("text-primary");
+                    }
+
                     if (parseFloat(content[key][1]) >= 0) {
                         $("[id='p" + key + "']").removeClass("text-muted");
                         $("[id='pct" + key + "']").removeClass("text-muted");
@@ -141,6 +150,49 @@ $(function () {
         });
     }
 
+    var showIndBasic = function () {
+        var basicType = "pe";
+        var indContainer = $(".industry");
+        $(indContainer).each(function (idx, obj) {
+            $.ajax({
+                url: stockmarketEndpoint + "industry-latest-daily-basic/" + $(obj).attr("name") + "/" + basicType + "/",
+                success: function (data) {
+                    // $(data.content).each(function (idx, obj) {
+                    //     // alert(idx);
+                    //     $("#p" + idx).text(obj[0]);
+                    //     $("#pct" + idx).text(obj[1]+"%");
+                    // });
+                    var content = data.content;
+                    for (var key in content) {
+                        // $("[id='pct" + key + "'").append("<span class='badge badge-pill badge-danger'>9</span>");
+                        $(content[key]).each(function(id, ob){
+                            if (ob.qt == "0.1") {
+                                $("[id='qt.1" + key + "']").text(" " + ob.val);
+                            }
+
+                            if (ob.qt == "0.5") {
+                                $("[id='qt.5" + key + "']").text(" " + ob.val);
+                            }
+
+                            if (ob.qt == "0.9") {
+                                $("[id='qt.9" + key + "']").text(" " + ob.val);
+                            }
+                        });
+                        // if (content[key] != undefined && content[key].hasOwnProperty("qt")) {
+                            
+                        // }
+                    }
+                }
+            });
+            if (obj.code == "000001") {
+                index = "sh";
+            } else if (obj.code){
+
+            }
+        });
+        
+    }
+
     // $(".navbar-toggler").click(function(){
     //     if($(this).next().is(":visible")){
     //         $(this).next().slideUp();
@@ -148,6 +200,6 @@ $(function () {
     //         $(this).next().slideDown();
     //     }
     // });
-
+    showIndBasic();
     showSelectedPrice();
 });
