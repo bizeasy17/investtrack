@@ -69,11 +69,16 @@ $(function () {
                     $("[id='p" + key + "']").text(content[key][0]);     //获取key值
                     $("[id='pct" + key + "']").text(content[key][1] + "%");
                     if (content[key][4] != undefined) {
-                        $("[id='pe" + key + "']").text("PE(" + content[key][4] + ")");
-                        $("[id='pe" + key + "']").addClass("text-primary");
+                        if (content[key][4]!="0"){
+                            $("[id='pe" + key + "']").text("市盈(" + content[key][4] + ")");
+                            $("[id='pe" + key + "']").addClass("text-primary");
+                        }else{
+                            $("[id='pe" + key + "']").text("市盈(亏)");
+                            $("[id='pe" + key + "']").addClass("text-primary");
+                        }
                     }
                     else {
-                        $("[id='pe" + key + "']").text("PE(-)");
+                        $("[id='pe" + key + "']").text("市盈(无)");
                         $("[id='pe" + key + "']").addClass("text-primary");
                     }
 

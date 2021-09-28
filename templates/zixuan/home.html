@@ -83,7 +83,7 @@
                                   </p>
                               </div>
                               <div class="container small col-lg-12 industry" name="{{ind}}">
-                                <span>{%trans '行业市盈率: '%}</span>
+                                <span class="text-muted" >{%trans '行业市盈率: '%}</span>
                                 <span><i class="fa fa-circle text-success small" aria-hidden="true" id="qt.1{{ind}}"></i> </span>
                                 <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="qt.5{{ind}}"></i> </span>
                                 <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="qt.9{{ind}}"></i> </span>
@@ -98,8 +98,8 @@
                                   <!-- <hr/> -->
                                   {% for k,v in stk.items %}
                                   <div class="d-flex align-items-left justify-content-between flex-wrap row mt-1">
-                                      <div class="text-muted" id="cd{{k}}"><a href="/?q={{k}}">{{k}}</a></div>
-                                      <span class="text-muted" id="nm{{k}}"><a href="/?q={{k}}">{{v}}</a></span>
+                                      <div id="cd{{k}}"><a href="/?q={{k}}" class="text-muted" >{{k}}</a></div>
+                                      <span id="nm{{k}}"><a href="/?q={{k}}" class="text-muted" >{{v}}</a></span>
                                       <span class="text-muted" id="p{{k}}">-</span>
                                       <span class="text-muted" id="pct{{k}}">-</span>
                                       <span class="text-primary" id="pe{{k}}">-</span>
