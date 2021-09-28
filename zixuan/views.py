@@ -2,6 +2,7 @@ from os import stat
 from investtrack.settings import NEAREST_THRESHOLD
 from analysis.models import StockHistoryDaily
 import pandas as pd
+import numpy as np
 import logging
 import pytz
 from django.contrib.auth.decorators import login_required
@@ -86,7 +87,11 @@ def get_selected_latest_price(request):
                             'ts_code', 'pe', 'pb', 'ps', 'pe_ttm', 'ps_ttm').order_by('-trade_date')[:1]
                         if cdb is not None and len(cdb) > 0:
                             for db in cdb:
-                                temp = temp + [round(db['pe']), round(db['pe_ttm']), round(db['pb']), round(db['ps']), round(db['ps_ttm'])]
+                                temp = temp + [round(db['pe'] if db['pe'] is not None else 0), round(
+                                    db['pe_ttm'] if db['pe_ttm'] is not None else 0), 
+                                    round(db['pb'] if db['pb'] is not None else 0), 
+                                    round(db['ps'] if db['ps'] is not None else 0), 
+                                    round(db['ps_ttm'] if db['ps_ttm'] is not None else 0)]
                         selected_stk[stk['ts_code']] = temp
             return JsonResponse({'content': selected_stk}, safe=False)
         else:
