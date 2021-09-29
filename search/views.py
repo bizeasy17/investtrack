@@ -45,7 +45,7 @@ class SearchView(TemplateView):
                     # query_trace.save()
                 company = StockNameCodeMap.objects.get(
                     ts_code=request.GET['q'])
-                return render(request, self.search_template, {self.context_object_name: {'ts_code':request.GET['q'], 'stock_name': company.stock_name, 'selected': selected}})
+                return render(request, self.search_template, {self.context_object_name: {'ts_code': request.GET['q'], 'stock_name': company.stock_name, 'industry': company.industry, 'selected': selected}})
             else:
                 return render(request, self.template_name)
         except Exception as err:

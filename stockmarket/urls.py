@@ -12,6 +12,8 @@ urlpatterns = [
          views.get_daily_basic),
     path('daily-basic/company/<ts_code>/<start_date>/<end_date>/',
          views.get_single_daily_basic),
+    path('latest-daily-basic/<ts_code>/',
+         views.get_latest_daily_basic),
     path('industry-latest-daily-basic/<industry>/<type>/',
          views.get_industry_basic),
     path('close/<ts_code>/<freq>/<int:period>/',

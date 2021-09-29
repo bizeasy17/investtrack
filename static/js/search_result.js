@@ -1161,6 +1161,52 @@ $(function () {
         renderChart();
     });
 
+    var showIndBasic = function (industry) {
+        var basicType = "pe,pb,ps";
+        // var indContainer = $(".industry");
+        $.ajax({
+            url: stockmarketEndpoint + "industry-latest-daily-basic/" + industry+ "/" + basicType + "/",
+            success: function (data) {
+                var content = data.content;
+                for (var key in content) {
+                    // $("[id='pct" + key + "'").append("<span class='badge badge-pill badge-danger'>9</span>");
+                    $(content[key]).each(function (id, ob) {
+                        if (ob.qt == "0.1") {
+                            $("[id='iqt.1" + ob.type + "']").text(" " + ob.val);
+                        }
+
+                        if (ob.qt == "0.5") {
+                            $("[id='iqt.5" + ob.type + "']").text(" " + ob.val);
+                        }
+
+                        if (ob.qt == "0.9") {
+                            $("[id='iqt.9" + ob.type + "']").text(" " + ob.val);
+                        }
+                    });
+                    // if (content[key] != undefined && content[key].hasOwnProperty("qt")) {
+
+                    // }
+                }
+            }
+        });
+    }
+
+    var showStockBasic = function (tsCode) {
+        $.ajax({
+            url: stockmarketEndpoint + "latest-daily-basic/" + tsCode + "/" ,
+            success: function (data) {
+                var content = data.latest_basic;
+                $(content).each(function(idx, obj){
+                    for(var k in obj){
+                        $("#" + k).text(" " + obj[k]);
+                    }
+                });
+            }
+        });
+    }
+
+    showIndBasic($("#ind").text());
+    showStockBasic($("#currentTsCode").val());
 
     // 初始化图表
     initParam();

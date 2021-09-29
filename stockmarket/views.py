@@ -6,7 +6,7 @@ from numpy.lib.function_base import append
 import pandas as pd
 import tushare as ts
 from analysis.models import (StockHistoryDaily,
-                             StockIndexHistory)
+                             AnalysisDateSeq)
 from analysis.utils import get_ip
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
@@ -384,25 +384,48 @@ def get_industry_basic(request, industry, type):
     ind_dict = {}
     ind_basic = []
     industries = industry.split(',')
+    basic_types = type.split(',')
 
     try:
         req_user = request.user
+        last_analysis = AnalysisDateSeq.objects.filter(
+            applied=True, seq_type='INDUSTRY_BASIC_QUANTILE').order_by('-analysis_date').first()
 
         for ind in industries:
-            ibqs = IndustryBasicQuantileStat.objects.filter(industry=ind, basic_type=type).exclude(quantile=.25).exclude(quantile=.75).order_by('-snap_date')[:3]
+            ibqs = IndustryBasicQuantileStat.objects.filter(industry=ind, basic_type__in=basic_types, snap_date=last_analysis.analysis_date).exclude(
+                quantile=.25).exclude(quantile=.75).order_by('-snap_date')
 
             if ibqs is not None and len(ibqs) > 0:
                 for ibq in ibqs:
                     ind_basic.append(
                         {
-                            'type':ibq.basic_type,
-                            'qt':ibq.quantile,
-                            'val':ibq.quantile_val
+                            'type': ibq.basic_type,
+                            'qt': ibq.quantile,
+                            'val': ibq.quantile_val
                         }
                     )
                 ind_dict[ind] = ind_basic
         return JsonResponse({'content': ind_dict}, safe=False)
     except Exception as e:
         print(e)
+        return HttpResponse(status=500)
+    pass
+
+
+def get_latest_daily_basic(request, ts_code):
+    basic_list = []
+    try:
+        cdb = CompanyDailyBasic.objects.filter(
+            ts_code=ts_code,).order_by('-trade_date').first()
+        if cdb is not None:
+            basic_list.append({
+                'pe': cdb.pe if cdb.pe is not None else 0,
+                'pe_ttm': cdb.pe_ttm if cdb.pe_ttm is not None else 0,
+                'pb': cdb.pb if cdb.pb is not None else 0,
+                'ps': cdb.ps if cdb.ps is not None else 0,
+                'ps_ttm': cdb.ps_ttm if cdb.ps_ttm is not None else 0,
+            })
+        return JsonResponse({'latest_basic': basic_list}, safe=False)
+    except Exception as err:
         return HttpResponse(status=500)
     pass
