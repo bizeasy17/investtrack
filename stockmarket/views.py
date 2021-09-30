@@ -35,6 +35,8 @@ def stock_close_hist(request, ts_code, freq='D', period=3):
             quantile = []
             qt_10 = []
             qt_90 = []
+            qt_50 = []
+
             close_result = []
             # ticks_result = []
             ma25_result = []
@@ -52,9 +54,9 @@ def stock_close_hist(request, ts_code, freq='D', period=3):
                     ts_code=ts_code, freq=freq, trade_date__lte=end_date).order_by('trade_date')
             # df = pd.DataFrame(results.values('stage_low_pct'))
             for result in results:
-                ma25_result.append(result.ma25)
-                ma60_result.append(result.ma60)
-                ma200_result.append(result.ma200)
+                # ma25_result.append(result.ma25)
+                # ma60_result.append(result.ma60)
+                # ma200_result.append(result.ma200)
                 close_result.append(result.close)
                 # ticks_result.append(
                 #     {
@@ -73,10 +75,12 @@ def stock_close_hist(request, ts_code, freq='D', period=3):
             for rst in close_result:
                 qt_10.append(quantile[0])  # 低价格的前10%
                 qt_90.append(quantile[4])  # 高价格的前10%
+                qt_50.append(quantile[2])  # 高价格的前50%
+
 
             # if type == 'ticks':
             #     return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-            return JsonResponse({'close': close_result, 'close10': qt_10, 'close90': qt_90, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+            return JsonResponse({'close': close_result, 'close10': qt_10, 'close50': qt_50, 'close90': qt_90, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
         except Exception as err:
             logging.error(err)
             return HttpResponse(status=500)
@@ -419,11 +423,11 @@ def get_latest_daily_basic(request, ts_code):
             ts_code=ts_code,).order_by('-trade_date').first()
         if cdb is not None:
             basic_list.append({
-                'pe': cdb.pe if cdb.pe is not None else 0,
-                'pe_ttm': cdb.pe_ttm if cdb.pe_ttm is not None else 0,
-                'pb': cdb.pb if cdb.pb is not None else 0,
-                'ps': cdb.ps if cdb.ps is not None else 0,
-                'ps_ttm': cdb.ps_ttm if cdb.ps_ttm is not None else 0,
+                'pe': round(cdb.pe,2) if cdb.pe is not None else 0,
+                'pe_ttm': round(cdb.pe_ttm,2) if cdb.pe_ttm is not None else 0,
+                'pb': round(cdb.pb,2) if cdb.pb is not None else 0,
+                'ps': round(cdb.ps,2) if cdb.ps is not None else 0,
+                'ps_ttm': round(cdb.ps_ttm,2) if cdb.ps_ttm is not None else 0,
             })
         return JsonResponse({'latest_basic': basic_list}, safe=False)
     except Exception as err:

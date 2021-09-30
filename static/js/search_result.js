@@ -151,7 +151,7 @@ $(function () {
                         }
                     },
                     legend: {
-                        data: ['收', '25', '60', '200']
+                        data: ['收盘价']
                     },
                     // title: {
                     //     text: '收盘线',
@@ -194,7 +194,7 @@ $(function () {
                     }],
                     series: [
                         {
-                            name: '收',
+                            name: '收盘价',
                             type: 'line',
                             smooth: true,
                             symbol: 'none',
@@ -215,39 +215,39 @@ $(function () {
                                 ]
                             }
                         },
-                        {
-                            name: '25',
-                            type: 'line',
-                            smooth: true,
-                            symbol: 'none',
-                            sampling: 'average',
-                            itemStyle: {
-                                color: 'rgb(0, 255, 0)'
-                            },
-                            data: data.ma25
-                        },
-                        {
-                            name: '60',
-                            type: 'line',
-                            smooth: true,
-                            symbol: 'none',
-                            sampling: 'average',
-                            itemStyle: {
-                                color: 'rgb(0, 0, 255)'
-                            },
-                            data: data.ma60
-                        },
-                        {
-                            name: '200',
-                            type: 'line',
-                            smooth: true,
-                            symbol: 'none',
-                            sampling: 'average',
-                            itemStyle: {
-                                color: 'rgb(25, 0, 31)'
-                            },
-                            data: data.ma200
-                        },
+                        // {
+                        //     name: 'MA25',
+                        //     type: 'line',
+                        //     smooth: true,
+                        //     symbol: 'none',
+                        //     sampling: 'average',
+                        //     itemStyle: {
+                        //         color: 'rgb(0, 255, 0)'
+                        //     },
+                        //     data: data.ma25
+                        // },
+                        // {
+                        //     name: '60',
+                        //     type: 'line',
+                        //     smooth: true,
+                        //     symbol: 'none',
+                        //     sampling: 'average',
+                        //     itemStyle: {
+                        //         color: 'rgb(0, 0, 255)'
+                        //     },
+                        //     data: data.ma60
+                        // },
+                        // {
+                        //     name: '200',
+                        //     type: 'line',
+                        //     smooth: true,
+                        //     symbol: 'none',
+                        //     sampling: 'average',
+                        //     itemStyle: {
+                        //         color: 'rgb(25, 0, 31)'
+                        //     },
+                        //     data: data.ma200
+                        // },
                         {
                             name: '低位',
                             type: 'line',
@@ -257,6 +257,16 @@ $(function () {
                                 color: 'rgb(0, 255, 0)'
                             },
                             data: data.close10
+                        },
+                        {
+                            name: '中位',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'none',
+                            itemStyle: {
+                                color: 'rgb(25, 70, 131)'
+                            },
+                            data: data.close50
                         },
                         {
                             name: '高位',
