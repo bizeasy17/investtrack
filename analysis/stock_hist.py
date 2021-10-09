@@ -5,7 +5,7 @@ import tushare as ts
 from django.db.models import Q
 from stockmarket.models import StockNameCodeMap
 
-from analysis.utils import (generate_task, hist_downloaded, init_eventlog,
+from analysis.utils import (generate_task, init_eventlog,
                             get_event_status, last_download_date,
                             log_download_hist, set_event_completed)
 

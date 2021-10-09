@@ -1,89 +1,137 @@
+
 import logging
 from datetime import date, datetime, timedelta
 
 import numpy as np
-from numpy.lib.function_base import append
 import pandas as pd
 import tushare as ts
-from analysis.models import (StockHistoryDaily,
-                             AnalysisDateSeq)
+from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
+                             StockHistoryDaily)
 from analysis.utils import get_ip
 from django.contrib.auth.models import AnonymousUser
-from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
+from django.db.models import Count, Q
+from django.http import (Http404, HttpResponse, HttpResponseServerError,
+                         JsonResponse)
 from django.shortcuts import render
+from numpy.lib.function_base import append
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 
-from stockmarket.models import StockNameCodeMap, CompanyBasic, CompanyDailyBasic, ManagerRewards
-from analysis.models import IndustryBasicQuantileStat
-
-from .utils import str_eval
+from .models import (CompanyBasic, CompanyDailyBasic, ManagerRewards,
+                     StockNameCodeMap)
+from .serializers import (CompanyDailyBasicSerializer, CompanySerializer,
+                          Industry, IndustrySerializer,
+                          StockCloseHistorySerializer)
+from .utils import str_eval, get_ind_basic
 
 # Create your views here.
 
 logger = logging.getLogger(__name__)
 
 
-def stock_close_hist(request, ts_code, freq='D', period=3):
-    '''
-    用户需要授权可以使用策略
-    '''
-    # 从当前时间为获取历史的最后一天
-    if request.method == 'GET':
-        end_date = date.today()
+class IndustryList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, industry):
+        industry_filter = industry.split(',')
+        industry_list = []
         try:
-            quantile = []
-            qt_10 = []
-            qt_90 = []
-            qt_50 = []
+            stocks = StockNameCodeMap.objects.filter(
+                asset='E', industry__in=industry_filter).values('industry').annotate(total=Count('ts_code')).order_by('industry')
 
-            close_result = []
-            # ticks_result = []
-            ma25_result = []
-            ma60_result = []
-            ma200_result = []
-            amount_result = []
-            lbl_trade_date = []
+            for stock in stocks:
+                ibqs = get_ind_basic(
+                    stock['industry'], ['pe', 'pb', 'ps'])
 
-            if period != 0:
-                start_date = end_date - timedelta(days=365 * period)
-                results = StockHistoryDaily.objects.filter(
-                    ts_code=ts_code, freq=freq, trade_date__gte=start_date, trade_date__lte=end_date).order_by('trade_date')
-            else:  # period = 0 means all stock history
-                results = StockHistoryDaily.objects.filter(
-                    ts_code=ts_code, freq=freq, trade_date__lte=end_date).order_by('trade_date')
-            # df = pd.DataFrame(results.values('stage_low_pct'))
-            for result in results:
-                # ma25_result.append(result.ma25)
-                # ma60_result.append(result.ma60)
-                # ma200_result.append(result.ma200)
-                close_result.append(result.close)
-                # ticks_result.append(
-                #     {
-                #         't': result.trade_date, 'o': result.open, 'h': result.high,
-                #         'l': result.low, 'c': result.close, 'd': '',
-                #         'ma25': result.ma25, 'ma60': result.ma60, 'ma200': result.ma200,
-                #     }
-                # )
-                amount_result.append(result.amount)
-                lbl_trade_date.append(result.trade_date)
-            df = pd.DataFrame(close_result, columns=['close'])
-            close_qtiles = df.close.quantile(
-                [0.1, 0.25, 0.5, 0.75, 0.9])
-            for index, value in close_qtiles.items():
-                quantile.append(round(value, 2))
-            for rst in close_result:
-                qt_10.append(quantile[0])  # 低价格的前10%
-                qt_90.append(quantile[4])  # 高价格的前10%
-                qt_50.append(quantile[2])  # 高价格的前50%
-
-
-            # if type == 'ticks':
-            #     return JsonResponse({'ticks': ticks_result, 'ma25': ma25_result, 'ma60': ma60_result, 'ma200': ma200_result, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
-            return JsonResponse({'close': close_result, 'close10': qt_10, 'close50': qt_50, 'close90': qt_90, 'amount': amount_result, 'label': lbl_trade_date}, safe=False)
+                si = Industry(industry=stock['industry'], stock_count=stock['total'], pe_10pct=ibqs['pe0.1'] if 'pe0.1' in ibqs else 0,
+                              pe_50pct=ibqs['pe0.5'] if 'pe0.5' in ibqs else 0, pe_90pct=ibqs['pe0.9'] if 'pe0.9' in ibqs else 0, 
+                              pb_10pct=ibqs['pb0.1'] if 'pb0.1' in ibqs else 0, pb_50pct=ibqs['pb0.5'] if 'pb0.5' in ibqs else 0, 
+                              pb_90pct=ibqs['pb0.9'] if 'pb0.9' in ibqs else 0, ps_10pct=ibqs['ps0.1'] if 'ps0.1' in ibqs else 0,
+                              ps_50pct=ibqs['ps0.5'] if 'ps0.5' in ibqs else 0, ps_90pct=ibqs['ps0.9'] if 'ps0.9' in ibqs else 0,)
+                industry_list.append(si)
+            serializer = IndustrySerializer(industry_list, many=True)
+            return Response(serializer.data)
+        except Industry.DoesNotExist:
+            raise Http404
         except Exception as err:
-            logging.error(err)
-            return HttpResponse(status=500)
+            print(err)
+            raise HttpResponseServerError
+
+
+class CompanyList(APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+    queryset = StockNameCodeMap.objects.filter(asset='E')
+    # def get_queryset(self):
+    #     queryset = StockNameCodeMap.objects.all()
+    #     # serializer_class = CompanySerializer
+    #     return queryset
+
+    def get(self, request, input_text=None):
+        try:
+            companies = StockNameCodeMap.objects.filter(
+                Q(ts_code__contains=input_text)
+                | Q(stock_name__contains=input_text)
+                | Q(stock_name_pinyin__contains=input_text)).order_by('list_date')[:10]
+            serializer = CompanySerializer(companies, many=True)
+            return Response(serializer.data)
+        except StockNameCodeMap.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            raise HttpResponseServerError
+
+
+class StockCloseHistoryList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, ts_code, freq='D', period=3):
+        try:
+            if period != 0:
+                start_date = date.today() - timedelta(days=365 * period)
+                close_history = StockHistoryDaily.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                    trade_date__lte=date.today()).order_by('trade_date')
+            else:  # period = 0 means all stock history
+                close_history = StockHistoryDaily.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__lte=date.today()).order_by('trade_date')
+
+            # df = pd.DataFrame(close_history, columns=['close','trade_date'])
+            # close_qtiles = df.close.quantile(
+            #     [0.1, 0.25, 0.5, 0.75, 0.9])
+
+            # df['close_10pct'] = close_qtiles[.1]
+            # df['close_50pct'] = close_qtiles[.5]
+            # df['close_90pct'] = close_qtiles[.9]
+
+            serializer = StockCloseHistorySerializer(close_history, many=True)
+            return Response(serializer.data)
+        except StockHistoryDaily.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+class StockDailyBasicHistoryList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, ts_code, start_date, end_date):
+        try:
+            cdb = CompanyDailyBasic.objects.filter(
+                ts_code=ts_code, trade_date__gte=datetime.strptime(
+                    start_date, '%Y%m%d'),
+                trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).order_by('-trade_date')
+
+            serializer = CompanyDailyBasicSerializer(cdb, many=True)
+            # serializer.fields = basic_type.split(',')
+            return Response(serializer.data)
+        except CompanyDailyBasic.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
 
 
 def get_companies(request, input_text):
@@ -102,13 +150,7 @@ def get_companies(request, input_text):
     set market='ZXB'
     where stock_code like '002%'
     '''
-    board_list = {
-        'SHZB': '上海主板',
-        'SZZB': '深圳主板',
-        'ZXB': '中小板',
-        'CYB': '创业板',
-        'KCB': '科创板',
-    }
+
     if request.method == 'GET':
         try:
             if not input_text.isnumeric():
@@ -140,16 +182,6 @@ def get_companies(request, input_text):
         except Exception as e:
             logger.error(e)
             return HttpResponse(status=500)
-
-
-def get_fcf(request, ts_code):
-    '''
-    第一种：自由现金流＝息税前利润－税金 + 折旧与摊销－资本支出－营运资本追加
-    pro = ts.pro_api()
-    df = pro.income(ts_code='600000.SH', start_date='20180101', end_date='20180730', 
-        fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps')
-    df = pro.cashflow(ts_code='600000.SH', start_date='20180101', end_date='20180730')
-    '''
 
 
 def get_company_basic(request, ts_code):
@@ -196,194 +228,6 @@ def get_company_basic(request, ts_code):
             return HttpResponse(status=500)
 
 
-def get_daily_basic(request, ts_code, start_date, end_date):
-    if request.method == 'GET':
-        pro = ts.pro_api()
-        company_daily_list = []
-        pe_50qt = []
-        pe_ttm_50 = []
-        try:
-            ts_code_list = ts_code.split(',')
-            if len(ts_code_list) > 0:
-                for code in ts_code_list:
-                    part_basic = []
-                    df = pro.daily_basic(ts_code=code, start_date=start_date, end_date=end_date,
-                                         fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
-                    if df is not None and len(df) > 0:
-                        for index, row in df.iterrows():
-                            part_basic.append({
-                                'trade_date': row['trade_date'],
-                                'turnover_rate': row['turnover_rate'],
-                                'volume_ratio': row['volume_ratio'],
-                                'pe': row['pe'],
-                                'pe_ttm': row['pe_ttm'],
-                                'pb': row['pb'],
-                                'ps_ttm': row['ps_ttm'],
-                                'ps': row['ps'],
-                            })
-                        company_daily_list.append({
-                            code: part_basic
-                        })
-                return JsonResponse({'results': company_daily_list}, safe=False)
-            else:
-                return HttpResponse(status=404)
-        except Exception as err:
-            logger.error(err)
-            return HttpResponse(status=500)
-
-
-def get_single_daily_basic(request, ts_code, start_date, end_date):
-    '''
-    tbd 分隔成多个方法
-    '''
-    if request.method == 'GET':
-        pro = ts.pro_api()
-        company_daily_list = []
-        to_list = []
-        to_range = []
-        vr_list = []
-        vr_range = []
-        pe_list = []
-        pe_range = []
-        pe_ttm_list = []
-        pb_list = []
-        pb_range = []
-        ps_list = []
-        ps_ttm_list = []
-        ps_range = []
-        date_label = []
-        pe_50qt_list = []
-        pe_10qt_list = []
-        pe_90qt_list = []
-        pe_ttm_50qt_list = []
-        pe_ttm_10qt_list = []
-        pe_ttm_90qt_list = []
-        ps_50qt_list = []
-        ps_10qt_list = []
-        ps_90qt_list = []
-        ps_ttm_50qt_list = []
-        ps_ttm_10qt_list = []
-        ps_ttm_90qt_list = []
-        to_50qt_list = []
-        to_10qt_list = []
-        to_90qt_list = []
-        vr_50qt_list = []
-        vr_10qt_list = []
-        vr_90qt_list = []
-        pb_50qt_list = []
-        pb_10qt_list = []
-        pb_90qt_list = []
-
-        try:
-            cdb = CompanyDailyBasic.objects.filter(
-                ts_code=ts_code, trade_date__gte=datetime.strptime(start_date, '%Y%m%d'), trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).order_by('-trade_date')
-            df = pd.DataFrame(cdb.values('pe', 'pe_ttm', 'ps', 'ps_ttm', 'turnover_rate', 'volume_ratio',
-                                         'pb', 'trade_date', 'total_mv', 'circ_mv', 'total_share', 'free_share', 'float_share'))
-            # df = pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date,
-            #                      fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,ps_ttm,ps')
-            # pe_50qt = df['pe'].quantile() if df['pe'].quantile(
-            # ) is not None and not np.isnan(df['pe'].quantile()) else 0
-            # pe_ttm_50qt = df['pe_ttm'].quantile() if df['pe_ttm'].quantile(
-            # ) is not None and not np.isnan(df['pe_ttm'].quantile()) else 0
-            # ps_50qt = df['ps'].quantile()
-            # ps_ttm_50qt = df['ps_ttm'].quantile()
-            # to_50qt = df['turnover_rate'].quantile()
-            # vr_50qt = df['volume_ratio'].quantile()
-            # pb_50qt = df['pb'].quantile()
-
-            pe_qt = df['pe'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            pe_ttm_qt = df['pe_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            ps_qt = df['ps'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            ps_ttm_qt = df['ps_ttm'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            to_qt = df['turnover_rate'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            vr_qt = df['volume_ratio'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-            pb_qt = df['pb'].quantile([0.1, 0.25, 0.5, 0.75, 0.9])
-
-            pe_range.append(75)
-            pe_range.append(100)
-            ps_range.append(75)
-            ps_range.append(100)
-            to_range.append(75)
-            to_range.append(100)
-            vr_range.append(75)
-            vr_range.append(100)
-            pb_range.append(75)
-            pb_range.append(100)
-
-            if df is not None and len(df) > 0:
-                for index, row in df.iterrows():
-                    date_label.append(row['trade_date'])
-                    to_list.append(row['turnover_rate']
-                                   if row['turnover_rate'] is not None and not np.isnan(row['turnover_rate']) else 0)
-                    vr_list.append(row['volume_ratio'] if row['volume_ratio'] is not None and not np.isnan(
-                        row['volume_ratio']) else 0)
-                    pe_list.append(
-                        row['pe'] if row['pe'] is not None and not np.isnan(row['pe']) else 0)
-                    pe_ttm_list.append(
-                        row['pe_ttm'] if row['pe_ttm'] is not None and not np.isnan(row['pe_ttm']) else 0)
-                    pb_list.append(row['pb'])
-                    ps_ttm_list.append(row['ps_ttm'])
-                    ps_list.append(row['ps'])
-
-                    pe_10qt_list.append(
-                        round(pe_qt.values[0] if not np.isnan(pe_qt.values[0]) else 0, 3))
-                    pe_50qt_list.append(
-                        round(pe_qt.values[2] if not np.isnan(pe_qt.values[2]) else 0, 3))
-                    pe_90qt_list.append(
-                        round(pe_qt.values[4] if not np.isnan(pe_qt.values[4]) else 0, 3))
-
-                    pe_ttm_10qt_list.append(
-                        round(pe_ttm_qt.values[0] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
-                    pe_ttm_50qt_list.append(
-                        round(pe_ttm_qt.values[2] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
-                    pe_ttm_90qt_list.append(
-                        round(pe_ttm_qt.values[4] if not np.isnan(pe_ttm_qt.values[0]) else 0, 3))
-
-                    ps_10qt_list.append(round(ps_qt.values[0], 3))
-                    ps_50qt_list.append(round(ps_qt.values[2], 3))
-                    ps_90qt_list.append(round(ps_qt.values[4], 3))
-
-                    ps_ttm_10qt_list.append(round(ps_ttm_qt.values[0], 3))
-                    ps_ttm_50qt_list.append(round(ps_ttm_qt.values[2], 3))
-                    ps_ttm_90qt_list.append(round(ps_ttm_qt.values[4], 3))
-
-                    to_10qt_list.append(round(to_qt.values[0], 3))
-                    to_50qt_list.append(round(to_qt.values[2], 3))
-                    to_90qt_list.append(round(to_qt.values[4], 3))
-
-                    vr_10qt_list.append(round(vr_qt.values[0], 3))
-                    vr_50qt_list.append(round(vr_qt.values[2], 3))
-                    vr_90qt_list.append(round(vr_qt.values[4], 3))
-
-                    pb_10qt_list.append(round(pb_qt.values[0], 3))
-                    pb_50qt_list.append(round(pb_qt.values[2], 3))
-                    pb_90qt_list.append(round(pb_qt.values[4], 3))
-
-                return JsonResponse({'date_label': date_label[::-1], 'turnover_rate': to_list[::-1],
-                                     'volume_ratio': vr_list[::-1],
-                                     'pe': pe_list[::-1], 'pe_ttm': pe_ttm_list[::-1],
-                                     'pb': pb_list[::-1], 'ps_ttm': ps_ttm_list[::-1],
-                                     'ps': ps_list[::-1], 'pe_10qt': pe_10qt_list,
-                                     'pe_50qt': pe_50qt_list, 'pe_90qt': pe_90qt_list,
-                                     'pe_ttm_10qt': pe_ttm_10qt_list, 'pe_ttm_50qt': pe_ttm_50qt_list,
-                                     'pe_ttm_90qt': pe_ttm_90qt_list, 'ps_10qt': ps_10qt_list,
-                                     'ps_50qt': ps_50qt_list, 'ps_90qt': ps_90qt_list,
-                                     'ps_ttm_10qt': ps_ttm_10qt_list, 'ps_ttm_50qt': ps_ttm_50qt_list,
-                                     'ps_ttm_90qt': ps_ttm_90qt_list, 'to_10qt': to_10qt_list,
-                                     'to_50qt': to_50qt_list, 'to_90qt': to_90qt_list,
-                                     'vr_10qt': vr_10qt_list, 'vr_50qt': vr_50qt_list,
-                                     'vr_90qt': vr_90qt_list, 'pb_10qt': pb_10qt_list,
-                                     'pb_50qt': pb_50qt_list, 'pb_90qt': pb_90qt_list,
-                                     'pe_range': pe_range, 'ps_range': ps_range,
-                                     'pb_range': pb_range, 'to_range': to_range,
-                                     'vr_range': vr_range}, safe=False)
-            else:
-                return HttpResponse(status=404)
-        except Exception as err:
-            logger.error(err)
-            return HttpResponse(status=500)
-
-
 def get_industry_basic(request, industry, type):
     ind_dict = {}
     ind_basic = []
@@ -423,11 +267,11 @@ def get_latest_daily_basic(request, ts_code):
             ts_code=ts_code,).order_by('-trade_date').first()
         if cdb is not None:
             basic_list.append({
-                'pe': round(cdb.pe,2) if cdb.pe is not None else 0,
-                'pe_ttm': round(cdb.pe_ttm,2) if cdb.pe_ttm is not None else 0,
-                'pb': round(cdb.pb,2) if cdb.pb is not None else 0,
-                'ps': round(cdb.ps,2) if cdb.ps is not None else 0,
-                'ps_ttm': round(cdb.ps_ttm,2) if cdb.ps_ttm is not None else 0,
+                'pe': round(cdb.pe, 2) if cdb.pe is not None else 0,
+                'pe_ttm': round(cdb.pe_ttm, 2) if cdb.pe_ttm is not None else 0,
+                'pb': round(cdb.pb, 2) if cdb.pb is not None else 0,
+                'ps': round(cdb.ps, 2) if cdb.ps is not None else 0,
+                'ps_ttm': round(cdb.ps_ttm, 2) if cdb.ps_ttm is not None else 0,
             })
         return JsonResponse({'latest_basic': basic_list}, safe=False)
     except Exception as err:

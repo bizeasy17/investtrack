@@ -20,7 +20,11 @@ from django.contrib import admin
 from django.urls import path, re_path
 from django.views.generic import TemplateView
 
+from stockmarket.models import StockNameCodeMap
+from rest_framework import routers, serializers, viewsets
+
 urlpatterns = [
+
     # admin url
     path('admin/', admin.site.urls),
     # App urls
@@ -54,6 +58,7 @@ urlpatterns = [
     re_path(r'^404/$',
             TemplateView.as_view(template_name='pages/404.html'), name='404'),
     # 3rd Party Apps
+    path('api-auth/', include('rest_framework.urls'))
 ]
 handler404 = 'users.views.page_not_found_view'
 if settings.DEBUG:

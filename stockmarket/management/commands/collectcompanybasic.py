@@ -2,7 +2,6 @@ import time
 from datetime import date, datetime, timedelta
 
 import tushare as ts
-from analysis.dl_daily_basic import handle_daily_basic
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 # from analysis.utils import init_eventlog, set_event_completed, is_event_completed
@@ -83,6 +82,8 @@ def company_list():
                             market = 'KCB'
                         else:
                             market = 'SHZB'
+
+                    print(pinyin_abbrev(row['name']))
                     try:
                         company = StockNameCodeMap.objects.get(ts_code=ts_code)
                         company.stock_name = row['name']
@@ -100,7 +101,7 @@ def company_list():
                                                    industry=row['industry'], fullname=row['fullname'], en_name=row[
                                                        'enname'], market=market, exchange=row['exchange'],
                                                    list_status=row['list_status'], list_date=datetime.strptime(row['list_date'], '%Y%m%d'), delist_date=row['delist_date'],
-                                                   is_hs=row['is_hs'], stock_name_pinyin=pinyin_abbrev(company.stock_name))
+                                                   is_hs=row['is_hs'], stock_name_pinyin=pinyin_abbrev(row['name']))
                         print(row['symbol'] + ' created new object')
 
                     company.save()

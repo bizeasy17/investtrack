@@ -151,6 +151,9 @@ $(function () {
                         }
                     }
                 }
+            },
+            complete: function(request, status){
+                $("#spinner").addClass("d-none");
             }
         });
     }
@@ -198,6 +201,69 @@ $(function () {
         
     }
 
+    var showIndustries = function(){
+        $.ajax({
+            url: stockmarketEndpoint + "industries/" + $("#myIndustries").val() + "/",
+            success: function (data) {
+
+                $(data).each(function (idx, obj) {
+                    var stockCard = 
+                            '<div class="mt-3 col-md-4 stretch-card">'+
+                                '<div class="card">' +
+                                    '<div class="card-body">' +
+                                        '<div class="d-flex align-items-center justify-content-between flex-wrap">'+
+                                            '<div class="card-title"><a class="text-muted" href="javascript:void(0);"><h6>'+obj.industry+'</h6></a></div>'+
+                                            '<p class="font-weight-medium small">'+
+                                                '<span class="badge badge-primary rounded-pill">'+obj.stock_count+'</span>'+
+                                            '</p>'+
+                                        '</div>'+
+                                        '<div class="container small col-lg-12 industry">'+
+                                            '<span class="text-muted" >行业市盈率:</span>'+
+                                            '<span class="text-success"><i class="fa fa-circle small" aria-hidden="true"></i> '+obj.pe_low+'</span>'+
+                                            '<span class="text-warning ml-1"><i class="fa fa-circle small" aria-hidden="true"></i> ' + obj.pe_med +'</span>'+
+                                            '<span class="text-danger ml-1"><i class="fa fa-circle small" aria-hidden="true"></i> ' + obj.pe_high+'</span>'+
+                                        '</div>'+
+                                        '<div class="container small mt-3">';
+                    $.ajax({
+                        url: zixuanEndpoint + "industries/" + obj.industry + "/my-company-daily-basic/",
+                        success: function (cdb) {
+                            $(cdb).each(function(id, ob){
+                                var highColor = "danger";
+                                if(parseFloat(ob.chg_pct)<0){
+                                    highColor = "success";
+                                }
+                                stockCard +=    '<div class="d-flex align-items-left justify-content-between flex-wrap row mt-1">'+
+                                                    '<div><a href="/?q='+ob.ts_code+'" class="text-primary" target="_blank">'+ob.ts_code+'</a></div>'+
+                                                    '<span><a href="/?q='+ob.ts_code+'" class="text-primary" target="_blank">'+ob.stock_name+'</a></span>'+
+                                                    '<span class="text-'+highColor+'">'+ob.close+'</span>'+
+                                                    '<span class="text-'+highColor+'">'+ob.chg_pct+'</span>'+
+                                                    '<span class="text-primary">' + ob.pe +'(PE)</span>'+
+                                                    '<div class="dropdown">'+
+                                                        '<a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">'+
+                                                            '<i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>'+
+                                                        '</a>'+
+                                                        '<div class="dropdown-menu" aria-labelledby="navbarDropdown">'+
+                                                            '<a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">无消息</a>'+
+                                                        '</div>'+
+                                                    '</div>'+
+                                                '</div>';
+                            });
+                        },
+                        complete: function(request, status){
+                            stockCard += '</div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>';
+                            
+                            $("#spinner").addClass("d-none");
+                            $("#companiesByIndustryContainer").append(stockCard);
+                        }
+                    });
+                });
+            }
+        });
+    }
+
     // $(".navbar-toggler").click(function(){
     //     if($(this).next().is(":visible")){
     //         $(this).next().slideUp();
@@ -205,6 +271,8 @@ $(function () {
     //         $(this).next().slideDown();
     //     }
     // });
+
     showIndBasic();
     showSelectedPrice();
+    // showIndustries();
 });

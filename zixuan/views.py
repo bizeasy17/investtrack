@@ -1,22 +1,28 @@
-from os import stat
-from investtrack.settings import NEAREST_THRESHOLD
-from analysis.models import StockHistoryDaily
-import pandas as pd
-import numpy as np
 import logging
+from os import close, stat
+
+import numpy as np
+import pandas as pd
 import pytz
+from analysis.models import StockHistoryDaily, StockQuantileStat
+from analysis.utils import get_ip
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import F
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.db.models import F, Count
+from django.http import (Http404, HttpResponse, HttpResponseRedirect,
+                         HttpResponseServerError, JsonResponse)
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
-from users.models import UserActionTrace, UserQueryTrace
-from analysis.utils import get_ip
-from analysis.models import StockQuantileStat
-from stockmarket.models import CompanyDailyBasic, StockNameCodeMap
 from investors.models import StockFollowing
+from investtrack.settings import NEAREST_THRESHOLD
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from stockmarket.models import CompanyDailyBasic, StockNameCodeMap
+from users.models import UserActionTrace, UserQueryTrace
+from stockmarket.serializers import CompanyDailyBasicExtSerializer, CompanyDailyBasicExt
+
+
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -31,10 +37,28 @@ class HomeView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         req_user = request.user
-        # if req_user is not None:
-        #     pass
-        # else:
-        #     pass
+        # # if req_user is not None:
+        # #     pass
+        # # else:
+        # #     pass
+        # ind_list = ''
+        # ind_count = 0
+        # stock_count = 0
+        # top6 = 0
+        # if not req_user.is_anonymous:
+        #     try:
+        #         stocks = StockFollowing.objects.filter(
+        #             trader=req_user).values('industry').annotate(total=Count('ts_code')).order_by('industry')
+        #         ind_count = len(stocks)
+        #         for stock in stocks:
+        #             if top6 < 6:
+        #                 ind_list += stock['industry'] + ','
+        #                 top6 += 1
+        #             stock_count += stock['total']
+        #     except Exception as err:
+        #         logger.error(err)
+
+        # return render(request, self.template_name, {'industries': ind_list, 'cnt_ind': ind_count, 'cnt_stk': stock_count})
         stk_ind_dic = {}
         stk_dic = {}
         count_ind = 0
@@ -63,6 +87,40 @@ class HomeView(TemplateView):
             return render(request, self.template_name, {'cnt_ind': count_ind, 'cnt_stk': count_stk})
 
 
+class MyCompanyDailyBasicList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, industry):
+        cdbext_list = []
+        try:
+            my_stocks = StockFollowing.objects.filter(
+                industry=industry, trader=request.user)
+
+            for stock in my_stocks:
+                close_hist = StockHistoryDaily.objects.filter(
+                    ts_code=stock.ts_code).values('close', 'pct_chg', 'jiuzhuan_count_b', 'jiuzhuan_count_s','trade_date').order_by('-trade_date').first()
+                cdb = CompanyDailyBasic.objects.filter(ts_code=stock.ts_code).values(
+                    'ts_code', 'pe', 'pb', 'ps', 'pe_ttm', 'ps_ttm').order_by('-trade_date').first()
+                
+                if close_hist is not None and cdb is not None:
+                    cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, trade_date=close_hist['trade_date'], pe=cdb['pe'], pe_ttm=cdb['pe_ttm']
+                                                , ps=cdb['ps'], ps_ttm=cdb['ps_ttm'], pb=cdb['pb'], close=close_hist['close']
+                                                  , chg_pct=close_hist['pct_chg'], jiuzhuan_b=close_hist['jiuzhuan_count_b']
+                                                  , jiuzhuan_s=close_hist['jiuzhuan_count_s'])
+                
+                    cdbext_list.append(cdbext)
+
+            serializer = CompanyDailyBasicExtSerializer(
+                cdbext_list, many=True)
+            # serializer.fields = basic_type.split(',')
+            return Response(serializer.data)
+        except CompanyDailyBasic.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
 @login_required
 def get_selected_latest_price(request):
     selected_stk = {}
@@ -88,9 +146,11 @@ def get_selected_latest_price(request):
                         if cdb is not None and len(cdb) > 0:
                             for db in cdb:
                                 temp = temp + [round(db['pe'] if db['pe'] is not None else 0), round(
-                                    db['pe_ttm'] if db['pe_ttm'] is not None else 0), 
-                                    round(db['pb'] if db['pb'] is not None else 0), 
-                                    round(db['ps'] if db['ps'] is not None else 0), 
+                                    db['pe_ttm'] if db['pe_ttm'] is not None else 0),
+                                    round(db['pb'] if db['pb']
+                                          is not None else 0),
+                                    round(db['ps'] if db['ps']
+                                          is not None else 0),
                                     round(db['ps_ttm'] if db['ps_ttm'] is not None else 0)]
                         selected_stk[stk['ts_code']] = temp
             return JsonResponse({'content': selected_stk}, safe=False)

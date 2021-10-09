@@ -1,8 +1,12 @@
+import ast
 import decimal
 from datetime import datetime
-import ast
 
+import numpy as np
 import tushare as ts
+from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
+                             StockHistoryDaily)
+
 from .models import StockNameCodeMap
 
 
@@ -74,6 +78,7 @@ def get_realtime_quotes(stock_symbols=[]):
                     (price - pre_close) / pre_close, 2) * 100)
     return realtime_quotes
 
+
 def get_stocknames(stock_symbols=[]):
     stocknames = {}
     if stock_symbols is not None and len(stock_symbols) >= 1:
@@ -82,9 +87,30 @@ def get_stocknames(stock_symbols=[]):
             stocknames[stock_symbol] = map.stock_name
     return stocknames
 
+
 def str_eval(str):
     '''
     逗号分隔，转成dict
     '''
     dict = ast.literal_eval(str)
     return dict
+
+
+def get_ind_basic(industry, type=[]):
+    ind_dict = {}
+
+    try:
+        last_analysis = AnalysisDateSeq.objects.filter(
+            applied=True, seq_type='INDUSTRY_BASIC_QUANTILE').order_by('-analysis_date').first()
+
+        ibqs = IndustryBasicQuantileStat.objects.filter(industry=industry,
+                                                        basic_type__in=type, snap_date=last_analysis.analysis_date).exclude(
+                                                        quantile=.25).exclude(quantile=.75).order_by('-snap_date')
+
+        if ibqs is not None and len(ibqs) > 0:
+            for ibq in ibqs:
+                ind_dict[ibq.basic_type+str(ibq.quantile)] = ibq.quantile_val if not np.isnan(ibq.quantile_val) else 0
+
+        return ind_dict
+    except Exception as e:
+        print(e)

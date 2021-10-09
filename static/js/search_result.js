@@ -19,12 +19,6 @@ $(function () {
     var today = new Date();
     var startDate = "";
     var endDate = "";
-    // var countYear = 3;
-
-    var strategyCode = "";
-    var strategyName = "";
-    var updownPctPeriod = 80;
-    var expdPctPeriod = "pct20_period";
 
     var closeChart = echarts.init(document.getElementById('closeChart'));
     var peChart = echarts.init(document.getElementById('peChart'));
@@ -34,41 +28,16 @@ $(function () {
     var pbChart = echarts.init(document.getElementById('pbChart'));
     var toChart = echarts.init(document.getElementById('toChart'));
     var vrChart = echarts.init(document.getElementById('vrChart'));
-    // var updownByPeriodChart = echarts.init(document.getElementById('updownByPeriodChart'));
-    // var periodByUpRangeChart = echarts.init(document.getElementById('periodByUpRangeChart'));
+
+    var basicCharts = $(".basic-chart");
 
 
     var initParam = function () {
         tsCode = $("#currentTsCode").val();
-        // expdPctPeriod = $('input:radio[name="pct_period"]:checked').val();
-        // updownPctPeriod = $('input:radio[name="period"]:checked').val();
-        // strategyCode = $('input:radio[name="bstrategy"]:checked').val();
-        // strategyName = $('input:radio[name="bstrategy"]:checked').next().text();
-        // bstr = $('input:radio[name="bstrategy"]:checked');
-
         closePeriod = $('input:radio[name="closePeriod"]:checked').val();
-
         startDate = formatDate(new Date(today.getTime() - (365 * closePeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
-
-        // initBTestDates();
     }
-
-    // var initVolRange = function() {
-    //     $.ajax({
-    //         url: stockmarketEndpoint + "updown-pct-dates/" + tsCode + "/" + strategyCode + "/" + updownPctPeriod + "/" + freq + "/",
-    //         success: function (data) {
-    //             pctOnPeriodDates = data;
-    //         }
-    //     });
-
-    //     $.ajax({
-    //         url: stockmarketEndpoint + "exp-pct-dates/" + tsCode + "/" + strategyCode + "/" + expdPctPeriod + "/" + freq + "/",
-    //         success: function (data) {
-    //             periodOnPctDates = data;
-    //         }
-    //     });
-    // }
 
     var renderChart = function () {
         showCompanyBasic(tsCode);
@@ -115,7 +84,7 @@ $(function () {
                 $("#companyName").parent().append("<span>" + data[0].company_name + "</span>");
                 $("#setupDate").parent().append("<span>" + data[0].setup_date + "</span>");
                 $("#capital").parent().append("<span>" + data[0].reg_capital + "万</span>");
-                $("#website").parent().append('<a href="http://' + data[0].website + '"><span>http://' + data[0].website + "</span></a>");
+                $("#website").parent().append('<a href="http://' + data[0].website + '" target="_blank"><span>http://' + data[0].website + '</span></a><span class="ml-1"><i class="fa fa-external-link-alt" aria-hidden="true"></i></span>');
                 $("#province").parent().append("<span>" + data[0].province + "</span>");
                 $("#city").parent().append("<span>" + data[0].city + "</span>");
                 $("#industry").parent().append("<span>" + data[0].main_business + "</span>");
@@ -141,8 +110,10 @@ $(function () {
         var zoomMin = 75;
         var zoomMax = 100;
         $.ajax({
-            url: stockmarketEndpoint + "close/" + tsCode + "/" + freq + "/" + closePeriod + "/",
+            url: stockmarketEndpoint + "stock-close-history/" + tsCode + "/" + freq + "/" + closePeriod + "/?format=json",
             success: function (data) {
+                var chartData = jsonToChartFormat(data, "close");
+                var closeQuantile = getQuantile(chartData);
                 option = {
                     tooltip: {
                         trigger: 'axis',
@@ -169,7 +140,7 @@ $(function () {
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
-                        data: data.label
+                        data: chartData.label//data.label
                     },
                     yAxis: {
                         type: 'value',
@@ -202,7 +173,7 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(25, 70, 131)'
                             },
-                            data: data.close,
+                            data: chartData.value, //data.close,
                             markPoint: {
                                 data: [
                                     { type: 'max', name: '最大值' },
@@ -256,7 +227,7 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(0, 255, 0)'
                             },
-                            data: data.close10
+                            data: closeQuantile.qt10
                         },
                         {
                             name: '中位',
@@ -266,7 +237,7 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(25, 70, 131)'
                             },
-                            data: data.close50
+                            data: closeQuantile.qt50
                         },
                         {
                             name: '高位',
@@ -276,7 +247,7 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(255, 0, 0)'
                             },
-                            data: data.close90
+                            data: closeQuantile.qt90
                         }
                     ]
                 };
@@ -288,15 +259,17 @@ $(function () {
 
     var renderCompanyBasicChart = function (tsCode, startDate, endDate) {
         $.ajax({
-            url: stockmarketEndpoint + "daily-basic/company/" + tsCode + "/" + startDate + "/" + endDate + "/",
+            url: stockmarketEndpoint + "daily-basic-history/" + tsCode + "/" + startDate + "/" + endDate + "/?format=json",
             success: function (data) {
-                renderPEChart(data.date_label, data.pe, data.pe_10qt, data.pe_50qt, data.pe_90qt, data.pe_range[0], data.pe_range[1]);
-                renderPETTMChart(data.date_label, data.pe_ttm, data.pe_ttm_10qt, data.pe_ttm_50qt, data.pe_ttm_90qt, data.pe_range[0], data.pe_range[1]);
-                renderPSChart(data.date_label, data.ps, data.ps_10qt, data.ps_50qt, data.ps_90qt, data.ps_range[0], data.ps_range[1]);
-                renderPSTTMChart(data.date_label, data.ps_ttm, data.ps_ttm_10qt, data.ps_ttm_50qt, data.ps_ttm_90qt, data.ps_range[0], data.ps_range[1]);
-                renderPBChart(data.date_label, data.pb, data.pb_10qt, data.pb_50qt, data.pb_90qt, data.pb_range[0], data.pb_range[1]);
-                renderTOChart(data.date_label, data.turnover_rate, data.to_50qt, data.to_range[0], data.to_range[1]);
-                renderVRChart(data.date_label, data.volume_ratio, data.vr_50qt, data.vr_range[0], data.vr_range[1]);
+                $(basicCharts).each(function (idx, obj) {
+                    renderBasicChart(data, obj, $(obj).attr("name"));
+                });
+                // renderPETTMChart(data.pe_ttm);
+                // renderPSChart(data.ps);
+                // renderPSTTMChart(data.ps_ttm);
+                // renderPBChart(data.pb);
+                // renderTOChart(data.turnover_rate);
+                // renderVRChart(data.volume_ratio);
             },
             statusCode: {
                 403: function () {
@@ -312,7 +285,11 @@ $(function () {
         });
     }
 
-    var renderPEChart = function (dateLabel, pe, pe10qt, pe50qt, pe90qt, zoomMin, zoomMax) {
+    var renderBasicChart = function (jsonData, canvas, basicType) {
+        var chartData = jsonToChartFormat(jsonData, basicType);
+        var peQuantile = getQuantile(chartData);
+        var chartCanvas = echarts.init(canvas);
+
         option = {
             tooltip: {
                 trigger: 'axis',
@@ -321,7 +298,7 @@ $(function () {
                 }
             },
             legend: {
-                data: ['PE', 'PE中位']
+                data: [basicType, basicType + "中位"]
             },
             // title: {
             //     text: '市盈',
@@ -339,7 +316,7 @@ $(function () {
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: dateLabel
+                data: chartData.label
             },
             yAxis: {
                 type: 'value',
@@ -347,8 +324,8 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: zoomMin,
-                end: zoomMax
+                start: 75,
+                end: 100
             }, {
                 start: 0,
                 end: 10,
@@ -364,7 +341,7 @@ $(function () {
             }],
             series: [
                 {
-                    name: 'PE',
+                    name: basicType,
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -372,7 +349,7 @@ $(function () {
                     itemStyle: {
                         color: 'rgb(25, 70, 131)'
                     },
-                    data: pe,
+                    data: chartData.value,
                     markPoint: {
                         data: [
                             { type: 'max', name: '最大值' },
@@ -386,17 +363,17 @@ $(function () {
                     }
                 },
                 {
-                    name: '低位',
+                    name: basicType+'低位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     itemStyle: {
                         color: 'rgb(0, 255, 0)'
                     },
-                    data: pe10qt
+                    data: peQuantile.qt10
                 },
                 {
-                    name: 'PE中位',
+                    name: basicType+'中位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -404,663 +381,22 @@ $(function () {
                     itemStyle: {
                         color: 'rgb(25, 70, 131)'
                     },
-                    data: pe50qt
+                    data: peQuantile.qt50
                 },
                 {
-                    name: '高位',
+                    name: basicType+'高位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
                     itemStyle: {
                         color: 'rgb(255, 0, 0)'
                     },
-                    data: pe90qt
+                    data: peQuantile.qt90
                 }
             ]
         };
 
-        peChart.setOption(option);
-    }
-
-    var renderPETTMChart = function (dateLabel, peTTM, peTTM10qt, peTTM50qt, peTTM90qt, zoomMin, zoomMax) {
-        option = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: ['PE(动)', 'PE(动)中位']
-            },
-            // title: {
-            //     text: '市盈',
-            //     left: '5%',
-            // },
-            toolbox: {
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: dateLabel
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%']
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: zoomMin,
-                end: zoomMax
-            }, {
-                start: 0,
-                end: 10,
-                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                handleSize: '100%',
-                handleStyle: {
-                    color: '#fff',
-                    shadowBlur: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.6)',
-                    shadowOffsetX: 2,
-                    shadowOffsetY: 2
-                }
-            }],
-            series: [
-                {
-                    name: 'PE(动)',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-                    data: peTTM,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: '低位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(0, 255, 0)'
-                    },
-                    data: peTTM10qt
-                },
-                {
-                    name: 'PE(动)中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-                    data: peTTM50qt
-                },
-                {
-                    name: '高位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(255, 0, 0)'
-                    },
-                    data: peTTM90qt
-                }
-            ]
-        };
-
-        peTTMChart.setOption(option);
-    }
-
-    var renderPSChart = function (dateLabel, ps, ps10qt, ps50qt, ps90qt, zoomMin, zoomMax) {
-        option = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: ['PS', 'PS中位']
-            },
-            // title: {
-            //     text: '市销',
-            //     left: '5%',
-            // },
-            toolbox: {
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: dateLabel
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%']
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: zoomMin,
-                end: zoomMax
-            }, {
-                start: 0,
-                end: 10,
-                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                handleSize: '80%',
-                handleStyle: {
-                    color: '#fff',
-                    shadowBlur: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.6)',
-                    shadowOffsetX: 2,
-                    shadowOffsetY: 2
-                }
-            }],
-            series: [
-                {
-                    name: 'PS',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-
-                    data: ps,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: '低位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(0, 255, 0)'
-                    },
-
-                    data: ps10qt
-                },
-                {
-                    name: 'PS中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-
-                    data: ps50qt
-                },
-                {
-                    name: '高位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(255, 0, 0)'
-                    },
-
-                    data: ps90qt
-                }
-            ]
-        };
-
-        psChart.setOption(option);
-    }
-
-    var renderPSTTMChart = function (dateLabel, psTTM, psTTM10qt, psTTM50qt, psTTM90qt, zoomMin, zoomMax) {
-        option = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: ['PS(动)', 'PS(动)中位']
-            },
-            // title: {
-            //     text: '市销',
-            //     left: '5%',
-            // },
-            toolbox: {
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: dateLabel
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%']
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: zoomMin,
-                end: zoomMax
-            }, {
-                start: 0,
-                end: 10,
-                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                handleSize: '80%',
-                handleStyle: {
-                    color: '#fff',
-                    shadowBlur: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.6)',
-                    shadowOffsetX: 2,
-                    shadowOffsetY: 2
-                }
-            }],
-            series: [
-                {
-                    name: 'PS(动)',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-
-                    data: psTTM,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: '低位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(0, 255, 0)'
-                    },
-
-                    data: psTTM10qt
-                },
-                {
-                    name: 'PS中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-
-                    data: psTTM50qt
-                },
-                {
-                    name: '高位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(255, 0, 0)'
-                    },
-
-                    data: psTTM90qt
-                }
-            ]
-        };
-
-        psTTMChart.setOption(option);
-    }
-
-    var renderPBChart = function (dateLabel, pb, pb10qt, pb50qt, pb90qt, zoomMin, zoomMax) {
-        option = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: ['PB', 'PB中位']
-            },
-            // title: {
-            //     text: '市净',
-            //     left: '5%',
-            // },
-            toolbox: {
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: dateLabel
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%']
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: zoomMin,
-                end: zoomMax
-            }, {
-                start: 0,
-                end: 10,
-                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                handleSize: '80%',
-                handleStyle: {
-                    color: '#fff',
-                    shadowBlur: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.6)',
-                    shadowOffsetX: 2,
-                    shadowOffsetY: 2
-                }
-            }],
-            series: [
-                {
-                    name: 'PB',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-
-                    data: pb,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: 'PB中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    // sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-
-                    data: pb50qt
-                },
-                {
-                    name: '低位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    // sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(0, 255, 0)'
-                    },
-
-                    data: pb10qt
-                },
-                {
-                    name: '高位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    // sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(255, 0, 0)'
-                    },
-
-                    data: pb90qt
-                }
-            ]
-        };
-
-        pbChart.setOption(option);
-    }
-
-    var renderTOChart = function (dateLabel, turnoverRate, tr50qt, zoomMin, zoomMax) {
-        option = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: ['换手', '换手中位']
-            },
-            // title: {
-            //     text: '换手率',
-            // },
-            toolbox: {
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: dateLabel
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%'],
-                // max: Math.round(data.up_qt[6])+100,
-                axisLabel: {
-                    formatter: '{value} %'
-                },
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: zoomMin,
-                end: zoomMax
-            }, {
-                start: 0,
-                end: 10,
-                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                handleSize: '80%',
-                handleStyle: {
-                    color: '#fff',
-                    shadowBlur: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.6)',
-                    shadowOffsetX: 2,
-                    shadowOffsetY: 2
-                }
-            }],
-            series: [
-                {
-                    name: '换手',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(25, 70, 131)'
-                    // },
-
-                    data: turnoverRate,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: '换手中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(255, 0, 0)'
-                    // },
-
-                    data: tr50qt
-                }
-            ]
-        };
-
-        toChart.setOption(option);
-    }
-
-    var renderVRChart = function (dateLabel, volumeRatio, vr50qt, zoomMin, zoomMax) {
-        option = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: ['量比', '量比中位']
-            },
-            // title: {
-            //     text: '量比',
-            // },
-            toolbox: {
-                feature: {
-                    dataZoom: {
-                        yAxisIndex: 'none'
-                    },
-                    restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: dateLabel
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%'],
-                axisLabel: {
-                    formatter: '{value} %'
-                },
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: zoomMin,
-                end: zoomMax
-            }, {
-                start: 0,
-                end: 10,
-                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                handleSize: '80%',
-                handleStyle: {
-                    color: '#fff',
-                    shadowBlur: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.6)',
-                    shadowOffsetX: 2,
-                    shadowOffsetY: 2
-                }
-            }],
-            series: [
-                {
-                    name: '量比',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(25, 70, 131)'
-                    // },
-
-                    data: volumeRatio,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: '量比中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    // itemStyle: {
-                    //     color: 'rgb(255, 0, 0)'
-                    // },
-
-                    data: vr50qt
-                }
-            ]
-        };
-
-        vrChart.setOption(option);
+        chartCanvas.setOption(option);
     }
 
     var followStock = function (tsCode, btn) {
@@ -1141,10 +477,10 @@ $(function () {
         // preventEnter: true,
         formatResult: function (item) {
             return {
-                value: item.id,
-                text: item.id + " - " + item.text,
+                value: item.stock_code,
+                text: item.stock_code + " - " + item.stock_name,
                 html: [
-                    item.id + " - " + item.text + "[" + item.market + "], " + item.area + ", " + item.industry + ", " + item.list_date + "上市",
+                    item.stock_code + " - " + item.stock_name + "[" + item.market + "], " + item.area + ", " + item.industry + ", " + item.list_date + "上市",
                 ]
             };
         },
@@ -1152,9 +488,9 @@ $(function () {
             search: function (qry, callback) {
                 // let's do a custom ajax call
                 $.ajax(
-                    stockmarketEndpoint + 'companies/' + $('#searchText').val(),
-                ).done(function (res) {
-                    callback(res.results)
+                    stockmarketEndpoint + 'companies/' + $('#searchText').val() + "/?format=json",
+                ).done(function (companies) {
+                    callback(companies)
                 });
             }
         }
@@ -1162,11 +498,14 @@ $(function () {
 
     $('#searchText').on('autocomplete.select', function (evt, item) {
         console.log('select');
-        tsCodeNoSfx = item.id;
+        tsCodeNoSfx = item.stock_code;
         tsCode = item.ts_code;
-        stockName = item.text;
+        stockName = item.stock_name;
         market = item.market;
         $("#searchText").val(tsCode);
+        $(".stock_name").each(function (idx, obj) {
+            $(obj).text(item.stock_name);
+        });
         // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
         renderChart();
     });
@@ -1175,7 +514,7 @@ $(function () {
         var basicType = "pe,pb,ps";
         // var indContainer = $(".industry");
         $.ajax({
-            url: stockmarketEndpoint + "industry-latest-daily-basic/" + industry+ "/" + basicType + "/",
+            url: stockmarketEndpoint + "industry-latest-daily-basic/" + industry + "/" + basicType + "/",
             success: function (data) {
                 var content = data.content;
                 for (var key in content) {
@@ -1203,16 +542,36 @@ $(function () {
 
     var showStockBasic = function (tsCode) {
         $.ajax({
-            url: stockmarketEndpoint + "latest-daily-basic/" + tsCode + "/" ,
+            url: stockmarketEndpoint + "latest-daily-basic/" + tsCode + "/",
             success: function (data) {
                 var content = data.latest_basic;
-                $(content).each(function(idx, obj){
-                    for(var k in obj){
+                $(content).each(function (idx, obj) {
+                    for (var k in obj) {
                         $("#" + k).text(" " + obj[k]);
                     }
                 });
             }
         });
+    }
+
+    var jsonToChartFormat = function (jsonData, dataType) {
+        var chartFormat = { 'value': [], 'label': [] };
+        $(jsonData).each(function (idx, obj) {
+            chartFormat.value.push(obj[dataType]);
+            chartFormat.label.push(obj.trade_date);
+        });
+        return chartFormat;
+    }
+
+    var getQuantile = function (chartData) {
+        var quantileData = { 'qt10': [], 'qt50': [], 'qt90': [] };
+        var quantileSeq = math.quantileSeq(chartData.value, [0.1, 0.5, 0.9]);
+        for (var i = 0; i < chartData.value.length; i++) {
+            quantileData.qt10.push(math.format(quantileSeq[0],2));
+            quantileData.qt50.push(math.format(quantileSeq[1], 2));
+            quantileData.qt90.push(math.format(quantileSeq[2], 2));
+        }
+        return quantileData;
     }
 
     showIndBasic($("#ind").text());

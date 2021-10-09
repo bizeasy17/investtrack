@@ -1,16 +1,20 @@
+import calendar
+import logging
+import math
+import time
 from calendar import monthrange
 from datetime import date, datetime, timedelta
-import time
-import calendar
+
 import numpy as np
 import pandas as pd
 # from investors.models import TradeStrategy
 import tushare as ts
 # from dashboard.utils import days_between
 from django.utils import timezone
+from scipy import stats
 
-from .models import (AnalysisEventLog, StockHistoryDaily, StockIndexHistory,
-                     StockStrategyTestLog, AnalysisDateSeq)
+from .models import (AnalysisDateSeq, AnalysisEventLog, StockHistoryDaily,
+                     StockIndexHistory, StockStrategyTestLog)
 
 strategy_dict = {'jiuzhuan_bs': {'jiuzhuan_count_b', 'jiuzhuan_count_s'}, 'dingdi': {'dingbu_s', 'dibu_b'},
                  'tupo_yali_b': {'tupo_b'}, 'diepo_zhicheng_s': {'diepo_s'},  'wm_dingdi_bs': {'m_ding', 'w_di'},
@@ -59,26 +63,6 @@ def get_ip(request):
     return ip
 
 
-def log_test_status(ts_code, event, freq, strategy_list=[]):
-    for strategy in strategy_list:
-        try:
-            mark_log = StockStrategyTestLog.objects.get(
-                ts_code=ts_code, analysis_code=strategy, event_type=event, freq=freq, is_done=False)
-            mark_log.is_done = True
-        except Exception as e:
-            # print(e)
-            mark_log = StockStrategyTestLog(ts_code=ts_code,
-                                            analysis_code=strategy,
-                                            event_type=event, freq=freq, is_done=True)
-            # try:
-            #     strategy_stat = TradeStrategyStat.objects.get(applied_period=freq, code=strategy)
-            #     strategy_stat.hist_analyzed = True
-            #     strategy_stat.save()
-            # except Exception as e:
-            #     print(e)
-        mark_log.save()
-
-
 def ready2proceed(strategy_code, freq='D'):
     exec_date = date.today()
     evt_dl_status = get_event_status(
@@ -102,37 +86,10 @@ def ready2proceed(strategy_code, freq='D'):
     return True
 
 
-def is_hist_downloaded(freq='D'):
-    exec_date = date.today()
-    evt_dl_status = get_event_status(
-        'HIST_DOWNLOAD', exec_date=exec_date, freq=freq)
-
-    if evt_dl_status == 0:
-        print("previous downloading is still ongoing")
-        return False
-    elif evt_dl_status == -1:
-        print("history has not yet been downloaded today")
-        return False
-
-    return True
-
-
 def get_dict_key(dict, value):
     for (k, v) in dict.items():
         if value in v:
             return k
-
-
-def ready2btest(ts_code, event, strategy_code, start_date, end_date, freq='D'):
-    exec_date = date.today()
-    completed = is_task_completed(
-        ts_code, event, strategy_code=get_dict_key(strategy_dict, strategy_code) if event == 'MARK_CP' else strategy_code, start_date=start_date, end_date=end_date, freq=freq)
-
-    if completed:
-        print('previous '+event+' is completed')
-        return True
-    print('previous '+event+' is still ongoing/ not exist')
-    return False
 
 
 def set_task_completed(ts_code, event, freq, strategy_code, start_date, end_date):
@@ -176,7 +133,7 @@ def generate_task(listed_company, start_date, end_date, freq='D', ):
     #     '200': {'junxian200_bs'}
     # }
     mark_strategy_dict = {
-        '25': {'jiuzhuan_bs'}
+        '25': {'junxian25_bs', 'jiuzhuan_bs'}
     }
 
     # analysis_hist = StockHistoryDaily.objects.filter(
@@ -327,40 +284,6 @@ def set_event_completed(event, exec_date, strategy_code=None, freq='D'):
         return False
 
 
-def set_event_exception(event, exec_date, strategy_code=None, freq='D'):
-    '''
-    前提，已经存在，在处理过程中in progress, 或已经结束finished 。。。。
-    1. 如果存在，就更新end date
-    2. 如果不存在，就创建新的
-    '''
-    # event_list = ['MARK_CP', 'PERIOD_TEST', 'EXP_PCT_TEST']
-    try:
-        if strategy_code is not None:  # Mark CP
-            event = AnalysisEventLog.objects.get(
-                analysis_code=strategy_code, event_type=event, freq=freq, exec_date=exec_date)
-        else:
-            event = AnalysisEventLog.objects.get(
-                event_type=event, freq=freq, exec_date=exec_date)
-        event.status = -1
-        event.save()
-    except Exception as e:  # 未找到event log记录
-        print(e)
-
-
-def is_task_completed(ts_code, event, strategy_code, start_date, end_date, freq):
-    print(start_date)
-    print(end_date)
-    print(strategy_code)
-    try:
-        task = StockStrategyTestLog.objects.get(
-            ts_code=ts_code, analysis_code=strategy_code, event_type=event,
-            start_date=start_date, end_date=end_date, freq=freq)
-        return task.is_done
-    except Exception as e:
-        # print(e)
-        return False
-
-
 def hist_downloaded(ts_code, event, freq):
     today = date.today()
     try:
@@ -431,40 +354,9 @@ def get_nearest_trade_cal(cur_date, exchange='SSE'):
         offset += 1
     # print(last_trade-timedelta(days=offset))
 
-
-def get_trade_cal_by_attr(ts_code, last_trade, attr='jiuzhuan_count_b'):
-    hist = None
-    it_is = False
-    offset = 0
-    # pro = ts.pro_api()
-    while it_is:
-        # df = pro.trade_cal(exchange=exchange, start_date=(last_trade -
-        #                                                   timedelta(days=offset+1)).strftime('%Y%m%d'), end_date=(last_trade-timedelta(days=offset+1)).strftime('%Y%m%d'))
-        # if df['is_open'].iloc[0] == 1:
-        #     count += 1
-        try:
-            hist = StockHistoryDaily.objects.get(
-                ts_code=ts_code, trade_date=last_trade-timedelta(days=offset+1))
-            if getattr(hist, attr) == 1:
-                it_is = True
-        except Exception as e:
-            pass
-        offset += 1
-    # print(last_trade-timedelta(days=offset))
-    return hist
-
-
-def get_pct_val_from(pct_str):
-    pct_arr = pct_str.split('_')
-    pct_val = pct_arr[0][3:]
-    return pct_val
-
-
-def get_pkdays_by_year_month(year, month):
-    pass
-
-
 # 20210918
+
+
 def init_log(ts_code, start_date, end_date, freq, log_type):
     '''
     exec_date = today()
@@ -602,8 +494,9 @@ def next_date(type='INDUSTRY_BASIC_QUANTILE'):
 
     if last_dateseq is not None and len(last_dateseq) > 0:
         return last_dateseq
-    
+
     return None
+
 
 def apply_analysis_date(type, date):
     try:
@@ -615,3 +508,51 @@ def apply_analysis_date(type, date):
     except Exception as err:
         print(err)
 
+
+# 20210930
+
+
+def mark_mov_avg(ts_code, df, ma_freq):
+    '''
+    标记股票的ma
+    '''
+    print('mark mov avg' + ma_freq + ' started on code - ' + ts_code + ',' +
+          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    try:
+        df['ma' +
+            ma_freq] = round(df['close'].rolling(window=int(ma_freq)).mean(), 3)
+        print('mark ma' + ma_freq + ' end on code - ' + ts_code +
+              ',' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as e:
+        print(e)
+    print('mark mov avg end')
+
+
+def calculate_slope(df, ts_code, day_offset=2, ma_freq='25', atype='1'):
+    # df.loc[:int(ma_freq)-1, 'ma'+ma_freq+"_slope"] = np.nan
+    # col='ma' + ma_freq, slope_col='ma'+ma_freq+'_slope',
+    print('mark slope' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    try:
+        # if atype == '0':
+        #     pass
+        # else:
+        #     pass
+        for index, row in df.iterrows():
+            try:
+                df_let = df[['ma' + ma_freq]].iloc[index -
+                                                   day_offset: index + day_offset]
+
+                df_let.reset_index(level=0, inplace=True)
+                df_let.columns = ['ds', 'y']
+                slope, intercept, r_value, p_value, std_err = stats.linregress(
+                    df_let.ds, df_let.y)
+                # slope_list.append(slope)
+                df.loc[index, 'ma'+ma_freq +
+                       '_slope'] = round(slope, 3) if slope is not np.nan else np.nan
+            except Exception as e:
+                print(e)
+                df.loc[index, 'ma'+ma_freq +
+                       '_slope'] = np.nan
+    except Exception as e:
+        print(e)
+    print('mark slope end' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

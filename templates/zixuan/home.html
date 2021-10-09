@@ -60,13 +60,23 @@
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
-        <div class="col-lg-12"><span class="text-muted">{% trans '您总共关注了' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>{% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%}</div>
+        <div class="col-lg-12"><span class="text-muted">{% trans '您总共关注了' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>{% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%}
+          </div>
+        
+        <input type="hidden" id="myIndustries" value="{{industries}}"/>
       </div>
       <hr class="row">
+      {% if request.user.is_authenticated %}
+      <div id="spinner">
+        <i class="fa fa-spinner fa-pulse fa-1x fa-fw"></i>
+        <span class="small">{% trans '个股信息加载中...' %}</span>
+      </div>
+      {% endif %}
       <div class="row">
           <div class="col-lg-12 grid-margin stretch-card mt-3">
               
-              <div class="row flex-grow small">
+              <div class="row flex-grow small" id="companiesByIndustryContainer">
+                  
                 {% if zixuan %}
                   {% for ind,stk in zixuan.items %}
                   
@@ -121,6 +131,7 @@
                   {% endfor %}
                 {% endif %}
               </div>
+              
           </div>
       </div>
     </div>
