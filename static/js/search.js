@@ -15,10 +15,10 @@ $(function () {
         // preventEnter: true,
         formatResult: function (item) {
             return {
-                value: item.id,
-                text: item.id + " - " + item.text,
+                value: item.stock_code,
+                text: item.stock_code + " - " + item.stock_name,
                 html: [
-                    item.id + " - " + item.text + " [" + item.market + "], " + item.area + ", " + item.industry + ", " + item.list_date + "上市",
+                    item.stock_code + " - " + item.stock_name + "[" + item.market + "], " + item.area + ", " + item.industry + ", " + item.list_date + "上市",
                 ]
             };
         },
@@ -26,9 +26,9 @@ $(function () {
             search: function (qry, callback) {
                 // let's do a custom ajax call
                 $.ajax(
-                    stockmarketEndpoint + 'companies/' + $('#searchText').val(),
-                ).done(function (res) {
-                    callback(res.results)
+                    stockmarketEndpoint + 'companies/' + $('#searchText').val() + "/?format=json",
+                ).done(function (companies) {
+                    callback(companies)
                 });
             }
         }
@@ -36,10 +36,7 @@ $(function () {
 
     $('#searchText').on('autocomplete.select', function (evt, item) {
         console.log('select');
-        var stockCode = item.id;
         var tsCode = item.ts_code;
-        var stockName = item.text;
-        var market = item.market;
         $("#searchText").val(tsCode);
         window.location.href = homeEndpoint + "?q=" + tsCode;
         // alert(

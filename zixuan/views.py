@@ -15,7 +15,7 @@ from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from investors.models import StockFollowing
-from investtrack.settings import NEAREST_THRESHOLD
+# from investtrack.settings_dev import NEAREST_THRESHOLD
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from stockmarket.models import CompanyDailyBasic, StockNameCodeMap
@@ -27,6 +27,7 @@ from stockmarket.serializers import CompanyDailyBasicExtSerializer, CompanyDaily
 
 logger = logging.getLogger(__name__)
 
+NEAREST_THRESHOLD = 0.1
 
 class HomeView(TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染

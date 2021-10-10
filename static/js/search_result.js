@@ -1,33 +1,33 @@
 $(function () {
     var stockmarketEndpoint = '/stockmarket/';
     var investorEndpoint = "/investors/";
-    var homeEndpoint = '/';
-    var indexList = "sh,sz,cyb,hs300"
+    // var homeEndpoint = '/';
+    // var indexList = "sh,sz,cyb,hs300"
     var freq = "D";
     var closePeriod = 5;
-    var histType = "close";
+    // var histType = "close";
     var tsCode = "";
-    var tsCodeNoSfx = "";
-    var stockName = "";
-    var market = "";
-    var pctOnPeriodDates = "";
-    var periodOnPctDates = "";
+    // var tsCodeNoSfx = "";
+    // var stockName = "";
+    // var market = "";
+    // var pctOnPeriodDates = "";
+    // var periodOnPctDates = "";
 
-    var bstr;
-    var sstr;
+    // var bstr;
+    // var sstr;
 
     var today = new Date();
     var startDate = "";
     var endDate = "";
 
     var closeChart = echarts.init(document.getElementById('closeChart'));
-    var peChart = echarts.init(document.getElementById('peChart'));
-    var peTTMChart = echarts.init(document.getElementById('peTTMChart'));
-    var psChart = echarts.init(document.getElementById('psChart'));
-    var psTTMChart = echarts.init(document.getElementById('psTTMChart'));
-    var pbChart = echarts.init(document.getElementById('pbChart'));
-    var toChart = echarts.init(document.getElementById('toChart'));
-    var vrChart = echarts.init(document.getElementById('vrChart'));
+    // var peChart = echarts.init(document.getElementById('peChart'));
+    // var peTTMChart = echarts.init(document.getElementById('peTTMChart'));
+    // var psChart = echarts.init(document.getElementById('psChart'));
+    // var psTTMChart = echarts.init(document.getElementById('psTTMChart'));
+    // var pbChart = echarts.init(document.getElementById('pbChart'));
+    // var toChart = echarts.init(document.getElementById('toChart'));
+    // var vrChart = echarts.init(document.getElementById('vrChart'));
 
     var basicCharts = $(".basic-chart");
 
@@ -84,7 +84,7 @@ $(function () {
                 $("#companyName").parent().append("<span>" + data[0].company_name + "</span>");
                 $("#setupDate").parent().append("<span>" + data[0].setup_date + "</span>");
                 $("#capital").parent().append("<span>" + data[0].reg_capital + "万</span>");
-                $("#website").parent().append('<a href="http://' + data[0].website + '" target="_blank"><span>http://' + data[0].website + '</span></a><span class="ml-1"><i class="fa fa-external-link-alt" aria-hidden="true"></i></span>');
+                $("#website").parent().append('<a href="http://' + data[0].website + '" target="_blank"><span>http://' + data[0].website + '</span><i class="fa fa-external-link-alt ml-1" aria-hidden="true"></i></a>');
                 $("#province").parent().append("<span>" + data[0].province + "</span>");
                 $("#city").parent().append("<span>" + data[0].city + "</span>");
                 $("#industry").parent().append("<span>" + data[0].main_business + "</span>");
@@ -112,6 +112,12 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "stock-close-history/" + tsCode + "/" + freq + "/" + closePeriod + "/?format=json",
             success: function (data) {
+                if ($(".error-msg").hasClass("d-none")==false){
+                    $(".error-msg").addClass("d-none");
+                }
+                if ($(".dashboard").hasClass("d-none")) {
+                    $(".dashboard").removeClass("d-none");
+                }
                 var chartData = jsonToChartFormat(data, "close");
                 var closeQuantile = getQuantile(chartData);
                 option = {

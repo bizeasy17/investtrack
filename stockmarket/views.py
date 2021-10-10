@@ -45,8 +45,8 @@ class IndustryList(APIView):
                     stock['industry'], ['pe', 'pb', 'ps'])
 
                 si = Industry(industry=stock['industry'], stock_count=stock['total'], pe_10pct=ibqs['pe0.1'] if 'pe0.1' in ibqs else 0,
-                              pe_50pct=ibqs['pe0.5'] if 'pe0.5' in ibqs else 0, pe_90pct=ibqs['pe0.9'] if 'pe0.9' in ibqs else 0, 
-                              pb_10pct=ibqs['pb0.1'] if 'pb0.1' in ibqs else 0, pb_50pct=ibqs['pb0.5'] if 'pb0.5' in ibqs else 0, 
+                              pe_50pct=ibqs['pe0.5'] if 'pe0.5' in ibqs else 0, pe_90pct=ibqs['pe0.9'] if 'pe0.9' in ibqs else 0,
+                              pb_10pct=ibqs['pb0.1'] if 'pb0.1' in ibqs else 0, pb_50pct=ibqs['pb0.5'] if 'pb0.5' in ibqs else 0,
                               pb_90pct=ibqs['pb0.9'] if 'pb0.9' in ibqs else 0, ps_10pct=ibqs['ps0.1'] if 'ps0.1' in ibqs else 0,
                               ps_50pct=ibqs['ps0.5'] if 'ps0.5' in ibqs else 0, ps_90pct=ibqs['ps0.9'] if 'ps0.9' in ibqs else 0,)
                 industry_list.append(si)
@@ -88,14 +88,14 @@ class StockCloseHistoryList(APIView):
 
     def get(self, request, ts_code, freq='D', period=3):
         try:
-            if period != 0:
+            if period <= 5:
                 start_date = date.today() - timedelta(days=365 * period)
                 close_history = StockHistoryDaily.objects.filter(
                     ts_code=ts_code, freq=freq, trade_date__gte=start_date,
-                    trade_date__lte=date.today()).order_by('trade_date')
+                    trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
             else:  # period = 0 means all stock history
                 close_history = StockHistoryDaily.objects.filter(
-                    ts_code=ts_code, freq=freq, trade_date__lte=date.today()).order_by('trade_date')
+                    ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
 
             # df = pd.DataFrame(close_history, columns=['close','trade_date'])
             # close_qtiles = df.close.quantile(
@@ -122,7 +122,9 @@ class StockDailyBasicHistoryList(APIView):
             cdb = CompanyDailyBasic.objects.filter(
                 ts_code=ts_code, trade_date__gte=datetime.strptime(
                     start_date, '%Y%m%d'),
-                trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).order_by('-trade_date')
+                trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).values('trade_date', 'pe', 'pe_ttm',
+                                                                               'pb', 'ps', 'ps_ttm', 'turnover_rate', 
+                                                                               'volume_ratio').order_by('trade_date')
 
             serializer = CompanyDailyBasicSerializer(cdb, many=True)
             # serializer.fields = basic_type.split(',')

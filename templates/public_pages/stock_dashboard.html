@@ -67,9 +67,9 @@
 <!-- <hr style="margin-top: 0rem; margin-bottom: 0.5rem" /> -->
 <div class="container-fluid mt-4 small">
   <div class="row">
-    <div class="col-lg-12">{{search_single.err_message}}</div>
+    <div class="col-lg-12 error-msg">{{search_single.err_message}}</div>
   </div>
-  <div class="row {{search_single.d_none}}">
+  <div class="row dashboard {{search_single.d_none}}">
     <div class="col-lg-8 ">
       <div><h6 class="m-0 font-weight-bold text-primary">股票基本面统计</h6></div>
       <hr/>
@@ -364,7 +364,7 @@
                 </div>
                 <div class="row col-lg-12">
                     <div class="row col-lg-6">
-                        <span class="font-weight-bold mr-1" id="province">{% trans '所在省' %}</span>
+                        <span class="font-weight-bold mr-1" id="province">{% trans '所在省份' %}</span>
                     </div>
                     <div class="row col-lg-6">
                         <span class="font-weight-bold mr-1" id="city">{% trans '所在城市' %}</span>

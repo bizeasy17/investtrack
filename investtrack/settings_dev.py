@@ -77,7 +77,8 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        # 'django.contrib.auth'
     ]
     # ,
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -117,7 +118,7 @@ AUTH_USER_MODEL = 'users.User'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = 'account:login'
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = 'search:home'
+LOGIN_REDIRECT_URL = 'zixuan:home'
 LOGOUT_REDIRECT_URL = 'search:home'
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 # ACCOUNT_EMAIL_VERIFICATION = 'none'
@@ -170,18 +171,6 @@ DATABASES = {
         'OPTIONS': {'client_encoding': 'UTF8'},
     }
 }
-# PROD
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'investtrack_prod',
-#         'USER': 'db_user1',
-#         'PASSWORD': 'password1!',
-#         'HOST': '39.100.215.105',
-#         'PORT': 5432,
-#         'OPTIONS': {'client_encoding': 'UTF8'},
-#     }
-# }
 
 # Logging configuration
 LOGGING = {
