@@ -508,12 +508,16 @@ $(function () {
         tsCode = item.ts_code;
         stockName = item.stock_name;
         market = item.market;
-        $("#searchText").val(tsCode);
+        $("#searchText").val(item.ts_code);
+        $("#currentTsCode").val(item.ts_code);
+        $("#ind").text(item.industry)
         $(".stock_name").each(function (idx, obj) {
             $(obj).text(item.stock_name);
         });
         // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
         renderChart();
+        showIndBasic(item.industry);
+        showStockBasic(item.ts_code);
     });
 
     var showIndBasic = function (industry) {
