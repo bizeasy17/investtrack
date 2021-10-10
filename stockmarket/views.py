@@ -22,7 +22,7 @@ from .models import (CompanyBasic, CompanyDailyBasic, ManagerRewards,
                      StockNameCodeMap)
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer,
                           Industry, IndustrySerializer,
-                          StockCloseHistorySerializer)
+                          StockCloseHistorySerializer, IndustryBasicQuantileSerializer)
 from .utils import str_eval, get_ind_basic
 
 # Create your views here.
@@ -51,6 +51,27 @@ class IndustryList(APIView):
                               ps_50pct=ibqs['ps0.5'] if 'ps0.5' in ibqs else 0, ps_90pct=ibqs['ps0.9'] if 'ps0.9' in ibqs else 0,)
                 industry_list.append(si)
             serializer = IndustrySerializer(industry_list, many=True)
+            return Response(serializer.data)
+        except Industry.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+class IndustryBasicList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, industry, basic_type, quantile, start_date, end_date):
+        try:
+            ibqs = IndustryBasicQuantileStat.objects.filter(industry=industry, basic_type=basic_type, quantile=float(quantile),
+                                                            snap_date__lte=datetime.strptime(
+                                                                end_date, '%Y%m%d'),
+                                                            snap_date__gte=datetime.strptime(
+                                                                start_date, '%Y%m%d')).values('industry', 'snap_date', 'basic_type',
+                                                                                              'stk_quantity', 'quantile', 'quantile_val').order_by('snap_date')
+            serializer = IndustryBasicQuantileSerializer(
+                ibqs, many=True)
             return Response(serializer.data)
         except Industry.DoesNotExist:
             raise Http404
@@ -123,7 +144,7 @@ class StockDailyBasicHistoryList(APIView):
                 ts_code=ts_code, trade_date__gte=datetime.strptime(
                     start_date, '%Y%m%d'),
                 trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).values('trade_date', 'pe', 'pe_ttm',
-                                                                               'pb', 'ps', 'ps_ttm', 'turnover_rate', 
+                                                                               'pb', 'ps', 'ps_ttm', 'turnover_rate',
                                                                                'volume_ratio').order_by('trade_date')
 
             serializer = CompanyDailyBasicSerializer(cdb, many=True)

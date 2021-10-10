@@ -85,7 +85,7 @@
                           <div class="card-body">
                               
                               <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                  <div class="card-title"><a class="text-muted" href="javascript:void(0);"><h6>{{ind}}</h6></a></div>
+                                  <div class="card-title"><a class="text-muted" href="{% url 'search:industry_profile' ind %}" target="_black"><h6>{{ind}}</h6></a></div>
                                   <p class="font-weight-medium small">
                                       <!-- <span class="text-muted mr-1"></span> -->
                                       <span class="badge badge-primary rounded-pill">{{stk.items|length}}</span>

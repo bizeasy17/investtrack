@@ -4,122 +4,54 @@ $(function () {
     // var homeEndpoint = '/';
     // var indexList = "sh,sz,cyb,hs300"
     var freq = "D";
-    var closePeriod = 5;
-    // var histType = "close";
-    var tsCode = "";
-    // var tsCodeNoSfx = "";
-    // var stockName = "";
-    // var market = "";
-    // var pctOnPeriodDates = "";
-    // var periodOnPctDates = "";
-
-    // var bstr;
-    // var sstr;
-
+    var period = 5;
+    var basicType = "close";
+    var curInd = "";
+    var quantile = "";
     var today = new Date();
     var startDate = "";
     var endDate = "";
 
-    var closeChart = echarts.init(document.getElementById('closeChart'));
-    // var peChart = echarts.init(document.getElementById('peChart'));
-    // var peTTMChart = echarts.init(document.getElementById('peTTMChart'));
-    // var psChart = echarts.init(document.getElementById('psChart'));
-    // var psTTMChart = echarts.init(document.getElementById('psTTMChart'));
-    // var pbChart = echarts.init(document.getElementById('pbChart'));
-    // var toChart = echarts.init(document.getElementById('toChart'));
-    // var vrChart = echarts.init(document.getElementById('vrChart'));
+    var peChart = document.getElementById("peChart");//$("#peChart");
+    var pbChart = document.getElementById("pbChart");//$("#peChart");
+    var psChart = document.getElementById("psChart");//$("#peChart");
+    var stkQtyChart = document.getElementById("stockQtyChart");//$("#peChart");
 
-    var basicCharts = $(".basic-chart");
 
 
     var initParam = function () {
-        tsCode = $("#currentTsCode").val();
-        closePeriod = $('input:radio[name="closePeriod"]:checked').val();
-        startDate = formatDate(new Date(today.getTime() - (365 * closePeriod * 24 * 60 * 60 * 1000)), "");
+        curInd = $("#curInd").val();
+        period = $('input:radio[name="period"]:checked').val();
+        quantile = $('input:radio[name="quantilePe"]:checked').val();
+        startDate = formatDate(new Date(today.getTime() - (365 * period * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
     }
 
     var renderChart = function () {
-        showCompanyBasic(tsCode);
-        renderCloseChart(tsCode);
-        renderCompanyBasicChart(tsCode, startDate, endDate);
-        // renderUpdownByPeriodChart();
-        // renderPeriodByUpRangeChart();
+        // showCompanyBasic(tsCode);
+        renderIndustryBasicChart(peChart, curInd, "pe", parseFloat(quantile), startDate, endDate);
+        renderIndustryBasicChart(pbChart, curInd, "pb", parseFloat(quantile), startDate, endDate);
+        renderIndustryBasicChart(psChart, curInd, "ps", parseFloat(quantile), startDate, endDate);
     }
 
-    var showCompanyBasic = function (tsCode) {
-        $.ajax({
-            url: stockmarketEndpoint + "company-basic/" + tsCode + "/",
-            success: function (data) {
-                if ($("#companyName").parent().children().length > 1) {
-                    $("#companyName").parent().children().last().remove();
-                }
-                if ($("#setupDate").parent().children().length > 1) {
-                    $("#setupDate").parent().children().last().remove();
-                }
-                if ($("#capital").parent().children().length > 1) {
-                    $("#capital").parent().children().last().remove();
-                }
-                if ($("#website").parent().children().length > 1) {
-                    $("#website").parent().children().last().remove();
-                }
-                if ($("#province").parent().children().length > 1) {
-                    $("#province").parent().children().last().remove();
-                }
-                if ($("#city").parent().children().length > 1) {
-                    $("#city").parent().children().last().remove();
-                }
-                if ($("#industry").parent().children().length > 1) {
-                    $("#industry").parent().children().last().remove();
-                }
-                if ($("#chairman").parent().children().length > 1) {
-                    $("#chairman").parent().children().last().remove();
-                }
-                if ($("#manager").parent().children().length > 1) {
-                    $("#manager").parent().children().last().remove();
-                }
-                if ($("#employees").parent().children().length > 1) {
-                    $("#employees").parent().children().last().remove();
-                }
-                $("#companyName").parent().append("<span>" + data[0].company_name + "</span>");
-                $("#setupDate").parent().append("<span>" + data[0].setup_date + "</span>");
-                $("#capital").parent().append("<span>" + data[0].reg_capital + "万</span>");
-                $("#website").parent().append('<a href="http://' + data[0].website + '" target="_blank"><span>http://' + data[0].website + '</span><i class="fa fa-external-link-alt ml-1" aria-hidden="true"></i></a>');
-                $("#province").parent().append("<span>" + data[0].province + "</span>");
-                $("#city").parent().append("<span>" + data[0].city + "</span>");
-                $("#industry").parent().append("<span>" + data[0].main_business + "</span>");
-                $("#chairman").parent().append("<span>" + data[0].chairman + "</span>");
-                $("#manager").parent().append("<span>" + data[0].manager + "</span>");
-                $("#employees").parent().append("<span>" + data[0].employees + "</span>");
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
 
-    var renderCloseChart = function (tsCode) {
+    var renderIndustryBasicChart = function (chart, industry, basicType, quantile, startDate, endDate) {
         var zoomMin = 75;
         var zoomMax = 100;
         $.ajax({
-            url: stockmarketEndpoint + "stock-close-history/" + tsCode + "/" + freq + "/" + closePeriod + "/?format=json",
+            // industry-basic/<industry>/<basic_type>/<quantile>/<start_date>/<end_date>/
+            url: stockmarketEndpoint + "industry-basic/" + industry + "/" + basicType + "/" + quantile + "/" + startDate + "/" + endDate + "/?format=json",
             success: function (data) {
+                var chartCanvas = echarts.init(chart);
+
                 if ($(".error-msg").hasClass("d-none")==false){
                     $(".error-msg").addClass("d-none");
                 }
                 if ($(".dashboard").hasClass("d-none")) {
                     $(".dashboard").removeClass("d-none");
                 }
-                var chartData = jsonToChartFormat(data, "close");
-                var closeQuantile = getQuantile(chartData);
+                var chartData = jsonToChartFormat(data, "quantile_val"); //18156636216
+                var basicQuantile = getQuantile(chartData);
                 option = {
                     tooltip: {
                         trigger: 'axis',
@@ -128,21 +60,8 @@ $(function () {
                         }
                     },
                     legend: {
-                        data: ['收盘价']
+                        data: [basicType]
                     },
-                    // title: {
-                    //     text: '收盘线',
-                    //     left: '5%',
-                    // },
-                    // toolbox: {
-                    //     feature: {
-                    //         dataZoom: {
-                    //             yAxisIndex: 'none'
-                    //         },
-                    //         restore: {},
-                    //         saveAsImage: {}
-                    //     }
-                    // },
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
@@ -171,7 +90,7 @@ $(function () {
                     }],
                     series: [
                         {
-                            name: '收盘价',
+                            name: basicType,
                             type: 'line',
                             smooth: true,
                             symbol: 'none',
@@ -192,39 +111,6 @@ $(function () {
                                 ]
                             }
                         },
-                        // {
-                        //     name: 'MA25',
-                        //     type: 'line',
-                        //     smooth: true,
-                        //     symbol: 'none',
-                        //     sampling: 'average',
-                        //     itemStyle: {
-                        //         color: 'rgb(0, 255, 0)'
-                        //     },
-                        //     data: data.ma25
-                        // },
-                        // {
-                        //     name: '60',
-                        //     type: 'line',
-                        //     smooth: true,
-                        //     symbol: 'none',
-                        //     sampling: 'average',
-                        //     itemStyle: {
-                        //         color: 'rgb(0, 0, 255)'
-                        //     },
-                        //     data: data.ma60
-                        // },
-                        // {
-                        //     name: '200',
-                        //     type: 'line',
-                        //     smooth: true,
-                        //     symbol: 'none',
-                        //     sampling: 'average',
-                        //     itemStyle: {
-                        //         color: 'rgb(25, 0, 31)'
-                        //     },
-                        //     data: data.ma200
-                        // },
                         {
                             name: '低位',
                             type: 'line',
@@ -233,7 +119,7 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(0, 255, 0)'
                             },
-                            data: closeQuantile.qt10
+                            data: basicQuantile.qt10
                         },
                         {
                             name: '中位',
@@ -243,7 +129,7 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(25, 70, 131)'
                             },
-                            data: closeQuantile.qt50
+                            data: basicQuantile.qt50
                         },
                         {
                             name: '高位',
@@ -253,12 +139,13 @@ $(function () {
                             itemStyle: {
                                 color: 'rgb(255, 0, 0)'
                             },
-                            data: closeQuantile.qt90
+                            data: basicQuantile.qt90
                         }
                     ]
                 };
+                chartCanvas.setOption(option);
 
-                closeChart.setOption(option);
+                showIndustryStock(stkQtyChart, data);
             }
         });
     }
@@ -291,10 +178,10 @@ $(function () {
         });
     }
 
-    var renderBasicChart = function (jsonData, canvas, basicType) {
-        var chartData = jsonToChartFormat(jsonData, basicType);
+    var showIndustryStock = function (chart, data) {
+        var chartData = jsonToChartFormat(data, "stock_count");
         var peQuantile = getQuantile(chartData);
-        var chartCanvas = echarts.init(canvas);
+        var chartCanvas = echarts.init(chart);
 
         option = {
             tooltip: {
@@ -304,7 +191,7 @@ $(function () {
                 }
             },
             legend: {
-                data: [basicType, basicType + "中位"]
+                data: ["股票数"]
             },
             // title: {
             //     text: '市盈',
@@ -330,7 +217,7 @@ $(function () {
             },
             dataZoom: [{
                 type: 'inside',
-                start: 75,
+                start: 0,
                 end: 100
             }, {
                 start: 0,
@@ -347,8 +234,8 @@ $(function () {
             }],
             series: [
                 {
-                    name: basicType,
-                    type: 'line',
+                    name: "股票数",
+                    type: 'bar',
                     smooth: true,
                     symbol: 'none',
                     sampling: 'average',
@@ -368,37 +255,6 @@ $(function () {
                         ]
                     }
                 },
-                {
-                    name: basicType+'低位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(0, 255, 0)'
-                    },
-                    data: peQuantile.qt10
-                },
-                {
-                    name: basicType+'中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-                    data: peQuantile.qt50
-                },
-                {
-                    name: basicType+'高位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(255, 0, 0)'
-                    },
-                    data: peQuantile.qt90
-                }
             ]
         };
 
@@ -454,17 +310,25 @@ $(function () {
     });
 
 
-    $('input:radio[name="closePeriod"]').change(function () {
+    $('input:radio[name="quantilePe"]').change(function () {
         // alert($(this).val());
-        closePeriod = $(this).val();
-        // closeChart.clear();
-        closeChart.showLoading();
-        renderCloseChart(tsCode);
-        closeChart.hideLoading();
-        // closeChart.resize();
+        quantile = $(this).val();
+        renderIndustryBasicChart(peChart, curInd, "pe", parseFloat(quantile), startDate, endDate);
     });
 
-    $('input:radio[name="pePeriod"]').change(function () {
+    $('input:radio[name="quantilePb"]').change(function () {
+        // alert($(this).val());
+        quantile = $(this).val();
+        renderIndustryBasicChart(pbChart, curInd, "pb", parseFloat(quantile), startDate, endDate);
+    });
+
+    $('input:radio[name="quantilePs"]').change(function () {
+        // alert($(this).val());
+        quantile = $(this).val();
+        renderIndustryBasicChart(psChart, curInd, "ps", parseFloat(quantile), startDate, endDate);
+    });
+
+    $('input:radio[name="period"]').change(function () {
         // alert($(this).val());
         var basicInfoPeriod = parseInt($(this).val());
         // peChart.clear();
@@ -473,9 +337,10 @@ $(function () {
             basicInfoPeriod = 30;
         }
         startDate = formatDate(new Date(today.getTime() - (365 * basicInfoPeriod * 24 * 60 * 60 * 1000)), "");
-        renderCompanyBasicChart(tsCode, startDate, endDate);
-        // peChart.hideLoading();
-        // closeChart.resize();
+        renderIndustryBasicChart(peChart, curInd, "pe", parseFloat(quantile), startDate, endDate);
+        renderIndustryBasicChart(pbChart, curInd, "pb", parseFloat(quantile), startDate, endDate);
+        renderIndustryBasicChart(psChart, curInd, "ps", parseFloat(quantile), startDate, endDate);
+
     });
 
     $('#searchText').autoComplete({
@@ -505,7 +370,7 @@ $(function () {
     $('#searchText').on('autocomplete.select', function (evt, item) {
         console.log('select');
         tsCodeNoSfx = item.stock_code;
-        tsCode = item.ts_code;
+        curInd = item.ts_code;
         stockName = item.stock_name;
         market = item.market;
         $("#searchText").val(item.ts_code);
@@ -584,8 +449,8 @@ $(function () {
     //     return quantileData;
     // }
 
-    showIndBasic($("#ind").text());
-    showStockBasic($("#currentTsCode").val());
+    showIndBasic($("#curInd").val());
+    // showStockBasic($("#currentTsCode").val());
 
     // 初始化图表
     initParam();

@@ -68,3 +68,25 @@ var getStartDate = function (period, format) {
 
     return formatDate(priorDate, format);
 }
+
+
+
+var jsonToChartFormat = function (jsonData, dataType) {
+    var chartFormat = { 'value': [], 'label': [] };
+    $(jsonData).each(function (idx, obj) {
+        chartFormat.value.push(obj[dataType]);
+        chartFormat.label.push(obj.trade_date);
+    });
+    return chartFormat;
+}
+
+var getQuantile = function (chartData) {
+    var quantileData = { 'qt10': [], 'qt50': [], 'qt90': [] };
+    var quantileSeq = math.quantileSeq(chartData.value, [0.1, 0.5, 0.9]);
+    for (var i = 0; i < chartData.value.length; i++) {
+        quantileData.qt10.push(math.format(quantileSeq[0], 2));
+        quantileData.qt50.push(math.format(quantileSeq[1], 2));
+        quantileData.qt90.push(math.format(quantileSeq[2], 2));
+    }
+    return quantileData;
+}

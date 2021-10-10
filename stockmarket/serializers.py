@@ -1,5 +1,5 @@
 import numpy as np
-from analysis.models import StockHistoryDaily
+from analysis.models import IndustryBasicQuantileStat, StockHistoryDaily
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
@@ -21,6 +21,8 @@ class Industry(models.Model):
     industry = models.CharField(
         _('行业'), max_length=50, blank=False, null=False, )
     stock_count = models.IntegerField(_('股票数'), blank=False, null=False, )
+    snap_date = models.DateField(
+        _('统计日期'), blank=False, null=False)  # symbol, e.g. 20200505
     pe_10pct = models.FloatField(_('PE低位'), blank=False, null=False, )
     pe_50pct = models.FloatField(_('PE中位'), blank=False, null=False, )
     pe_90pct = models.FloatField(_('PE高位'), blank=False, null=False, )
@@ -30,6 +32,7 @@ class Industry(models.Model):
     ps_10pct = models.FloatField(_('PS低位'), blank=False, null=False, )
     ps_50pct = models.FloatField(_('PS中位'), blank=False, null=False, )
     ps_90pct = models.FloatField(_('PS高位'), blank=False, null=False, )
+    
 
     class Meta:
         ordering = ['industry']
@@ -86,6 +89,7 @@ class IndustrySerializer(serializers.ModelSerializer):
         return {
             'industry': instance.industry,
             'stock_count': instance.stock_count,
+            # 'snap_date': instance.snap_date,
             'pe_low': instance.pe_10pct if not np.isnan(instance.pe_10pct) else 0,
             'pe_med': instance.pe_50pct if not np.isnan(instance.pe_50pct) else 0,
             'pe_high': instance.pe_90pct if not np.isnan(instance.pe_90pct) else 0,
@@ -184,5 +188,23 @@ class CompanyDailyBasicExtSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CompanyDailyBasicExt
+        # fields = ['trade_date', 'turnover_rate',
+        #           'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']
+
+
+class IndustryBasicQuantileSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'industry': instance['industry'],
+            'basic_type': instance['basic_type'],
+            'trade_date': instance['snap_date'],
+            'quantile': instance['quantile'],
+            'stock_count': instance['stk_quantity'],
+            'quantile_val': instance['quantile_val'] if not np.isnan(instance['quantile_val']) else 0,
+        }
+
+    class Meta:
+        model = IndustryBasicQuantileStat
         # fields = ['trade_date', 'turnover_rate',
         #           'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']

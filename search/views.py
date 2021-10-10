@@ -12,6 +12,7 @@ from django.views.generic import TemplateView
 from users.models import UserActionTrace, UserQueryTrace
 from analysis.utils import get_ip
 from investors.models import StockFollowing
+from stockmarket.models import StockNameCodeMap
 # Create your views here.
 
 logger = logging.getLogger(__name__)
@@ -51,3 +52,27 @@ class SearchView(TemplateView):
         except Exception as err:
             logger.error(err)
             return render(request, self.search_template, {self.context_object_name: {'err_message': _('抱歉，未查询到相关股票，请重试！'), 'd_none': 'd-none'}})
+
+
+class IndustryHomeView(TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'public_pages/industry_profile.html'
+    # search_template_list = 'public_pages/search_result_list.html'
+
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'industry'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            req_user = request.user
+            industry = self.kwargs['industry']
+            stocks = StockNameCodeMap.objects.filter(industry=industry)
+            stocks_sel = StockFollowing.objects.filter(industry=industry)
+            if req_user is not None:
+                pass
+            else:
+                pass
+            return render(request, self.template_name, {self.context_object_name: {'ind': industry, 'stk': len(stocks), 'stk_sel': len(stocks_sel)}})
+        except Exception as err:
+            logger.error(err)
+            return render(request, self.template_name, {self.context_object_name: {'err_message': _('抱歉，未查询到相关行业，请重试！'), 'd_none': 'd-none'}})

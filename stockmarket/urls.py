@@ -6,6 +6,8 @@ app_name = 'stock_market'
 urlpatterns = [
     path('industries/<industry>/',
          views.IndustryList.as_view(), name='industry_list'),  # ??
+    path('industry-basic/<industry>/<basic_type>/<quantile>/<start_date>/<end_date>/',
+         views.IndustryBasicList.as_view(), name='industry_list'),  # ??
     path('companies/<input_text>/',
          views.CompanyList.as_view(), name='company_list'),#views.get_companies),
 #     path('industries/<industry>/companies/',
