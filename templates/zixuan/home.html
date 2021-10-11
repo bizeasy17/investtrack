@@ -85,7 +85,7 @@
                           <div class="card-body">
                               
                               <div class="d-flex align-items-center justify-content-between flex-wrap">
-                                  <div class="card-title"><a class="text-muted" href="{% url 'search:industry_profile' ind %}" target="_black"><h6>{{ind}}</h6></a></div>
+                                  <div class="card-title"><a class="text-primary" href="{% url 'search:industry_profile' ind %}" target="_black"><h6>{{ind}}</h6></a></div>
                                   <p class="font-weight-medium small">
                                       <!-- <span class="text-muted mr-1"></span> -->
                                       <span class="badge badge-primary rounded-pill">{{stk.items|length}}</span>
@@ -98,7 +98,7 @@
                                 <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="qt.5{{ind}}"></i> </span>
                                 <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="qt.9{{ind}}"></i> </span>
                               </div>
-                              <div class="container small mt-3">
+                              <table class="table table-sm table-borderless mt-3">
                                   <!-- <div class="d-flex align-items-left justify-content-between flex-wrap row">
                                       <span class="text-muted">{% trans '股票代码(EXG)' %}</span>
                                       <span class="text-muted">{% trans '股票名称' %}</span>
@@ -107,23 +107,25 @@
                                   </div> -->
                                   <!-- <hr/> -->
                                   {% for k,v in stk.items %}
-                                  <div class="d-flex align-items-left justify-content-between flex-wrap row mt-1">
-                                      <div id="cd{{k}}"><a href="/?q={{k}}" class="text-muted" target="_blank">{{k}}</a></div>
-                                      <span id="nm{{k}}"><a href="/?q={{k}}" class="text-muted" target="_blank">{{v}}</a></span>
-                                      <span class="text-muted" id="p{{k}}">-</span>
-                                      <span class="text-muted" id="pct{{k}}">-</span>
-                                      <span class="text-primary" id="pe{{k}}">-</span>
-                                      <div class="dropdown">
+                                  <tbody class="small">
+                                    <tr>
+                                      <td id="cd{{k}}"><a href="/?q={{k}}" class="text-primary" target="_blank">{{k}}</a></div>
+                                      <td id="nm{{k}}"><a href="/?q={{k}}" class="text-primary" target="_blank">{{v}}</a></span>
+                                      <td class="text-muted" id="p{{k}}">-</span>
+                                      <td class="text-muted" id="pct{{k}}">-</span>
+                                      <td class="text-muted" id="pe{{k}}">-</span>
+                                      <td class="dropdown">
                                         <a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
                                           <i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>
                                         </a>
                                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                           <a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">{%trans '无消息'%}</a>
                                         </div>
-                                      </div>
-                                  </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
                                   {% endfor %}
-                              </div>
+                                </table>
                           </div>
                       </div>
                   </div>

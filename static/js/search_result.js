@@ -514,6 +514,8 @@ $(function () {
         $(".stock_name").each(function (idx, obj) {
             $(obj).text(item.stock_name);
         });
+        $("#industryUrl").attr("href", "/industry/" + item.industry);
+
         // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
         renderChart();
         showIndBasic(item.industry);
@@ -557,6 +559,9 @@ $(function () {
                 var content = data.latest_basic;
                 $(content).each(function (idx, obj) {
                     for (var k in obj) {
+                        if (parseFloat(obj[k])==0){
+                            obj[k] = "亏"
+                        }
                         $("#" + k).text(" " + obj[k]);
                     }
                 });

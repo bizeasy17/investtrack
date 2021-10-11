@@ -71,7 +71,8 @@
   </div>
   <div class="row dashboard {{search_single.d_none}}">
     <div class="col-lg-8 ">
-      <div><h6 class="m-0 font-weight-bold text-primary">股票基本面统计</h6></div>
+      <div><h6 class="m-0 font-weight-bold">股票基本面统计</h6>
+      </div>
       <hr/>
       <div class="d-flex flex-row align-items-center justify-content-between mt-2">
         <div class="industry">
@@ -117,7 +118,7 @@
               <div class="card mb-4">
                 <!-- Card Header - Dropdown -->
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">收盘 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                    <h6 class="m-0 font-weight-bold text-muted">收盘 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
                     <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                         <label class="btn btn-light active">
                             <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -147,7 +148,7 @@
       </div>
       <div class="row">
         <div class="col-lg-12 d-flex flex-row justify-content-between">
-          <div><h6 class="m-0 font-weight-bold text-primary">股票基本面指标</h6></div>
+          <div><h6 class="m-0 font-weight-bold">股票基本面指标</h6></div>
           
           <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
               <label class="btn btn-light active">
@@ -173,7 +174,7 @@
         <div class="col-lg-12">
           <div class="card mt-4 mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市盈率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                <h6 class="m-0 font-weight-bold text-muted">市盈率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
                 
             </div>
             <div class="card-body">
@@ -188,7 +189,7 @@
         <div class="col-lg-12">
           <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市盈率(动) - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                <h6 class="m-0 font-weight-bold text-muted">市盈率(动) - <span class="stock_name">{{search_single.stock_name}}</span></h6>
                 <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
                     <label class="btn btn-light active">
                         <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -219,7 +220,7 @@
           <div class="col-lg-12">
             <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市净率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                <h6 class="m-0 font-weight-bold text-muted">市净率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
                 <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
                     <label class="btn btn-light active">
                         <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -248,7 +249,7 @@
           <div class="col-lg-12">
           <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市销率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                <h6 class="m-0 font-weight-bold text-muted">市销率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
                 <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
                     <label class="btn btn-light active">
                         <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -277,7 +278,7 @@
           <div class="col-lg-12">
           <div class="card mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">市销率(动) - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                <h6 class="m-0 font-weight-bold text-muted">市销率(动) - <span class="stock_name">{{search_single.stock_name}}</span></h6>
                 <div class="btn-group btn-group-sm btn-group-toggle small d-none" data-toggle="buttons">
                     <label class="btn btn-light active">
                         <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -306,7 +307,7 @@
         <div class="col-lg-6">
         <div class="card mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">换手率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+              <h6 class="m-0 font-weight-bold text-muted">换手率 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
           </div>
           <div class="card-body">
             <div class="col-lg-12">
@@ -318,7 +319,7 @@
         <div class="col-lg-6">
         <div class="card mb-4">
           <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-              <h6 class="m-0 font-weight-bold text-primary">量比 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+              <h6 class="m-0 font-weight-bold text-muted">量比 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
           </div>
           <div class="card-body">
             <div id="vrChart" style="height: 300px" class="basic-chart" name="volume_ratio"></div>
@@ -330,7 +331,10 @@
     <div class="col-lg-4">
         <div class="row">
             <div class="col-lg-12 justify-content-between">
-                <span class="font-weight-bold">{% trans '基本信息' %}</span><button class="btn btn-sm btn-primary float-right" href="#follow" id="followStock">{% if search_single.selected %}{% trans '-' %}{% else %}{% trans '+' %}{%endif%}</button>
+                <span class="font-weight-bold">{% trans '基本信息' %}</span>
+                <span class="font-weight-bold text-muted">({% trans '所属行业: ' %}</span><a class="text-primary" id="industryUrl" href="{% url 'search:industry_profile' search_single.industry %}" target="_black"><span class="ml-1" id="ind">{{search_single.industry}}</span><i class="fa fa-external-link-alt ml-1" aria-hidden="true"></i></a>）
+
+                <button class="btn btn-sm btn-primary float-right" href="#follow" id="followStock">{% if search_single.selected %}{% trans '-' %}{% else %}{% trans '+' %}{%endif%}</button>
           </div>
         </div>
         <div class="row">
@@ -375,9 +379,7 @@
                         <span class="font-weight-bold mr-1" id="employees">{% trans '员工数量' %}</span>
                     </div>
                 </div>
-                <div class="row col-lg-12">
-                    <span class="font-weight-bold">{% trans '行业' %}</span><span class="ml-1" id="ind">{{search_single.industry}}</span>
-                </div>
+                
                 <div class="row col-lg-12">
                     <span class="row col-lg-12 font-weight-bold" id="industry">{% trans '主营业务' %}</span>
                 </div>
