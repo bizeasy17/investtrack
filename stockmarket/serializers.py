@@ -153,7 +153,7 @@ class CompanyDailyBasicSerializer(serializers.ModelSerializer):
             'turnover_rate': instance['turnover_rate'] if not np.isnan(instance['turnover_rate']) else 0,
             'volume_ratio': instance['volume_ratio'] if not np.isnan(instance['volume_ratio']) else 0,
             'pe': instance['pe'] if instance['pe'] is not None and not np.isnan(instance['pe']) else 0,
-            'pe_ttm': instance['pe_ttm'] if instance['pe_ttm'] and not np.isnan(instance['pe_ttm']) is not None else 0,
+            'pe_ttm': instance['pe_ttm'] if instance['pe_ttm'] is not None and not np.isnan(instance['pe_ttm']) else 0,
             'pb': instance['pb'] if not np.isnan(instance['pb']) else 0,
             'ps': instance['ps'] if not np.isnan(instance['ps']) else 0,
             'ps_ttm': instance['ps_ttm'] if not np.isnan(instance['ps_ttm']) else 0,
