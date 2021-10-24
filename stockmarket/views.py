@@ -19,9 +19,9 @@ from rest_framework.views import APIView
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 
 from .models import (CompanyBasic, CompanyDailyBasic, ManagerRewards,
-                     StockNameCodeMap)
+                     StockNameCodeMap, Industry)
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer,
-                          Industry, IndustrySerializer,
+                          IndustrySerializer,
                           StockCloseHistorySerializer, IndustryBasicQuantileSerializer)
 from .utils import str_eval, get_ind_basic
 
@@ -95,7 +95,7 @@ class CompanyList(APIView):
             companies = StockNameCodeMap.objects.filter(
                 Q(ts_code__contains=input_text)
                 | Q(stock_name__contains=input_text)
-                | Q(stock_name_pinyin__contains=input_text)).order_by('list_date')[:10]
+                | Q(stock_name_pinyin__icontains=input_text)).order_by('list_date')[:10]
             serializer = CompanySerializer(companies, many=True)
             return Response(serializer.data)
         except StockNameCodeMap.DoesNotExist:
@@ -178,7 +178,7 @@ def get_companies(request, input_text):
         try:
             if not input_text.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
-                    Q(stock_name__contains=input_text) | Q(stock_name_pinyin__contains=input_text)).order_by('list_date')[:10]
+                    Q(stock_name__contains=input_text) | Q(stock_name_pinyin__icontains=input_text)).order_by('list_date')[:10]
             elif input_text.isnumeric():
                 companies = StockNameCodeMap.objects.filter(
                     stock_code__contains=input_text).order_by('list_date')[:10]

@@ -1,32 +1,148 @@
 import logging
-from stockmarket.models import StockNameCodeMap
 
+from analysis.models import StockHistoryDaily
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import (Http404, HttpResponse, HttpResponseRedirect,
+                         HttpResponseServerError, JsonResponse)
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from stockmarket.models import CompanyDailyBasic, StockNameCodeMap, Industry
+from stockmarket.serializers import (CompanyDailyBasicExt,
+                                     CompanyDailyBasicExtSerializer)
+from stockmarket.utils import get_stocknames
+from users.models import UserActionTrace, UserQueryTrace
 
 from investors.models import StockFollowing, TradeStrategy
-from stockmarket.utils import get_stocknames
 
 
-class KanpanView(LoginRequiredMixin, TemplateView):
+class XuanguView(LoginRequiredMixin, TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'investors/kanpan.html'
+    template_name = 'investors/xuangu.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
-    context_object_name = 'kanpan'
+    context_object_name = 'xuangu'
 
     def get(self, request, *args, **kwargs):
         req_user = request.user
         if req_user is not None:
-            stocks_following = StockFollowing.objects.filter(
-                trader=req_user.id,)
+            company = StockNameCodeMap.objects.filter(
+                ts_code='')
             queryset = {
-                'followings': stocks_following,
+                'companies': company,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
+
+
+class CompanyHistoryDailyBasicList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, filters, start_idx, end_idx):
+        '''
+        filters - 板块，区域，城市，行业，PE，PB，PS
+        step 1. 板块
+        step 2. 区域
+        step 3. 城市
+        step 4. 行业
+        step 5. PE > PB > PS
+        '''
+        filter_list = filters.split(',')
+        cdbext_list = []
+        try:
+            if filter_list[0] == '3':
+                my_stocks = StockNameCodeMap.objects.filter(
+                    ts_code__startswith='3')
+            elif filter_list[0] == '688':
+                my_stocks = StockNameCodeMap.objects.filter(
+                    ts_code__startswith='688')
+            elif filter_list[0] == '0':
+                my_stocks = StockNameCodeMap.objects.filter(
+                    ts_code__startswith='0')
+            elif filter_list[0] == '60':
+                my_stocks = StockNameCodeMap.objects.filter(
+                    ts_code__startswith='60')
+            else:
+                my_stocks = StockNameCodeMap.objects.all()
+
+            # 省份过滤
+            if filter_list[1] != 0:
+                my_stocks = my_stocks.filter(
+                    company_basic__province=filter_list[1])
+            # 城市过滤
+            if filter_list[2] != 0:
+                my_stocks = my_stocks.filter(
+                    company_basic__city=filter_list[2])
+            # 行业
+            if filter_list[3] != 0:
+                my_stocks = my_stocks.filter(
+                    ind__industry=filter_list[3])
+
+                # get basic from industry table
+                ind = Industry.objects.get(industry=filter_list[3])
+
+                # PE高低过滤
+                # if filter_list[4] != 0:
+                if filter_list[4] == '1':  # low
+                    my_stocks = my_stocks.filter(
+                        daily_basic__pe__lte=ind.pe_10pct * 1.1)
+                if filter_list[4] == '2':  # med
+                    my_stocks = my_stocks.filter(
+                        daily_basic__pe__lte=ind.pe_50pct * 1.2, daily_basic__pe__gte=ind.pe_50pct * 0.8)
+                if filter_list[4] == '3':  # high
+                    my_stocks = my_stocks.filter(
+                        daily_basic__pe__gte=ind.pe_90pct * 0.9)
+
+                # PB高低过滤
+                if filter_list[5] == '1':
+                    my_stocks = my_stocks.filter(
+                        daily_basic__pb__lte=ind.pb_10pct * 1.1)
+                if filter_list[5] == '2':
+                    my_stocks = my_stocks.filter(
+                        daily_basic__pb__lte=ind.pb_50pct * 1.2, daily_basic__pb__gte=ind.pb_50pct * 0.8)
+                if filter_list[5] == '3':
+                    my_stocks = my_stocks.filter(
+                        daily_basic__pb=ind.pb_90pct * 0.9)
+
+                # PS高低过滤
+                if filter_list[6] == '1':
+                    my_stocks = my_stocks.filter(
+                        daily_basic__ps__lte=ind.ps_10pct * 1.1)
+                if filter_list[6] == '2':
+                    my_stocks = my_stocks.filter(
+                        daily_basic__ps__lte=ind.ps_50pct * 1.2, daily_basic__ps__gte=ind.ps_50pct * 0.8)
+                if filter_list[6] == '3':
+                    my_stocks = my_stocks.filter(
+                        daily_basic__ps=ind.ps_90pct * 0.9)
+            else: #无行业过滤器
+                # industries = Industry.objects.all()
+
+                # for ind in industries:
+                #     company_basic = ind.company_ind.company_basic.filter(pe__lte=ind.pe_10pct*1.1)
+                # my_stocks = my_stocks.filter(
+                #     ind__industry=filter_list[3])
+                pass
+
+            my_stocks = my_stocks[start_idx:end_idx]
+
+            for stock in my_stocks:
+                db = stock.get_latest_daily_basic()
+                dc = stock.get_latest_history()
+                cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps, 
+                                              ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, total_mv=db.total_mv, trade_date=dc.trade_date)
+
+                cdbext_list.append(cdbext)
+
+            serializer = CompanyDailyBasicExtSerializer(
+                cdbext_list, many=True)
+            # serializer.fields = basic_type.split(',')
+            return Response(serializer.data)
+        except CompanyDailyBasic.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
 
 
 class LinechartView(LoginRequiredMixin, TemplateView):

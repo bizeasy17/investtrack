@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
 
-from .models import CompanyDailyBasic, StockNameCodeMap
+from .models import CompanyDailyBasic, StockNameCodeMap, Industry
 
 BOARD_LIST = {
     'SHZB': '上海主板',
@@ -17,30 +17,30 @@ BOARD_LIST = {
 # Serializers define the API representation.
 
 
-class Industry(models.Model):
-    industry = models.CharField(
-        _('行业'), max_length=50, blank=False, null=False, )
-    stock_count = models.IntegerField(_('股票数'), blank=False, null=False, )
-    snap_date = models.DateField(
-        _('统计日期'), blank=False, null=False)  # symbol, e.g. 20200505
-    pe_10pct = models.FloatField(_('PE低位'), blank=False, null=False, )
-    pe_50pct = models.FloatField(_('PE中位'), blank=False, null=False, )
-    pe_90pct = models.FloatField(_('PE高位'), blank=False, null=False, )
-    pb_10pct = models.FloatField(_('PB低位'), blank=False, null=False, )
-    pb_50pct = models.FloatField(_('PB中位'), blank=False, null=False, )
-    pb_90pct = models.FloatField(_('PB高位'), blank=False, null=False, )
-    ps_10pct = models.FloatField(_('PS低位'), blank=False, null=False, )
-    ps_50pct = models.FloatField(_('PS中位'), blank=False, null=False, )
-    ps_90pct = models.FloatField(_('PS高位'), blank=False, null=False, )
+# class Industry(models.Model):
+#     industry = models.CharField(
+#         _('行业'), max_length=50, blank=False, null=False, )
+#     stock_count = models.IntegerField(_('股票数'), blank=False, null=False, )
+#     snap_date = models.DateField(
+#         _('统计日期'), blank=False, null=False)  # symbol, e.g. 20200505
+#     pe_10pct = models.FloatField(_('PE低位'), blank=False, null=False, )
+#     pe_50pct = models.FloatField(_('PE中位'), blank=False, null=False, )
+#     pe_90pct = models.FloatField(_('PE高位'), blank=False, null=False, )
+#     pb_10pct = models.FloatField(_('PB低位'), blank=False, null=False, )
+#     pb_50pct = models.FloatField(_('PB中位'), blank=False, null=False, )
+#     pb_90pct = models.FloatField(_('PB高位'), blank=False, null=False, )
+#     ps_10pct = models.FloatField(_('PS低位'), blank=False, null=False, )
+#     ps_50pct = models.FloatField(_('PS中位'), blank=False, null=False, )
+#     ps_90pct = models.FloatField(_('PS高位'), blank=False, null=False, )
     
 
-    class Meta:
-        ordering = ['industry']
-        verbose_name = _('行业')
-        verbose_name_plural = verbose_name
+#     class Meta:
+#         ordering = ['industry']
+#         verbose_name = _('行业')
+#         verbose_name_plural = verbose_name
 
-    def __str__(self):
-        return self.industry
+#     def __str__(self):
+#         return self.industry
 
 
 class CompanyDailyBasicExt(CompanyDailyBasic):
@@ -56,7 +56,7 @@ class CompanyDailyBasicExt(CompanyDailyBasic):
     # ps = models.FloatField(_('PS'), blank=False, null=False, )
     # ps_ttm = models.FloatField(_('动态PS'), blank=False, null=False, )
     # total_mv = models.FloatField(_('总市值'), blank=False, null=False, )
-    # circ_mv = models.FloatField(_('PS中位'), blank=False, null=False, )
+    # circ_mv = models.FloatField(_('流通市值'), blank=False, null=False, )
     jiuzhuan_b = models.IntegerField(_('九转买'), blank=False, null=False, )
     jiuzhuan_s = models.IntegerField(_('九转卖'), blank=False, null=False, )
     industry = models.CharField(
@@ -179,11 +179,12 @@ class CompanyDailyBasicExtSerializer(serializers.ModelSerializer):
             'trade_date': instance.trade_date,
             # 'turnover_rate': instance.turnover_rate if not np.isnan(instance.turnover_rate) else 0,
             # 'volume_ratio': instance.volume_ratio if not np.isnan(instance.volume_ratio) else 0,
-            'pe': instance['pe'] if instance['pe'] is not None else 0,
-            'pe_ttm': instance['pe_ttm'] if instance['pe_ttm'] is not None else 0,
+            'pe': instance.pe if not np.isnan(instance.pe) and instance.pe is not None else 0,
+            'pe_ttm': instance.pe_ttm if not np.isnan(instance.pe_ttm) and instance.pe_ttm is not None else 0,
             'pb': instance.pb if not np.isnan(instance.pb) else 0,
             'ps': instance.ps if not np.isnan(instance.ps) else 0,
             'ps_ttm': instance.ps_ttm if not np.isnan(instance.ps_ttm) else 0,
+            'total_mv': instance.total_mv,
         }
 
     class Meta:

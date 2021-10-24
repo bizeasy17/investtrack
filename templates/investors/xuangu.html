@@ -1,0 +1,256 @@
+{% extends 'base_public.html' %}
+{% load static i18n %}
+{% load crispy_forms_tags thumbnail humanize %}
+
+{% block title %}
+{% trans '投呗 - 自选股' %}
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
+      <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
+      <span class="text-white">{% trans '投呗' %}</span>   
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarColor01">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'zixuan:home' %}">{% trans '自选股' %}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'investors:xuangu' %}">{% trans '条件选股' %}</a>
+        </li>
+      </ul>
+  </div>
+    <form class="col-lg-4" id="searchForm" action="{%url 'search:home'%}">
+      <input type="text" class="form-control form-control-sm small" id="searchText" autocomplete="off" name="q" placeholder="{% trans '股票名称, 代码或首字母' %}" value="{{search_single.ts_code}}">
+    </form>
+    {% if request.user.is_authenticated %}
+      <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {% if request.user.picture %}
+          <img src="/media/{{ request.user.picture }}" height="30" width="30" style="border-radius: 50%;" class="user-image">
+          {% else %} 
+          <img src="{% static 'img/user.png' %}" height="30" alt="{% trans '无个人头像' %}" />
+          {% endif %}
+          <span class="text-white">{{ request.user.name }}</span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="{% url 'user:get_profile' %}"><i class="fa fa-cogs fa-fw" aria-hidden="true"></i>&nbsp; {% trans '个人信息设置' %}</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{%url 'account:logout'%}" id="logout"><i class="fa fa-sign-out-alt fa-fw" aria-hidden="true"></i>&nbsp; {% trans '注销' %}</a>
+        </div>
+      </div>
+    {% else %}
+    <!-- <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a> -->
+    <div><a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a></div>
+    {% endif %}
+    </div>
+</nav>
+{% endblock navbar %}
+
+{% block content %}
+
+<!-- /.container -->
+<header class="masthead mt-1">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row text-center ">
+        <div class="col-lg-12"><span class="text-muted">{% trans '沪深A股共有' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>{% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%}
+          </div>
+        
+        <input type="hidden" id="myIndustries" value="{{industries}}"/>
+      </div>
+      <hr class="row">
+      
+      <div class="row">
+        <div class="col-lg-3">
+          <div class="row">
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="board" autocomplete="off" value="shsz"/><span class="text-warning">{% trans '沪深A' %}</span>
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="board" autocomplete="off" value="shMainBoard"/>{% trans '沪主板' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="board" autocomplete="off" value="szMainBoard" checked/>{% trans '深主板' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="board" autocomplete="off" value="szGEM" />{% trans '创业' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="board" autocomplete="off" value="shSTAR"/>{% trans '科创' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="area" autocomplete="off" value="shsz"/><span class="text-warning">{% trans '全部' %}</span>
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="area" autocomplete="off" value="shsz"/>{% trans '浙江' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="area" autocomplete="off" value="shMainBoard"/>{% trans '上海' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="area" autocomplete="off" value="szMainBoard" checked/>{% trans '广东' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="city" autocomplete="off" value="shsz"/>{% trans '全部' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="city" autocomplete="off" value="shsz"/>{% trans '杭州' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="city" autocomplete="off" value="shMainBoard"/>{% trans '宁波' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="city" autocomplete="off" value="szMainBoard" checked/>{% trans '台州' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="industry" autocomplete="off" value="shsz"/>{% trans '全部' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="industry" autocomplete="off" value="shMainBoard"/>{% trans '软件' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="industry" autocomplete="off" value="szMainBoard" checked/>{% trans '电气' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="industry" autocomplete="off" value="szGEM" />{% trans '通信' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="industry" autocomplete="off" value="shSTAR"/>{% trans '自定' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="pe" autocomplete="off" value="0"/><span class="text-warning">{% trans '全部' %}</span>
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="pe" autocomplete="off" value="1"/>{% trans 'PE高位' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="pe" autocomplete="off" value="2"/>{% trans 'PE中位' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="pe" autocomplete="off" value="3" checked/>{% trans 'PE低位' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="pb" autocomplete="off" value="0"/><span class="text-warning">{% trans '全部' %}</span>
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="pb" autocomplete="off" value="1"/>{% trans 'PB高位' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="pb" autocomplete="off" value="2"/>{% trans 'PB中位' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="pb" autocomplete="off" value="3" checked/>{% trans 'PB低位' %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light">
+                        <input type="radio" name="ps" autocomplete="off" value="0"/><span class="text-warning">{% trans '全部' %}</span>
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="ps" autocomplete="off" value="1"/>{% trans 'PS高位' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="ps" autocomplete="off" value="2"/>{% trans 'PS中位' %}
+                    </label>
+                    <label class="btn btn-light active">
+                        <input type="radio" name="ps" autocomplete="off" value="3" checked/>{% trans 'PS低位' %}
+                    </label>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-9 ">
+          <div class="row">
+            {% if request.user.is_authenticated %}
+            <div class=" text-center  col-lg-12" id="spinner">
+              <i class="fa fa-spinner fa-pulse fa-1x fa-fw"></i>
+              <span class="small">{% trans '个股查询结果加载中...' %}</span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="row col-lg-12">
+            <table class="table table-sm table-borderless mt-2">
+
+              <tbody class="small">
+                <tr>
+                  <td id="cd{{k}}"><a href="/?q={{k}}" class="text-primary" target="_blank">{{k}}000001.SZ</a></td>
+                  <td id="nm{{k}}"><a href="/?q={{k}}" class="text-primary" target="_blank">{{v}}平安银行</a></td>
+                  <td class="text-muted" id="pe{{k}}">-银行</td>
+                  
+                  <td class="text-muted" id="p{{k}}"><span>-12.2</span></td>
+                  <td class="text-muted" id="pct{{k}}"><span>-5%</span></td>
+                  <td class="text-muted" id="pe{{k}}"><span>-PE(3)</span></td>
+                  <td class="text-muted" id="pe{{k}}"><span>-PE动(3)</span></td>
+                  <td class="text-muted" id="pb{{k}}"><span>-PB(3)</span></td>
+                  <td class="text-muted" id="ps{{k}}"><span>-PS(3)</span></td>
+                  <td class="text-muted" id="ps{{k}}"><span>-市值(147亿)</span></td>
+
+                  <td class="dropdown">
+                    <a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
+                      <i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">{%trans '无消息'%}</a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+              
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+</header>
+<!-- 新股IPO -->
+<!-- df = pro.new_share(start_date='20180901', end_date='20181018') -->
+
+<!-- content-wrapper ends -->
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript" charset="utf-8">var imgRoot = "{% static 'img/' %}"</script>
+<script src="{% static 'js/xuangu.js' %}" type="text/javascript"></script>
+{% endblock javascript %}

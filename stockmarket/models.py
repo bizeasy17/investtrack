@@ -1,3 +1,4 @@
+from enum import unique
 import random
 import string
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -12,7 +13,7 @@ from django.db.models import Sum
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-
+# from analysis.utils import last_date_seq
 # Create your models here.
 
 
@@ -27,6 +28,38 @@ class BaseModel(models.Model):
     @abstractmethod
     def get_absolute_url(self):
         pass
+
+
+class Industry(BaseModel):
+    industry = models.CharField(
+        _('行业'), max_length=50, blank=False, null=False, unique=True, db_index=True)  # name e.g. 平安银行
+    industry_pinyin = models.CharField(
+        _('行业名称拼音'), max_length=50, blank=True, null=True)  # name e.g. 平安银行
+    stock_count = models.IntegerField(_('股票数'), blank=True, null=True, )
+    snap_date = models.DateField(
+        _('统计日期'), blank=True, null=True)  # symbol, e.g. 20200505
+    pe_10pct = models.FloatField(_('PE低位'), blank=True, null=True, )
+    pe_50pct = models.FloatField(_('PE中位'), blank=True, null=True, )
+    pe_90pct = models.FloatField(_('PE高位'), blank=True, null=True, )
+    pb_10pct = models.FloatField(_('PB低位'), blank=True, null=True, )
+    pb_50pct = models.FloatField(_('PB中位'), blank=True, null=True, )
+    pb_90pct = models.FloatField(_('PB高位'), blank=True, null=True, )
+    ps_10pct = models.FloatField(_('PS低位'), blank=True, null=True, )
+    ps_50pct = models.FloatField(_('PS中位'), blank=True, null=True, )
+    ps_90pct = models.FloatField(_('PS高位'), blank=True, null=True, )
+
+    class Meta:
+        ordering = ['industry']
+        # unique_together = ('industry')
+        verbose_name = _('行业')
+        verbose_name_plural = verbose_name
+
+    def get_latest_daily_basic(self):
+        # date_seq = AnalysisDateSeq.objects.filter().order_by('-analysis_date').first()
+        return self.industry_basic
+
+    def __str__(self):
+        return self.industry
 
 
 class StockNameCodeMap(BaseModel):
@@ -78,6 +111,8 @@ class StockNameCodeMap(BaseModel):
                             blank=True, null=True)
     industry = models.CharField(
         _('所属行业'), max_length=50, blank=True, null=True)
+    ind = models.ForeignKey(Industry, related_name='company_ind',
+                                blank=True, null=True, on_delete=models.SET_NULL)
     fullname = models.CharField(
         _('股票全称'), max_length=100, blank=True, null=True)
     en_name = models.CharField(_('英文全称'), max_length=100,
@@ -120,19 +155,28 @@ class StockNameCodeMap(BaseModel):
     def __str__(self):
         return self.stock_name
 
-    # def save(self, *args, **kwargs):
-    #     self.stock_code = self.stock_code + '.' + self.market
-    #     super.save(*args, **kwargs)
+    def get_latest_history(self):
+        return self.close_history.first()
+
+    def get_latest_daily_basic(self):
+        return self.daily_basic.first()
+
+    def get_company_basic(self):
+        return self.company_basic.first()
+
+    # def get_company_basic_by_province(self, province):
+    #     return self.company_basic.filter()
 
     class Meta:
         ordering = ['-last_mod_time']
-        verbose_name = _('股票代码表')
+        verbose_name = _('股票基本信息')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
 
 class CompanyBasic(BaseModel):
-    company =  models.ForeignKey(StockNameCodeMap,blank=True, null=True, on_delete=models.SET_NULL)
+    company = models.ForeignKey(StockNameCodeMap, related_name='company_basic',
+                                blank=True, null=True, on_delete=models.SET_NULL)
 
     stock_code = models.CharField(
         _('股票代码'), max_length=50, blank=False, null=False, unique=True)  # symbol, e.g. 000001
@@ -186,7 +230,8 @@ class CompanyBasic(BaseModel):
 
 
 class IndexDailyBasic(BaseModel):
-    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company = models.ForeignKey(StockNameCodeMap, related_name='index_basic',
+                                blank=True, null=True, on_delete=models.SET_NULL)
 
     ts_code = models.CharField(
         _('TS代码'), max_length=50, blank=True, null=False, )  # e.g. 000001.SZ
@@ -201,7 +246,7 @@ class IndexDailyBasic(BaseModel):
     pe_ttm = models.FloatField(
         _('市盈率TTM'), blank=True, null=True)
     pb = models.FloatField(
-            _('市净率'), blank=True, null=True)
+        _('市净率'), blank=True, null=True)
     total_share = models.FloatField(
         _('总股本'), blank=True, null=True)
     float_share = models.FloatField(
@@ -228,7 +273,8 @@ class IndexDailyBasic(BaseModel):
 
 
 class CompanyDailyBasic(BaseModel):
-    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company = models.ForeignKey(StockNameCodeMap, related_name='daily_basic',
+                                blank=True, null=True, on_delete=models.SET_NULL)
 
     ts_code = models.CharField(
         _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
@@ -277,15 +323,16 @@ class CompanyDailyBasic(BaseModel):
     #     super.save(*args, **kwargs)
 
     class Meta:
-        ordering = ['-last_mod_time']
-        verbose_name = _('公司每日基本')
+        ordering = ['-trade_date']
+        verbose_name = _('公司每日基本面')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
         unique_together = ('ts_code', 'trade_date',)
 
 
 class CompanyManagers(BaseModel):
-    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company = models.ForeignKey(StockNameCodeMap, related_name='manager',
+                                blank=True, null=True, on_delete=models.SET_NULL)
 
     # stock_code = models.CharField(
     #     _('股票代码'), max_length=50, blank=False, null=False)  # symbol, e.g. 000001
@@ -321,14 +368,15 @@ class CompanyManagers(BaseModel):
     #     super.save(*args, **kwargs)
 
     class Meta:
-        ordering = ['-last_mod_time']
+        ordering = ['-announce_date']
         verbose_name = _('公司管理层')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
 
 class ManagerRewards(BaseModel):
-    company =  models.ForeignKey(StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
+    company = models.ForeignKey(
+        StockNameCodeMap, blank=True, null=True, on_delete=models.SET_NULL)
 
     # stock_code = models.CharField(
     #     _('股票代码'), max_length=50, blank=False, null=False,)  # symbol, e.g. 000001

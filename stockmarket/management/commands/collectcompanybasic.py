@@ -115,25 +115,32 @@ def company_basic(ts_code):
         pro = ts.pro_api()
 
         # 查询当前所有正常上市交易的股票列表
+
         if ts_code is None:
             companies = StockNameCodeMap.objects.filter(
                 asset='E').order_by('ts_code')
 
             for company in companies:
                 print('starting all company basic for ' + company.ts_code)
-                data = pro.stock_company(
-                    ts_code=company.ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
-                store_company_basic(company, data)
+                try:
+                    cb = CompanyBasic.objects.get(ts_code=company.ts_code)
+                except CompanyBasic.DoesNotExist:
+                    data = pro.stock_company(
+                        ts_code=company.ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
+                    store_company_basic(company, data)
 
-                print('ending company for ' + company.ts_code)
-                print('waiting for 12 sec')
-                time.sleep(12)
+                    print('ending company for ' + company.ts_code)
+                    print('waiting for 12 sec')
+                    time.sleep(12)
         else:
             print('starting company basic for ' + ts_code)
-            company = StockNameCodeMap.objects.get(ts_code=ts_code)
-            data = pro.stock_company(
-                ts_code=ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
-            store_company_basic(company, data)
+            try:
+                cb = CompanyBasic.objects.get(ts_code=ts_code)
+            except CompanyBasic.DoesNotExist:
+                company = StockNameCodeMap.objects.get(ts_code=ts_code)
+                data = pro.stock_company(
+                    ts_code=ts_code, fields='ts_code,exchange,chairman,manager,reg_capital,setup_date,province,secretary,city,introduction,website,email,office,employees,main_business,business_scope')
+                store_company_basic(company, data)
             print('ending company basic for ' + ts_code)
     except Exception as e:
         print(e)

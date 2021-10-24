@@ -498,6 +498,16 @@ def next_date(type='INDUSTRY_BASIC_QUANTILE'):
     return None
 
 
+def last_date_seq(type='INDUSTRY_BASIC_QUANTILE'):
+    last_dateseq = AnalysisDateSeq.objects.filter(
+        seq_type=type, applied=True).order_by('-analysis_date').first()
+
+    if last_dateseq is not None:
+        return last_dateseq.analysis_date
+
+    return None
+
+
 def apply_analysis_date(type, date):
     try:
         dateseq = AnalysisDateSeq.objects.get(

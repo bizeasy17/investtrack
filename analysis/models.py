@@ -13,8 +13,8 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
-from investors.models import TradeStrategy
-from stockmarket.models import StockNameCodeMap, CompanyBasic
+
+from stockmarket.models import StockNameCodeMap, Industry
 # Create your models here.
 
 
@@ -227,7 +227,8 @@ class StockHistoryDaily(BaseModel):
     vol	float	成交量 （手）
     amount	float	成交额 （千元）
     '''
-
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='close_history', blank=True, null=True, on_delete=models.SET_NULL)
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     trade_date = models.DateField(
@@ -277,12 +278,8 @@ class StockHistoryDaily(BaseModel):
     def __str__(self):
         return self.ts_code
 
-    # def save(self, *args, **kwargs):
-    #     self.stock_code = self.stock_code + '.' + self.market
-    #     super.save(*args, **kwargs)
-
     class Meta:
-        ordering = ['-last_mod_time']
+        ordering = ['-trade_date']
         verbose_name = _('股票代码表')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
@@ -403,8 +400,10 @@ class IndustryBasicQuantileStat(BaseModel):
     软件 PE 0.5 15.5 2000-01-31
 
     '''
+    ind = models.ForeignKey(Industry, related_name='industry_basic', blank=True, null=True, on_delete=models.SET_NULL)  # e.g. 000001.SZ
     industry = models.CharField(
         _('行业'), max_length=25, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    
     # new fields
     basic_type = models.CharField(
         _('统计类型'), max_length=10, blank=True, null=True)  # close
@@ -426,7 +425,7 @@ class IndustryBasicQuantileStat(BaseModel):
 
     class Meta:
         unique_together = ('industry', 'basic_type', 'quantile', 'snap_date')
-        ordering = ['-last_mod_time']
+        ordering = ['-snap_date']
         verbose_name = _('行业高低分位统计')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

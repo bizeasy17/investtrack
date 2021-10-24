@@ -81,7 +81,7 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                 if sdate is not None and edate is not None:  # 给定下载开始和结束时间
                     start_date = sdate
                     end_date = edate
-                    download_stock_hist(
+                    download_stock_hist(listed_company,
                         listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
                 else:  # 根据日志记录下载相应历史记录
 
@@ -92,13 +92,13 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                             print('update hist')
                             start_date = last_date[1] + \
                                 timedelta(days=1)
-                            download_stock_hist(
+                            download_stock_hist(listed_company,
                                 listed_company.ts_code, last_date[1] + timedelta(days=1), today, listed_company.asset, freq, )
                     else:
                         # 需要进行首次下载
                         print('first time')
                         start_date = listed_company.list_date
-                        download_stock_hist(
+                        download_stock_hist(listed_company,
                             listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
                     end_date = today
                 if start_date is not None and end_date is not None:
@@ -190,7 +190,7 @@ def download_hist_data(stock_symbol, start_date, end_date, freq='D', asset='E'):
         return pd.concat(df_list)
 
 
-def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
+def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq='D'):
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info started.')
     # end_date = date.today()
@@ -203,11 +203,11 @@ def download_stock_hist(ts_code, start_date, end_date, asset='E', freq='D'):
         if asset == 'E':
             hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
                                      low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                     amount=v[10], freq=freq)
+                                     amount=v[10], freq=freq, company=company)
         else: # 指数信息
             hist = StockIndexHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
                                      low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                     amount=v[10], freq=freq)
+                                     amount=v[10], freq=freq, company=company)
         '''
         ts_code	str	股票代码
         trade_date	str	交易日期

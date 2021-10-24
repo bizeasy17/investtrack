@@ -179,7 +179,7 @@ def get_selected_traffic(request, ts_code):
                         stat_list.append({
                             'ts_code': ts_code,
                             'traffic_light': 'Y',
-                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年中位',
+                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '历史') + '中位',
                             'type': stat.stat_type,
                             'period': stat.period,
                             'qt': stat.quantile,
@@ -190,7 +190,7 @@ def get_selected_traffic(request, ts_code):
                         stat_list.append({
                             'ts_code': ts_code,
                             'traffic_light': 'G',
-                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年低位',
+                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '历史') + '低位',
                             'type': stat.stat_type,
                             'period': stat.period,
                             'qt': stat.quantile,
@@ -201,7 +201,7 @@ def get_selected_traffic(request, ts_code):
                         stat_list.append({
                             'ts_code': ts_code,
                             'traffic_light': 'R',
-                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '全部历史') + '年高位',
+                            'msg': '股价处于' + (str(stat.period) if stat.period != 99 else '历史') + '高位',
                             'type': stat.stat_type,
                             'period': stat.period,
                             'qt': stat.quantile,
