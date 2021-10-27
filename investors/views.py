@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from analysis.models import StockHistoryDaily
 from django.contrib.auth.decorators import login_required
@@ -82,39 +83,7 @@ class CompanyHistoryDailyBasicList(APIView):
                 # get basic from industry table
                 ind = Industry.objects.get(industry=filter_list[3])
 
-                # PE高低过滤
-                # if filter_list[4] != 0:
-                if filter_list[4] == '1':  # low
-                    my_stocks = my_stocks.filter(
-                        daily_basic__pe__lte=ind.pe_10pct * 1.1)
-                if filter_list[4] == '2':  # med
-                    my_stocks = my_stocks.filter(
-                        daily_basic__pe__lte=ind.pe_50pct * 1.2, daily_basic__pe__gte=ind.pe_50pct * 0.8)
-                if filter_list[4] == '3':  # high
-                    my_stocks = my_stocks.filter(
-                        daily_basic__pe__gte=ind.pe_90pct * 0.9)
-
-                # PB高低过滤
-                if filter_list[5] == '1':
-                    my_stocks = my_stocks.filter(
-                        daily_basic__pb__lte=ind.pb_10pct * 1.1)
-                if filter_list[5] == '2':
-                    my_stocks = my_stocks.filter(
-                        daily_basic__pb__lte=ind.pb_50pct * 1.2, daily_basic__pb__gte=ind.pb_50pct * 0.8)
-                if filter_list[5] == '3':
-                    my_stocks = my_stocks.filter(
-                        daily_basic__pb=ind.pb_90pct * 0.9)
-
-                # PS高低过滤
-                if filter_list[6] == '1':
-                    my_stocks = my_stocks.filter(
-                        daily_basic__ps__lte=ind.ps_10pct * 1.1)
-                if filter_list[6] == '2':
-                    my_stocks = my_stocks.filter(
-                        daily_basic__ps__lte=ind.ps_50pct * 1.2, daily_basic__ps__gte=ind.ps_50pct * 0.8)
-                if filter_list[6] == '3':
-                    my_stocks = my_stocks.filter(
-                        daily_basic__ps=ind.ps_90pct * 0.9)
+                
             else: #无行业过滤器
                 # industries = Industry.objects.all()
 
@@ -129,6 +98,48 @@ class CompanyHistoryDailyBasicList(APIView):
             for stock in my_stocks:
                 db = stock.get_latest_daily_basic()
                 dc = stock.get_latest_history()
+                
+                if db is None or dc is None: continue
+
+                if filter_list[3] != 0:
+                    # PE高低过滤
+                    # if filter_list[4] != 0:
+                    if filter_list[4] == '-1':  # 亏损
+                        if not np.isnan(db.pe):
+                            continue
+                    elif filter_list[4] == '1':  # low
+                        if np.isnan(db.pe) or db.pe > ind.pe_10pct * 1.1:
+                            continue
+                    elif filter_list[4] == '2':  # med
+                        if np.isnan(db.pe) or (db.pe > ind.pe_50pct * 1.2 or db.pe < ind.pe_50pct * 0.8):
+                            continue
+                    elif filter_list[4] == '3':  # high
+                        if np.isnan(db.pe) or db.pe < ind.pe_90pct * 0.9:
+                            continue
+                    
+
+                    # PB高低过滤
+                    if filter_list[5] == '1':
+                        if db.pb > ind.pb_10pct * 1.1:
+                            continue
+                    elif filter_list[5] == '2':
+                        if db.pb > ind.pb_50pct * 1.2 or db.pb < ind.pb_50pct * 0.8:
+                            continue
+                    elif filter_list[5] == '3':
+                        if db.pb < ind.pb_90pct * 0.9:
+                            continue
+
+                    # PS高低过滤
+                    if filter_list[6] == '1':
+                        if db.ps > ind.ps_10pct * 1.1:
+                            continue
+                    elif filter_list[6] == '2':
+                        if db.ps > ind.ps_50pct * 1.2 or db.ps < ind.ps_50pct * 0.8:
+                            continue
+                    elif filter_list[6] == '3':
+                        if db.ps < ind.ps_90pct * 0.9:
+                            continue
+                
                 cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps, 
                                               ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, total_mv=db.total_mv, trade_date=dc.trade_date)
 
