@@ -1,6 +1,6 @@
 import logging
-import numpy as np
 
+import numpy as np
 from analysis.models import StockHistoryDaily
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,9 +9,11 @@ from django.http import (Http404, HttpResponse, HttpResponseRedirect,
 from django.shortcuts import render
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
+from django.db.models import Count
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from stockmarket.models import CompanyDailyBasic, StockNameCodeMap, Industry
+from stockmarket.models import (City, CompanyDailyBasic, Industry, Province,
+                                StockNameCodeMap)
 from stockmarket.serializers import (CompanyDailyBasicExt,
                                      CompanyDailyBasicExtSerializer)
 from stockmarket.utils import get_stocknames
@@ -29,10 +31,19 @@ class XuanguView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         req_user = request.user
         if req_user is not None:
-            company = StockNameCodeMap.objects.filter(
-                ts_code='')
+            # company = StockNameCodeMap.objects.filter(
+            #     ts_code='')
+            provinces = Province.objects.annotate(count_num=Count('city_province')).values(
+                'name', 'count_num').order_by('-count_num')[0:6]
+            industries = Industry.objects.annotate(count_num=Count('company_ind')).values(
+                'industry', 'count_num').order_by('-count_num')[0:4]
+            industries_more = Industry.objects.annotate(count_num=Count('company_ind')).values(
+                'industry', 'count_num').order_by('-count_num')[5:]
+            # city = City.objects.annotate(filter(ts_code='')
             queryset = {
-                'companies': company,
+                'provinces': provinces,
+                'industries': industries,
+                'ind_more': industries_more,
             }
             return render(request, self.template_name, {self.context_object_name: queryset})
 
@@ -54,37 +65,36 @@ class CompanyHistoryDailyBasicList(APIView):
         try:
             if filter_list[0] == '3':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='3')
+                    ts_code__startswith='3').order_by('-ts_code')
             elif filter_list[0] == '688':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='688')
+                    ts_code__startswith='688').order_by('-ts_code')
             elif filter_list[0] == '0':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='0')
+                    ts_code__startswith='0').order_by('-ts_code')
             elif filter_list[0] == '60':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='60')
+                    ts_code__startswith='60').order_by('-ts_code')
             else:
-                my_stocks = StockNameCodeMap.objects.all()
+                my_stocks = StockNameCodeMap.objects.all().order_by('-ts_code')
 
             # 省份过滤
-            if filter_list[1] != 0:
+            if filter_list[1] != '0':
                 my_stocks = my_stocks.filter(
                     company_basic__province=filter_list[1])
             # 城市过滤
-            if filter_list[2] != 0:
+            if filter_list[2] != '0':
                 my_stocks = my_stocks.filter(
                     company_basic__city=filter_list[2])
             # 行业
-            if filter_list[3] != 0:
+            if filter_list[3] != '0':
                 my_stocks = my_stocks.filter(
                     ind__industry=filter_list[3])
 
                 # get basic from industry table
                 ind = Industry.objects.get(industry=filter_list[3])
 
-                
-            else: #无行业过滤器
+            else:  # 无行业过滤器
                 # industries = Industry.objects.all()
 
                 # for ind in industries:
@@ -98,10 +108,11 @@ class CompanyHistoryDailyBasicList(APIView):
             for stock in my_stocks:
                 db = stock.get_latest_daily_basic()
                 dc = stock.get_latest_history()
-                
-                if db is None or dc is None: continue
 
-                if filter_list[3] != 0:
+                if db is None or dc is None:
+                    continue
+
+                if filter_list[3] != '0':
                     # PE高低过滤
                     # if filter_list[4] != 0:
                     if filter_list[4] == '-1':  # 亏损
@@ -116,7 +127,6 @@ class CompanyHistoryDailyBasicList(APIView):
                     elif filter_list[4] == '3':  # high
                         if np.isnan(db.pe) or db.pe < ind.pe_90pct * 0.9:
                             continue
-                    
 
                     # PB高低过滤
                     if filter_list[5] == '1':
@@ -139,8 +149,8 @@ class CompanyHistoryDailyBasicList(APIView):
                     elif filter_list[6] == '3':
                         if db.ps < ind.ps_90pct * 0.9:
                             continue
-                
-                cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps, 
+
+                cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps,
                                               ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, total_mv=db.total_mv, trade_date=dc.trade_date)
 
                 cdbext_list.append(cdbext)

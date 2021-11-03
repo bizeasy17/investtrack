@@ -16,14 +16,18 @@ from django.shortcuts import render
 from numpy.lib.function_base import append
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from search.utils import pinyin_abbrev
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 
-from .models import (CompanyBasic, CompanyDailyBasic, ManagerRewards,
-                     StockNameCodeMap, Industry)
+from stockmarket.models import (City, CompanyBasic, Industry, Province,
+                                StockNameCodeMap)
+
+from .models import (CompanyBasic, CompanyDailyBasic, Industry, ManagerRewards,
+                     StockNameCodeMap)
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer,
-                          IndustrySerializer,
-                          StockCloseHistorySerializer, IndustryBasicQuantileSerializer)
-from .utils import str_eval, get_ind_basic
+                          IndustryBasicQuantileSerializer, IndustrySerializer,
+                          StockCloseHistorySerializer, CitySerializer, ProvinceSerializer)
+from .utils import get_ind_basic, str_eval
 
 # Create your views here.
 
@@ -79,6 +83,44 @@ class IndustryBasicList(APIView):
             print(err)
             raise HttpResponseServerError
 
+
+class CityList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, province, top):
+        try:
+            if province != '-1':
+                cities = City.objects.filter(province__name=province).values('name')[0:top]
+            else:  # period = 0 means all stock history
+                cities = City.objects.all().values('name')[0:top]
+
+            serializer = CitySerializer(cities, many=True)
+            return Response(serializer.data)
+        except StockHistoryDaily.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+class ProvinceList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, country):
+        try:
+            if country != '-1':
+                provinces = Province.objects.filter(
+                    country=country).values('name')
+            else:  # period = 0 means all stock history
+                provinces = Province.objects.all().values('name')
+
+            serializer = ProvinceSerializer(provinces, many=True)
+            return Response(serializer.data)
+        except StockHistoryDaily.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
 
 class CompanyList(APIView):
     """
@@ -300,3 +342,42 @@ def get_latest_daily_basic(request, ts_code):
     except Exception as err:
         return HttpResponse(status=500)
     pass
+
+
+def command_test(request):
+    try:
+        companies_bef = CompanyBasic.objects.filter(
+        ).order_by().values('province', 'city').distinct()
+        # print(len(companies_bef))
+        # companies = StockNameCodeMap.objects.all()
+        for c in companies_bef:
+            print(c['province'])
+            print(c['city'])
+            prov = Province(name=c['province'], province_pinyin=pinyin_abbrev(
+                c['province']))
+            prov.save()
+            city = City(name=c['city'], proince=c['province'], city_pinyin=pinyin_abbrev(
+                c['city']))
+            city.save()
+
+            print(c['province'] + ' created.')
+            print(c['city'] + ' created.')
+
+            cb = CompanyBasic.objects.filter(
+                province=c['province'])
+            for b in cb:
+                b.shengfen = prov
+                b.chengshi = city
+                b.save()
+                print(prov.name + ',' + city.name + ' FK updated for ' +
+                        b.ts_code + ' CompanyBasic.')
+
+            companies = StockNameCodeMap.objects.filter(
+                area=c['province'])
+            for company in companies:
+                company.province = prov
+                company.save()
+                print(prov.name + ' FK updated for ' +
+                        company.ts_code + ' StockNameCode.')
+    except Exception as err:
+        print(err)

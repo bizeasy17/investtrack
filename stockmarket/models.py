@@ -30,6 +30,42 @@ class BaseModel(models.Model):
         pass
 
 
+
+class Province(BaseModel):
+    name = models.CharField(
+        _('省份'), max_length=50, blank=False, null=False, unique=True, db_index=True, )  # name e.g. 平安银行
+    country = models.CharField(
+        _('国家'), max_length=50, blank=True, null=False, default='中国')
+    province_pinyin = models.CharField(
+        _('省份拼音'), max_length=50, blank=True, null=True,)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('name','country')
+        verbose_name = _('省份')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
+class City(BaseModel):
+    name = models.CharField(
+        _('城市'), max_length=50, blank=False, null=False, unique=True, db_index=True)  # name e.g. 平安银行
+    province = models.ForeignKey(Province, related_name='city_province', blank=True, null=True, on_delete=models.SET_NULL)
+    city_pinyin = models.CharField(
+        _('城市拼音'), max_length=50, blank=True, null=True,)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('name','province')
+        verbose_name = _('城市')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
+
+
 class Industry(BaseModel):
     industry = models.CharField(
         _('行业'), max_length=50, blank=False, null=False, unique=True, db_index=True)  # name e.g. 平安银行
@@ -109,6 +145,8 @@ class StockNameCodeMap(BaseModel):
         _('TS代码'), max_length=50, blank=True, null=False, unique=True)  # e.g. 000001.SZ
     area = models.CharField(_('所在地域'), max_length=50,
                             blank=True, null=True)
+    province = models.ForeignKey(Province, related_name='province',
+                                blank=True, null=True, on_delete=models.SET_NULL)
     industry = models.CharField(
         _('所属行业'), max_length=50, blank=True, null=True)
     ind = models.ForeignKey(Industry, related_name='company_ind',
@@ -198,8 +236,12 @@ class CompanyBasic(BaseModel):
         _('注册日期'), blank=True, null=True)
     province = models.CharField(
         _('所在省'), max_length=50, blank=True, null=True)
+    shengfen = models.ForeignKey(Province, related_name='company_province',
+                                blank=True, null=True, on_delete=models.SET_NULL)
     city = models.CharField(
         _('城市'), max_length=50, blank=True, null=True)
+    chengshi = models.ForeignKey(City, related_name='company_city',
+                                blank=True, null=True, on_delete=models.SET_NULL)
     introduction = models.CharField(
         _('介绍'), max_length=5000, blank=True, null=True)
     website = models.CharField(

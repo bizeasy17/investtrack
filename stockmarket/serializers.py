@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
 
-from .models import CompanyDailyBasic, StockNameCodeMap, Industry
+from .models import CompanyDailyBasic, Province, StockNameCodeMap, Industry, City
 
 BOARD_LIST = {
     'SHZB': '上海主板',
@@ -32,7 +32,7 @@ BOARD_LIST = {
 #     ps_10pct = models.FloatField(_('PS低位'), blank=False, null=False, )
 #     ps_50pct = models.FloatField(_('PS中位'), blank=False, null=False, )
 #     ps_90pct = models.FloatField(_('PS高位'), blank=False, null=False, )
-    
+
 
 #     class Meta:
 #         ordering = ['industry']
@@ -61,7 +61,6 @@ class CompanyDailyBasicExt(CompanyDailyBasic):
     jiuzhuan_s = models.IntegerField(_('九转卖'), blank=False, null=False, )
     industry = models.CharField(
         _('所属行业'), max_length=50, blank=False, null=False, )
-
 
     class Meta:
         ordering = ['ts_code']
@@ -104,6 +103,7 @@ class IndustrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Industry
         fields = ['industry']
+
 
 class CompanySerializer(serializers.ModelSerializer):
 
@@ -209,3 +209,17 @@ class IndustryBasicQuantileSerializer(serializers.ModelSerializer):
         model = IndustryBasicQuantileStat
         # fields = ['trade_date', 'turnover_rate',
         #           'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']
+
+
+class ProvinceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Province
+        fields = ['name']
+
+
+class CitySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = City
+        fields = ['name']
