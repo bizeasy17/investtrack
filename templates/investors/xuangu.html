@@ -63,8 +63,26 @@
     <div class="overlay"></div>
     <div class="container">
       <div class="row text-center ">
-        <div class="col-lg-12"><span class="text-muted">{% trans '沪深A股共有' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>{% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%}
+        <div class="col-lg-12">
+          <!-- <span class="text-muted">{% trans '沪深A股共有' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>
+          {% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%} -->
+          <div class="container small col-lg-12 industry">
+            <span class="text-muted" >{%trans '行业市盈率: '%}</span>
+            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1pe"></i> </span>
+            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5pe"></i> </span>
+            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9pe"></i> </span>
+
+            <span class="text-muted ml-2" >{%trans '行业市净: '%}</span>
+            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1pb"></i> </span>
+            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5pb"></i> </span>
+            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9pb"></i> </span>
+
+            <span class="text-muted ml-2" >{%trans '行业市销: '%}</span>
+            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1ps"></i> </span>
+            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5ps"></i> </span>
+            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9ps"></i> </span>
           </div>
+        </div>
         
         <input type="hidden" id="myIndustries" value="{{industries}}"/>
       </div>
@@ -213,6 +231,7 @@
             </div>
             {% endif %}
           </div>
+          
           <div class="row col-lg-12">
             <table class="table table-sm table-borderless mt-2">
 
@@ -243,6 +262,14 @@
               
             </table>
           </div>
+          <div class="row col-lg-12">
+              <nav aria-label="Page navigation">
+                  <ul class="pagination">
+                      <li class="page-item small"><a class="page-link" href="javascript:void(0)">{% trans '<< 前50条' %}</a></li>
+                      <li class="page-item small"><a class="page-link" href="javascript:void(0">{% trans '后50条 >>' %}</a></li>
+                  </ul>
+              </nav>
+          </div>  
         </div>
       </div>
     </div>

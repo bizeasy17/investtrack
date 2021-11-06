@@ -14,6 +14,11 @@ $(function () {
 
     var startIdx = 0;
     var endIdx = 50;
+    var rowCount = 50;
+    var currentIdx = 0;
+    var prevStockPickTr = undefined;
+    var totalRowCount = 0
+    var prevPagination;
 
     $(window).keydown(function (event) {
         if ((event.keyCode == 13) && ($("#searchText").val() == "")) {
@@ -131,6 +136,25 @@ $(function () {
         });
     }
 
+    var bindIndustryBasic = function(industry) {
+        $.ajax({
+            url: stockmarketEndpoint + "industries/" + industry + "/",
+            success: function (data) {
+                if(data.length > 0){
+                    $("[id='iqt.1pe']").text(" " + data[0].pe_low);
+                    $("[id='iqt.5pe']").text(" " + data[0].pe_med);
+                    $("[id='iqt.9pe']").text(" " + data[0].pe_high);
+                    $("[id='iqt.1pb']").text(" " + data[0].pb_low);
+                    $("[id='iqt.5pb']").text(" " + data[0].pb_med);
+                    $("[id='iqt.9pb']").text(" " + data[0].pb_high);
+                    $("[id='iqt.1ps']").text(" " + data[0].ps_low);
+                    $("[id='iqt.5ps']").text(" " + data[0].ps_med);
+                    $("[id='iqt.9ps']").text(" " + data[0].ps_high);
+                }
+            }
+        });
+    }
+
     var showFilterResult = function(filters, startIdx, endIdx){
         $.ajax({
             url: investorsEndpoint + "xuangu/filters/" + filters + "/" + startIdx + "/" + endIdx + "/",
@@ -174,6 +198,7 @@ $(function () {
                             '</tr>';
                         $("#resultTbody").append(stockCard);
                     })
+                    totalRowCount = data.length;
                 }
             },
             complete: function (request, status) {
@@ -221,6 +246,7 @@ $(function () {
             showBasicFilter();
         }
         industry = $(this).val();
+        bindIndustryBasic($(this).val());
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps);
         showFilterResult(filter, startIdx, endIdx);
@@ -297,8 +323,29 @@ $(function () {
         showFilterResult(filter, startIdx, endIdx);
     });
 
+
+    $(".pagination").on("click", ".page-item", function (event) {
+        if ($(this).index() == 0) {
+            // prev
+            if (currentIdx == 0) return;
+            else {
+                currentIdx -= rowCount;
+            }
+            console.log(currentIdx);
+        } else {
+            // next
+            if (currentIdx + rowCount + 1 > totalRowCount) {
+                return;
+            }
+            currentIdx += rowCount;
+            console.log(currentIdx);
+        }
+
+        prevPagination = $(this);
+        showFilterResult(filter, currentIdx, currentIdx+rowCount);
+    });
     
 
     filter = buildFilter(board, province, city, industry, pe, pb, ps);
-    showFilterResult(filter, startIdx, endIdx);
+    showFilterResult(filter, currentIdx, endIdx);
 });
