@@ -8,7 +8,7 @@ from django.db import transaction
 from search.utils import pinyin_abbrev
 from stockmarket.models import (CompanyBasic, CompanyDailyBasic,
                                 CompanyManagers, ManagerRewards,
-                                StockNameCodeMap)
+                                StockNameCodeMap, Province, City)
 from users.models import User
 
 
@@ -175,7 +175,7 @@ def store_company_basic(company, data):
                 cb.main_business = row['main_business']
                 cb.business_scope = row['business_scope']
                 cb.secretary = row['secretary']
-            except Exception as e:
+            except CompanyBasic.DoesNotExist:
                 # cn_tz = pytz.timezone("Asia/Shanghai")
                 # print(e)
                 cb = CompanyBasic(ts_code=row['ts_code'], stock_code=row['ts_code'].split('.')[0], chairman=row['chairman'], manager=row['manager'], reg_capital=row['reg_capital'],
@@ -184,6 +184,20 @@ def store_company_basic(company, data):
                     'website'], email=row['email'], office=row['office'], secretary=row['secretary'],
                     employees=row['employees'], main_business=row['main_business'], business_scope=row['business_scope'],
                     index_category=index_ctg, company=company)
+
+            # 创建省份或者城市，如果不存在
+            try:
+                p = Province.objects.get(name=row['province'])
+            except Province.DoesNotExist:
+                p = Province(name=row['province'])
+                p.save()
+
+            try:
+                c = City.objects.get(name=row['city'], province=p)
+            except City.DoesNotExist:
+                c = City(name=row['city'], province=p)
+                c.save()
+
             cb.save()
 
 

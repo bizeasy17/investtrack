@@ -13,8 +13,8 @@ $(function () {
     var prevIndMoreFilter = undefined;
 
     var startIdx = 0;
-    var endIdx = 50;
-    var rowCount = 50;
+    var endIdx = 25;
+    var rowCount = 25;
     var currentIdx = 0;
     var prevStockPickTr = undefined;
     var totalRowCount = 0
@@ -69,11 +69,11 @@ $(function () {
         // });
     });
 
-    var buildFilter = function(board, province, city, industry, pe, pb, ps){
-        return board + "," + province + "," + city + "," + industry + "," + pe + "," + pb + "," + ps; 
+    var buildFilter = function (board, province, city, industry, pe, pb, ps) {
+        return board + "," + province + "," + city + "," + industry + "," + pe + "," + pb + "," + ps;
     }
 
-    var showBasicFilter = function(){
+    var showBasicFilter = function () {
         if (!$("#basicFilter").is(":visible")) {
             $("#basicFilter").removeClass("d-none");
             $("#basicFilter").slideDown();
@@ -102,32 +102,32 @@ $(function () {
         showFilterResult(filter, startIdx, endIdx);
     }
 
-    var bindCityFilter = function(province) {
+    var bindCityFilter = function (province) {
         $.ajax({
             url: stockmarketEndpoint + "province/" + province + "/cities/4/",
-            success: function(data){
+            success: function (data) {
                 $("#cityFilter").empty();
-                var cityInput = 
-                    '<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">'+
-                        '<label class="btn btn-light active">' +
-                            '<input type="radio" name="city" autocomplete="off" value="0" checked/><span class="text-warning">全部</span>'+
-                        '</label>';
-                $(data).each(function(idx, obj){
-                    cityInput += 
-                        '<label class="btn btn-light">'+
-                            '<input type="radio" name="city" autocomplete="off" value="'+obj.name+'" />'+obj.name+
+                var cityInput =
+                    '<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">' +
+                    '<label class="btn btn-light active">' +
+                    '<input type="radio" name="city" autocomplete="off" value="0" checked/><span class="text-warning">全部</span>' +
+                    '</label>';
+                $(data).each(function (idx, obj) {
+                    cityInput +=
+                        '<label class="btn btn-light">' +
+                        '<input type="radio" name="city" autocomplete="off" value="' + obj.name + '" />' + obj.name +
                         '</label>';
                 })
-                cityInput += 
-                        '<label class="btn btn-light">' +
-                            '<input type="radio" name="city" autocomplete="off" value="more" />更多' +
-                        '</label>'+
+                cityInput +=
+                    '<label class="btn btn-light">' +
+                    '<input type="radio" name="city" autocomplete="off" value="more" />更多' +
+                    '</label>' +
                     '</div>'
                 $("#cityFilter").append(cityInput);
 
-                
+
             },
-            complete: function(request, status){
+            complete: function (request, status) {
                 var cities = document.getElementsByName('city');
                 $(cities).each(function (idx, obj) {
                     $(obj).on('change', cityChange);
@@ -136,11 +136,12 @@ $(function () {
         });
     }
 
-    var bindIndustryBasic = function(industry) {
+    var bindIndustryBasic = function (industry) {
         $.ajax({
             url: stockmarketEndpoint + "industries/" + industry + "/",
             success: function (data) {
-                if(data.length > 0){
+                if (data.length > 0) {
+                    $("#headIndustry").text("("+industry+") ");
                     $("[id='iqt.1pe']").text(" " + data[0].pe_low);
                     $("[id='iqt.5pe']").text(" " + data[0].pe_med);
                     $("[id='iqt.9pe']").text(" " + data[0].pe_high);
@@ -155,51 +156,71 @@ $(function () {
         });
     }
 
-    var showFilterResult = function(filters, startIdx, endIdx){
+    var showFilterResult = function (filters, startIdx, endIdx) {
         $.ajax({
             url: investorsEndpoint + "xuangu/filters/" + filters + "/" + startIdx + "/" + endIdx + "/",
             success: function (data) {
                 $("#resultTbody").empty();
-
-                if(data.length == 0){
+                $("#message").removeClass("d-none");
+                if (data.count == 0) {
                     // alert("no data");
-                    $("#message").removeClass("d-none");
                     $("#message").text("无查询结果.");
-                }else{
-                    $("#message").addClass("d-none");
-                
-                    $(data).each(function (idx, obj) {
+                } else {
+                    $(data.results).each(function (idx, obj) {
                         var textColor = "text-danger";
-                        if(parseFloat(obj.chg_pct) < 0) {
+                        var pe = "";
+                        var pe_ttm = "";
+                        if (parseFloat(obj.chg_pct) < 0) {
                             textColor = "text-success";
                         }
-                        var stockCard = 
-                            '<tr>'+
-                                '<td id="cd{{k}}"><a href="/?q='+obj.ts_code+'" class="text-primary" target="_blank">'+obj.ts_code+'</a></td>'+
-                                '<td id="nm{{k}}"><a href="/?q='+obj.ts_code+'" class="text-primary" target="_blank">'+obj.stock_name+'</a></td>'+
-                                '<td class="text-muted" id="pe{{k}}">'+obj.industry+'</td>'+
+                        if (parseFloat(obj.pe) == 0) {
+                            pe = "亏"
+                        } else {
+                            pe = math.format(parseFloat(obj.pe), 3);
+                        }
+                        if (parseFloat(obj.pe_ttm) == 0) {
+                            pe_ttm = "亏"
+                        } else {
+                            pe_ttm = math.format(parseFloat(obj.pe_ttm), 3);
+                        }
+                        var stockCard =
+                            '<tr>' +
+                            '<td id="cd{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.ts_code + '</a></td>' +
+                            '<td id="nm{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.stock_name + '</a></td>' +
+                            '<td class="text-muted" id="pe{{k}}">' + obj.industry + '</td>' +
 
-                                '<td class="' + textColor + '" id="p{{k}}"><span>' + math.format(parseFloat(obj.close),3)+'</span></td>'+
-                                '<td class="'+textColor+'" id="pct{{k}}"><span>'+math.format(parseFloat(obj.chg_pct),3)+'%</span></td>'+
-                                '<td class="text-muted" id="pe{{k}}"><span>PE ('+math.format(parseFloat(obj.pe),3)+')</span></td>'+
-                                '<td class="text-muted" id="pe{{k}}"><span>PE动 ('+math.format(parseFloat(obj.pe_ttm),3)+')</span></td>'+
-                                '<td class="text-muted" id="pb{{k}}"><span>PB ('+math.format(parseFloat(obj.pb),3)+')</span></td>'+
-                                '<td class="text-muted" id="ps{{k}}"><span>PS ('+math.format(parseFloat(obj.ps),3)+')</span></td>'+
-                                '<td class="text-muted" id="ps{{k}}"><span>市值 ('+math.format(parseFloat(obj.total_mv)/10000,4)+'亿元)</span></td>'+
+                            '<td class="' + textColor + '" id="p{{k}}"><span>' + math.format(parseFloat(obj.close), 3) + '</span></td>' +
+                            '<td class="' + textColor + '" id="pct{{k}}"><span>' + math.format(parseFloat(obj.chg_pct), 3) + '%</span></td>' +
+                            '<td class="text-muted" id="pe{{k}}"><span>PE (' + pe + ')</span></td>' +
+                            '<td class="text-muted" id="pe{{k}}"><span>PE动 (' + pe_ttm + ')</span></td>' +
+                            '<td class="text-muted" id="pb{{k}}"><span>PB (' + math.format(parseFloat(obj.pb), 3) + ')</span></td>' +
+                            '<td class="text-muted" id="ps{{k}}"><span>PS (' + math.format(parseFloat(obj.ps), 3) + ')</span></td>' +
+                            '<td class="text-muted" id="ps{{k}}"><span>市值 (' + math.format(parseFloat(obj.total_mv) / 10000, 4) + '亿元)</span></td>' +
 
-                                '<td class="dropdown">'+
-                                    '<a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">'+
-                                        '<i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>'+
-                                    '</a>'+
-                                    '<div class="dropdown-menu" aria-labelledby="navbarDropdown">'+
-                                        '<a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">无消息</a>'+
-                                    '</div>'+
-                                '</td>'+
+                            '<td class="dropdown">' +
+                            '<a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">' +
+                            '<i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>' +
+                            '</a>' +
+                            '<div class="dropdown-menu" aria-labelledby="navbarDropdown">' +
+                            '<a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">无消息</a>' +
+                            '</div>' +
+                            '</td>' +
                             '</tr>';
                         $("#resultTbody").append(stockCard);
                     })
-                    totalRowCount = data.length;
+                    totalRowCount = data.count;
+                    $("#message").text("共有" + totalRowCount + "条结果，当前" + (currentIdx+1).toString() + " - " + (currentIdx + rowCount).toString() + "条");
                 }
+            },
+            404: function () {
+                $("#resultTbody").empty();
+                console.info("404 page not found");
+            },
+            500: function () {
+                $("#resultTbody").empty();
+                $("#message").removeClass("d-none");
+                $("#message").text("500 internal server error");
+                console.info("500 internal server error");
             },
             complete: function (request, status) {
                 $("#spinner").addClass("d-none");
@@ -226,7 +247,7 @@ $(function () {
 
         if (province != "0") {
             bindCityFilter(province);
-        }else{
+        } else {
             city = "0";
         }
         showCityFilter(province);
@@ -242,9 +263,9 @@ $(function () {
         $("#spinner").removeClass("d-none");
         $("#message").addClass("d-none");
 
-        if (industry == "0" || $(this).val() == "0"){
-            showBasicFilter();
-        }
+        // if (industry == "0" || $(this).val() == "0") {
+        //     showBasicFilter();
+        // }
         industry = $(this).val();
         bindIndustryBasic($(this).val());
 
@@ -325,6 +346,8 @@ $(function () {
 
 
     $(".pagination").on("click", ".page-item", function (event) {
+        $("#spinner").removeClass("d-none");
+
         if ($(this).index() == 0) {
             // prev
             if (currentIdx == 0) return;
@@ -342,9 +365,9 @@ $(function () {
         }
 
         prevPagination = $(this);
-        showFilterResult(filter, currentIdx, currentIdx+rowCount);
+        showFilterResult(filter, currentIdx, currentIdx + rowCount);
     });
-    
+
 
     filter = buildFilter(board, province, city, industry, pe, pb, ps);
     showFilterResult(filter, currentIdx, endIdx);

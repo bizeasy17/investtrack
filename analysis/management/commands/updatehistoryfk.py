@@ -11,13 +11,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            companies = StockNameCodeMap.objects.all()
+            history_list = []
+            companies = StockNameCodeMap.objects.all().order_by('-ts_code')
             for c in companies:
                 close_results = StockHistoryDaily.objects.filter(
-                    ts_code=c.ts_code)
+                    ts_code=c.ts_code, company=None)
                 for history in close_results:
                     history.company = c
-                    history.save()
+                    history_list.append(history)
+                    # history.save()
+                StockHistoryDaily.objects.bulk_update(history_list, ['company'])
+                history_list.clear()
                 print(c.ts_code + ' updated.')
         except Exception as err:
             print(err)

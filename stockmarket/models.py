@@ -314,6 +314,60 @@ class IndexDailyBasic(BaseModel):
         get_latest_by = 'id'
 
 
+class CompanyBasicFilter(BaseModel):
+    company = models.OneToOneField(StockNameCodeMap, related_name='basic_filter',
+                                blank=True, null=True, on_delete=models.SET_NULL)
+
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日期'), blank=True, null=True)
+    turnover_rate = models.IntegerField(
+        _('换手率'), blank=True, null=True)
+    turnover_rate_f = models.IntegerField(
+        _('换手率(自由流通)'), blank=True, null=True)
+    volume_ratio = models.IntegerField(_('量比'),
+                                     blank=True, null=True)
+    pe = models.IntegerField(
+        _('市盈率'), blank=True, null=True)
+    pe_ttm = models.IntegerField(
+        _('市盈率TTM'), blank=True, null=True)
+    pb = models.IntegerField(
+        _('市净率'), blank=True, null=True)
+    ps = models.IntegerField(
+        _('市销率'), blank=True, null=True)
+    ps_ttm = models.IntegerField(
+        _('市销率TTM'), blank=True, null=True)
+    dv_ratio = models.IntegerField(
+        _('股息'), blank=True, null=True)
+    dv_ttm = models.IntegerField(
+        _('股息率TTM'), blank=True, null=True)
+    total_share = models.IntegerField(
+        _('总股本'), blank=True, null=True)
+    float_share = models.IntegerField(
+        _('流通股本'), blank=True, null=True)
+    free_share = models.IntegerField(
+        _('自由流通股本'), blank=True, null=True)
+    total_mv = models.IntegerField(
+        _('总市值'), blank=True, null=True)  # name e.g. 平安银行
+    circ_mv = models.IntegerField(
+        _('流通市值'), blank=True, null=True)  # name e.g. 平安银行
+
+    def __str__(self):
+        return self.ts_code
+
+    # def save(self, *args, **kwargs):
+    #     self.stock_code = self.stock_code + '.' + self.market
+    #     super.save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-ts_code']
+        verbose_name = _('公司基本面过滤器')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+        # unique_together = ('ts_code', 'trade_date',)
+
+
 class CompanyDailyBasic(BaseModel):
     company = models.ForeignKey(StockNameCodeMap, related_name='daily_basic',
                                 blank=True, null=True, on_delete=models.SET_NULL)

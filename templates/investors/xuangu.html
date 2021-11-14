@@ -67,20 +67,21 @@
           <!-- <span class="text-muted">{% trans '沪深A股共有' %}{{cnt_stk}}{% trans '只股票，' %}{{cnt_ind}}{% trans '个行业。'%}</span>
           {% if not request.user.is_authenticated %}<a href="{%url 'account:login' %}">{% trans '请登录' %}</a>{%endif%} -->
           <div class="container small col-lg-12 industry">
+            <span class="text-muted" id="headIndustry"></span>
             <span class="text-muted" >{%trans '行业市盈率: '%}</span>
-            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1pe"></i> </span>
-            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5pe"></i> </span>
-            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9pe"></i> </span>
+            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1pe"> - </i> </span>
+            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5pe"> - </i> </span>
+            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9pe"> - </i> </span>
 
             <span class="text-muted ml-2" >{%trans '行业市净: '%}</span>
-            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1pb"></i> </span>
-            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5pb"></i> </span>
-            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9pb"></i> </span>
+            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1pb"> - </i> </span>
+            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5pb"> - </i> </span>
+            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9pb"> - </i> </span>
 
             <span class="text-muted ml-2" >{%trans '行业市销: '%}</span>
-            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1ps"></i> </span>
-            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5ps"></i> </span>
-            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9ps"></i> </span>
+            <span><i class="fa fa-circle text-success small" aria-hidden="true" id="iqt.1ps"> - </i> </span>
+            <span><i class="fa fa-circle text-warning small" aria-hidden="true" id="iqt.5ps"> - </i> </span>
+            <span><i class="fa fa-circle text-danger small" aria-hidden="true" id="iqt.9ps"> - </i> </span>
           </div>
         </div>
         
@@ -95,7 +96,7 @@
                 <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                     <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
                     <label class="btn btn-light active">
-                        <input type="radio" name="board" autocomplete="off" value="all" checked/><span class="text-warning">{% trans '沪深A' %}</span>
+                        <input type="radio" name="board" autocomplete="off" value="all" checked/><span class="text-warning">{% trans '全部' %}</span>
                     </label>
                     <label class="btn btn-light">
                         <input type="radio" name="board" autocomplete="off" value="60"/>{% trans '沪主板' %}
@@ -160,7 +161,7 @@
                   <span class="industry-more badge mt-1">{{i.industry}}</span>
                 {% endfor %}
             </div>
-            <div class="mt-1 d-none" id="basicFilter">
+            <div class="mt-1" id="basicFilter">
               <div class="col-lg-12">
                   <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
                       <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
@@ -168,13 +169,13 @@
                           <input type="radio" name="pe" autocomplete="off" value="0" checked/><span class="text-warning">{% trans '全部' %}</span>
                       </label>
                       <label class="btn btn-light">
-                          <input type="radio" name="pe" autocomplete="off" value="1"/>{% trans 'PE高' %}
+                          <input type="radio" name="pe" autocomplete="off" value="3"/>{% trans 'PE高' %}
                       </label>
                       <label class="btn btn-light">
                           <input type="radio" name="pe" autocomplete="off" value="2"/>{% trans 'PE中' %}
                       </label>
                       <label class="btn btn-light">
-                          <input type="radio" name="pe" autocomplete="off" value="3"/>{% trans 'PE低' %}
+                          <input type="radio" name="pe" autocomplete="off" value="1"/>{% trans 'PE低' %}
                       </label>
                       <label class="btn btn-light">
                           <input type="radio" name="pe" autocomplete="off" value="-1"/>{% trans 'PE亏' %}
@@ -188,13 +189,13 @@
                           <input type="radio" name="pb" autocomplete="off" value="0" checked/><span class="text-warning">{% trans '全部' %}</span>
                       </label>
                       <label class="btn btn-light">
-                          <input type="radio" name="pb" autocomplete="off" value="1"/>{% trans 'PB高' %}
+                          <input type="radio" name="pb" autocomplete="off" value="3"/>{% trans 'PB高' %}
                       </label>
                       <label class="btn btn-light">
                           <input type="radio" name="pb" autocomplete="off" value="2"/>{% trans 'PB中' %}
                       </label>
                       <label class="btn btn-light ">
-                          <input type="radio" name="pb" autocomplete="off" value="3" checked/>{% trans 'PB低' %}
+                          <input type="radio" name="pb" autocomplete="off" value="1" checked/>{% trans 'PB低' %}
                       </label>
                   </div>
               </div>
@@ -205,13 +206,13 @@
                           <input type="radio" name="ps" autocomplete="off" value="0" checked/><span class="text-warning">{% trans '全部' %}</span>
                       </label>
                       <label class="btn btn-light">
-                          <input type="radio" name="ps" autocomplete="off" value="1"/>{% trans 'PS高' %}
+                          <input type="radio" name="ps" autocomplete="off" value="3"/>{% trans 'PS高' %}
                       </label>
                       <label class="btn btn-light">
                           <input type="radio" name="ps" autocomplete="off" value="2"/>{% trans 'PS中' %}
                       </label>
                       <label class="btn btn-light ">
-                          <input type="radio" name="ps" autocomplete="off" value="3"/>{% trans 'PS低' %}
+                          <input type="radio" name="ps" autocomplete="off" value="1"/>{% trans 'PS低' %}
                       </label>
                   </div>
               </div>
@@ -263,12 +264,14 @@
             </table>
           </div>
           <div class="row col-lg-12">
+            <div class="ml-auto">
               <nav aria-label="Page navigation">
                   <ul class="pagination">
-                      <li class="page-item small"><a class="page-link" href="javascript:void(0)">{% trans '<< 前50条' %}</a></li>
-                      <li class="page-item small"><a class="page-link" href="javascript:void(0">{% trans '后50条 >>' %}</a></li>
+                      <li class="page-item small"><a class="page-link" href="javascript:void(0)">{% trans '<< 前25条' %}</a></li>
+                      <li class="page-item small"><a class="page-link" href="javascript:void(0">{% trans '后25条 >>' %}</a></li>
                   </ul>
               </nav>
+            </div>
           </div>  
         </div>
       </div>

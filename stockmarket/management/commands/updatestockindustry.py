@@ -15,16 +15,20 @@ class Command(BaseCommand):
             companies_bef = StockNameCodeMap.objects.filter(asset='E').order_by().values('industry').distinct()
             # companies = StockNameCodeMap.objects.all()
             for c in companies_bef:
-                i = Industry(industry=c['industry'], industry_pinyin=pinyin_abbrev(
-                    c['industry']))
-                i.save()
-                print(c['industry'] + ' created.')
+                if c['industry'] is not None:
+                    try:
+                        i = Industry.objects.get(industry=c['industry'])
+                    except Industry.DoesNotExist:
+                        i = Industry(industry=c['industry'], industry_pinyin=pinyin_abbrev(
+                            c['industry']))
+                        i.save()
+                        print(c['industry'] + ' created.')
 
-                companies_aft = StockNameCodeMap.objects.filter(industry=c['industry'])
-                for c in companies_aft:
-                    c.ind = i
-                    c.save()
-                    print(i.industry + ' FK updated for '+ c.ts_code +' StockNameCode.')
+                    companies_aft = StockNameCodeMap.objects.filter(industry=c['industry'])
+                    for c in companies_aft:
+                        c.ind = i
+                        c.save()
+                        print(i.industry + ' FK updated for '+ c.ts_code +' StockNameCode.')
         except Exception as err:
             print(err)
 

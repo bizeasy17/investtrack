@@ -65,18 +65,18 @@ class CompanyHistoryDailyBasicList(APIView):
         try:
             if filter_list[0] == '3':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='3').order_by('-ts_code')
+                    ts_code__startswith='3').order_by('ts_code')
             elif filter_list[0] == '688':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='688').order_by('-ts_code')
+                    ts_code__startswith='688').order_by('ts_code')
             elif filter_list[0] == '0':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='0').order_by('-ts_code')
+                    ts_code__startswith='0').order_by('ts_code')
             elif filter_list[0] == '60':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='60').order_by('-ts_code')
+                    ts_code__startswith='60').order_by('ts_code')
             else:
-                my_stocks = StockNameCodeMap.objects.all().order_by('-ts_code')
+                my_stocks = StockNameCodeMap.objects.all().order_by('ts_code')
 
             # 省份过滤
             if filter_list[1] != '0':
@@ -103,62 +103,87 @@ class CompanyHistoryDailyBasicList(APIView):
                 #     ind__industry=filter_list[3])
                 pass
 
-            my_stocks = my_stocks[start_idx:end_idx]
+            # if filter_list[4] == '1':  # low
+            #     my_stocks = my_stocks.filter(basic_filter__pe_low='Y')
 
+            # PE高低过滤
+            if filter_list[4] != '0':  
+                my_stocks = my_stocks.filter(
+                    basic_filter__pe=int(filter_list[4]))
+
+            # PB高低过滤
+            if filter_list[5] != '0':
+                my_stocks = my_stocks.filter(
+                    basic_filter__pb=int(filter_list[5]))
+
+            # PS高低过滤
+            if filter_list[6] != '0':
+                my_stocks = my_stocks.filter(
+                    basic_filter__ps=int(filter_list[6]))
+
+            total_count = len(my_stocks)
+            my_stocks = my_stocks[start_idx:end_idx]
+            # count = 0
             for stock in my_stocks:
+                # if count > end_idx:
+                #     break
+
                 db = stock.get_latest_daily_basic()
                 dc = stock.get_latest_history()
 
                 if db is None or dc is None:
                     continue
+                
+                # # 选中行业过滤器
+                # if filter_list[3] != '0':
+                #     # PE高低过滤
+                #     # if filter_list[4] != 0:
+                #     if filter_list[4] == '-1':  # 亏损
+                #         if db.pe is not None:
+                #             continue
+                #     elif filter_list[4] == '1':  # low
+                #         if db.pe is None or db.pe > ind.pe_10pct * 1.1:
+                #             continue
+                #     elif filter_list[4] == '2':  # med
+                #         if db.pe is None or (db.pe > ind.pe_50pct * 1.2 or db.pe < ind.pe_50pct * 0.8):
+                #             continue
+                #     elif filter_list[4] == '3':  # high
+                #         if db.pe is None or db.pe < ind.pe_90pct * 0.9:
+                #             continue
 
-                if filter_list[3] != '0':
-                    # PE高低过滤
-                    # if filter_list[4] != 0:
-                    if filter_list[4] == '-1':  # 亏损
-                        if not np.isnan(db.pe):
-                            continue
-                    elif filter_list[4] == '1':  # low
-                        if np.isnan(db.pe) or db.pe > ind.pe_10pct * 1.1:
-                            continue
-                    elif filter_list[4] == '2':  # med
-                        if np.isnan(db.pe) or (db.pe > ind.pe_50pct * 1.2 or db.pe < ind.pe_50pct * 0.8):
-                            continue
-                    elif filter_list[4] == '3':  # high
-                        if np.isnan(db.pe) or db.pe < ind.pe_90pct * 0.9:
-                            continue
+                #     # PB高低过滤
+                #     if filter_list[5] == '1':
+                #         if db.pb is not None and db.pb > ind.pb_10pct * 1.1:
+                #             continue
+                #     elif filter_list[5] == '2':
+                #         if db.pb is not None and (db.pb > ind.pb_50pct * 1.2 or db.pb < ind.pb_50pct * 0.8):
+                #             continue
+                #     elif filter_list[5] == '3':
+                #         if db.pb is not None and db.pb < ind.pb_90pct * 0.9:
+                #             continue
 
-                    # PB高低过滤
-                    if filter_list[5] == '1':
-                        if db.pb > ind.pb_10pct * 1.1:
-                            continue
-                    elif filter_list[5] == '2':
-                        if db.pb > ind.pb_50pct * 1.2 or db.pb < ind.pb_50pct * 0.8:
-                            continue
-                    elif filter_list[5] == '3':
-                        if db.pb < ind.pb_90pct * 0.9:
-                            continue
-
-                    # PS高低过滤
-                    if filter_list[6] == '1':
-                        if db.ps > ind.ps_10pct * 1.1:
-                            continue
-                    elif filter_list[6] == '2':
-                        if db.ps > ind.ps_50pct * 1.2 or db.ps < ind.ps_50pct * 0.8:
-                            continue
-                    elif filter_list[6] == '3':
-                        if db.ps < ind.ps_90pct * 0.9:
-                            continue
+                #     # PS高低过滤
+                #     if filter_list[6] == '1':
+                #         if db.ps is not None and db.ps > ind.ps_10pct * 1.1:
+                #             continue
+                #     elif filter_list[6] == '2':
+                #         if db.ps is not None and (db.ps > ind.ps_50pct * 1.2 or db.ps < ind.ps_50pct * 0.8):
+                #             continue
+                #     elif filter_list[6] == '3':
+                #         if db.ps is not None and db.ps < ind.ps_90pct * 0.9:
+                #             continue
 
                 cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps,
                                               ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, total_mv=db.total_mv, trade_date=dc.trade_date)
 
                 cdbext_list.append(cdbext)
 
+                # count += 1
+
             serializer = CompanyDailyBasicExtSerializer(
                 cdbext_list, many=True)
             # serializer.fields = basic_type.split(',')
-            return Response(serializer.data)
+            return Response({'count': total_count, 'results': serializer.data})
         except CompanyDailyBasic.DoesNotExist:
             raise Http404
         except Exception as err:

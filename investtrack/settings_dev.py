@@ -80,9 +80,9 @@ REST_FRAMEWORK = {
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
         # 'django.contrib.auth'
     ]
-    # ,
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    # 'PAGE_SIZE': 10
+    ,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25
 }
 
 MIDDLEWARE = [
@@ -160,30 +160,30 @@ WSGI_APPLICATION = 'investtrack.wsgi.application'
 # }
 
 # Change the database connection to postgresql
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'investtrack',
-        'USER': 'db_usr',
-        'PASSWORD': 'password',
-        'HOST': '127.0.0.1',
-        'PORT': 5432,
-        'OPTIONS': {'client_encoding': 'UTF8'},
-    }
-}
-
-# PROD
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'investtrack_prod',
-#         'USER': 'db_user1',
-#         'PASSWORD': 'password1!',
-#         'HOST': '39.100.215.105',
+#         'NAME': 'investtrack',
+#         'USER': 'db_usr',
+#         'PASSWORD': 'password',
+#         'HOST': '127.0.0.1',
 #         'PORT': 5432,
 #         'OPTIONS': {'client_encoding': 'UTF8'},
 #     }
 # }
+
+# PROD
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'investtrack_prod',
+        'USER': 'db_user1',
+        'PASSWORD': 'password1!',
+        'HOST': '39.100.215.105',
+        'PORT': 5432,
+        'OPTIONS': {'client_encoding': 'UTF8'},
+    }
+}
 
 # Logging configuration
 LOGGING = {
