@@ -1,5 +1,6 @@
 
 # from analysis.models import IndustryBasicQuantileStat
+from datetime import date
 from django.core.management.base import BaseCommand, CommandError
 from stockmarket.models import CompanyBasicFilter, Industry, StockNameCodeMap
 from search.utils import pinyin_abbrev
@@ -12,6 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
+            today = date.today()
             industries = Industry.objects.all().exclude(pe_10pct=None)
             companies = StockNameCodeMap.objects.order_by('ts_code').all()
             for company in companies:
@@ -66,7 +68,8 @@ class Command(BaseCommand):
                             filter.ps = 2
                         if db.ps is not None and db.ps >= ind.ps_90pct * 0.9:
                             filter.ps = 3
-                    
+                        
+                        filter.trade_date = today
                         filter.save()
                         print(stock.ts_code + ' filter populated.')
                 print(ind.industry + ' processed')

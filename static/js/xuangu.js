@@ -289,9 +289,9 @@ $(function () {
         $("#spinner").removeClass("d-none");
         $("#message").addClass("d-none");
 
-        if (industry == "0" || $(this).val() == "0") {
-            showBasicFilter();
-        }
+        // if (industry == "0" || $(this).val() == "0") {
+        //     showBasicFilter();
+        // }
         industry = $(this).text();
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps);
