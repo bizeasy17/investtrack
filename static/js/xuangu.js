@@ -185,26 +185,27 @@ $(function () {
                         }
                         var stockCard =
                             '<tr>' +
-                            '<td id="cd{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.ts_code + '</a></td>' +
-                            '<td id="nm{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.stock_name + '</a></td>' +
-                            '<td class="text-muted" id="pe{{k}}">' + obj.industry + '</td>' +
+                                '<td id="cd{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.ts_code + '</a></td>' +
+                                '<td id="nm{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.stock_name + '</a></td>' +
+                                '<td class="text-muted" id="pe{{k}}">' + obj.industry + '</td>' +
 
-                            '<td class="' + textColor + '" id="p{{k}}"><span>' + math.format(parseFloat(obj.close), 3) + '</span></td>' +
-                            '<td class="' + textColor + '" id="pct{{k}}"><span>' + math.format(parseFloat(obj.chg_pct), 3) + '%</span></td>' +
-                            '<td class="text-muted" id="pe{{k}}"><span>PE (' + pe + ')</span></td>' +
-                            '<td class="text-muted" id="pe{{k}}"><span>PE动 (' + pe_ttm + ')</span></td>' +
-                            '<td class="text-muted" id="pb{{k}}"><span>PB (' + math.format(parseFloat(obj.pb), 3) + ')</span></td>' +
-                            '<td class="text-muted" id="ps{{k}}"><span>PS (' + math.format(parseFloat(obj.ps), 3) + ')</span></td>' +
-                            '<td class="text-muted" id="ps{{k}}"><span>市值 (' + math.format(parseFloat(obj.total_mv) / 10000, 4) + '亿元)</span></td>' +
+                                '<td class="' + textColor + '" id="p{{k}}"><span>' + math.format(parseFloat(obj.close), 3) + '</span></td>' +
+                                '<td class="' + textColor + '" id="pct{{k}}"><span>' + math.format(parseFloat(obj.chg_pct), 3) + '%</span></td>' +
+                                '<td class="text-muted" id="pe{{k}}"><span>PE (' + pe + ')</span></td>' +
+                                '<td class="text-muted" id="pe{{k}}"><span>PE动 (' + pe_ttm + ')</span></td>' +
+                                '<td class="text-muted" id="pb{{k}}"><span>PB (' + math.format(parseFloat(obj.pb), 3) + ')</span></td>' +
+                                '<td class="text-muted" id="ps{{k}}"><span>PS (' + math.format(parseFloat(obj.ps), 3) + ')</span></td>' +
+                                '<td class="text-muted" id="mv{{k}}"><span>市值 (' + math.format(parseFloat(obj.total_mv) / 10000, 4) + '亿元)</span></td>' +
+                                '<td class="text-muted" id="top10{{k}}"><span>持仓 (' + math.format(parseFloat(obj.top10_hold_pct), 3) + '%)</span></td>' +
 
-                            '<td class="dropdown">' +
-                            '<a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">' +
-                            '<i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>' +
-                            '</a>' +
-                            '<div class="dropdown-menu" aria-labelledby="navbarDropdown">' +
-                            '<a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">无消息</a>' +
-                            '</div>' +
-                            '</td>' +
+                                // '<td class="dropdown">' +
+                                //     '<a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">' +
+                                //     '<i class="fa fa-circle text-muted small" aria-hidden="true" id="tl{{k}}"></i>' +
+                                //     '</a>' +
+                                //     '<div class="dropdown-menu" aria-labelledby="navbarDropdown">' +
+                                //     '<a class="dropdown-item small" href="javascript:void(0)" id="tlmsg{{k}}">无消息</a>' +
+                                //     '</div>' +
+                                // '</td>' +
                             '</tr>';
                         $("#resultTbody").append(stockCard);
                     })
@@ -293,7 +294,7 @@ $(function () {
         //     showBasicFilter();
         // }
         industry = $(this).text();
-
+        bindIndustryBasic($(this).text());
         filter = buildFilter(board, province, city, industry, pe, pb, ps);
         showFilterResult(filter, startIdx, endIdx);
 

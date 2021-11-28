@@ -65,18 +65,18 @@ class CompanyHistoryDailyBasicList(APIView):
         try:
             if filter_list[0] == '3':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='3').order_by('ts_code')
+                    ts_code__startswith='3').order_by('ts_code').exclude(asset='I')
             elif filter_list[0] == '688':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='688').order_by('ts_code')
+                    ts_code__startswith='688').order_by('ts_code').exclude(asset='I')
             elif filter_list[0] == '0':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='0').order_by('ts_code')
+                    ts_code__startswith='0').order_by('ts_code').exclude(asset='I')
             elif filter_list[0] == '60':
                 my_stocks = StockNameCodeMap.objects.filter(
-                    ts_code__startswith='60').order_by('ts_code')
+                    ts_code__startswith='60').order_by('ts_code').exclude(asset='I')
             else:
-                my_stocks = StockNameCodeMap.objects.all().order_by('ts_code')
+                my_stocks = StockNameCodeMap.objects.all().order_by('ts_code').exclude(asset='I')
 
             # 省份过滤
             if filter_list[1] != '0':
@@ -130,9 +130,17 @@ class CompanyHistoryDailyBasicList(APIView):
 
                 db = stock.get_latest_daily_basic()
                 dc = stock.get_latest_history()
+                top10_holders = stock.get_company_top10_holders()
 
                 if db is None or dc is None:
                     continue
+                
+                float_hold_amount = 0
+                float_hold_pct = 0.0
+                for holder in top10_holders:
+                    float_hold_amount += holder.hold_amount
+
+                float_hold_pct = round(float_hold_amount / (db.float_share * 10000) * 100, 2)
                 
                 # # 选中行业过滤器
                 # if filter_list[3] != '0':
@@ -173,8 +181,10 @@ class CompanyHistoryDailyBasicList(APIView):
                 #         if db.ps is not None and db.ps < ind.ps_90pct * 0.9:
                 #             continue
 
-                cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps,
-                                              ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, total_mv=db.total_mv, trade_date=dc.trade_date)
+                cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, 
+                                            industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps,
+                                              ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, 
+                                              total_mv=db.total_mv, trade_date=dc.trade_date, float_hold_pct=float_hold_pct)
 
                 cdbext_list.append(cdbext)
 

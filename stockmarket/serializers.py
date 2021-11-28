@@ -56,7 +56,7 @@ class CompanyDailyBasicExt(CompanyDailyBasic):
     # ps = models.FloatField(_('PS'), blank=False, null=False, )
     # ps_ttm = models.FloatField(_('动态PS'), blank=False, null=False, )
     # total_mv = models.FloatField(_('总市值'), blank=False, null=False, )
-    # circ_mv = models.FloatField(_('流通市值'), blank=False, null=False, )
+    float_hold_pct = models.FloatField(_('流通股持仓%'), blank=True, null=True, )
     jiuzhuan_b = models.IntegerField(_('九转买'), blank=False, null=False, )
     jiuzhuan_s = models.IntegerField(_('九转卖'), blank=False, null=False, )
     industry = models.CharField(
@@ -185,6 +185,8 @@ class CompanyDailyBasicExtSerializer(serializers.ModelSerializer):
             'ps': instance.ps if (instance.ps is not None and not np.isnan(instance.ps)) else 0,
             'ps_ttm': instance.ps_ttm if (instance.ps_ttm is not None and not np.isnan(instance.ps_ttm)) else 0,
             'total_mv': instance.total_mv if instance.total_mv is not None else 0,
+            'top10_hold_pct': instance.float_hold_pct if instance.float_hold_pct is not None else 0,
+
         }
 
     class Meta:

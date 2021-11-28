@@ -64,7 +64,8 @@ class StockIndexHistory(BaseModel):
     vol	float	成交量 （手）
     amount	float	成交额 （千元）
     '''
-
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='index_history', blank=True, null=True, on_delete=models.SET_NULL)
     ts_code = models.CharField(
         _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
     trade_date = models.DateField(
