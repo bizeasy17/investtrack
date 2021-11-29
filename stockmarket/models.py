@@ -189,6 +189,9 @@ class StockNameCodeMap(BaseModel):
     #     _('交易历史已更新？'), blank=False, null=False, default=False)
     dailybasic_date = models.DateField(
         _('基本面下载日期'), blank=True, null=True)
+    top10_holder_date = models.DateField(
+        _('流通股持仓下载日期'), blank=True, null=True)
+        
 
     def __str__(self):
         return self.stock_name
