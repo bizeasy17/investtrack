@@ -217,6 +217,26 @@
                   </div>
               </div>
             </div>
+            <div class="col-lg-12 mt-1">
+                <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                    <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+                    <label class="btn btn-light active">
+                        <input type="radio" name="top10_holder" autocomplete="off" value="all" checked/><span class="text-warning">{% trans '全部' %}</span>
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="top10_holder" autocomplete="off" value="10"/>{% trans '持仓>10%' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="top10_holder" autocomplete="off" value="25"/>{% trans '>25%' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="top10_holder" autocomplete="off" value="50" />{% trans '>50%' %}
+                    </label>
+                    <label class="btn btn-light">
+                        <input type="radio" name="top10_holder" autocomplete="off" value="75"/>{% trans '>75%' %}
+                    </label>
+                </div>
+            </div>
           </div>
         </div>
         <div class="col-lg-8">

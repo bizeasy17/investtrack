@@ -4,6 +4,7 @@ import string
 from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import date, datetime, timedelta
 import decimal
+from django import db
 
 import tushare as ts
 from django.conf import settings
@@ -191,7 +192,7 @@ class StockNameCodeMap(BaseModel):
         _('基本面下载日期'), blank=True, null=True)
     top10_holder_date = models.DateField(
         _('流通股持仓下载日期'), blank=True, null=True)
-        
+
 
     def __str__(self):
         return self.stock_name
@@ -915,7 +916,7 @@ class CompanyTop10FloatHolders(BaseModel):
     hold_amount	float	持有数量（股）
     '''
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
     announce_date = models.DateField(
         _('公告日期'), blank=True, null=True)
     end_date = models.DateField(
