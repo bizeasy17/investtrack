@@ -121,6 +121,11 @@ class CompanyHistoryDailyBasicList(APIView):
                 my_stocks = my_stocks.filter(
                     basic_filter__ps=int(filter_list[6]))
 
+            # PS高低过滤
+            if filter_list[7] != '0':
+                my_stocks = my_stocks.filter(
+                    top10_holder_pct__hold_pct__gte=float(filter_list[7]))
+
             total_count = len(my_stocks)
             my_stocks = my_stocks[start_idx:end_idx]
             # count = 0
@@ -130,17 +135,19 @@ class CompanyHistoryDailyBasicList(APIView):
 
                 db = stock.get_latest_daily_basic()
                 dc = stock.get_latest_history()
-                top10_holders = stock.get_company_top10_holders()
+                # top10_holders = stock.get_company_top10_holders()
 
                 if db is None or dc is None:
                     continue
-                
-                float_hold_amount = 0
-                float_hold_pct = 0.0
-                for holder in top10_holders:
-                    float_hold_amount += holder.hold_amount
 
-                float_hold_pct = round(float_hold_amount / (db.float_share * 10000) * 100, 2)
+                top10_holders = stock.get_company_top10_holders_pct()
+                
+                # float_hold_amount = 0
+                # float_hold_pct = 0.0
+                # for holder in top10_holders:
+                #     float_hold_amount += holder.hold_amount
+
+                # float_hold_pct = round(float_hold_amount / (db.float_share * 10000) * 100, 2)
                 
                 # # 选中行业过滤器
                 # if filter_list[3] != '0':
@@ -184,7 +191,7 @@ class CompanyHistoryDailyBasicList(APIView):
                 cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, 
                                             industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps,
                                               ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, 
-                                              total_mv=db.total_mv, trade_date=dc.trade_date, float_hold_pct=float_hold_pct)
+                                              total_mv=db.total_mv, trade_date=dc.trade_date, float_hold_pct=top10_holders.hold_pct)
 
                 cdbext_list.append(cdbext)
 

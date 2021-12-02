@@ -212,6 +212,9 @@ class StockNameCodeMap(BaseModel):
     def get_company_top10_holders(self):
         return self.top10_holder.order_by('-end_date')[:10]
 
+    def get_company_top10_holders_pct(self):
+        return self.top10_holder_pct
+
     class Meta:
         ordering = ['-last_mod_time']
         verbose_name = _('股票基本信息')
@@ -931,5 +934,35 @@ class CompanyTop10FloatHolders(BaseModel):
     class Meta:
         ordering = ['-end_date']
         verbose_name = _('前10大流通股')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class CompanyTop10FloatHoldersFilter(BaseModel):
+    '''
+    ts_code	str	TS股票代码
+    ann_date	str	公告日期
+    end_date	str	报告期
+    holder_name	str	股东名称
+    hold_amount	float	持有数量（股）
+    '''
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
+    announce_date = models.DateField(
+        _('公告日期'), blank=True, null=True)
+    end_date = models.DateField(
+        _('截至日期'), blank=True, null=True)
+    hold_pct = models.FloatField(
+        _('持股比例'), blank=True, null=True)
+    hold_amount = models.FloatField(
+        _('持股数'), blank=True, null=True)
+    float_amount = models.FloatField(
+        _('流通股数'), blank=True, null=True)
+    company = models.OneToOneField(
+        StockNameCodeMap, related_name='top10_holder_pct', blank=True, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ['-end_date']
+        verbose_name = _('前10大流通股持股比例')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

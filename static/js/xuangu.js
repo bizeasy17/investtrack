@@ -8,6 +8,7 @@ $(function () {
     var pb = "0";
     var pe = "0";
     var ps = "0";
+    var holdPct = "0";
 
     var prevIndFilter = undefined;
     var prevIndMoreFilter = undefined;
@@ -69,8 +70,8 @@ $(function () {
         // });
     });
 
-    var buildFilter = function (board, province, city, industry, pe, pb, ps) {
-        return board + "," + province + "," + city + "," + industry + "," + pe + "," + pb + "," + ps;
+    var buildFilter = function (board, province, city, industry, pe, pb, ps, holdPct) {
+        return board + "," + province + "," + city + "," + industry + "," + pe + "," + pb + "," + ps + "," + holdPct;
     }
 
     var showBasicFilter = function () {
@@ -98,7 +99,7 @@ $(function () {
         $("#message").addClass("d-none");
 
         city = $(this).val();
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
     }
 
@@ -235,7 +236,7 @@ $(function () {
         $("#message").addClass("d-none");
 
         board = $(this).val();
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -253,7 +254,7 @@ $(function () {
         }
         showCityFilter(province);
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -270,7 +271,7 @@ $(function () {
         industry = $(this).val();
         bindIndustryBasic($(this).val());
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
 
         $(prevIndMoreFilter).css("background-color", "#f8f9fa");
@@ -295,7 +296,7 @@ $(function () {
         // }
         industry = $(this).text();
         bindIndustryBasic($(this).text());
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
 
         // $(prevIndFilter).parent().removeClass("active");
@@ -317,7 +318,7 @@ $(function () {
 
         pe = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -329,7 +330,7 @@ $(function () {
 
         pb = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -341,7 +342,19 @@ $(function () {
 
         ps = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        showFilterResult(filter, startIdx, endIdx);
+    });
+
+    $('input:radio[name="top10_holder"]').change(function () {
+        // alert($(this).val());
+
+        $("#spinner").removeClass("d-none");
+        $("#message").addClass("d-none");
+
+        holdPct = $(this).val();
+
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -370,6 +383,6 @@ $(function () {
     });
 
 
-    filter = buildFilter(board, province, city, industry, pe, pb, ps);
+    filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
     showFilterResult(filter, currentIdx, endIdx);
 });
