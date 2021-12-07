@@ -202,7 +202,18 @@ class StockNameCodeMap(BaseModel):
 
     def get_latest_daily_basic(self):
         return self.daily_basic.first()
-
+    
+    def get_daily_basic_by_date(self, trade_date):
+        db = self.get_latest_daily_basic()
+        if db is None: return None
+        else:
+            while True:
+                db = self.daily_basic.filter(trade_date=trade_date).first()
+                if db is not None:
+                    return db
+                else:
+                    trade_date = trade_date - timedelta(days=1)
+        
     def get_company_basic(self):
         return self.company_basic.first()
 
@@ -964,5 +975,47 @@ class CompanyTop10FloatHoldersFilter(BaseModel):
     class Meta:
         ordering = ['-end_date']
         verbose_name = _('前10大流通股持股比例')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class CompanyTop10FloatHoldersStat(BaseModel):
+    '''
+    ts_code	str	TS股票代码
+    ann_date	str	公告日期
+    end_date	str	报告期
+    holder_name	str	股东名称
+    hold_amount	float	持有数量（股）
+    '''
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
+    announce_date = models.DateField(
+        _('公告日期'), blank=True, null=True)
+    end_date = models.DateField(
+        _('截至日期'), blank=True, null=True)
+    hold_pct = models.FloatField(
+        _('持股比例'), blank=True, null=True)
+    hold_amount = models.FloatField(
+        _('持股数'), blank=True, null=True)
+    float_amount = models.FloatField(
+        _('流通股数'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'),
+                              blank=True, null=True)
+    pe = models.FloatField(
+        _('市盈率'), blank=True, null=True)
+    pe_ttm = models.FloatField(
+        _('市盈率TTM'), blank=True, null=True)
+    pb = models.FloatField(
+        _('市净率'), blank=True, null=True)
+    ps = models.FloatField(
+        _('市销率'), blank=True, null=True)
+    ps_ttm = models.FloatField(
+        _('市销率TTM'), blank=True, null=True)
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='top10_holder_stat', blank=True, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ['-end_date']
+        verbose_name = _('前10大流通股持股统计')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

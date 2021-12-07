@@ -22,9 +22,9 @@ from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 from stockmarket.models import (City, CompanyBasic, Industry, Province,
                                 StockNameCodeMap)
 
-from .models import (CompanyBasic, CompanyDailyBasic, Industry, ManagerRewards,
+from .models import (CompanyBasic, CompanyDailyBasic, CompanyTop10FloatHoldersStat, Industry, ManagerRewards,
                      StockNameCodeMap)
-from .serializers import (CompanyDailyBasicSerializer, CompanySerializer,
+from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
                           StockCloseHistorySerializer, CitySerializer, ProvinceSerializer)
 from .utils import get_ind_basic, str_eval
@@ -90,7 +90,8 @@ class CityList(APIView):
     def get(self, request, province, top):
         try:
             if province != '-1':
-                cities = City.objects.filter(province__name=province).values('name')[0:top]
+                cities = City.objects.filter(
+                    province__name=province).values('name')[0:top]
             else:  # period = 0 means all stock history
                 cities = City.objects.all().values('name')[0:top]
 
@@ -121,6 +122,7 @@ class ProvinceList(APIView):
         except Exception as err:
             print(err)
             raise HttpResponseServerError
+
 
 class CompanyList(APIView):
     """
@@ -193,6 +195,26 @@ class StockDailyBasicHistoryList(APIView):
             # serializer.fields = basic_type.split(',')
             return Response(serializer.data)
         except CompanyDailyBasic.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+class StockTop10HoldersStatList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, ts_code, period=18):
+        try:
+            start_date = date.today() - timedelta(days=365 * period)
+            ctfshs = CompanyTop10FloatHoldersStat.objects.filter(
+                ts_code=ts_code, end_date__gte=start_date,
+                end_date__lte=date.today(),).order_by('end_date')
+
+            serializer = CompanyTop10HoldersStatSerializer(ctfshs, many=True)
+            # serializer.fields = basic_type.split(',')
+            return Response(serializer.data)
+        except CompanyTop10FloatHoldersStat.DoesNotExist:
             raise Http404
         except Exception as err:
             print(err)
@@ -370,7 +392,7 @@ def command_test(request):
                 b.chengshi = city
                 b.save()
                 print(prov.name + ',' + city.name + ' FK updated for ' +
-                        b.ts_code + ' CompanyBasic.')
+                      b.ts_code + ' CompanyBasic.')
 
             companies = StockNameCodeMap.objects.filter(
                 area=c['province'])
@@ -378,6 +400,6 @@ def command_test(request):
                 company.province = prov
                 company.save()
                 print(prov.name + ' FK updated for ' +
-                        company.ts_code + ' StockNameCode.')
+                      company.ts_code + ' StockNameCode.')
     except Exception as err:
         print(err)

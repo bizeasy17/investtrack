@@ -7,6 +7,7 @@ $(function () {
     var closePeriod = 5;
     // var histType = "close";
     var tsCode = "";
+    var period = 18;
     // var tsCodeNoSfx = "";
     // var stockName = "";
     // var market = "";
@@ -21,13 +22,10 @@ $(function () {
     var endDate = "";
 
     var closeChart = echarts.init(document.getElementById('closeChart'));
-    // var peChart = echarts.init(document.getElementById('peChart'));
-    // var peTTMChart = echarts.init(document.getElementById('peTTMChart'));
-    // var psChart = echarts.init(document.getElementById('psChart'));
-    // var psTTMChart = echarts.init(document.getElementById('psTTMChart'));
-    // var pbChart = echarts.init(document.getElementById('pbChart'));
-    // var toChart = echarts.init(document.getElementById('toChart'));
-    // var vrChart = echarts.init(document.getElementById('vrChart'));
+    var top10HoldersChart = echarts.init(document.getElementById('top10HoldersChart'));
+    var top10HoldersPetChart = echarts.init(document.getElementById('top10HoldersPETChart'));
+    var top10HoldersPbChart = echarts.init(document.getElementById('top10HoldersPBChart'));
+    var top10HoldersPsChart = echarts.init(document.getElementById('top10HoldersPSChart'));
 
     var basicCharts = $(".basic-chart");
 
@@ -43,6 +41,7 @@ $(function () {
         showCompanyBasic(tsCode);
         renderCloseChart(tsCode);
         renderCompanyBasicChart(tsCode, startDate, endDate);
+        renderTop10HolderStatChart(tsCode, period);
         // renderUpdownByPeriodChart();
         // renderPeriodByUpRangeChart();
     }
@@ -112,7 +111,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "stock-close-history/" + tsCode + "/" + freq + "/" + closePeriod + "/?format=json",
             success: function (data) {
-                if ($(".error-msg").hasClass("d-none")==false){
+                if ($(".error-msg").hasClass("d-none") == false) {
                     $(".error-msg").addClass("d-none");
                 }
                 if ($(".dashboard").hasClass("d-none")) {
@@ -369,7 +368,7 @@ $(function () {
                     }
                 },
                 {
-                    name: basicType+'低位',
+                    name: basicType + '低位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -379,7 +378,7 @@ $(function () {
                     data: peQuantile.qt10
                 },
                 {
-                    name: basicType+'中位',
+                    name: basicType + '中位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -390,7 +389,7 @@ $(function () {
                     data: peQuantile.qt50
                 },
                 {
-                    name: basicType+'高位',
+                    name: basicType + '高位',
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
@@ -403,6 +402,384 @@ $(function () {
         };
 
         chartCanvas.setOption(option);
+    }
+
+    var renderTop10HolderStatChart = function (tsCode, period) {
+        $.ajax({
+            url: stockmarketEndpoint + "top10-holders-stat/" + tsCode + "/" + period + "/?format=json",
+            success: function (data) {
+                // if ($(".error-msg").hasClass("d-none") == false) {
+                //     $(".error-msg").addClass("d-none");
+                // }
+                // if ($(".dashboard").hasClass("d-none")) {
+                //     $(".dashboard").removeClass("d-none");
+                // }
+                var closeData = jsonToChartFormat(data, "close");
+                var petData = jsonToChartFormat(data, "pe_ttm");
+                var pbData = jsonToChartFormat(data, "pb");
+                var psData = jsonToChartFormat(data, "ps");
+
+                var pctData = jsonToChartFormat(data, "hold_pct");
+
+                const colors = ['#5470C6', '#EE6666'];
+                option = {
+                    color: colors,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    grid: {
+                        right: '20%'
+                    },
+                    toolbox: {
+                        feature: {
+                            dataView: { show: true, readOnly: false },
+                            restore: { show: true },
+                            saveAsImage: { show: true }
+                        }
+                    },
+                    legend: {
+                        data: ['收', '持仓']
+                    },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            axisTick: {
+                                alignWithLabel: true
+                            },
+                            // prettier-ignore
+                            data: closeData.label
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: '持仓',
+                            min: 0,
+                            max: 100,
+                            position: 'right',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[0]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value} %'
+                            }
+                        },
+                        {
+                            type: 'value',
+                            name: '收盘',
+                            // min: 0,
+                            // max: 25,
+                            position: 'left',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[1]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value}元'
+                            }
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '持仓',
+                            type: 'bar',
+                            data: pctData.value
+                        },
+                        // {
+                        //     name: 'Precipitation',
+                        //     type: 'bar',
+                        //     yAxisIndex: 1,
+                        //     data: [
+                        //         2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3
+                        //     ]
+                        // },
+                        {
+                            name: '收',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            data: closeData.value
+                        }
+                    ]
+                };
+
+                petOption = {
+                    color: colors,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    grid: {
+                        right: '20%'
+                    },
+                    toolbox: {
+                        feature: {
+                            dataView: { show: true, readOnly: false },
+                            restore: { show: true },
+                            saveAsImage: { show: true }
+                        }
+                    },
+                    legend: {
+                        data: ['PET', '持仓']
+                    },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            axisTick: {
+                                alignWithLabel: true
+                            },
+                            // prettier-ignore
+                            data: closeData.label
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: '持仓',
+                            min: 0,
+                            max: 100,
+                            position: 'right',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[0]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value} %'
+                            }
+                        },
+                        {
+                            type: 'value',
+                            name: 'PET',
+                            // min: 0,
+                            // max: 25,
+                            position: 'left',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[1]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value}'
+                            }
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '持仓',
+                            type: 'bar',
+                            data: pctData.value
+                        },
+                        // {
+                        //     name: 'Precipitation',
+                        //     type: 'bar',
+                        //     yAxisIndex: 1,
+                        //     data: [
+                        //         2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3
+                        //     ]
+                        // },
+                        {
+                            name: 'PET',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            data: petData.value
+                        }
+                    ]
+                };
+
+                pbOption = {
+                    color: colors,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    grid: {
+                        right: '20%'
+                    },
+                    toolbox: {
+                        feature: {
+                            dataView: { show: true, readOnly: false },
+                            restore: { show: true },
+                            saveAsImage: { show: true }
+                        }
+                    },
+                    legend: {
+                        data: ['PB', '持仓']
+                    },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            axisTick: {
+                                alignWithLabel: true
+                            },
+                            // prettier-ignore
+                            data: closeData.label
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: '持仓',
+                            min: 0,
+                            max: 100,
+                            position: 'right',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[0]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value} %'
+                            }
+                        },
+                        {
+                            type: 'value',
+                            name: 'PB',
+                            // min: 0,
+                            // max: 25,
+                            position: 'left',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[1]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value}'
+                            }
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '持仓',
+                            type: 'bar',
+                            data: pctData.value
+                        },
+                        // {
+                        //     name: 'Precipitation',
+                        //     type: 'bar',
+                        //     yAxisIndex: 1,
+                        //     data: [
+                        //         2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3
+                        //     ]
+                        // },
+                        {
+                            name: 'PB',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            data: pbData.value
+                        }
+                    ]
+                };
+
+                psOption = {
+                    color: colors,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    grid: {
+                        right: '20%'
+                    },
+                    toolbox: {
+                        feature: {
+                            dataView: { show: true, readOnly: false },
+                            restore: { show: true },
+                            saveAsImage: { show: true }
+                        }
+                    },
+                    legend: {
+                        data: ['PS', '持仓']
+                    },
+                    xAxis: [
+                        {
+                            type: 'category',
+                            axisTick: {
+                                alignWithLabel: true
+                            },
+                            // prettier-ignore
+                            data: closeData.label
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: '持仓',
+                            min: 0,
+                            max: 100,
+                            position: 'right',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[0]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value} %'
+                            }
+                        },
+                        {
+                            type: 'value',
+                            name: 'PS',
+                            // min: 0,
+                            // max: 25,
+                            position: 'left',
+                            axisLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: colors[1]
+                                }
+                            },
+                            axisLabel: {
+                                formatter: '{value}'
+                            }
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '持仓',
+                            type: 'bar',
+                            data: pctData.value
+                        },
+                        // {
+                        //     name: 'Precipitation',
+                        //     type: 'bar',
+                        //     yAxisIndex: 1,
+                        //     data: [
+                        //         2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3
+                        //     ]
+                        // },
+                        {
+                            name: 'PS',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            data: psData.value
+                        }
+                    ]
+                };
+
+                top10HoldersChart.setOption(option);
+                top10HoldersPetChart.setOption(petOption);
+                top10HoldersPbChart.setOption(pbOption);
+                top10HoldersPsChart.setOption(psOption);
+            }
+        });
     }
 
     var followStock = function (tsCode, btn) {
@@ -559,7 +936,7 @@ $(function () {
                 var content = data.latest_basic;
                 $(content).each(function (idx, obj) {
                     for (var k in obj) {
-                        if (parseFloat(obj[k])==0){
+                        if (parseFloat(obj[k]) == 0) {
                             obj[k] = "亏"
                         }
                         $("#" + k).text(" " + obj[k]);

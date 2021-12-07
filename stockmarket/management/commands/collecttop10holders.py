@@ -91,9 +91,10 @@ def collect_top10_holders(ts_code):
                         # company.save()
                     company.top10_holder_date = top10_holder_list[0].end_date
                     top10_holder_list.clear()
+                    company.save()
                 # time.sleep(0.3)
             print('end for ' + company.ts_code +
                 ':' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        StockNameCodeMap.objects.bulk_update(companies, ['top10_holder_date'])
+        # StockNameCodeMap.objects.bulk_update(companies, ['top10_holder_date'])
     except Exception as e:
         print(e)

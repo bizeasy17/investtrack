@@ -190,14 +190,14 @@ $(function () {
                                 '<td id="nm{{k}}"><a href="/?q=' + obj.ts_code + '" class="text-primary" target="_blank">' + obj.stock_name + '</a></td>' +
                                 '<td class="text-muted" id="pe{{k}}">' + obj.industry + '</td>' +
 
-                                '<td class="' + textColor + '" id="p{{k}}"><span>' + math.format(parseFloat(obj.close), 3) + '</span></td>' +
-                                '<td class="' + textColor + '" id="pct{{k}}"><span>' + math.format(parseFloat(obj.chg_pct), 3) + '%</span></td>' +
+                                '<td class="' + textColor + '" id="p{{k}}"><span>' + math.format(parseFloat(obj.close), 2) + '</span></td>' +
+                                '<td class="' + textColor + '" id="pct{{k}}"><span>' + math.format(parseFloat(obj.chg_pct), 2) + '%</span></td>' +
                                 '<td class="text-muted" id="pe{{k}}"><span>PE (' + pe + ')</span></td>' +
                                 '<td class="text-muted" id="pe{{k}}"><span>PE动 (' + pe_ttm + ')</span></td>' +
-                                '<td class="text-muted" id="pb{{k}}"><span>PB (' + math.format(parseFloat(obj.pb), 3) + ')</span></td>' +
-                                '<td class="text-muted" id="ps{{k}}"><span>PS (' + math.format(parseFloat(obj.ps), 3) + ')</span></td>' +
-                                '<td class="text-muted" id="mv{{k}}"><span>市值 (' + math.format(parseFloat(obj.total_mv) / 10000, 4) + '亿元)</span></td>' +
-                                '<td class="text-muted" id="top10{{k}}"><span>持仓 (' + math.format(parseFloat(obj.top10_hold_pct), 3) + '%)</span></td>' +
+                                '<td class="text-muted" id="pb{{k}}"><span>PB (' + math.format(parseFloat(obj.pb), 2) + ')</span></td>' +
+                                '<td class="text-muted" id="ps{{k}}"><span>PS (' + math.format(parseFloat(obj.ps), 2) + ')</span></td>' +
+                                '<td class="text-muted" id="mv{{k}}"><span>值 (' + math.format(parseFloat(obj.total_mv) / 10000, 2) + '亿元)</span></td>' +
+                                '<td class="text-muted" id="top10{{k}}"><span>仓 (' + math.format(parseFloat(obj.top10_hold_pct), 2) + '%)</span></td>' +
 
                                 // '<td class="dropdown">' +
                                 //     '<a href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">' +
@@ -230,6 +230,13 @@ $(function () {
         });
     }
 
+    var resetIndex = function(){
+        startIdx = 0;
+        endIdx = 25;
+        currentIdx = 0;
+        prevPagination = undefined;
+    }
+
     $('input:radio[name="board"]').change(function () {
         // alert($(this).val());
         $("#spinner").removeClass("d-none");
@@ -237,6 +244,7 @@ $(function () {
 
         board = $(this).val();
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -255,6 +263,7 @@ $(function () {
         showCityFilter(province);
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -272,6 +281,7 @@ $(function () {
         bindIndustryBasic($(this).val());
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
 
         $(prevIndMoreFilter).css("background-color", "#f8f9fa");
@@ -319,6 +329,7 @@ $(function () {
         pe = $(this).val();
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -331,6 +342,7 @@ $(function () {
         pb = $(this).val();
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -343,6 +355,7 @@ $(function () {
         ps = $(this).val();
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
 
@@ -355,6 +368,7 @@ $(function () {
         holdPct = $(this).val();
 
         filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
 

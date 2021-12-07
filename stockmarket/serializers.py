@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
 
-from .models import CompanyDailyBasic, Province, StockNameCodeMap, Industry, City
+from .models import CompanyDailyBasic, CompanyTop10FloatHoldersStat, Province, StockNameCodeMap, Industry, City
 
 BOARD_LIST = {
     'SHZB': '上海主板',
@@ -194,6 +194,29 @@ class CompanyDailyBasicExtSerializer(serializers.ModelSerializer):
         # fields = ['trade_date', 'turnover_rate',
         #           'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']
 
+
+class CompanyTop10HoldersStatSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'ts_code': instance.ts_code,
+            # 'stock_name': instance.stock_name,
+            'hold_pct': instance.hold_pct * 100,
+            'close': instance.close,
+            'trade_date': instance.end_date,
+            'hold_amount': instance.hold_amount,
+            'float_amount': instance.float_amount,
+            'pe': instance.pe if (instance.pe is not None and not np.isnan(instance.pe)) else 0,
+            'pe_ttm': instance.pe_ttm if (instance.pe_ttm is not None and not np.isnan(instance.pe_ttm)) else 0,
+            'pb': instance.pb if (instance.pb is not None and not np.isnan(instance.pb)) else 0,
+            'ps': instance.ps if (instance.ps is not None and not np.isnan(instance.ps)) else 0,
+            'ps_ttm': instance.ps_ttm if (instance.ps_ttm is not None and not np.isnan(instance.ps_ttm)) else 0,
+        }
+
+    class Meta:
+        model = CompanyTop10FloatHoldersStat
+        # fields = ['trade_date', 'turnover_rate',
+        #           'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']
 
 class IndustryBasicQuantileSerializer(serializers.ModelSerializer):
 
