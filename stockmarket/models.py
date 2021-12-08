@@ -207,12 +207,12 @@ class StockNameCodeMap(BaseModel):
         db = self.get_latest_daily_basic()
         if db is None: return None
         else:
-            while True:
-                db = self.daily_basic.filter(trade_date=trade_date).first()
-                if db is not None:
-                    return db
-                else:
-                    trade_date = trade_date - timedelta(days=1)
+            db = self.daily_basic.filter(trade_date__lte=trade_date).first()
+            if db is not None:
+                return db
+            else:
+                return None
+
         
     def get_company_basic(self):
         return self.company_basic.first()

@@ -41,7 +41,7 @@ class Command(BaseCommand):
                     # print(company.top10_holder_date)
                     stat = CompanyTop10FloatHoldersStat.objects.filter(
                         company=company).order_by('-end_date').first()
-                    # print(stat)
+                    print(stat.end_date)
                     # return
                     if stat is not None and stat.end_date < company.top10_holder_date:
                         # Province.objects.annotate(count_num=Count('city_province')).values(
@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
                         if db is None:
                             print(company.ts_code + ' daily basic not available. ' +
-                                  today.strftime('%Y%m%d %H:%M:%S'))
+                                  datetime.now().strftime('%Y%m%d %H:%M:%S'))
                         else:
                             # hold_pct = round(
                             #     holder.total_amount / (db.float_share * 10000) * 100, 2)
@@ -87,8 +87,8 @@ class Command(BaseCommand):
                                 top10_stat.ps = db.ps
                                 top10_stat.ps_ttm = db.ps_ttm
                                 top10_stat.save()
-                                print(
-                                    company.ts_code + ' top10 holder filter updated. ' + today.strftime('%Y%m%d %H:%M:%S'))
+                                # print(
+                                #     company.ts_code + ' top10 holder filter updated. ' + today.strftime('%Y%m%d %H:%M:%S'))
                             except CompanyTop10FloatHoldersStat.DoesNotExist:
                                 top10_stat = CompanyTop10FloatHoldersStat(
                                     company=company, ts_code=company.ts_code, hold_amount=holder[
@@ -97,8 +97,9 @@ class Command(BaseCommand):
                                     hold_pct=round(holder['total_amount'] / (db.float_share * 10000), 2),
                                     close=db.close, pe=db.pe, pe_ttm=db.pe_ttm, pb=db.pb, ps=db.ps, ps_ttm=db.ps_ttm)
                                 top10_stat.save()
-                                print(
-                                    company.ts_code + ' top10 holder filter created. ' + today.strftime('%Y%m%d %H:%M:%S'))
+                                # print(
+                                #     company.ts_code + ' top10 holder filter created. ' + today.strftime('%Y%m%d %H:%M:%S'))
+                    print(company.ts_code + ' top10 holder created. ' + datetime.now().strftime('%Y%m%d %H:%M:%S'))
                 except Exception as err:
                     print(err)
         except Exception as err:
