@@ -25,6 +25,7 @@ class Command(BaseCommand):
         ts_code = options['ts_code']
 
         try:
+            holders = []
             today = datetime.today()
             if ts_code is None:
                 companies = StockNameCodeMap.objects.filter(
@@ -41,14 +42,15 @@ class Command(BaseCommand):
                     # print(company.top10_holder_date)
                     stat = CompanyTop10FloatHoldersStat.objects.filter(
                         company=company).order_by('-end_date').first()
-                    print(stat.end_date)
+                    # print(stat.end_date)
                     # return
-                    if stat is not None and stat.end_date < company.top10_holder_date:
-                        # Province.objects.annotate(count_num=Count('city_province')).values(
-                        #     'name', 'count_num').order_by('-count_num')[0:6]
-                        holders = CompanyTop10FloatHolders.objects.values('announce_date', 'end_date', 'ts_code').filter(
-                            ts_code=company.ts_code, end_date__gt=stat.end_date).annotate(
-                            total_amount=Sum('hold_amount'))
+                    if stat is not None:
+                        if stat.end_date < company.top10_holder_date:
+                            # Province.objects.annotate(count_num=Count('city_province')).values(
+                            #     'name', 'count_num').order_by('-count_num')[0:6]
+                            holders = CompanyTop10FloatHolders.objects.values('announce_date', 'end_date', 'ts_code').filter(
+                                ts_code=company.ts_code, end_date__gt=stat.end_date).annotate(
+                                total_amount=Sum('hold_amount'))
                     else:
                         holders = CompanyTop10FloatHolders.objects.filter(
                             ts_code=company.ts_code,).values('announce_date', 'end_date', 'ts_code').annotate(total_amount=Sum('hold_amount'))
@@ -99,7 +101,7 @@ class Command(BaseCommand):
                                 top10_stat.save()
                                 # print(
                                 #     company.ts_code + ' top10 holder filter created. ' + today.strftime('%Y%m%d %H:%M:%S'))
-                    print(company.ts_code + ' top10 holder created. ' + datetime.now().strftime('%Y%m%d %H:%M:%S'))
+                    print(company.ts_code + ' top10 holder proceeded. ' + datetime.now().strftime('%Y%m%d %H:%M:%S'))
                 except Exception as err:
                     print(err)
         except Exception as err:
