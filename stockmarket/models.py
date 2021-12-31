@@ -31,7 +31,6 @@ class BaseModel(models.Model):
         pass
 
 
-
 class Province(BaseModel):
     name = models.CharField(
         _('省份'), max_length=50, blank=False, null=False, unique=True, db_index=True, )  # name e.g. 平安银行
@@ -42,7 +41,7 @@ class Province(BaseModel):
 
     class Meta:
         ordering = ['name']
-        unique_together = ('name','country')
+        unique_together = ('name', 'country')
         verbose_name = _('省份')
         verbose_name_plural = verbose_name
 
@@ -53,13 +52,14 @@ class Province(BaseModel):
 class City(BaseModel):
     name = models.CharField(
         _('城市'), max_length=50, blank=False, null=False, unique=True, db_index=True)  # name e.g. 平安银行
-    province = models.ForeignKey(Province, related_name='city_province', blank=True, null=True, on_delete=models.SET_NULL)
+    province = models.ForeignKey(
+        Province, related_name='city_province', blank=True, null=True, on_delete=models.SET_NULL)
     city_pinyin = models.CharField(
         _('城市拼音'), max_length=50, blank=True, null=True,)
 
     class Meta:
         ordering = ['name']
-        unique_together = ('name','province')
+        unique_together = ('name', 'province')
         verbose_name = _('城市')
         verbose_name_plural = verbose_name
 
@@ -147,11 +147,11 @@ class StockNameCodeMap(BaseModel):
     area = models.CharField(_('所在地域'), max_length=50,
                             blank=True, null=True)
     province = models.ForeignKey(Province, related_name='province',
-                                blank=True, null=True, on_delete=models.SET_NULL)
+                                 blank=True, null=True, on_delete=models.SET_NULL)
     industry = models.CharField(
         _('所属行业'), max_length=50, blank=True, null=True)
     ind = models.ForeignKey(Industry, related_name='company_ind',
-                                blank=True, null=True, on_delete=models.SET_NULL)
+                            blank=True, null=True, on_delete=models.SET_NULL)
     fullname = models.CharField(
         _('股票全称'), max_length=100, blank=True, null=True)
     en_name = models.CharField(_('英文全称'), max_length=100,
@@ -192,7 +192,8 @@ class StockNameCodeMap(BaseModel):
         _('基本面下载日期'), blank=True, null=True)
     top10_holder_date = models.DateField(
         _('流通股持仓下载日期'), blank=True, null=True)
-
+    fin_indicator_date = models.DateField(
+        _('财务指标下载日期'), blank=True, null=True)
 
     def __str__(self):
         return self.stock_name
@@ -202,10 +203,11 @@ class StockNameCodeMap(BaseModel):
 
     def get_latest_daily_basic(self):
         return self.daily_basic.first()
-    
+
     def get_daily_basic_by_date(self, trade_date):
         db = self.get_latest_daily_basic()
-        if db is None: return None
+        if db is None:
+            return None
         else:
             db = self.daily_basic.filter(trade_date__lte=trade_date).first()
             if db is not None:
@@ -213,7 +215,6 @@ class StockNameCodeMap(BaseModel):
             else:
                 return None
 
-        
     def get_company_basic(self):
         return self.company_basic.first()
 
@@ -258,11 +259,11 @@ class CompanyBasic(BaseModel):
     province = models.CharField(
         _('所在省'), max_length=50, blank=True, null=True)
     shengfen = models.ForeignKey(Province, related_name='company_province',
-                                blank=True, null=True, on_delete=models.SET_NULL)
+                                 blank=True, null=True, on_delete=models.SET_NULL)
     city = models.CharField(
         _('城市'), max_length=50, blank=True, null=True)
     chengshi = models.ForeignKey(City, related_name='company_city',
-                                blank=True, null=True, on_delete=models.SET_NULL)
+                                 blank=True, null=True, on_delete=models.SET_NULL)
     introduction = models.CharField(
         _('介绍'), max_length=5000, blank=True, null=True)
     website = models.CharField(
@@ -337,7 +338,7 @@ class IndexDailyBasic(BaseModel):
 
 class CompanyBasicFilter(BaseModel):
     company = models.OneToOneField(StockNameCodeMap, related_name='basic_filter',
-                                blank=True, null=True, on_delete=models.SET_NULL)
+                                   blank=True, null=True, on_delete=models.SET_NULL)
 
     ts_code = models.CharField(
         _('TS代码'), max_length=50, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
@@ -348,7 +349,7 @@ class CompanyBasicFilter(BaseModel):
     turnover_rate_f = models.IntegerField(
         _('换手率(自由流通)'), blank=True, null=True)
     volume_ratio = models.IntegerField(_('量比'),
-                                     blank=True, null=True)
+                                       blank=True, null=True)
     pe = models.IntegerField(
         _('市盈率'), blank=True, null=True)
     pe_ttm = models.IntegerField(
@@ -921,6 +922,352 @@ class CompanyCashflow(BaseModel):
         get_latest_by = 'id'
 
 
+class CompanyFinIndicators(BaseModel):
+
+    # ts_code	str	Y	TS代码
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
+    announce_date = models.DateField(
+        _('公告日期'), blank=True, null=True)  # ann_date	str	Y	公告日期
+    end_date = models.DateField(
+        _('截至日期'), blank=True, null=True)  # end_date	str	Y	报告期
+    eps = models.FloatField(
+        _('基本每股收益'), blank=True, null=True)  # eps	float	Y	基本每股收益
+    dt_eps = models.FloatField(
+        _('稀释每股收益'), blank=True, null=True)  # float	Y	稀释每股收益
+    total_revenue_ps = models.FloatField(
+        _('每股营业总收入'), blank=True, null=True)  # float	Y	每股营业总收入
+    revenue_ps = models.FloatField(
+        _('每股营业收入'), blank=True, null=True)  # float	Y	每股营业收入
+    capital_rese_ps = models.FloatField(
+        _('每股资本公积'), blank=True, null=True)  # float	Y	每股资本公积
+    surplus_rese_ps = models.FloatField(
+        _('每股盈余公积'), blank=True, null=True)  # float	Y	每股盈余公积
+    undist_profit_ps = models.FloatField(
+        _('每股未分配利润'), blank=True, null=True)  # float	Y	每股未分配利润
+    extra_item = models.FloatField(
+        _('非经常性损益'), blank=True, null=True)  # float	Y	非经常性损益
+    profit_dedt = models.FloatField(
+        _('扣非净利润'), blank=True, null=True)  # float	Y	扣除非经常性损益后的净利润（扣非净利润）
+    gross_margin = models.FloatField(
+        _('毛利'), blank=True, null=True)  # float	Y	毛利
+    current_ratio = models.FloatField(
+        _('流动比率'), blank=True, null=True)  # float	Y	流动比率
+    quick_ratio = models.FloatField(
+        _('速动比率'), blank=True, null=True)  # float	Y	速动比率
+    cash_ratio = models.FloatField(
+        _('保守速动比率'), blank=True, null=True)  # float	Y	保守速动比率
+    invturn_days = models.FloatField(
+        _('存货周转天数'), blank=True, null=True)  # float	N	存货周转天数
+    arturn_days = models.FloatField(
+        _('应收账款周转天数'), blank=True, null=True)  # float	N	应收账款周转天数
+    inv_turn = models.FloatField(
+        _('存货周转率'), blank=True, null=True)  # float	N	存货周转率
+    ar_turn = models.FloatField(
+        _('应收账款周转率'), blank=True, null=True)  # float	Y	应收账款周转率
+    ca_turn = models.FloatField(
+        _('流动资产周转率'), blank=True, null=True)  # float	Y	流动资产周转率
+    fa_turn = models.FloatField(
+        _('固定资产周转率'), blank=True, null=True)  # float	Y	固定资产周转率
+    assets_turn = models.FloatField(
+        _('总资产周转率'), blank=True, null=True)  # float	Y	总资产周转率
+    op_income = models.FloatField(
+        _('经营活动净收益'), blank=True, null=True)  # float	Y	经营活动净收益
+    valuechange_income = models.FloatField(
+        _('价值变动净收益'), blank=True, null=True)  # float	N	价值变动净收益
+    interst_income = models.FloatField(
+        _('利息费用'), blank=True, null=True)  # float	N	利息费用
+    daa = models.FloatField(
+        _('折旧与摊销'), blank=True, null=True)  # float	N	折旧与摊销
+    ebit = models.FloatField(
+        _('息税前利润'), blank=True, null=True)  # float	Y	息税前利润
+    ebitda = models.FloatField(
+        _('息税折旧摊销前利润'), blank=True, null=True)  # float	Y	息税折旧摊销前利润
+    fcff = models.FloatField(
+        _('企业自由现金流量'), blank=True, null=True)  # float	Y	企业自由现金流量
+    fcfe = models.FloatField(
+        _('股权自由现金流量'), blank=True, null=True)  # float	Y	股权自由现金流量
+    current_exint = models.FloatField(
+        _('无息流动负债'), blank=True, null=True)  # float	Y	无息流动负债
+    noncurrent_exint = models.FloatField(
+        _('无息非流动负债'), blank=True, null=True)  # float	Y	无息非流动负债
+    interestdebt = models.FloatField(
+        _('带息债务'), blank=True, null=True)  # float	Y	带息债务
+    netdebt = models.FloatField(
+        _('净债务'), blank=True, null=True)  # float	Y	净债务
+    tangible_asset = models.FloatField(
+        _('有形资产'), blank=True, null=True)  # float	Y	有形资产
+    working_capital = models.FloatField(
+        _('营运资金'), blank=True, null=True)  # float	Y	营运资金
+    networking_capital = models.FloatField(
+        _('营运流动资本'), blank=True, null=True)  # float	Y	营运流动资本
+    invest_capital = models.FloatField(
+        _('全部投入资本'), blank=True, null=True)  # float	Y	全部投入资本
+    retained_earnings = models.FloatField(
+        _('留存收益'), blank=True, null=True)  # float	Y	留存收益
+    diluted2_eps = models.FloatField(
+        _('期末摊薄每股收益'), blank=True, null=True)  # float	Y	期末摊薄每股收益
+    bps = models.FloatField(
+        _('每股净资产'), blank=True, null=True)  # float	Y	每股净资产
+    ocfps = models.FloatField(
+        _('每股经营活动产生的现金流量净额'), blank=True, null=True)  # float	Y	每股经营活动产生的现金流量净额
+    retainedps = models.FloatField(
+        _('每股留存收益'), blank=True, null=True)  # float	Y	每股留存收益
+    cfps = models.FloatField(
+        _('每股现金流量净额'), blank=True, null=True)  # float	Y	每股现金流量净额
+    ebit_ps = models.FloatField(
+        _('每股息税前利润'), blank=True, null=True)  # float	Y	每股息税前利润
+    fcff_ps = models.FloatField(
+        _('每股企业自由现金流量'), blank=True, null=True)  # float	Y	每股企业自由现金流量
+    fcfe_ps = models.FloatField(
+        _('每股股东自由现金流量'), blank=True, null=True)  # float	Y	每股股东自由现金流量
+    netprofit_margin = models.FloatField(
+        _('销售净利率'), blank=True, null=True)  # float	Y	销售净利率
+    grossprofit_margin = models.FloatField(
+        _('销售毛利率'), blank=True, null=True)  # float	Y	销售毛利率
+    cogs_of_sales = models.FloatField(
+        _('销售成本率'), blank=True, null=True)  # float	Y	销售成本率
+    expense_of_sales = models.FloatField(
+        _('销售期间费用率'), blank=True, null=True)  # float	Y	销售期间费用率
+    profit_to_gr = models.FloatField(
+        _('净利润/营业总收入'), blank=True, null=True)  # float	Y	净利润/营业总收入
+    saleexp_to_gr = models.FloatField(
+        _('销售费用/营业总收入'), blank=True, null=True)  # float	Y	销售费用/营业总收入
+    adminexp_of_gr = models.FloatField(
+        _('管理费用/营业总收入'), blank=True, null=True)  # float	Y	管理费用/营业总收入
+    finaexp_of_gr = models.FloatField(
+        _('财务费用/营业总收入'), blank=True, null=True)  # float	Y	财务费用/营业总收入
+    impai_ttm = models.FloatField(
+        _('资产减值损失/营业总收入'), blank=True, null=True)  # float	Y	资产减值损失/营业总收入
+    gc_of_gr = models.FloatField(
+        _('营业总成本/营业总收入'), blank=True, null=True)  # float	Y	营业总成本/营业总收入
+    op_of_gr = models.FloatField(
+        _('营业利润/营业总收入'), blank=True, null=True)  # float	Y	营业利润/营业总收入
+    ebit_of_gr = models.FloatField(
+        _('息税前利润/营业总收入'), blank=True, null=True)  # float	Y	息税前利润/营业总收入
+    roe = models.FloatField(
+        _('净资产收益率'), blank=True, null=True)  # float 	Y	净资产收益率
+    roe_waa = models.FloatField(
+        _('加权平均净资产收益率'), blank=True, null=True)  # float	Y	加权平均净资产收益率
+    roe_dt = models.FloatField(
+        _('净资产收益率(扣除非经常损益)'), blank=True, null=True)  # float	Y	净资产收益率(扣除非经常损益)
+    roa = models.FloatField(
+        _('总资产报酬率'), blank=True, null=True)  # float	Y	总资产报酬率
+    npta = models.FloatField(
+        _('总资产净利润'), blank=True, null=True)  # float	Y	总资产净利润
+    roic = models.FloatField(
+        _('投入资本回报率'), blank=True, null=True)  # float	Y	投入资本回报率
+    roe_yearly = models.FloatField(
+        _('年化净资产收益率'), blank=True, null=True)  # float	Y	年化净资产收益率
+    roa2_yearly = models.FloatField(
+        _('年化总资产报酬率'), blank=True, null=True)  # float	Y	年化总资产报酬率
+    roe_avg = models.FloatField(
+        _('平均净资产收益率(增发条件)'), blank=True, null=True)  # float	N	平均净资产收益率(增发条件)
+    opincome_of_ebt = models.FloatField(
+        _('经营活动净收益/利润总额'), blank=True, null=True)  # float	N	经营活动净收益/利润总额
+    investincome_of_ebt = models.FloatField(
+        _('价值变动净收益/利润总额'), blank=True, null=True)  # float	N	价值变动净收益/利润总额
+    n_op_profit_of_ebt = models.FloatField(
+        _('营业外收支净额/利润总额'), blank=True, null=True)  # float	N	营业外收支净额/利润总额
+    tax_to_ebt = models.FloatField(
+        _('所得税/利润总额'), blank=True, null=True)  # float	N	所得税/利润总额
+    dtprofit_to_profit = models.FloatField(
+        _('扣除非经常损益后的净利润/净利润'), blank=True, null=True)  # float	N	扣除非经常损益后的净利润/净利润
+    salescash_to_or = models.FloatField(
+        _('销售商品提供劳务收到的现金/营业收入'), blank=True, null=True)  # float	N	销售商品提供劳务收到的现金/营业收入
+    ocf_to_or = models.FloatField(
+        _('经营活动产生的现金流量净额/营业收入'), blank=True, null=True)  # float	N	经营活动产生的现金流量净额/营业收入
+    ocf_to_opincome = models.FloatField(
+        _('经营活动产生的现金流量净额/经营活动净收益'), blank=True, null=True)  # float	N	经营活动产生的现金流量净额/经营活动净收益
+    capitalized_to_da = models.FloatField(
+        _('资本支出/折旧和摊销'), blank=True, null=True)  # float	N	资本支出/折旧和摊销
+    debt_to_assets = models.FloatField(
+        _('资产负债率'), blank=True, null=True)  # float	Y	资产负债率
+    assets_to_eqt = models.FloatField(
+        _('权益乘数'), blank=True, null=True)  # float	Y	权益乘数
+    dp_assets_to_eqt = models.FloatField(
+        _('权益乘数(杜邦分析)'), blank=True, null=True)  # float	Y	权益乘数(杜邦分析)
+    ca_to_assets = models.FloatField(
+        _('流动资产/总资产'), blank=True, null=True)  # float	Y	流动资产/总资产
+    nca_to_assets = models.FloatField(
+        _('非流动资产/总资产'), blank=True, null=True)  # float	Y	非流动资产/总资产
+    tbassets_to_totalassets = models.FloatField(
+        _('有形资产/总资产'), blank=True, null=True)  # float	Y	有形资产/总资产
+    int_to_talcap = models.FloatField(
+        _('带息债务/全部投入资本'), blank=True, null=True)  # float	Y	带息债务/全部投入资本
+    eqt_to_talcapital = models.FloatField(
+        _('归属于母公司的股东权益/全部投入资本'), blank=True, null=True)  # float	Y	归属于母公司的股东权益/全部投入资本
+    currentdebt_to_debt = models.FloatField(
+        _('流动负债/负债合计'), blank=True, null=True)  # float	Y	流动负债/负债合计
+    longdeb_to_debt = models.FloatField(
+        _('非流动负债/负债合计'), blank=True, null=True)  # float	Y	非流动负债/负债合计
+    ocf_to_shortdebt = models.FloatField(
+        _('经营活动产生的现金流量净额/流动负债'), blank=True, null=True)  # float	Y	经营活动产生的现金流量净额/流动负债
+    debt_to_eqt = models.FloatField(
+        _('产权比率'), blank=True, null=True)  # float Y	产权比率
+    eqt_to_debt = models.FloatField(
+        _('归属于母公司的股东权益/负债合计'), blank=True, null=True)  # float	Y	归属于母公司的股东权益/负债合计
+    eqt_to_interestdebt = models.FloatField(
+        _('归属于母公司的股东权益/带息债务'), blank=True, null=True)  # float	Y	归属于母公司的股东权益/带息债务
+    tangibleasset_to_debt = models.FloatField(
+        _('有形资产/负债合计'), blank=True, null=True)  # float	Y	有形资产/负债合计
+    tangasset_to_intdebt = models.FloatField(
+        _('有形资产/带息债务'), blank=True, null=True)  # float	Y	有形资产/带息债务
+    tangibleasset_to_netdebt = models.FloatField(
+        _('有形资产/净债务'), blank=True, null=True)  # float	Y	有形资产/净债务
+    ocf_to_debt = models.FloatField(
+        _('经营活动产生的现金流量净额/负债合计'), blank=True, null=True)  # float	Y	经营活动产生的现金流量净额/负债合计
+    ocf_to_interestdebt = models.FloatField(
+        _('经营活动产生的现金流量净额/带息债务'), blank=True, null=True)  # float	N	经营活动产生的现金流量净额/带息债务
+    ocf_to_netdebt = models.FloatField(
+        _('经营活动产生的现金流量净额/净债务'), blank=True, null=True)  # float	N	经营活动产生的现金流量净额/净债务
+    ebit_to_interest = models.FloatField(
+        _('已获利息倍数(EBIT/利息费用)'), blank=True, null=True)  # float	N	已获利息倍数(EBIT/利息费用)
+    longdebt_to_workingcapital = models.FloatField(
+        _('长期债务与营运资金比率'), blank=True, null=True)  # float	N	长期债务与营运资金比率
+    ebitda_to_debt = models.FloatField(
+        _('息税折旧摊销前利润/负债合计'), blank=True, null=True)  # float	N	息税折旧摊销前利润/负债合计
+    turn_days = models.FloatField(
+        _('营业周期'), blank=True, null=True)  # float	Y	营业周期
+    roa_yearly = models.FloatField(
+        _('年化总资产净利率'), blank=True, null=True)  # float	Y	年化总资产净利率
+    roa_dp = models.FloatField(
+        _('总资产净利率'), blank=True, null=True)  # float	Y	总资产净利率(杜邦分析)
+    fixed_assets = models.FloatField(
+        _('固定资产合计'), blank=True, null=True)  # float	Y	固定资产合计
+    profit_prefin_exp = models.FloatField(
+        _('扣除财务费用前营业利润'), blank=True, null=True)  # float	N	扣除财务费用前营业利润
+    non_op_profit = models.FloatField(
+        _('非营业利润'), blank=True, null=True)  # float	N	非营业利润
+    op_to_ebt = models.FloatField(
+        _('营业利润／利润总额'), blank=True, null=True)  # float	N	营业利润／利润总额
+    nop_to_ebt = models.FloatField(
+        _('非营业利润／利润总额'), blank=True, null=True)  # float	N	非营业利润／利润总额
+    ocf_to_profit = models.FloatField(
+        _('经营活动产生的现金流量净额／营业利润'), blank=True, null=True)  # float	N	经营活动产生的现金流量净额／营业利润
+    cash_to_liqdebt = models.FloatField(
+        _('货币资金／流动负债'), blank=True, null=True)  # float	N	货币资金／流动负债
+    cash_to_liqdebt_withinterest = models.FloatField(
+        _('货币资金／带息流动负债'), blank=True, null=True)  # float	N	货币资金／带息流动负债
+    op_to_liqdebt = models.FloatField(
+        _('营业利润／流动负债'), blank=True, null=True)  # float	N	营业利润／流动负债
+    op_to_debt = models.FloatField(
+        _('营业利润／负债合计'), blank=True, null=True)  # float	N	营业利润／负债合计
+    roic_yearly = models.FloatField(
+        _('年化投入资本回报率'), blank=True, null=True)  # float	N	年化投入资本回报率
+    total_fa_trun = models.FloatField(
+        _('固定资产合计周转率'), blank=True, null=True)  # float	N	固定资产合计周转率
+    profit_to_op = models.FloatField(
+        _('利润总额／营业收入'), blank=True, null=True)  # float	Y	利润总额／营业收入
+    q_opincome = models.FloatField(
+        _('经营活动单季度净收益'), blank=True, null=True)  # float	N	经营活动单季度净收益
+    q_investincome = models.FloatField(
+        _('价值变动单季度净收益'), blank=True, null=True)  # float	N	价值变动单季度净收益
+    q_dtprofit = models.FloatField(
+        _('扣除非经常损益后的单季度净利润'), blank=True, null=True)  # float	N	扣除非经常损益后的单季度净利润
+    q_eps = models.FloatField(
+        _('每股收益'), blank=True, null=True)  # float	N	每股收益(单季度)
+    q_netprofit_margin = models.FloatField(
+        _('销售净利率'), blank=True, null=True)  # float	N	销售净利率(单季度)
+    q_gsprofit_margin = models.FloatField(
+        _('销售毛利率'), blank=True, null=True)  # float	N	销售毛利率(单季度)
+    q_exp_to_sales = models.FloatField(
+        _('销售期间费用率'), blank=True, null=True)  # float	N	销售期间费用率(单季度)
+    q_profit_to_gr = models.FloatField(
+        _('净利润／营业总收入'), blank=True, null=True)  # float	N	净利润／营业总收入(单季度)
+    q_saleexp_to_gr = models.FloatField(
+        _('销售费用／营业总收入'), blank=True, null=True)  # float	Y	销售费用／营业总收入 (单季度)
+    q_adminexp_to_gr = models.FloatField(
+        _('管理费用／营业总收入'), blank=True, null=True)  # float	N	管理费用／营业总收入 (单季度)
+    q_finaexp_to_gr = models.FloatField(
+        _('财务费用／营业总收入'), blank=True, null=True)  # float	N	财务费用／营业总收入 (单季度)
+    q_impair_to_gr_ttm = models.FloatField(
+        _('资产减值损失／营业总收入'), blank=True, null=True)  # float	N	资产减值损失／营业总收入(单季度)
+    q_gc_to_gr = models.FloatField(
+        _('营业总成本／营业总收入'), blank=True, null=True)  # float	Y	营业总成本／营业总收入 (单季度)
+    q_op_to_gr = models.FloatField(
+        _('营业利润／营业总收入'), blank=True, null=True)  # float	N	营业利润／营业总收入(单季度)
+    q_roe = models.FloatField(
+        _('净资产收益率'), blank=True, null=True)  # float	Y	净资产收益率(单季度)
+    q_dt_roe = models.FloatField(
+        _('净资产单季度收益率'), blank=True, null=True)  # float	Y	净资产单季度收益率(扣除非经常损益)
+    q_npta = models.FloatField(
+        _('总资产净利润'), blank=True, null=True)  # float	Y	总资产净利润(单季度)
+    q_opincome_to_ebt = models.FloatField(
+        _('经营活动净收益／利润总额'), blank=True, null=True)  # float	N	经营活动净收益／利润总额(单季度)
+    q_investincome_to_ebt = models.FloatField(
+        _('价值变动净收益／利润总额'), blank=True, null=True)  # float	N	价值变动净收益／利润总额(单季度)
+    q_dtprofit_to_profit = models.FloatField(
+        _('扣除非经常损益后的净利润／净利润'), blank=True, null=True)  # float	N	扣除非经常损益后的净利润／净利润(单季度)
+    q_salescash_to_or = models.FloatField(
+        _('销售商品提供劳务收到的现金／营业收入'), blank=True, null=True)  # float	N	销售商品提供劳务收到的现金／营业收入(单季度)
+    q_ocf_to_sales = models.FloatField(
+        _('经营活动产生的现金流量净额／营业收入'), blank=True, null=True)  # float	Y	经营活动产生的现金流量净额／营业收入(单季度)
+    q_ocf_to_or = models.FloatField(
+        _('经营活动产生的现金流量净额／经营活动净收益'), blank=True, null=True)  # float	N	经营活动产生的现金流量净额／经营活动净收益(单季度)
+    basic_eps_yoy = models.FloatField(
+        _('基本每股收益同比增长率'), blank=True, null=True)  # float	Y	基本每股收益同比增长率(%)
+    dt_eps_yoy = models.FloatField(
+        _('稀释每股收益同比增长率'), blank=True, null=True)  # float	Y	稀释每股收益同比增长率(%)
+    cfps_yoy = models.FloatField(
+        _('每股经营活动产生的现金流量净额同比增长率'), blank=True, null=True)  # float	Y	每股经营活动产生的现金流量净额同比增长率(%)
+    op_yoy = models.FloatField(
+        _('营业利润同比增长率'), blank=True, null=True)  # float	Y	营业利润同比增长率(%)
+    ebt_yoy = models.FloatField(
+        _('利润总额同比增长率'), blank=True, null=True)  # float	Y	利润总额同比增长率(%)
+    netprofit_yoy = models.FloatField(
+        _('归属母公司股东的净利润同比增长率'), blank=True, null=True)  # float	Y	归属母公司股东的净利润同比增长率(%)
+    dt_netprofit_yoy = models.FloatField(
+        _('归属母公司股东的净利润-扣除非经常损益同比增长率'), blank=True, null=True)  # float	Y	归属母公司股东的净利润-扣除非经常损益同比增长率(%)
+    ocf_yoy = models.FloatField(
+        _('经营活动产生的现金流量净额同比增长率'), blank=True, null=True)  # float	Y	经营活动产生的现金流量净额同比增长率(%)
+    roe_yoy = models.FloatField(
+        _('净资产收益率(摊薄)同比增长率'), blank=True, null=True)  # float	Y	净资产收益率(摊薄)同比增长率(%)
+    bps_yoy = models.FloatField(
+        _('每股净资产相对年初增长率'), blank=True, null=True)  # float	Y	每股净资产相对年初增长率(%)
+    assets_yoy = models.FloatField(
+        _('资产总计相对年初增长率'), blank=True, null=True)  # float	Y	资产总计相对年初增长率(%)
+    eqt_yoy = models.FloatField(
+        _('归属母公司的股东权益相对年初增长率'), blank=True, null=True)  # float	Y	归属母公司的股东权益相对年初增长率(%)
+    tr_yoy = models.FloatField(
+        _('营业总收入同比增长率'), blank=True, null=True)  # float	Y	营业总收入同比增长率(%)
+    or_yoy = models.FloatField(
+        _('营业收入同比增长率'), blank=True, null=True)  # float	Y	营业收入同比增长率(%)
+    q_gr_yoy = models.FloatField(
+        _('营业总收入同比增长率'), blank=True, null=True)  # float	N	营业总收入同比增长率(%)(单季度)
+    q_gr_qoq = models.FloatField(
+        _('营业总收入环比增长率'), blank=True, null=True)  # float	N	营业总收入环比增长率(%)(单季度)
+    q_sales_yoy = models.FloatField(
+        _('营业收入同比增长率'), blank=True, null=True)  # float	Y	营业收入同比增长率(%)(单季度)
+    q_sales_qoq = models.FloatField(
+        _('营业收入环比增长率'), blank=True, null=True)  # float	N	营业收入环比增长率(%)(单季度)
+    q_op_yoy = models.FloatField(
+        _('营业利润同比增长率'), blank=True, null=True)  # float	N	营业利润同比增长率(%)(单季度)
+    q_op_qoq = models.FloatField(
+        _('营业利润环比增长率'), blank=True, null=True)  # float	Y	营业利润环比增长率(%)(单季度)
+    q_profit_yoy = models.FloatField(
+        _('净利润同比增长率'), blank=True, null=True)  # float	N	净利润同比增长率(%)(单季度)
+    q_profit_qoq = models.FloatField(
+        _('净利润环比增长率'), blank=True, null=True)  # float	N	净利润环比增长率(%)(单季度)
+    q_netprofit_yoy = models.FloatField(
+        _('归属母公司股东的净利润同比增长率'), blank=True, null=True)  # float	N	归属母公司股东的净利润同比增长率(%)(单季度)
+    q_netprofit_qoq = models.FloatField(
+        _('归属母公司股东的净利润环比增长率'), blank=True, null=True)  # float	N	归属母公司股东的净利润环比增长率(%)(单季度)
+    equity_yoy = models.FloatField(
+        _('净资产同比增长率'), blank=True, null=True)  # float	Y	净资产同比增长率
+    rd_exp = models.FloatField(
+        _('研发费用'), blank=True, null=True)  # float	N	研发费用
+    update_flag = models.CharField(
+        _('更新标识'),  max_length=5, blank=True, null=True)  # str	N	更新标识
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='fin_indicator', blank=True, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ['-end_date']
+        verbose_name = _('财务指标')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
 class CompanyTop10FloatHolders(BaseModel):
     '''
     ts_code	str	TS股票代码
@@ -941,7 +1288,7 @@ class CompanyTop10FloatHolders(BaseModel):
         _('持股数'), blank=True, null=True)
     company = models.ForeignKey(
         StockNameCodeMap, related_name='top10_holder', blank=True, null=True, on_delete=models.SET_NULL)
-    
+
     class Meta:
         ordering = ['-end_date']
         verbose_name = _('前10大流通股')

@@ -38,12 +38,27 @@ $(function () {
     }
 
     var renderChart = function () {
-        showCompanyBasic(tsCode);
         renderCloseChart(tsCode);
         renderCompanyBasicChart(tsCode, startDate, endDate);
-        renderTop10HolderStatChart(tsCode, period);
         // renderUpdownByPeriodChart();
         // renderPeriodByUpRangeChart();
+        if (tsCode == "000001.SH" || tsCode == "399001.SZ" || tsCode == "399006.SZ") {
+            // top10HoldersChart.setOption(undefined);
+            // top10HoldersPetChart.setOption(undefined);
+            // top10HoldersPbChart.setOption(undefined);
+            // top10HoldersPsChart.setOption(undefined);
+            $("#psChart").addClass("d-none");
+            $("#psTTMChart").addClass("d-none");
+            // $("#psChart").addClass("d-none");
+            $("#vrChart").addClass("d-none");
+        } else {
+            showCompanyBasic(tsCode);
+            renderTop10HolderStatChart(tsCode, period);
+            $("#psChart").removeClass("d-none");
+            $("#psTTMChart").removeClass("d-none");
+            // $("#psChart").addClass("d-none");
+            $("#vrChart").removeClass("d-none");
+        }
     }
 
     var showCompanyBasic = function (tsCode) {
@@ -267,7 +282,13 @@ $(function () {
             url: stockmarketEndpoint + "daily-basic-history/" + tsCode + "/" + startDate + "/" + endDate + "/?format=json",
             success: function (data) {
                 $(basicCharts).each(function (idx, obj) {
-                    renderBasicChart(data, obj, $(obj).attr("name"));
+                    if (tsCode == "000001.SH" || tsCode == "399001.SZ" || tsCode == "399006.SZ") {
+                        if ($(obj).attr("name") == "pe" || $(obj).attr("name") == "pe_ttm" || $(obj).attr("name") == "trade_date" || $(obj).attr("name") == "pb" || $(obj).attr("name") == "turnover_rate") {
+                            renderBasicChart(data, obj, $(obj).attr("name"));
+                        }
+                    } else {
+                        renderBasicChart(data, obj, $(obj).attr("name"));
+                    }
                 });
                 // renderPETTMChart(data.pe_ttm);
                 // renderPSChart(data.ps);

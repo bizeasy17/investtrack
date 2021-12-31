@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import tushare as ts
 from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
-                             StockHistoryDaily)
+                             StockHistoryDaily, StockIndexHistory)
 from analysis.utils import get_ip
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Count, Q
@@ -22,16 +22,18 @@ from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 from stockmarket.models import (City, CompanyBasic, Industry, Province,
                                 StockNameCodeMap)
 
-from .models import (CompanyBasic, CompanyDailyBasic, CompanyTop10FloatHoldersStat, Industry, ManagerRewards,
+from .models import (CompanyBasic, CompanyDailyBasic, CompanyTop10FloatHoldersStat, IndexDailyBasic, Industry, ManagerRewards,
                      StockNameCodeMap)
-from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer,
+from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, IndexDailyBasicSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
                           StockCloseHistorySerializer, CitySerializer, ProvinceSerializer)
-from .utils import get_ind_basic, str_eval
+from .utils import get_ind_basic, str_eval, collect_fin_indicators
 
 # Create your views here.
 
 logger = logging.getLogger(__name__)
+
+index_list = ['000001.SH', '399001.SZ', '399006.SZ']
 
 
 class IndustryList(APIView):
@@ -155,12 +157,21 @@ class StockCloseHistoryList(APIView):
         try:
             if period <= 5:
                 start_date = date.today() - timedelta(days=365 * period)
-                close_history = StockHistoryDaily.objects.filter(
-                    ts_code=ts_code, freq=freq, trade_date__gte=start_date,
-                    trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                if ts_code in index_list:
+                    close_history = StockIndexHistory.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                        trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                else:
+                    close_history = StockHistoryDaily.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                        trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
             else:  # period = 0 means all stock history
-                close_history = StockHistoryDaily.objects.filter(
-                    ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                if ts_code in index_list:
+                    close_history = StockIndexHistory.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                else:
+                    close_history = StockHistoryDaily.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
 
             # df = pd.DataFrame(close_history, columns=['close','trade_date'])
             # close_qtiles = df.close.quantile(
@@ -184,14 +195,24 @@ class StockDailyBasicHistoryList(APIView):
 
     def get(self, request, ts_code, start_date, end_date):
         try:
-            cdb = CompanyDailyBasic.objects.filter(
-                ts_code=ts_code, trade_date__gte=datetime.strptime(
-                    start_date, '%Y%m%d'),
-                trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).values('trade_date', 'pe', 'pe_ttm',
-                                                                               'pb', 'ps', 'ps_ttm', 'turnover_rate',
-                                                                               'volume_ratio').order_by('trade_date')
+            if ts_code in index_list:
+                cdb = IndexDailyBasic.objects.filter(
+                    ts_code=ts_code, trade_date__gte=datetime.strptime(
+                        start_date, '%Y%m%d'),
+                    trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).values('trade_date', 'pe', 'pe_ttm',
+                                                                                   'pb', 'turnover_rate',
+                                                                                   ).order_by('trade_date')
+                serializer = IndexDailyBasicSerializer(cdb, many=True)
 
-            serializer = CompanyDailyBasicSerializer(cdb, many=True)
+            else:
+                cdb = CompanyDailyBasic.objects.filter(
+                    ts_code=ts_code, trade_date__gte=datetime.strptime(
+                        start_date, '%Y%m%d'),
+                    trade_date__lte=datetime.strptime(end_date, '%Y%m%d'),).values('trade_date', 'pe', 'pe_ttm',
+                                                                                   'pb', 'ps', 'ps_ttm', 'turnover_rate',
+                                                                                   'volume_ratio').order_by('trade_date')
+
+                serializer = CompanyDailyBasicSerializer(cdb, many=True)
             # serializer.fields = basic_type.split(',')
             return Response(serializer.data)
         except CompanyDailyBasic.DoesNotExist:
@@ -403,3 +424,23 @@ def command_test(request):
                       company.ts_code + ' StockNameCode.')
     except Exception as err:
         print(err)
+
+
+# Create your views here.
+def analysis_command(request, cmd, params):
+    p = params.split(',')
+
+    try:
+        plist = params.split(',')
+        if cmd == 'ibq':
+            # quantile = [.1, .25, .5, .75, .9]
+            # # get last end date
+            # next_dates = next_date()
+            # process_industrybasic_quantile(
+            #     quantile, next_dates,)
+            pass
+        if cmd == 'cfi':
+            collect_fin_indicators(plist[0])
+        return HttpResponse(status=200)
+    except Exception as e:
+        return HttpResponse(status=500)

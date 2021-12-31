@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
 
-from .models import CompanyDailyBasic, CompanyTop10FloatHoldersStat, Province, StockNameCodeMap, Industry, City
+from .models import CompanyDailyBasic, CompanyTop10FloatHoldersStat, IndexDailyBasic, Province, StockNameCodeMap, Industry, City
 
 BOARD_LIST = {
     'SHZB': '上海主板',
@@ -165,6 +165,25 @@ class CompanyDailyBasicSerializer(serializers.ModelSerializer):
                   'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']
 
 
+class IndexDailyBasicSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'trade_date': instance['trade_date'],
+            'turnover_rate': instance['turnover_rate'] if not np.isnan(instance['turnover_rate']) else 0,
+            # 'volume_ratio': instance['volume_ratio'] if not np.isnan(instance['volume_ratio']) else 0,
+            'pe': instance['pe'] if instance['pe'] is not None and not np.isnan(instance['pe']) else 0,
+            'pe_ttm': instance['pe_ttm'] if instance['pe_ttm'] is not None and not np.isnan(instance['pe_ttm']) else 0,
+            'pb': instance['pb'] if not np.isnan(instance['pb']) else 0,
+            # 'ps': instance['ps'] if not np.isnan(instance['ps']) else 0,
+            # 'ps_ttm': instance['ps_ttm'] if not np.isnan(instance['ps_ttm']) else 0,
+        }
+
+    class Meta:
+        model = IndexDailyBasic
+        fields = ['trade_date', 'turnover_rate','pe', 'pe_ttm', 'pb',]
+
+
 class CompanyDailyBasicExtSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
@@ -217,6 +236,7 @@ class CompanyTop10HoldersStatSerializer(serializers.ModelSerializer):
         model = CompanyTop10FloatHoldersStat
         # fields = ['trade_date', 'turnover_rate',
         #           'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm']
+
 
 class IndustryBasicQuantileSerializer(serializers.ModelSerializer):
 

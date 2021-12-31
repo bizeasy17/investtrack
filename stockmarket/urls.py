@@ -30,4 +30,5 @@ urlpatterns = [
          views.get_industry_basic),
     path('command/',
          views.command_test),
+    path('cmd/<cmd>/<params>/', views.analysis_command),
 ]
