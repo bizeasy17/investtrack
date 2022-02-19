@@ -84,9 +84,9 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                     download_stock_hist(listed_company,
                         listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
                 else:  # 根据日志记录下载相应历史记录
-
+                    print(last_date)
                     if last_date is not None:
-                        if last_date[1] < today:  # 如果有差异就下载，不然就退出
+                        if last_date[1] < today and today > listed_company.last_update_date:  # 如果有差异就下载，不然就退出
                             # 已完成首次下载
                             download_type = 1
                             print('update hist')

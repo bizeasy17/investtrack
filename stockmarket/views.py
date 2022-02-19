@@ -22,7 +22,7 @@ from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
 from stockmarket.models import (City, CompanyBasic, Industry, Province,
                                 StockNameCodeMap)
 
-from .models import (CompanyBasic, CompanyDailyBasic, CompanyTop10FloatHoldersStat, IndexDailyBasic, Industry, ManagerRewards,
+from .models import (CompanyBasic, CompanyDailyBasic, CompanyFinIndicators, CompanyTop10FloatHoldersStat, IndexDailyBasic, Industry, ManagerRewards,
                      StockNameCodeMap)
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, IndexDailyBasicSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
@@ -231,6 +231,33 @@ class StockTop10HoldersStatList(APIView):
             ctfshs = CompanyTop10FloatHoldersStat.objects.filter(
                 ts_code=ts_code, end_date__gte=start_date,
                 end_date__lte=date.today(),).order_by('end_date')
+
+            serializer = CompanyTop10HoldersStatSerializer(ctfshs, many=True)
+            # serializer.fields = basic_type.split(',')
+            return Response(serializer.data)
+        except CompanyTop10FloatHoldersStat.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+class StockFinanceIndicatorStatList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, ts_code, period=18):
+        try:
+            start_date = date.today() - timedelta(days=365 * period)
+            ctfshs = CompanyFinIndicators.objects.filter(
+                ts_code=ts_code, end_date__gte=start_date,
+                end_date__lte=date.today(),).order_by('end_date').values(
+                    'total_revenue_ps','revenue_ps','surplus_rese_ps','undist_profit_ps','current_ratio', #neg current_ratio 
+                    'ar_turn','interst_income','daa','ebit','ebitda','current_exint','noncurrent_exint','interestdebt',
+                    'fcff','fcfe','netdebt','tangible_asset','working_capital','invest_capital','retained_earnings',
+                    'bps','retainedps','roa2_yearly','assets_to_eqt','dp_assets_to_eqt','ca_to_assets','nca_to_assets',#neg roa2_yearly,ca_to_assets
+                    'tbassets_to_totalassets','eqt_to_talcapital','debt_to_eqt','tangibleasset_to_debt', # neg tangibleasset_to_debt,tbassets_to_totalassets,tangibleasset_to_debt
+                    'longdebt_to_workingcapital','fixed_assets','total_fa_trun','q_opincome','q_investincome','q_dtprofit','q_eps', #neg roa_yearly,total_fa_trun
+                    #'','','','','','','','','','',
+                )
 
             serializer = CompanyTop10HoldersStatSerializer(ctfshs, many=True)
             # serializer.fields = basic_type.split(',')

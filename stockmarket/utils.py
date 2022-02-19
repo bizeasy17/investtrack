@@ -11,7 +11,7 @@ from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
 
 from stockmarket.models import CompanyFinIndicators, StockNameCodeMap
 
-from .models import StockNameCodeMap
+from .models import CompanyBalanceSheet, StockNameCodeMap
 
 
 def get_single_realtime_quote(symbol):
@@ -497,4 +497,370 @@ def get_fina_indicator_fields():
         'dt_netprofit_yoy,ocf_yoy,roe_yoy,bps_yoy,assets_yoy,eqt_yoy,tr_yoy,or_yoy,q_gr_yoy,q_gr_qoq,q_sales_yoy,' \
         'q_sales_qoq,q_op_yoy,q_op_qoq,q_profit_yoy,q_profit_qoq,q_netprofit_yoy,q_netprofit_qoq,' \
         'equity_yoy,rd_exp,update_flag'
+    return fields
+
+
+def collect_balance_sheet(ts_code):
+    try:
+        pro = ts.pro_api()
+
+        # 查询当前所有正常上市交易的股票列表
+        balance_sheet_list = []
+        end_year = date.today().year
+        end_date = None
+        if ts_code is None:
+            companies = StockNameCodeMap.objects.filter(
+                asset='E').order_by('ts_code')
+        else:
+            companies = StockNameCodeMap.objects.filter(ts_code=ts_code)
+
+        for company in companies:
+            print('starting for ' + company.ts_code +
+                  ':' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            list_year = company.list_date.year
+
+            if company.balance_sheet_date is None:
+                if end_year - list_year <= 20:
+                    data = pro.balancesheet(
+                        ts_code=company.ts_code, start_date=str(list_year)+'0101', end_date=str(end_year)+'1231', fields=get_balance_sheet_fields())
+                else:
+                    temp_year = end_year - 20
+                    data1 = pro.balancesheet(
+                        ts_code=company.ts_code, start_date=str(temp_year)+'0101', end_date=str(end_year)+'1231', fields=get_balance_sheet_fields())
+                    data2 = pro.balancesheet(
+                        ts_code=company.ts_code, start_date=str(list_year)+'0101', end_date=str(temp_year-1)+'1231', fields=get_balance_sheet_fields())
+                    data = pd.concat([data1, data2])
+            else:
+                data = pro.balancesheet(
+                    ts_code=company.ts_code, start_date=company.fin_indicator_date.strftime('%Y%m%d'), end_date=str(end_year)+'1231', fields=get_balance_sheet_fields())
+
+            # old_indicators = CompanyFinIndicators.objects.filter(
+            #     ts_code=company.ts_code)
+
+            # print(len(data))
+
+            if len(data) > 0:
+                for index, row in data.iterrows():
+                    # try:
+                    # print(datetime.strptime(
+                    #     row['ann_date'], '%Y%m%d'))
+                    # print(datetime.strptime(row['end_date'], '%Y%m%d'))
+                    balance_sheet = CompanyBalanceSheet.objects.filter(
+                        ts_code=company.ts_code, announce_date=datetime.strptime(
+                            row['ann_date'], '%Y%m%d'), f_announce_date=datetime.strptime(
+                            row['f_ann_date'], '%Y%m%d'), end_date=datetime.strptime(row['end_date'], '%Y%m%d'))
+                    if len(balance_sheet) <= 0:
+                        cbs = CompanyBalanceSheet(ts_code=company.ts_code,
+                                                  announce_date=datetime.strptime(
+                                                      row['ann_date'], '%Y%m%d'),
+                                                  f_announce_date=datetime.strptime(
+                                                      row['f_ann_date'], '%Y%m%d'),
+                                                  end_date=datetime.strptime(
+                                                      row['end_date'], '%Y%m%d'), company=company)
+                        # cbs.ts_code = row['ts_code']  # str	Y	TS股票代码
+                        # cbs.announce_date = row['ann_date']  # s	str	Y	公告日期
+                        # s	str	Y	实际公告日期
+                        # cbs.f_announce_date = row['f_ann_date']
+                        # cbs.end_date = row['end_date']  # s	str	Y	报告期
+                        cbs.report_type = row['report_type']  # sstr	Y	报表类型
+                        # s	str	Y	公司类型(1一般工商业2银行3保险4证券)
+                        cbs.comp_type = row['comp_type']
+                        cbs.end_type = row['end_type']  # s	str	Y	报告期类型
+                        cbs.total_share = row['total_share']  # s	float	Y	期末总股本
+                        cbs.cap_rese = row['cap_rese']  # s	float	Y	资本公积金
+                        # s	float	Y	未分配利润
+                        cbs.undistr_porfit = row['undistr_porfit']
+                        # s	float	Y	盈余公积金
+                        cbs.surplus_rese = row['surplus_rese']
+                        # s	float	Y	专项储备
+                        cbs.special_rese = row['special_rese']
+                        cbs.money_cap = row['money_cap']  # s	float	Y	货币资金
+                        cbs.trad_asset = row['trad_asset']  # s	float	Y	交易性金融资产
+                        # s	float	Y	应收票据
+                        cbs.notes_receiv = row['notes_receiv']
+                        # s	float	Y	应收账款
+                        cbs.accounts_receiv = row['accounts_receiv']
+                        cbs.oth_receiv = row['oth_receiv']  # s	float	Y	其他应收款
+                        cbs.prepayment = row['prepayment']  # s	float	Y	预付款项
+                        cbs.div_receiv = row['div_receiv']  # s	float	Y	应收股利
+                        cbs.int_receiv = row['int_receiv']  # s	float	Y	应收利息
+                        cbs.inventories = row['inventories']  # s	float	Y	存货
+                        cbs.amor_exp = row['amor_exp']  # s	float	Y	长期待摊费用
+                        # s	float	Y	一年内到期的非流动资产
+                        cbs.nca_within_1y = row['nca_within_1y']
+                        cbs.sett_rsrv = row['sett_rsrv']  # s	float	Y	结算备付金
+                        # s	float	Y	拆出资金
+                        cbs.loanto_oth_bank_fi = row['loanto_oth_bank_fi']
+                        # s	float	Y	应收保费
+                        cbs.premium_receiv = row['premium_receiv']
+                        # s	float	Y	应收分保账款
+                        cbs.reinsur_receiv = row['reinsur_receiv']
+                        # s	float	Y	应收分保合同准备金
+                        cbs.reinsur_res_receiv = row['reinsur_res_receiv']
+                        # s	float	Y	买入返售金融资产
+                        cbs.pur_resale_fa = row['pur_resale_fa']
+                        # s	float	Y	其他流动资产
+                        cbs.oth_cur_assets = row['oth_cur_assets']
+                        # s	float	Y	流动资产合计
+                        cbs.total_cur_assets = row['total_cur_assets']
+                        # s	float	Y	可供出售金融资产
+                        cbs.fa_avail_for_sale = row['fa_avail_for_sale']
+                        cbs.htm_invest = row['htm_invest']  # s	float	Y	持有至到期投资
+                        # s	float	Y	长期股权投资
+                        cbs.lt_eqt_invest = row['lt_eqt_invest']
+                        # s	float	Y	投资性房地产
+                        cbs.invest_real_estate = row['invest_real_estate']
+                        # s	float	Y	定期存款
+                        cbs.time_deposits = row['time_deposits']
+                        cbs.oth_assets = row['oth_assets']  # s	float	Y	其他资产
+                        cbs.lt_rec = row['lt_rec']  # s	float	Y	长期应收款
+                        cbs.fix_assets = row['fix_assets']  # s	float	Y	固定资产
+                        cbs.cip = row['cip']  # sfloat	Y	在建工程
+                        # sfloat	Y	工程物资
+                        cbs.const_materials = row['const_materials']
+                        # s	float	Y	固定资产清理
+                        cbs.fixed_assets_disp = row['fixed_assets_disp']
+                        # s	float	Y	生产性生物资产
+                        cbs.produc_bio_assets = row['produc_bio_assets']
+                        # s	float	Y	油气资产
+                        cbs.oil_and_gas_assets = row['oil_and_gas_assets']
+                        cbs.intan_assets = row['intan_assets']  # float	Y	无形资产
+                        cbs.r_and_d = row['r_and_d']  # float	Y	研发支出
+                        cbs.goodwill = row['goodwill']  # float	Y	商誉
+                        cbs.lt_amor_exp = row['lt_amor_exp']  # float	Y	长期待摊费用
+                        # float	Y	递延所得税资产
+                        cbs.defer_tax_assets = row['defer_tax_assets']
+                        # float	Y	发放贷款及垫款
+                        cbs.decr_in_disbur = row['decr_in_disbur']
+                        cbs.oth_nca = row['oth_nca']  # float	Y	其他非流动资产
+                        cbs.total_nca = row['total_nca']  # float	Y	非流动资产合计
+                        # float	Y	现金及存放中央银行款项
+                        cbs.cash_reser_cb = row['cash_reser_cb']
+                        # float	Y	存放同业和其它金融机构款项
+                        cbs.depos_in_oth_bfi = row['depos_in_oth_bfi']
+                        cbs.prec_metals = row['prec_metals']  # float	Y	贵金属
+                        # float	Y	衍生金融资产
+                        cbs.deriv_assets = row['deriv_assets']
+                        # float	Y	应收分保未到期责任准备金
+                        cbs.rr_reins_une_prem = row['rr_reins_une_prem']
+                        # float	Y	应收分保未决赔款准备金
+                        cbs.rr_reins_outstd_cla = row['rr_reins_outstd_cla']
+                        # float	Y	应收分保寿险责任准备金
+                        cbs.rr_reins_lins_liab = row['rr_reins_lins_liab']
+                        # float	Y	应收分保长期健康险责任准备金
+                        cbs.rr_reins_lthins_liab = row['rr_reins_lthins_liab']
+                        cbs.refund_depos = row['refund_depos']  # float	Y	存出保证金
+                        # float	Y	保户质押贷款
+                        cbs.ph_pledge_loans = row['ph_pledge_loans']
+                        # float	Y	存出资本保证金
+                        cbs.refund_cap_depos = row['refund_cap_depos']
+                        # float	Y	独立账户资产
+                        cbs.indep_acct_assets = row['indep_acct_assets']
+                        # float	Y	其中：客户资金存款
+                        cbs.client_depos = row['client_depos']
+                        # float	Y	其中：客户备付金
+                        cbs.client_prov = row['client_prov']
+                        # float	Y	其中:交易席位费
+                        cbs.transac_seat_fee = row['transac_seat_fee']
+                        # float	Y	应收款项类投资
+                        cbs.invest_as_receiv = row['invest_as_receiv']
+                        cbs.total_assets = row['total_assets']  # float	Y	资产总计
+                        cbs.lt_borr = row['lt_borr']  # float	Y	长期借款
+                        cbs.st_borr = row['st_borr']  # float	Y	短期借款
+                        cbs.cb_borr = row['cb_borr']  # float	Y	向中央银行借款
+                        # float	Y	吸收存款及同业存放
+                        cbs.depos_ib_deposits = row['depos_ib_deposits']
+                        # float	Y	拆入资金
+                        cbs.loan_oth_bank = row['loan_oth_bank']
+                        cbs.trading_fl = row['trading_fl']  # float	Y	交易性金融负债
+                        # float	Y	应付票据
+                        cbs.notes_payable = row['notes_payable']
+                        cbs.acct_payable = row['acct_payable']  # float	Y	应付账款
+                        cbs.adv_receipts = row['adv_receipts']  # float	Y	预收款项
+                        # float	Y	卖出回购金融资产款
+                        cbs.sold_for_repur_fa = row['sold_for_repur_fa']
+                        # float	Y	应付手续费及佣金
+                        cbs.comm_payable = row['comm_payable']
+                        # float	Y	应付职工薪酬
+                        cbs.payroll_payable = row['payroll_payable']
+                        # float	Y	应交税费
+                        cbs.taxes_payable = row['taxes_payable']
+                        cbs.int_payable = row['int_payable']  # float	Y	应付利息
+                        cbs.div_payable = row['div_payable']  # float	Y	应付股利
+                        cbs.oth_payable = row['oth_payable']  # float	Y	其他应付款
+                        cbs.acc_exp = row['acc_exp']  # float	Y	预提费用
+                        cbs.deferred_inc = row['deferred_inc']  # float	Y	递延收益
+                        # float	Y	应付短期债券
+                        cbs.st_bonds_payable = row['st_bonds_payable']
+                        # float	Y	应付分保账款
+                        cbs.payable_to_reinsurer = row['payable_to_reinsurer']
+                        # float	Y	保险合同准备金
+                        cbs.rsrv_insur_cont = row['rsrv_insur_cont']
+                        # float	Y	代理买卖证券款
+                        cbs.acting_trading_sec = row['acting_trading_sec']
+                        # float	Y	代理承销证券款
+                        cbs.acting_uw_sec = row['acting_uw_sec']
+                        # float	Y	一年内到期的非流动负债
+                        cbs.non_cur_liab_due_1y = row['non_cur_liab_due_1y']
+                        # float	Y	其他流动负债
+                        cbs.oth_cur_liab = row['oth_cur_liab']
+                        # float	Y	流动负债合计
+                        cbs.total_cur_liab = row['total_cur_liab']
+                        cbs.bond_payable = row['bond_payable']  # float	Y	应付债券
+                        cbs.lt_payable = row['lt_payable']  # float	Y	长期应付款
+                        # float	Y	专项应付款
+                        cbs.specific_payables = row['specific_payables']
+                        # float	Y	预计负债
+                        cbs.estimated_liab = row['estimated_liab']
+                        # float	Y	递延所得税负债
+                        cbs.defer_tax_liab = row['defer_tax_liab']
+                        # float	Y	递延收益-非流动负债
+                        cbs.defer_inc_non_cur_liab = row['defer_inc_non_cur_liab']
+                        cbs.oth_ncl = row['oth_ncl']  # float	Y	其他非流动负债
+                        cbs.total_ncl = row['total_ncl']  # float	Y	非流动负债合计
+                        # float	Y	同业和其它金融机构存放款项
+                        cbs.depos_oth_bfi = row['depos_oth_bfi']
+                        cbs.deriv_liab = row['deriv_liab']  # float	Y	衍生金融负债
+                        cbs.depos = row['depos']  # float	Y	吸收存款
+                        # float	Y	代理业务负债
+                        cbs.agency_bus_liab = row['agency_bus_liab']
+                        cbs.oth_liab = row['oth_liab']  # float	Y	其他负债
+                        # float	Y	预收保费
+                        cbs.prem_receiv_adva = row['prem_receiv_adva']
+                        # float	Y	存入保证金
+                        cbs.depos_received = row['depos_received']
+                        cbs.ph_invest = row['ph_invest']  # float	Y	保户储金及投资款
+                        # float	Y	未到期责任准备金
+                        cbs.reser_une_prem = row['reser_une_prem']
+                        # float	Y	未决赔款准备金
+                        cbs.reser_outstd_claims = row['reser_outstd_claims']
+                        # float	Y	寿险责任准备金
+                        cbs.reser_lins_liab = row['reser_lins_liab']
+                        # float	Y	长期健康险责任准备金
+                        cbs.reser_lthins_liab = row['reser_lthins_liab']
+                        # float	Y	独立账户负债
+                        cbs.indept_acc_liab = row['indept_acc_liab']
+                        cbs.pledge_borr = row['pledge_borr']  # float	Y	其中:质押借款
+                        # float	Y	应付赔付款
+                        cbs.indem_payable = row['indem_payable']
+                        # float	Y	应付保单红利
+                        cbs.policy_div_payable = row['policy_div_payable']
+                        cbs.total_liab = row['total_liab']  # float	Y	负债合计
+                        # float	Y	减:库存股
+                        cbs.treasury_share = row['treasury_share']
+                        # float	Y	一般风险准备
+                        cbs.ordin_risk_reser = row['ordin_risk_reser']
+                        # float	Y	外币报表折算差额
+                        cbs.forex_differ = row['forex_differ']
+                        # float	Y	未确认的投资损失
+                        cbs.invest_loss_unconf = row['invest_loss_unconf']
+                        # float	Y	少数股东权益
+                        cbs.minority_int = row['minority_int']
+                        # float	Y	股东权益合计(不含少数股东权益)
+                        cbs.total_hldr_eqy_exc_min_int = row['total_hldr_eqy_exc_min_int']
+                        # float	Y	股东权益合计(含少数股东权益)
+                        cbs.total_hldr_eqy_inc_min_int = row['total_hldr_eqy_inc_min_int']
+                        # float	Y	负债及股东权益总计
+                        cbs.total_liab_hldr_eqy = row['total_liab_hldr_eqy']
+                        # float	Y	长期应付职工薪酬
+                        cbs.lt_payroll_payable = row['lt_payroll_payable']
+                        # float	Y	其他综合收益
+                        cbs.oth_comp_income = row['oth_comp_income']
+                        # float	Y	其他权益工具
+                        cbs.oth_eqt_tools = row['oth_eqt_tools']
+                        # float	Y	其他权益工具(优先股)
+                        cbs.oth_eqt_tools_p_shr = row['oth_eqt_tools_p_shr']
+                        # float	Y	融出资金
+                        cbs.lending_funds = row['lending_funds']
+                        # float	Y	应收款项
+                        cbs.acc_receivable = row['acc_receivable']
+                        # float	Y	应付短期融资款
+                        cbs.st_fin_payable = row['st_fin_payable']
+                        cbs.payables = row['payables']  # float	Y	应付款项
+                        cbs.hfs_assets = row['hfs_assets']  # float	Y	持有待售的资产
+                        cbs.hfs_sales = row['hfs_sales']  # float	Y	持有待售的负债
+                        # float	Y	以摊余成本计量的金融资产
+                        cbs.cost_fin_assets = row['cost_fin_assets']
+                        # float	Y	以公允价值计量且其变动计入其他综合收益的金融资产
+                        cbs.fair_value_fin_assets = row['fair_value_fin_assets']
+                        cbs.cip_total = row['cip_total']  # float	Y	在建工程(合计)(元)
+                        # float	Y	其他应付款(合计)(元)
+                        cbs.oth_pay_total = row['oth_pay_total']
+                        # float	Y	长期应付款(合计)(元)
+                        cbs.long_pay_total = row['long_pay_total']
+                        cbs.debt_invest = row['debt_invest']  # float	Y	债权投资(元)
+                        # float	Y	其他债权投资(元)
+                        cbs.oth_debt_invest = row['oth_debt_invest']
+                        # float	N	其他权益工具投资(元)
+                        cbs.oth_eq_invest = row['oth_eq_invest']
+                        # float	N	其他非流动金融资产(元)
+                        cbs.oth_illiq_fin_assets = row['oth_illiq_fin_assets']
+                        # float	N	其他权益工具:永续债(元)
+                        cbs.oth_eq_ppbond = row['oth_eq_ppbond']
+                        # float	N	应收款项融资
+                        cbs.receiv_financing = row['receiv_financing']
+                        # float	N	使用权资产
+                        cbs.use_right_assets = row['use_right_assets']
+                        cbs.lease_liab = row['lease_liab']  # float	N	租赁负债
+                        # float	Y	合同资产
+                        cbs.contract_assets = row['contract_assets']
+                        # float	Y	合同负债
+                        cbs.contract_liab = row['contract_liab']
+                        # float	Y	应收票据及应收账款
+                        cbs.accounts_receiv_bill = row['accounts_receiv_bill']
+                        # float	Y	应付票据及应付账款
+                        cbs.accounts_pay = row['accounts_pay']
+                        # float	Y	其他应收款(合计)（元）
+                        cbs.oth_rcv_total = row['oth_rcv_total']
+                        # float	Y	固定资产(合计)(元)
+                        cbs.fix_assets_total = row['fix_assets_total']
+                        cbs.update_flag = row['update_flag']  # str	N	更新标识
+                        balance_sheet_list.append(cbs)
+
+                    # except CompanyFinIndicators.DoesNotExist:
+
+                        # cn_tz = pytz.timezone("Asia/Shanghai")
+                        # end_date = row['end_date']
+                        # print(company.ts_code + ' created new object')
+                if len(balance_sheet_list) > 0:
+                    CompanyBalanceSheet.objects.bulk_create(
+                        balance_sheet_list)
+                    # if company.top10_holder_date != datetime.strptime(row['end_date'], '%Y%m%d'):
+                    # company.top10_holder_date = datetime.strptime(row['end_date'], '%Y%m%d')
+                    # company.save()
+                    company.balance_sheet_date = balance_sheet_list[0].end_date
+                    balance_sheet_list.clear()
+                    company.save()
+                # time.sleep(0.3)
+            print('end for ' + company.ts_code +
+                  ':' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        # StockNameCodeMap.objects.bulk_update(companies, ['top10_holder_date'])
+    except Exception as e:
+        print(e)
+
+
+def get_balance_sheet_fields():
+    fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,'\
+        'comp_type,end_type,total_share,cap_rese,undistr_porfit,'\
+        'surplus_rese,special_rese,money_cap,trad_asset,notes_receiv,'\
+        'accounts_receiv,oth_receiv,prepayment,div_receiv,int_receiv,inventories,'\
+        'amor_exp,nca_within_1y,sett_rsrv,loanto_oth_bank_fi,premium_receiv,reinsur_receiv,'\
+        'reinsur_res_receiv,pur_resale_fa,oth_cur_assets,total_cur_assets,fa_avail_for_sale,htm_invest,'\
+        'lt_eqt_invest,invest_real_estate,time_deposits,oth_assets,lt_rec,fix_assets,cip,const_materials,'\
+        'fixed_assets_disp,produc_bio_assets,oil_and_gas_assets,intan_assets,r_and_d,goodwill,lt_amor_exp,'\
+        'defer_tax_assets,decr_in_disbur,oth_nca,total_nca,cash_reser_cb,depos_in_oth_bfi,prec_metals,deriv_assets,'\
+        'rr_reins_une_prem,rr_reins_outstd_cla,rr_reins_lins_liab,rr_reins_lthins_liab,refund_depos,ph_pledge_loans,'\
+        'refund_cap_depos,indep_acct_assets,client_depos,client_prov,transac_seat_fee,invest_as_receiv,total_assets,'\
+        'lt_borr,st_borr,cb_borr,depos_ib_deposits,loan_oth_bank,trading_fl,notes_payable,acct_payable,adv_receipts,sold_for_repur_fa,'\
+        'comm_payable,payroll_payable,taxes_payable,int_payable,div_payable,oth_payable,acc_exp,deferred_inc,st_bonds_payable,'\
+        'payable_to_reinsurer,rsrv_insur_cont,acting_trading_sec,acting_uw_sec,non_cur_liab_due_1y,oth_cur_liab,total_cur_liab,'\
+        'bond_payable,lt_payable,specific_payables,estimated_liab,defer_tax_liab,defer_inc_non_cur_liab,oth_ncl,'\
+        'total_ncl,depos_oth_bfi,deriv_liab,depos,agency_bus_liab,oth_liab,prem_receiv_adva,depos_received,ph_invest,reser_une_prem,'\
+        'reser_outstd_claims,reser_lins_liab,reser_lthins_liab,indept_acc_liab,pledge_borr,indem_payable,policy_div_payable,'\
+        'total_liab,treasury_share,ordin_risk_reser,forex_differ,invest_loss_unconf,minority_int,total_hldr_eqy_exc_min_int,'\
+        'total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,lt_payroll_payable,oth_comp_income,oth_eqt_tools,oth_eqt_tools_p_shr,'\
+        'lending_funds,acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,cost_fin_assets,fair_value_fin_assets,'\
+        'cip_total,oth_pay_total,long_pay_total,debt_invest,oth_debt_invest,oth_eq_invest,oth_illiq_fin_assets,oth_eq_ppbond,'\
+        'receiv_financing,use_right_assets,lease_liab,contract_assets,contract_liab,accounts_receiv_bill,accounts_pay,'\
+        'oth_rcv_total,fix_assets_total,update_flag'
     return fields

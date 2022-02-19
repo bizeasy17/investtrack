@@ -144,3 +144,5 @@ collectedstatic/
 .vscode/settings.json
 .vscode/launch.json
 investtrack/settings_prod.py
+investtrack/settings_dev.py
+

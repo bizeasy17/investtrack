@@ -194,6 +194,8 @@ class StockNameCodeMap(BaseModel):
         _('流通股持仓下载日期'), blank=True, null=True)
     fin_indicator_date = models.DateField(
         _('财务指标下载日期'), blank=True, null=True)
+    balance_sheet_date = models.DateField(
+        _('财务指标下载日期'), blank=True, null=True)
 
     def __str__(self):
         return self.stock_name
@@ -637,169 +639,322 @@ class CompanyIncomeSheet(BaseModel):
 
 
 class CompanyBalanceSheet(BaseModel):
-    '''
-    ts_code	str	Y	TS股票代码
-    ann_date	str	Y	公告日期
-    f_ann_date	str	Y	实际公告日期
-    end_date	str	Y	报告期
-    report_type	str	Y	报表类型
-    comp_type	str	Y	公司类型(1一般工商业2银行3保险4证券)
-    end_type	str	Y	报告期类型
-    total_share	float	Y	期末总股本
-    cap_rese	float	Y	资本公积金
-    undistr_porfit	float	Y	未分配利润
-    surplus_rese	float	Y	盈余公积金
-    special_rese	float	Y	专项储备
-    money_cap	float	Y	货币资金
-    trad_asset	float	Y	交易性金融资产
-    notes_receiv	float	Y	应收票据
-    accounts_receiv	float	Y	应收账款
-    oth_receiv	float	Y	其他应收款
-    prepayment	float	Y	预付款项
-    div_receiv	float	Y	应收股利
-    int_receiv	float	Y	应收利息
-    inventories	float	Y	存货
-    amor_exp	float	Y	长期待摊费用
-    nca_within_1y	float	Y	一年内到期的非流动资产
-    sett_rsrv	float	Y	结算备付金
-    loanto_oth_bank_fi	float	Y	拆出资金
-    premium_receiv	float	Y	应收保费
-    reinsur_receiv	float	Y	应收分保账款
-    reinsur_res_receiv	float	Y	应收分保合同准备金
-    pur_resale_fa	float	Y	买入返售金融资产
-    oth_cur_assets	float	Y	其他流动资产
-    total_cur_assets	float	Y	流动资产合计
-    fa_avail_for_sale	float	Y	可供出售金融资产
-    htm_invest	float	Y	持有至到期投资
-    lt_eqt_invest	float	Y	长期股权投资
-    invest_real_estate	float	Y	投资性房地产
-    time_deposits	float	Y	定期存款
-    oth_assets	float	Y	其他资产
-    lt_rec	float	Y	长期应收款
-    fix_assets	float	Y	固定资产
-    cip	float	Y	在建工程
-    const_materials	float	Y	工程物资
-    fixed_assets_disp	float	Y	固定资产清理
-    produc_bio_assets	float	Y	生产性生物资产
-    oil_and_gas_assets	float	Y	油气资产
-    intan_assets	float	Y	无形资产
-    r_and_d	float	Y	研发支出
-    goodwill	float	Y	商誉
-    lt_amor_exp	float	Y	长期待摊费用
-    defer_tax_assets	float	Y	递延所得税资产
-    decr_in_disbur	float	Y	发放贷款及垫款
-    oth_nca	float	Y	其他非流动资产
-    total_nca	float	Y	非流动资产合计
-    cash_reser_cb	float	Y	现金及存放中央银行款项
-    depos_in_oth_bfi	float	Y	存放同业和其它金融机构款项
-    prec_metals	float	Y	贵金属
-    deriv_assets	float	Y	衍生金融资产
-    rr_reins_une_prem	float	Y	应收分保未到期责任准备金
-    rr_reins_outstd_cla	float	Y	应收分保未决赔款准备金
-    rr_reins_lins_liab	float	Y	应收分保寿险责任准备金
-    rr_reins_lthins_liab	float	Y	应收分保长期健康险责任准备金
-    refund_depos	float	Y	存出保证金
-    ph_pledge_loans	float	Y	保户质押贷款
-    refund_cap_depos	float	Y	存出资本保证金
-    indep_acct_assets	float	Y	独立账户资产
-    client_depos	float	Y	其中：客户资金存款
-    client_prov	float	Y	其中：客户备付金
-    transac_seat_fee	float	Y	其中:交易席位费
-    invest_as_receiv	float	Y	应收款项类投资
-    total_assets	float	Y	资产总计
-    lt_borr	float	Y	长期借款
-    st_borr	float	Y	短期借款
-    cb_borr	float	Y	向中央银行借款
-    depos_ib_deposits	float	Y	吸收存款及同业存放
-    loan_oth_bank	float	Y	拆入资金
-    trading_fl	float	Y	交易性金融负债
-    notes_payable	float	Y	应付票据
-    acct_payable	float	Y	应付账款
-    adv_receipts	float	Y	预收款项
-    sold_for_repur_fa	float	Y	卖出回购金融资产款
-    comm_payable	float	Y	应付手续费及佣金
-    payroll_payable	float	Y	应付职工薪酬
-    taxes_payable	float	Y	应交税费
-    int_payable	float	Y	应付利息
-    div_payable	float	Y	应付股利
-    oth_payable	float	Y	其他应付款
-    acc_exp	float	Y	预提费用
-    deferred_inc	float	Y	递延收益
-    st_bonds_payable	float	Y	应付短期债券
-    payable_to_reinsurer	float	Y	应付分保账款
-    rsrv_insur_cont	float	Y	保险合同准备金
-    acting_trading_sec	float	Y	代理买卖证券款
-    acting_uw_sec	float	Y	代理承销证券款
-    non_cur_liab_due_1y	float	Y	一年内到期的非流动负债
-    oth_cur_liab	float	Y	其他流动负债
-    total_cur_liab	float	Y	流动负债合计
-    bond_payable	float	Y	应付债券
-    lt_payable	float	Y	长期应付款
-    specific_payables	float	Y	专项应付款
-    estimated_liab	float	Y	预计负债
-    defer_tax_liab	float	Y	递延所得税负债
-    defer_inc_non_cur_liab	float	Y	递延收益-非流动负债
-    oth_ncl	float	Y	其他非流动负债
-    total_ncl	float	Y	非流动负债合计
-    depos_oth_bfi	float	Y	同业和其它金融机构存放款项
-    deriv_liab	float	Y	衍生金融负债
-    depos	float	Y	吸收存款
-    agency_bus_liab	float	Y	代理业务负债
-    oth_liab	float	Y	其他负债
-    prem_receiv_adva	float	Y	预收保费
-    depos_received	float	Y	存入保证金
-    ph_invest	float	Y	保户储金及投资款
-    reser_une_prem	float	Y	未到期责任准备金
-    reser_outstd_claims	float	Y	未决赔款准备金
-    reser_lins_liab	float	Y	寿险责任准备金
-    reser_lthins_liab	float	Y	长期健康险责任准备金
-    indept_acc_liab	float	Y	独立账户负债
-    pledge_borr	float	Y	其中:质押借款
-    indem_payable	float	Y	应付赔付款
-    policy_div_payable	float	Y	应付保单红利
-    total_liab	float	Y	负债合计
-    treasury_share	float	Y	减:库存股
-    ordin_risk_reser	float	Y	一般风险准备
-    forex_differ	float	Y	外币报表折算差额
-    invest_loss_unconf	float	Y	未确认的投资损失
-    minority_int	float	Y	少数股东权益
-    total_hldr_eqy_exc_min_int	float	Y	股东权益合计(不含少数股东权益)
-    total_hldr_eqy_inc_min_int	float	Y	股东权益合计(含少数股东权益)
-    total_liab_hldr_eqy	float	Y	负债及股东权益总计
-    lt_payroll_payable	float	Y	长期应付职工薪酬
-    oth_comp_income	float	Y	其他综合收益
-    oth_eqt_tools	float	Y	其他权益工具
-    oth_eqt_tools_p_shr	float	Y	其他权益工具(优先股)
-    lending_funds	float	Y	融出资金
-    acc_receivable	float	Y	应收款项
-    st_fin_payable	float	Y	应付短期融资款
-    payables	float	Y	应付款项
-    hfs_assets	float	Y	持有待售的资产
-    hfs_sales	float	Y	持有待售的负债
-    cost_fin_assets	float	Y	以摊余成本计量的金融资产
-    fair_value_fin_assets	float	Y	以公允价值计量且其变动计入其他综合收益的金融资产
-    cip_total	float	Y	在建工程(合计)(元)
-    oth_pay_total	float	Y	其他应付款(合计)(元)
-    long_pay_total	float	Y	长期应付款(合计)(元)
-    debt_invest	float	Y	债权投资(元)
-    oth_debt_invest	float	Y	其他债权投资(元)
-    oth_eq_invest	float	N	其他权益工具投资(元)
-    oth_illiq_fin_assets	float	N	其他非流动金融资产(元)
-    oth_eq_ppbond	float	N	其他权益工具:永续债(元)
-    receiv_financing	float	N	应收款项融资
-    use_right_assets	float	N	使用权资产
-    lease_liab	float	N	租赁负债
-    contract_assets	float	Y	合同资产
-    contract_liab	float	Y	合同负债
-    accounts_receiv_bill	float	Y	应收票据及应收账款
-    accounts_pay	float	Y	应付票据及应付账款
-    oth_rcv_total	float	Y	其他应收款(合计)（元）
-    fix_assets_total	float	Y	固定资产(合计)(元)
-    update_flag	str	Y	更新标识
-    '''
-
     ts_code = models.CharField(
-        _('TS代码'), max_length=50, blank=True, null=False)  # e.g. 000001.SZ
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
+    announce_date = models.DateField(
+        _('公告日期'), blank=True, null=True)  # ann_date	str	Y	公告日期
+    f_announce_date = models.DateField(
+        _('实际公告日期'), blank=True, null=True)  # ann_date	str	Y	实际公告日期
+    end_date = models.DateField(
+        _('报告期'), blank=True, null=True)  # end_date	str	Y	报告期
+    report_type = models.CharField(
+        _('报表类型'), max_length=50, blank=True, null=True)  # str	Y	报表类型
+    comp_type = models.CharField(
+        _('公司类型'), max_length=50, blank=True, null=True)		# str	Y	公司类型(1一般工商业2银行3保险4证券)
+    end_type = models.CharField(
+        _('报告期类型'), max_length=50, blank=True, null=True)		# str	Y	报告期类型
+    total_share = models.FloatField(
+        _('期末总股本'), blank=True, null=True)  # float	Y	期末总股本
+    cap_rese = models.FloatField(
+        _('资本公积金'), blank=True, null=True)  # float	Y	资本公积金
+    undistr_porfit = models.FloatField(
+        _('未分配利润'), blank=True, null=True)  # float	Y	未分配利润
+    surplus_rese = models.FloatField(
+        _('盈余公积金'), blank=True, null=True)  # float	Y	盈余公积金
+    special_rese = models.FloatField(
+        _('专项储备'), blank=True, null=True)  # float	Y	专项储备
+    money_cap = models.FloatField(
+        _('货币资金'), blank=True, null=True)  # float	Y	货币资金
+    trad_asset = models.FloatField(
+        _('交易性金融资产'), blank=True, null=True)  # float	Y	交易性金融资产
+    notes_receiv = models.FloatField(
+        _('应收票据'), blank=True, null=True)  # float	Y	应收票据
+    accounts_receiv = models.FloatField(
+        _('应收账款'), blank=True, null=True)  # float	Y	应收账款
+    oth_receiv = models.FloatField(
+        _('其他应收款'), blank=True, null=True)  # float	Y	其他应收款
+    prepayment = models.FloatField(
+        _('预付款项'), blank=True, null=True)  # float	Y	预付款项
+    div_receiv = models.FloatField(
+        _('应收股利'), blank=True, null=True)  # float	Y	应收股利
+    int_receiv = models.FloatField(
+        _('应收利息'), blank=True, null=True)  # float	Y	应收利息
+    inventories = models.FloatField(
+        _('存货'), blank=True, null=True)  # float	Y	存货
+    amor_exp = models.FloatField(
+        _('长期待摊费用'), blank=True, null=True)  # float	Y	长期待摊费用
+    nca_within_1y = models.FloatField(
+        _('一年内到期的非流动资产'), blank=True, null=True)  # float	Y	一年内到期的非流动资产
+    sett_rsrv = models.FloatField(
+        _('结算备付金'), blank=True, null=True)  # float	Y	结算备付金
+    loanto_oth_bank_fi = models.FloatField(
+        _('拆出资金'), blank=True, null=True)  # float	Y	拆出资金
+    premium_receiv = models.FloatField(
+        _('应收保费'), blank=True, null=True)  # float	Y	应收保费
+    reinsur_receiv = models.FloatField(
+        _('应收分保账款'), blank=True, null=True)  # float	Y	应收分保账款
+    reinsur_res_receiv = models.FloatField(
+        _('应收分保合同准备金'), blank=True, null=True)  # float	Y	应收分保合同准备金
+    pur_resale_fa = models.FloatField(
+        _('买入返售金融资产'), blank=True, null=True)  # float	Y	买入返售金融资产
+    oth_cur_assets = models.FloatField(
+        _('其他流动资产'), blank=True, null=True)  # float	Y	其他流动资产
+    total_cur_assets = models.FloatField(
+        _('流动资产合计'), blank=True, null=True)  # float	Y	流动资产合计
+    fa_avail_for_sale = models.FloatField(
+        _('可供出售金融资产'), blank=True, null=True)  # float	Y	可供出售金融资产
+    htm_invest = models.FloatField(
+        _('持有至到期投资'), blank=True, null=True)  # float	Y	持有至到期投资
+    lt_eqt_invest = models.FloatField(
+        _('长期股权投资'), blank=True, null=True)  # float	Y	长期股权投资
+    invest_real_estate = models.FloatField(
+        _('投资性房地产'), blank=True, null=True)  # float	Y	投资性房地产
+    time_deposits = models.FloatField(
+        _('定期存款'), blank=True, null=True)  # float	Y	定期存款
+    oth_assets = models.FloatField(
+        _('其他资产'), blank=True, null=True)  # float	Y	其他资产
+    lt_rec = models.FloatField(
+        _('长期应收款'), blank=True, null=True)  # float	Y	长期应收款
+    fix_assets = models.FloatField(
+        _('固定资产'), blank=True, null=True)  # float	Y	固定资产
+    cip = models.FloatField(
+        _('在建工程'), blank=True, null=True)  # float	Y	在建工程
+    const_materials = models.FloatField(
+        _('工程物资'), blank=True, null=True)  # float	Y	工程物资
+    fixed_assets_disp = models.FloatField(
+        _('固定资产清理'), blank=True, null=True)  # float	Y	固定资产清理
+    produc_bio_assets = models.FloatField(
+        _('生产性生物资产'), blank=True, null=True)  # float	Y	生产性生物资产
+    oil_and_gas_assets = models.FloatField(
+        _('油气资产'), blank=True, null=True)  # float	Y	油气资产
+    intan_assets = models.FloatField(
+        _('无形资产'), blank=True, null=True)  # float	Y	无形资产
+    r_and_d = models.FloatField(
+        _('研发支出'), blank=True, null=True)  # float	Y	研发支出
+    goodwill = models.FloatField(
+        _('商誉'), blank=True, null=True)  # float	Y	商誉
+    lt_amor_exp = models.FloatField(
+        _('长期待摊费用'), blank=True, null=True)  # float	Y	长期待摊费用
+    defer_tax_assets = models.FloatField(
+        _('递延所得税资产'), blank=True, null=True)  # float	Y	递延所得税资产
+    decr_in_disbur = models.FloatField(
+        _('发放贷款及垫款'), blank=True, null=True)  # float	Y	发放贷款及垫款
+    oth_nca = models.FloatField(
+        _('其他非流动资产'), blank=True, null=True)  # float	Y	其他非流动资产
+    total_nca = models.FloatField(
+        _('非流动资产合计'), blank=True, null=True)  # float	Y	非流动资产合计
+    cash_reser_cb = models.FloatField(
+        _('现金及存放中央银行款项'), blank=True, null=True)  # float	Y	现金及存放中央银行款项
+    depos_in_oth_bfi = models.FloatField(
+        _('存放同业和其它金融机构款项'), blank=True, null=True)  # float	Y	存放同业和其它金融机构款项
+    prec_metals = models.FloatField(
+        _('贵金属'), blank=True, null=True)  # float	Y	贵金属
+    deriv_assets = models.FloatField(
+        _('衍生金融资产'), blank=True, null=True)  # float	Y	衍生金融资产
+    rr_reins_une_prem = models.FloatField(
+        _('应收分保未到期责任准备金'), blank=True, null=True)  # float	Y	应收分保未到期责任准备金
+    rr_reins_outstd_cla = models.FloatField(
+        _('应收分保未决赔款准备金'), blank=True, null=True)  # float	Y	应收分保未决赔款准备金
+    rr_reins_lins_liab = models.FloatField(
+        _('应收分保寿险责任准备金'), blank=True, null=True)  # float	Y	应收分保寿险责任准备金
+    rr_reins_lthins_liab = models.FloatField(
+        _('应收分保长期健康险责任准备金'), blank=True, null=True)  # float	Y	应收分保长期健康险责任准备金
+    refund_depos = models.FloatField(
+        _('存出保证金'), blank=True, null=True)  # float	Y	存出保证金
+    ph_pledge_loans = models.FloatField(
+        _('保户质押贷款'), blank=True, null=True)  # float	Y	保户质押贷款
+    refund_cap_depos = models.FloatField(
+        _('存出资本保证金'), blank=True, null=True)  # float	Y	存出资本保证金
+    indep_acct_assets = models.FloatField(
+        _('独立账户资产'), blank=True, null=True)  # float	Y	独立账户资产
+    client_depos = models.FloatField(
+        _('客户资金存款'), blank=True, null=True)  # float	Y	其中：客户资金存款
+    client_prov = models.FloatField(
+        _('客户备付金'), blank=True, null=True)  # float	Y	其中：客户备付金
+    transac_seat_fee = models.FloatField(
+        _('交易席位费'), blank=True, null=True)  # float	Y	其中:交易席位费
+    invest_as_receiv = models.FloatField(
+        _('应收款项类投资'), blank=True, null=True)  # float	Y	应收款项类投资
+    total_assets = models.FloatField(
+        _('资产总计'), blank=True, null=True)  # float	Y	资产总计
+    lt_borr = models.FloatField(
+        _('长期借款'), blank=True, null=True)  # float	Y	长期借款
+    st_borr = models.FloatField(
+        _('短期借款'), blank=True, null=True)  # float	Y	短期借款
+    cb_borr = models.FloatField(
+        _('向中央银行借款'), blank=True, null=True)  # float	Y	向中央银行借款
+    depos_ib_deposits = models.FloatField(
+        _('吸收存款及同业存放'), blank=True, null=True)  # float	Y	吸收存款及同业存放
+    loan_oth_bank = models.FloatField(
+        _('拆入资金'), blank=True, null=True)  # float	Y	拆入资金
+    trading_fl = models.FloatField(
+        _('交易性金融负债'), blank=True, null=True)  # float	Y	交易性金融负债
+    notes_payable = models.FloatField(
+        _('应付票据'), blank=True, null=True)  # float	Y	应付票据
+    acct_payable = models.FloatField(
+        _('应付账款'), blank=True, null=True)  # float	Y	应付账款
+    adv_receipts = models.FloatField(
+        _('预收款项'), blank=True, null=True)  # float	Y	预收款项
+    sold_for_repur_fa = models.FloatField(
+        _('卖出回购金融资产款'), blank=True, null=True)  # float	Y	卖出回购金融资产款
+    comm_payable = models.FloatField(
+        _('应付手续费及佣金'), blank=True, null=True)  # float	Y	应付手续费及佣金
+    payroll_payable = models.FloatField(
+        _('应付职工薪酬'), blank=True, null=True)  # float	Y	应付职工薪酬
+    taxes_payable = models.FloatField(
+        _('应交税费'), blank=True, null=True)  # float	Y	应交税费
+    int_payable = models.FloatField(
+        _('应付利息'), blank=True, null=True)  # float	Y	应付利息
+    div_payable = models.FloatField(
+        _('应付股利'), blank=True, null=True)  # float	Y	应付股利
+    oth_payable = models.FloatField(
+        _('其他应付款'), blank=True, null=True)  # float	Y	其他应付款
+    acc_exp = models.FloatField(
+        _('预提费用'), blank=True, null=True)  # float	Y	预提费用
+    deferred_inc = models.FloatField(
+        _('递延收益'), blank=True, null=True)  # float	Y	递延收益
+    st_bonds_payable = models.FloatField(
+        _('应付短期债券'), blank=True, null=True)  # float	Y	应付短期债券
+    payable_to_reinsurer = models.FloatField(
+        _('应付分保账款'), blank=True, null=True)  # float	Y	应付分保账款
+    rsrv_insur_cont = models.FloatField(
+        _('保险合同准备金'), blank=True, null=True)  # float	Y	保险合同准备金
+    acting_trading_sec = models.FloatField(
+        _('代理买卖证券款'), blank=True, null=True)  # float	Y	代理买卖证券款
+    acting_uw_sec = models.FloatField(
+        _('代理承销证券款'), blank=True, null=True)  # float	Y	代理承销证券款
+    non_cur_liab_due_1y = models.FloatField(
+        _('一年内到期的非流动负债'), blank=True, null=True)  # float	Y	一年内到期的非流动负债
+    oth_cur_liab = models.FloatField(
+        _('其他流动负债'), blank=True, null=True)  # float	Y	其他流动负债
+    total_cur_liab = models.FloatField(
+        _('流动负债合计'), blank=True, null=True)  # float	Y	流动负债合计
+    bond_payable = models.FloatField(
+        _('应付债券'), blank=True, null=True)  # float	Y	应付债券
+    lt_payable = models.FloatField(
+        _('长期应付款'), blank=True, null=True)  # float	Y	长期应付款
+    specific_payables = models.FloatField(
+        _('专项应付款'), blank=True, null=True)  # float	Y	专项应付款
+    estimated_liab = models.FloatField(
+        _('预计负债'), blank=True, null=True)  # float	Y	预计负债
+    defer_tax_liab = models.FloatField(
+        _('递延所得税负债'), blank=True, null=True)  # float	Y	递延所得税负债
+    defer_inc_non_cur_liab = models.FloatField(
+        _('递延收益-非流动负债'), blank=True, null=True)  # float	Y	递延收益-非流动负债
+    oth_ncl = models.FloatField(
+        _('其他非流动负债'), blank=True, null=True)  # float	Y	其他非流动负债
+    total_ncl = models.FloatField(
+        _('非流动负债合计'), blank=True, null=True)  # float	Y	非流动负债合计
+    depos_oth_bfi = models.FloatField(
+        _('同业和其它金融机构存放款项'), blank=True, null=True)  # float	Y	同业和其它金融机构存放款项
+    deriv_liab = models.FloatField(
+        _('衍生金融负债'), blank=True, null=True)  # float	Y	衍生金融负债
+    depos = models.FloatField(
+        _('吸收存款'), blank=True, null=True)  # float	Y	吸收存款
+    agency_bus_liab = models.FloatField(
+        _('代理业务负债'), blank=True, null=True)  # float	Y	代理业务负债
+    oth_liab = models.FloatField(
+        _('其他负债'), blank=True, null=True)  # float	Y	其他负债
+    prem_receiv_adva = models.FloatField(
+        _('预收保费'), blank=True, null=True)  # float	Y	预收保费
+    depos_received = models.FloatField(
+        _('存入保证金'), blank=True, null=True)  # float	Y	存入保证金
+    ph_invest = models.FloatField(
+        _('保户储金及投资款'), blank=True, null=True)  # float	Y	保户储金及投资款
+    reser_une_prem = models.FloatField(
+        _('未到期责任准备金'), blank=True, null=True)  # float	Y	未到期责任准备金
+    reser_outstd_claims = models.FloatField(
+        _('未决赔款准备金'), blank=True, null=True)  # float	Y	未决赔款准备金
+    reser_lins_liab = models.FloatField(
+        _('寿险责任准备金'), blank=True, null=True)  # float	Y	寿险责任准备金
+    reser_lthins_liab = models.FloatField(
+        _('长期健康险责任准备金'), blank=True, null=True)  # float	Y	长期健康险责任准备金
+    indept_acc_liab = models.FloatField(
+        _('独立账户负债'), blank=True, null=True)  # float	Y	独立账户负债
+    pledge_borr = models.FloatField(
+        _('质押借款'), blank=True, null=True)  # float	Y	其中:质押借款
+    indem_payable = models.FloatField(
+        _('应付赔付款'), blank=True, null=True)  # float	Y	应付赔付款
+    policy_div_payable = models.FloatField(
+        _('应付保单红利'), blank=True, null=True)  # float	Y	应付保单红利
+    total_liab = models.FloatField(
+        _('负债合计'), blank=True, null=True)  # float	Y	负债合计
+    treasury_share = models.FloatField(
+        _('减:库存股'), blank=True, null=True)  # float	Y	减:库存股
+    ordin_risk_reser = models.FloatField(
+        _('一般风险准备'), blank=True, null=True)  # float	Y	一般风险准备
+    forex_differ = models.FloatField(
+        _('外币报表折算差额'), blank=True, null=True)  # float	Y	外币报表折算差额
+    invest_loss_unconf = models.FloatField(
+        _('未确认的投资损失'), blank=True, null=True)  # float	Y	未确认的投资损失
+    minority_int = models.FloatField(
+        _('少数股东权益'), blank=True, null=True)  # float	Y	少数股东权益
+    total_hldr_eqy_exc_min_int = models.FloatField(
+        _('股东权益合计(不含少数股东权益)'), blank=True, null=True)  # float	Y	股东权益合计(不含少数股东权益)
+    total_hldr_eqy_inc_min_int = models.FloatField(
+        _('股东权益合计(含少数股东权益)'), blank=True, null=True)  # float	Y	股东权益合计(含少数股东权益)
+    total_liab_hldr_eqy = models.FloatField(
+        _('负债及股东权益总计'), blank=True, null=True)  # float	Y	负债及股东权益总计
+    lt_payroll_payable = models.FloatField(
+        _('长期应付职工薪酬'), blank=True, null=True)  # float	Y	长期应付职工薪酬
+    oth_comp_income = models.FloatField(
+        _('其他综合收益'), blank=True, null=True)  # float	Y	其他综合收益
+    oth_eqt_tools = models.FloatField(
+        _('其他权益工具'), blank=True, null=True)  # float	Y	其他权益工具
+    oth_eqt_tools_p_shr  = models.FloatField(
+        _('其他权益工具(优先股)'), blank=True, null=True)   # float	Y	其他权益工具(优先股)
+    lending_funds = models.FloatField(
+        _('融出资金'), blank=True, null=True)  # float	Y	融出资金
+    acc_receivable = models.FloatField(
+        _('应收款项'), blank=True, null=True)  # float	Y	应收款项
+    st_fin_payable = models.FloatField(
+        _('应付短期融资款'), blank=True, null=True)  # float	Y	应付短期融资款
+    payables = models.FloatField(
+        _('应付款项'), blank=True, null=True)  # float	Y	应付款项
+    hfs_assets = models.FloatField(
+        _('持有待售的资产'), blank=True, null=True)  # float	Y	持有待售的资产
+    hfs_sales = models.FloatField(
+        _('持有待售的负债'), blank=True, null=True)  # float	Y	持有待售的负债
+    cost_fin_assets = models.FloatField(
+        _('以摊余成本计量的金融资产'), blank=True, null=True)  # float	Y	以摊余成本计量的金融资产
+    fair_value_fin_assets = models.FloatField(
+        _('公允价值计量计入的金融资产'), blank=True, null=True)  # float	Y	以公允价值计量且其变动计入其他综合收益的金融资产
+    cip_total = models.FloatField(
+        _('在建工程'), blank=True, null=True)  # float	Y	在建工程(合计)(元)
+    oth_pay_total = models.FloatField(
+        _('在建工程'), blank=True, null=True)  # float	Y	在建工程(合计)(元)
+    long_pay_total = models.FloatField(
+        _('长期应付款'), blank=True, null=True)  # float	Y	长期应付款(合计)(元)
+    debt_invest = models.FloatField(
+        _('债权投资'), blank=True, null=True)  # float	Y	债权投资(元)
+    oth_debt_invest = models.FloatField(
+        _('其他债权投资'), blank=True, null=True)  # float	Y	其他债权投资(元)
+    oth_eq_invest = models.FloatField(
+        _('其他权益工具投资'), blank=True, null=True)  # float	N	其他权益工具投资(元)
+    oth_illiq_fin_assets = models.FloatField(
+        _('其他非流动金融资产'), blank=True, null=True)  # float	N	其他非流动金融资产(元)
+    oth_eq_ppbond = models.FloatField(
+        _('其他权益工具永续债'), blank=True, null=True)  # float	N	其他权益工具:永续债(元)
+    receiv_financing = models.FloatField(
+        _('应收款项融资'), blank=True, null=True)  # float	N	应收款项融资
+    use_right_assets = models.FloatField(
+        _('使用权资产'), blank=True, null=True)  # float	N	使用权资产
+    lease_liab = models.FloatField(
+        _('租赁负债'), blank=True, null=True)  # float	N	租赁负债
+    contract_assets = models.FloatField(
+        _('合同资产'), blank=True, null=True)  # float	Y	合同资产
+    contract_liab = models.FloatField(
+        _('合同负债'), blank=True, null=True)  # float	Y	合同负债
+    accounts_receiv_bill = models.FloatField(
+        _('应收票据及应收账款'), blank=True, null=True)  # float	Y	应收票据及应收账款
+    accounts_pay = models.FloatField(
+        _('应付票据及应付账款'), blank=True, null=True)  # float	Y	应付票据及应付账款
+    oth_rcv_total = models.FloatField(
+        _('其他应收款(合计)'), blank=True, null=True)  # float	Y	其他应收款(合计)（元）
+    fix_assets_total = models.FloatField(
+        _('固定资产(合计)'), blank=True, null=True)  # float	Y	固定资产(合计)(元)
+    update_flag = models.CharField(
+        _('更新标识'), max_length=50, blank=True, null=False, )  # str	Y	更新标识
     company = models.ForeignKey(
         StockNameCodeMap, related_name='balance_sheet', blank=True, null=True, on_delete=models.SET_NULL)
 
@@ -936,7 +1091,7 @@ class CompanyFinIndicators(BaseModel):
     dt_eps = models.FloatField(
         _('稀释每股收益'), blank=True, null=True)  # float	Y	稀释每股收益
     total_revenue_ps = models.FloatField(
-        _('每股营业总收入'), blank=True, null=True)  # float	Y	每股营业总收入
+        _('每股营业总收入'), blank=True, null=True)  # float	Y	每股营业总收入, 
     revenue_ps = models.FloatField(
         _('每股营业收入'), blank=True, null=True)  # float	Y	每股营业收入
     capital_rese_ps = models.FloatField(
@@ -1268,6 +1423,7 @@ class CompanyFinIndicators(BaseModel):
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
+
 class CompanyTop10FloatHolders(BaseModel):
     '''
     ts_code	str	TS股票代码
@@ -1364,5 +1520,24 @@ class CompanyTop10FloatHoldersStat(BaseModel):
     class Meta:
         ordering = ['-end_date']
         verbose_name = _('前10大流通股持股统计')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class CompanyIndicatorCorrelation(BaseModel):
+    ts_code = models.CharField(
+        _('TS代码'), max_length=50, blank=True, null=False, db_index=True)  # e.g. 000001.SZ
+    end_date = models.DateField(
+        _('报告期'), blank=True, null=True)  # end_date	str	Y	报告期
+    a_indicator = models.FloatField(
+        _('计算指标'), blank=True, null=True,  db_index=True)  # float	Y	期末总股本
+    correlation = models.FloatField(
+        _('关联度'), blank=True, null=True)  # float	Y	资本公积金
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='company_correlation', blank=True, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ['-end_date']
+        verbose_name = _('指标关联度')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'

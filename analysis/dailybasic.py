@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-
+import time
 import pandas as pd
 import tushare as ts
 from django.db.models import Q
@@ -74,6 +74,7 @@ def download_dailybasic(ts_code=None, start_date=None, end_date=None, freq='D'):
 
                 company.dailybasic_date = end_date
                 company.save()
+                time.sleep(0.1)
                 # complete_download(company.ts_code, end_date, DOWNLOAD_TYPE, freq)
             else:
                 print(company.ts_code +
