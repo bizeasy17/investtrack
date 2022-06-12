@@ -135,6 +135,10 @@ uploads/
 uwsgi/uwsgi_pid
 collectedstatic/
 
+# data configuration
+diggings/data
+diggings/model
+
 # accesscode
 .csv
 

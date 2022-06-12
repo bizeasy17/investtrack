@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
+from analysis.commands import pop_eema_indic
 
 from analysis.dailybasic import process_industrybasic_quantile
 from analysis.utils import next_date
@@ -31,6 +32,8 @@ def analysis_command(request, cmd, params):
             next_dates = next_date()
             process_industrybasic_quantile(
                 quantile, next_dates,)
+        elif cmd == 'indic':
+            pop_eema_indic(plist[0],plist[1],plist[2])
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)

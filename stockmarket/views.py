@@ -27,7 +27,7 @@ from .models import (CompanyBasic, CompanyDailyBasic, CompanyFinIndicators, Comp
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, IndexDailyBasicSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
                           StockCloseHistorySerializer, CitySerializer, ProvinceSerializer)
-from .utils import get_ind_basic, str_eval, collect_fin_indicators
+from .utils import get_ind_basic, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
 
 # Create your views here.
 
@@ -468,6 +468,8 @@ def analysis_command(request, cmd, params):
             pass
         if cmd == 'cfi':
             collect_fin_indicators(plist[0])
+        if cmd == 'popdb2fin':
+            pop_dailybasic_to_finindicator(plist[0])
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)

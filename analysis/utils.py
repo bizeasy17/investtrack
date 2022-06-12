@@ -30,7 +30,7 @@ def days_between(d1, d2):
 
 
 def days_to_now(d1):
-    d2 = datetime.now(tz=timezone.utc)
+    d2 = datetime.now()
     return abs((d2 - d1).days)
 
 

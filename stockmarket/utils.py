@@ -11,7 +11,7 @@ from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
 
 from stockmarket.models import CompanyFinIndicators, StockNameCodeMap
 
-from .models import CompanyBalanceSheet, StockNameCodeMap
+from .models import CompanyBalanceSheet, CompanyDailyBasic, StockNameCodeMap
 
 
 def get_single_realtime_quote(symbol):
@@ -141,16 +141,30 @@ def collect_fin_indicators(ts_code):
             list_year = company.list_date.year
 
             if company.fin_indicator_date is None:
-                if end_year - list_year <= 20:
+                if end_year - list_year <= 10:
+                    print(end_year)
                     data = pro.fina_indicator(
                         ts_code=company.ts_code, start_date=str(list_year)+'0101', end_date=str(end_year)+'1231', fields=get_fina_indicator_fields())
-                else:
-                    temp_year = end_year - 20
+                elif end_year - list_year > 10 and end_year - list_year <= 20:
+                    temp_year = end_year - 10
+                    print(temp_year)
                     data1 = pro.fina_indicator(
                         ts_code=company.ts_code, start_date=str(temp_year)+'0101', end_date=str(end_year)+'1231', fields=get_fina_indicator_fields())
                     data2 = pro.fina_indicator(
                         ts_code=company.ts_code, start_date=str(list_year)+'0101', end_date=str(temp_year-1)+'1231', fields=get_fina_indicator_fields())
                     data = pd.concat([data1, data2])
+                else:
+                    temp_year1 = end_year - 20
+                    temp_year2 = end_year - 10
+                    print(temp_year1)
+                    print(temp_year2)
+                    data1 = pro.fina_indicator(
+                        ts_code=company.ts_code, start_date=str(list_year)+'0101', end_date=str(temp_year1-1)+'1231', fields=get_fina_indicator_fields())
+                    data2 = pro.fina_indicator(
+                        ts_code=company.ts_code, start_date=str(temp_year1)+'0101', end_date=str(temp_year2-1)+'1231', fields=get_fina_indicator_fields())
+                    data3 = pro.fina_indicator(
+                        ts_code=company.ts_code, start_date=str(temp_year2)+'0101', end_date=str(end_year)+'1231', fields=get_fina_indicator_fields())
+                    data = pd.concat([data1, data2, data3])
             else:
                 data = pro.fina_indicator(
                     ts_code=company.ts_code, start_date=company.fin_indicator_date.strftime('%Y%m%d'), end_date=str(end_year)+'1231', fields=get_fina_indicator_fields())
@@ -163,16 +177,22 @@ def collect_fin_indicators(ts_code):
             if len(data) > 0:
                 for index, row in data.iterrows():
                     # try:
-                    # print(datetime.strptime(
-                    #     row['ann_date'], '%Y%m%d'))
-                    # print(datetime.strptime(row['end_date'], '%Y%m%d'))
+                    end_date = None
+                    if row['ann_date'] is None:  # or row['end_date'] is None:
+                        # print(row['ann_date'])
+                        # print(row['end_date'])
+                        # print(datetime.strptime(
+                        #     row['ann_date'], '%Y%m%d'))
+                        # print(datetime.strptime(row['end_date'], '%Y%m%d'))
+                        ann_date = datetime.strptime(row['end_date'], '%Y%m%d')
+                    else:
+                        ann_date = datetime.strptime(
+                            row['ann_date'], '%Y%m%d')
                     indicators = CompanyFinIndicators.objects.filter(
-                        ts_code=company.ts_code, announce_date=datetime.strptime(
-                            row['ann_date'], '%Y%m%d'), end_date=datetime.strptime(row['end_date'], '%Y%m%d'))
+                        ts_code=company.ts_code, announce_date=ann_date, end_date=datetime.strptime(row['end_date'], '%Y%m%d'))
                     if len(indicators) <= 0:
                         cfi = CompanyFinIndicators(ts_code=company.ts_code,
-                                                   announce_date=datetime.strptime(
-                                                       row['ann_date'], '%Y%m%d'),
+                                                   announce_date=ann_date,
                                                    end_date=datetime.strptime(
                                                        row['end_date'], '%Y%m%d'), company=company)
                         # top10_holder.save()
@@ -465,7 +485,7 @@ def collect_fin_indicators(ts_code):
                     company.fin_indicator_date = fina_indicator_list[0].end_date
                     fina_indicator_list.clear()
                     company.save()
-                # time.sleep(0.3)
+                # time.sleep(10)
             print('end for ' + company.ts_code +
                   ':' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         # StockNameCodeMap.objects.bulk_update(companies, ['top10_holder_date'])
@@ -831,7 +851,7 @@ def collect_balance_sheet(ts_code):
                     company.balance_sheet_date = balance_sheet_list[0].end_date
                     balance_sheet_list.clear()
                     company.save()
-                # time.sleep(0.3)
+                # time.sleep(5)
             print('end for ' + company.ts_code +
                   ':' + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         # StockNameCodeMap.objects.bulk_update(companies, ['top10_holder_date'])
@@ -864,3 +884,165 @@ def get_balance_sheet_fields():
         'receiv_financing,use_right_assets,lease_liab,contract_assets,contract_liab,accounts_receiv_bill,accounts_pay,'\
         'oth_rcv_total,fix_assets_total,update_flag'
     return fields
+
+
+def pop_dailybasic_to_finindicator(ts_code):
+    try:
+        today = date.today()
+        db_list5 = []
+        tmp_price = 0
+        tmp_mv = 0
+        tmp_pe = 0
+        tmp_pe_ttm = 0
+        tmp_pb = 0
+        tmp_ps = 0
+        tmp_ps_ttm = 0
+        pop_date = None
+        db_list = []
+        if ts_code is None:
+            companies = StockNameCodeMap.objects.order_by('ts_code').all()
+        else:
+            companies = StockNameCodeMap.objects.filter(ts_code=ts_code)
+
+        for company in companies:
+            print(company.ts_code + ' start - ' +
+                  datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            if company.popdb2fin_date is None:
+                cfi = CompanyFinIndicators.objects.filter(
+                    ts_code=company.ts_code, company=company).order_by('announce_date')
+            else:
+                cfi = CompanyFinIndicators.objects.filter(
+                    ts_code=company.ts_code, company=company, announce_date__gt=company.popdb2fin_date).order_by('announce_date')
+
+            for indic in cfi:
+                try:
+                    cdb = CompanyDailyBasic.objects.get(
+                        trade_date=indic.announce_date, ts_code=company.ts_code)
+                    # print(indic.announce_date.strftime('%Y-%m-%d') + ' in processing')
+                    indic.close = cdb.close
+                    indic.total_mv = cdb.total_mv
+                    indic.pe = cdb.pe
+                    indic.pe_ttm = cdb.pe_ttm
+                    indic.pb = cdb.pb
+                    indic.ps = cdb.ps
+                    indic.ps_ttm = cdb.ps_ttm
+                    # indic.save()
+                    if len(db_list5) < 5:
+                        db_list5.append(indic)
+                    else:
+                        db_list5.pop(0)
+                        db_list5.append(indic)
+                except Exception as err:
+                    if len(db_list5) > 0:
+                        for i in range(0, len(db_list5)-1):
+                            tmp_price += db_list5[i].close
+                            tmp_mv += db_list5[i].total_mv
+                            tmp_pe += db_list5[i].pe if db_list5[i].pe is not None else 0
+                            tmp_pe_ttm += db_list5[i].pe_ttm if db_list5[i].pe_ttm is not None else 0
+                            tmp_pb += db_list5[i].pb if db_list5[i].pb is not None else 0
+                            tmp_ps += db_list5[i].ps if db_list5[i].ps is not None else 0
+                            tmp_ps_ttm += db_list5[i].ps_ttm if db_list5[i].ps_ttm is not None else 0
+
+                        indic.close = round(tmp_price / len(db_list5), 3)
+                        indic.total_mv = round(tmp_mv / len(db_list5), 3)
+                        indic.pe = round(tmp_pe / len(db_list5), 3)
+                        indic.pe_ttm = round(tmp_pe_ttm / len(db_list5), 3)
+                        indic.pb = round(tmp_pb / len(db_list5), 3)
+                        indic.ps = round(tmp_ps / len(db_list5), 3)
+                        indic.ps_ttm = round(tmp_ps_ttm / len(db_list5), 3)
+
+                        # indic.save()
+                    # print(err)
+                db_list.append(indic)
+                # print(indic.announce_date.strftime('%Y-%m-%d')  + ' processed')
+            if len(cfi) > 0:
+                company.popdb2fin_date = db_list[-1].announce_date
+                CompanyFinIndicators.objects.bulk_update(db_list, ['total_mv','pe','pe_ttm','pb','ps','ps_ttm'])
+                company.save()
+                db_list.clear()
+                db_list5.clear()
+            print(company.ts_code + ' end - ' +
+                  datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as err:
+        print(err)
+
+
+def pop_dailybasic_to_balancesheet(ts_code):
+    try:
+        today = date.today()
+        db_list5 = []
+        tmp_price = 0
+        tmp_mv = 0
+        tmp_pe = 0
+        tmp_pe_ttm = 0
+        tmp_pb = 0
+        tmp_ps = 0
+        tmp_ps_ttm = 0
+        pop_date = None
+        db_list = []
+        if ts_code is None:
+            companies = StockNameCodeMap.objects.order_by('ts_code').all()
+        else:
+            companies = StockNameCodeMap.objects.filter(ts_code=ts_code)
+
+        for company in companies:
+            print(company.ts_code + ' start - ' +
+                  datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            if company.popdb2bs_date is None:
+                cfi = CompanyBalanceSheet.objects.filter(
+                    ts_code=company.ts_code, company=company).order_by('announce_date')
+            else:
+                cfi = CompanyBalanceSheet.objects.filter(
+                    ts_code=company.ts_code, company=company, announce_date__gt=company.popdb2fin_date).order_by('announce_date')
+
+            for indic in cfi:
+                try:
+                    cdb = CompanyDailyBasic.objects.get(
+                        trade_date=indic.announce_date, ts_code=company.ts_code)
+                    # print(indic.announce_date.strftime('%Y-%m-%d') + ' in processing')
+                    indic.close = cdb.close
+                    indic.total_mv = cdb.total_mv
+                    indic.pe = cdb.pe
+                    indic.pe_ttm = cdb.pe_ttm
+                    indic.pb = cdb.pb
+                    indic.ps = cdb.ps
+                    indic.ps_ttm = cdb.ps_ttm
+                    # indic.save()
+                    if len(db_list5) < 5:
+                        db_list5.append(indic)
+                    else:
+                        db_list5.pop(0)
+                        db_list5.append(indic)
+                except Exception as err:
+                    if len(db_list5) > 0:
+                        for i in range(0, len(db_list5)-1):
+                            tmp_price += db_list5[i].close
+                            tmp_mv += db_list5[i].total_mv
+                            tmp_pe += db_list5[i].pe if db_list5[i].pe is not None else 0
+                            tmp_pe_ttm += db_list5[i].pe_ttm if db_list5[i].pe_ttm is not None else 0
+                            tmp_pb += db_list5[i].pb if db_list5[i].pb is not None else 0
+                            tmp_ps += db_list5[i].ps if db_list5[i].ps is not None else 0
+                            tmp_ps_ttm += db_list5[i].ps_ttm if db_list5[i].ps_ttm is not None else 0
+
+                        indic.close = round(tmp_price / len(db_list5), 3)
+                        indic.total_mv = round(tmp_mv / len(db_list5), 3)
+                        indic.pe = round(tmp_pe / len(db_list5), 3)
+                        indic.pe_ttm = round(tmp_pe_ttm / len(db_list5), 3)
+                        indic.pb = round(tmp_pb / len(db_list5), 3)
+                        indic.ps = round(tmp_ps / len(db_list5), 3)
+                        indic.ps_ttm = round(tmp_ps_ttm / len(db_list5), 3)
+
+                        # indic.save()
+                    # print(err)
+                db_list.append(indic)
+                # print(indic.announce_date.strftime('%Y-%m-%d')  + ' processed')
+            if len(cfi) > 0:
+                company.popdb2bs_date = db_list[-1].announce_date
+                CompanyBalanceSheet.objects.bulk_update(db_list, ['total_mv','pe','pe_ttm','pb','ps','ps_ttm'])
+                company.save()
+                db_list.clear()
+                db_list5.clear()
+            print(company.ts_code + ' end - ' +
+                  datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as err:
+        print(err)

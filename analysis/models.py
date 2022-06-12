@@ -286,6 +286,64 @@ class StockHistoryDaily(BaseModel):
         get_latest_by = 'id'
 
 
+class StockHistory(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    open	float	开盘价
+    high	float	最高价
+    low	float	最低价
+    close	float	收盘价
+    pre_close	float	昨收价
+    change	float	涨跌额
+    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    vol	float	成交量 （手）
+    amount	float	成交额 （千元）
+    '''
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='stock_history', blank=True, null=True, on_delete=models.SET_NULL)
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    open = models.FloatField(
+        _('开盘价'), blank=True, null=True)
+    high = models.FloatField(
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
+    pre_close = models.FloatField(
+        _('前日收盘价'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'), blank=True, null=True)
+    change = models.FloatField(
+        _('价格变化'), blank=True, null=True)
+    pct_chg = models.FloatField(
+        _('价格变化%'), blank=True, null=True)
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    chg4 = models.FloatField(
+        _('与4日前变化'), blank=True, null=True)
+    jiuzhuan_count_b = models.FloatField(
+        _('九转序列B'),  blank=True, null=True)
+    jiuzhuan_count_s = models.FloatField(
+        _('九转序列S'),  blank=True, null=True)
+
+    freq = models.CharField(
+        _('周期'), max_length=5, blank=False, null=False, default='W')  # e.g. 000001.SZ
+
+    def __str__(self):
+        return self.ts_code
+
+    class Meta:
+        ordering = ['-trade_date']
+        verbose_name = _('股票代码表')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
 class StockHistoryDailyArc(BaseModel):
     '''
     StockHistoryDaily 超过3年的数据都archive到此table
@@ -347,6 +405,61 @@ class StockHistoryDailyArc(BaseModel):
     class Meta:
         ordering = ['-last_mod_time']
         verbose_name = _('股票收盘备份')
+        verbose_name_plural = verbose_name
+        get_latest_by = 'id'
+
+
+class StockHistoryIndicators(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    open	float	开盘价
+    high	float	最高价
+    low	float	最低价
+    close	float	收盘价
+    pre_close	float	昨收价
+    change	float	涨跌额
+    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    vol	float	成交量 （手）
+    amount	float	成交额 （千元）
+    '''
+    company = models.ForeignKey(
+        StockNameCodeMap, related_name='eema_indicator_history', blank=True, null=True, on_delete=models.SET_NULL)
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    high = models.FloatField(
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'), blank=True, null=True)
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+    var1 = models.FloatField(
+        _('九转序列B'),  blank=True, null=True)
+    var2 = models.FloatField(
+        _('九转序列S'),  blank=True, null=True)
+    var3 = models.FloatField(
+        _('MA25'),  blank=True, null=True)
+    rsv = models.FloatField(
+        _('MA25斜率'),  blank=True, null=True)
+    eema_b = models.FloatField(
+        _('MA60'),  blank=True, null=True)
+    eema_s = models.FloatField(
+        _('MA60斜率'),  blank=True, null=True)
+    freq = models.CharField(
+        _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
+
+    def __str__(self):
+        return self.ts_code
+
+    class Meta:
+        ordering = ['-trade_date']
+        verbose_name = _('股票技术指标')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 

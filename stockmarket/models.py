@@ -196,6 +196,11 @@ class StockNameCodeMap(BaseModel):
         _('财务指标下载日期'), blank=True, null=True)
     balance_sheet_date = models.DateField(
         _('财务指标下载日期'), blank=True, null=True)
+    popdb2fin_date = models.DateField(
+        _('推送每日指标日期'), blank=True, null=True)
+    # 0416/2022
+    pop2eema_date = models.DateField(
+        _('推送加强ema指标日期(短线窥探)'), blank=True, null=True)
 
     def __str__(self):
         return self.stock_name
@@ -1414,6 +1419,21 @@ class CompanyFinIndicators(BaseModel):
         _('研发费用'), blank=True, null=True)  # float	N	研发费用
     update_flag = models.CharField(
         _('更新标识'),  max_length=5, blank=True, null=True)  # str	N	更新标识
+    # daily basic，用于市值估算
+    total_mv = models.FloatField(
+        _('总市值'), blank=True, null=True)  # float	Y	价格
+    close = models.FloatField(
+        _('价格'), blank=True, null=True)  # float	Y	价格
+    pe = models.FloatField(
+        _('pe'), blank=True, null=True)  # float	Y	pe
+    pe_ttm = models.FloatField(
+        _('pe_ttm'), blank=True, null=True)  # float	Y	pe_ttm
+    pb = models.FloatField(
+        _('pb'), blank=True, null=True)  # float	Y	pb
+    ps = models.FloatField(
+        _('ps'), blank=True, null=True)  # float	Y	ps
+    ps_ttm = models.FloatField(
+        _('ps_ttm'), blank=True, null=True)  # float	Y	ps_ttm
     company = models.ForeignKey(
         StockNameCodeMap, related_name='fin_indicator', blank=True, null=True, on_delete=models.SET_NULL)
 
