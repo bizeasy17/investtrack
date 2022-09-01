@@ -6,9 +6,10 @@ from analysis.utils import days_to_now
 from stockmarket.models import StockNameCodeMap
 
 
-def pop_eema_indic(ts_code, freq='D', update_flag_p=0):
+def pop_eema_indic(ts_code, freq='D', ):
     ema_list = []
     update_flag = 0
+    df_ema = pd.DataFrame({})
     # exec_date = date.today()
 
     if ts_code is None:
@@ -36,19 +37,23 @@ def pop_eema_indic(ts_code, freq='D', update_flag_p=0):
                     df = pd.DataFrame(hist)
                     df_ema = enhanced_ema(company.ts_code, df)
 
-                else:
-                    hist_new = StockHistoryDaily.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
-                    # 至少9条老的交易历史
-                    hist_offset = StockHistoryDaily.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')[:8]
+                else: # 更新指标
+                    hist_count = StockHistoryDaily.objects.all().count()
+                    # 从上次运行开始到今天的交易历史
+                    var_hist = StockHistoryDaily.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')
                     
-                    df_new = pd.DataFrame.from_records(hist_new)
-                    df_offset = pd.DataFrame.from_records(hist_offset)
+                    # 至少9条老的交易历史?
+                    rsv_hist = StockHistoryDaily.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
                     
-                    df = pd.concat(df_offset, df_new)
-                    update_flag = len(df)
-                    df_ema = enhanced_ema(company.ts_code, df)
+                    if len(var_hist) > 0:
+                        df_var = pd.DataFrame.from_records(var_hist)
+                        df_rsv_hist = pd.DataFrame.from_records(rsv_hist)
+                        
+                        df_rsv = pd.concat([df_var, df_rsv_hist, ]) # df[::-1]
+                        update_flag = len(df_var) 
+                        df_ema = enhanced_ema(company.ts_code, df_var, df_rsv, hist_count, update_flag=update_flag, ) # reverse dataframe
 
                     # print(hist)
             elif freq == 'W' or freq == 'M':
@@ -58,18 +63,19 @@ def pop_eema_indic(ts_code, freq='D', update_flag_p=0):
                     df = pd.DataFrame(hist)
                     df_ema = enhanced_ema(company.ts_code, df)
                 else:
-                    hist_new = StockHistory.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
+                    var_hist = StockHistory.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')
                     # 至少9条老的交易历史
-                    hist_offset = StockHistoryDaily.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')[:8]
+                    rsv_hist = StockHistoryDaily.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:9]
                     
-                    df_new = pd.DataFrame.from_records(hist_new)
-                    df_offset = pd.DataFrame.from_records(hist_offset)
-                    
-                    df = pd.concat(df_offset, df_new)
-                    update_flag = len(df)
-                    df_ema = enhanced_ema(company.ts_code, df)
+                    if len(var_hist) > 0:
+                        df_var = pd.DataFrame.from_records(var_hist)
+                        df_rsv = pd.DataFrame.from_records(rsv_hist)
+                        
+                        df = pd.concat([df_rsv, df_var])
+                        update_flag = len(df)
+                        df_ema = enhanced_ema(company.ts_code, df.loc[::-1], update_flag=update_flag,)
 
             # print(df.head())
 

@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
                          HttpResponseServerError, JsonResponse)
 from django.shortcuts import render
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 from django.db.models import Count
 from rest_framework.response import Response

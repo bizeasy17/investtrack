@@ -12,7 +12,7 @@ from django.db.models import F, Count
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
                          HttpResponseServerError, JsonResponse)
 from django.shortcuts import redirect, render, reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 from investors.models import StockFollowing
 # from investtrack.settings_dev import NEAREST_THRESHOLD

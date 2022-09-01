@@ -42,6 +42,12 @@ bs4 # https://code.launchpad.net/beautifulsoup
 
 # data science
 scipy #from scipy import stats
+sklearn
 
+# restful
+restframework #from scipy import stats
+
+# django-translation
+django-translation #ugettext-lazzy
 
 # apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6

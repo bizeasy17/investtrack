@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 from analysis.commands import pop_eema_indic
 
@@ -33,7 +33,7 @@ def analysis_command(request, cmd, params):
             process_industrybasic_quantile(
                 quantile, next_dates,)
         elif cmd == 'indic':
-            pop_eema_indic(plist[0],plist[1],plist[2])
+            pop_eema_indic(plist[0],plist[1])
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)
