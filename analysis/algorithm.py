@@ -35,9 +35,9 @@ from numpy import busday_count
 # from sklearn.datasets import load_wine
 from typing import List
 from analysis.models import StockHistoryIndicators
+from analysis.models import StockHistoryDaily
 
-
-def enhanced_ema(ts_code, df_var, df_rsv, hist_count, var2_ema_param=10, rsv_param=9, bs_param=3, update_flag=0):
+def calc_enhanced_rsv(df_var, var2_ema_param=10, rsv_param=9, bs_param=3, ):
     '''
     duan_xian_kui_tan
     return df_ohlc['var1'],var2,var3,rsv,b,s
@@ -49,8 +49,8 @@ def enhanced_ema(ts_code, df_var, df_rsv, hist_count, var2_ema_param=10, rsv_par
     s = []
     # df_hist = None
     # df_ohlc = df_hist.loc[:, ['close', 'high', 'low', ]]
-    if update_flag != 0:
-        return enhanced_ema_diff(ts_code, df_var, df_rsv, hist_count, update_flag, var2_ema_param=10, rsv_param=9, bs_param=3)
+    # if len(df_var) != 0:
+    #     return cal_enhanced_rsv_diff(ts_code, df_var, df_rsv, var2_ema_param=10, rsv_param=9, bs_param=3)
 
     # VAR1
     df_var['var1'] = round((df_var['close'] + df_var['high'] + df_var['low']) / 3, 2)
@@ -61,24 +61,34 @@ def enhanced_ema(ts_code, df_var, df_rsv, hist_count, var2_ema_param=10, rsv_par
 
     # RSV
     rsv = []
-    for idx, row in df_rsv.iterrows():
-        v = (row['close'] - df_rsv['low'].loc[idx-rsv_param+1:idx].min()) / \
-            (df_rsv['high'].loc[idx-rsv_param+1:idx].max() -
-             df_rsv['low'].loc[idx-rsv_param+1:idx].min()) * 100
-        rsv.append(v)
+    for idx, row in df_var.iterrows():
+        v = (row['close'] - df_var['low'].loc[idx-rsv_param+1:idx].min()) / \
+            (df_var['high'].loc[idx-rsv_param+1:idx].max() -
+             df_var['low'].loc[idx-rsv_param+1:idx].min()) * 100
+        rsv.append(round(v,2))
         # pass
     # pass
     b = talib.SMA(np.array(rsv), bs_param)
-    s = talib.SMA(b, bs_param)
+    try:
+        s = talib.SMA(b, bs_param)
+    except Exception as err:
+        s = [np.NAN] * len(b)
+
+    b_list = []
+    for i in range(0, len(b)):
+        b_list.append(round(b[i],2))
+    s_list = []
+    for i in range(0, len(s)):
+        s_list.append(round(s[i],2))
 
     # if update_flag == 1:
     #     return df_hist['var1'].iloc[-1],var2.iloc[-1],var3.iloc[-1],rsv[-1],b[-1],s[-1]
 
     df_var['var2'] = var2  # pd.Series(var2.values.tolist()[::-1])
     df_var['var3'] = var3  # var3[::-1]
-    df_var['rsv'] = pd.Series(rsv)  # pd.Series(rsv[::-1])
-    df_var['b'] = pd.Series(b)  # pd.Series(b[::-1])
-    df_var['s'] = pd.Series(s)  # pd.Series(s[::-1])
+    df_var['rsv'] = rsv  # pd.Series(rsv[::-1])
+    df_var['b'] = b_list # pd.Series(b[::-1])
+    df_var['s'] = s_list  # pd.Series(s[::-1])
     # print(df_ohlc['var2'])
     # print(df_ohlc['var3'])
     return df_var
@@ -89,9 +99,9 @@ def enhanced_ema(ts_code, df_var, df_rsv, hist_count, var2_ema_param=10, rsv_par
 def EMA_diff(var1_new: List[any], N: int, var1_hist: List[any], var2_hist, ) -> List[any]:
     out = []
     full_var1 = var1_hist+var1_new
-    if var2_hist is np.NaN:
-        out.append(sum(full_var1[:N] / N))
-        print(out)
+    if np.isnan(var2_hist):
+        out.append(round(sum(full_var1[:N]) / N,2))
+        # print(out)
     else:
         # print(sum(var1_new[:N]) / N)
         e = round((2 * var1_new[0] + (N - 1) * var2_hist) / (N + 1),2)
@@ -104,22 +114,22 @@ def EMA_diff(var1_new: List[any], N: int, var1_hist: List[any], var2_hist, ) -> 
     return out
 
 
-def SMA_diff(new_list: List[any], N: int, hist_list: List[any]) -> List[any]:
+def SMA_diff(hist_list: List[any], N: int) -> List[any]:
     out = []
-    full_list = hist_list+new_list
+    # full_list = hist_list+new_list
     # if out_hist is np.NaN:
     #     out.append(sum(full_list[:N] / N))
     #     print(out)
     # else:
-    for i in range(N-1, len(full_list)): 
-        e = round(sum(full_list[i-2:i+1]) / N, 2) # list序列标号，前包后不包
+    for i in range(N-1, len(hist_list)): 
+        e = round(sum(hist_list[i-2:i+1]) / N, 2) # list序列标号，前包后不包
         print(e) 
         out.append(e)
     return out
     # pass
 
 
-def enhanced_ema_diff(ts_code, df_var, df_rsv, hist_count, update_flag=1, var2_ema_param=10, rsv_param=9, bs_param=3):
+def calc_enhanced_rsv_diff(ts_code, df_var, df_rsv, hist_count, var2_ema_param=10, rsv_param=9, bs_param=3):
     '''
     df_new: 新的股票历史 trade_date > feed_date, <= today
     df_offset:  
@@ -135,8 +145,11 @@ def enhanced_ema_diff(ts_code, df_var, df_rsv, hist_count, update_flag=1, var2_e
     '''
     var1 = []
     ema_diff = []
-    indic_hist = 9
-    date_diff = int(update_flag)
+    var1_list = []
+    rsv_hist_list = []
+    eema_b_list = []
+    # indic_hist = 9
+    # date_diff = int(update_flag)
     # 1
     # df_latest = df_hist.iloc[-(date_diff if date_diff>=9 else rsv_diff):]
     # df_latest = df_var[0] # new history dataframe, trade_date asc
@@ -146,52 +159,60 @@ def enhanced_ema_diff(ts_code, df_var, df_rsv, hist_count, update_flag=1, var2_e
     df_rsv = df_rsv.reset_index()  # avoid duplicate index
     # ema 9条历史EMA数据
     eema_indic = StockHistoryIndicators.objects.filter(
-        ts_code=ts_code).order_by('-trade_date').values('high', 'low', 'close', 'var1', 'var2', 'var3', 'rsv', 'eema_b', 'eema_s')[:indic_hist]
+        ts_code=ts_code).order_by('-trade_date').values('high', 'low', 'close', 'var1', 'var2', 'var3', 'rsv', 'eema_b', 'eema_s')[:rsv_param+1]
 
     # 2 date seq - asc
-    for i in range(0, date_diff):
+    for i in range(0, len(df_var)):
         var1.append(round((df_var['close'].iloc[i] +
-                     df_var['high'].iloc[i] + df_var['low'].iloc[i]) / 3, 2))
-
+                    df_var['high'].iloc[i] + df_var['low'].iloc[i]) / 3, 2))
     # 3
-    df_eema = pd.DataFrame.from_records(eema_indic)  # date - desc
+    # df_eema = pd.DataFrame.from_records(eema_indic)  # date - desc
     # ser_var1 = pd.concat(
     #     [df_eema['var1'][::-1], pd.Series(var1)], ignore_index=True)  # reverse ema history -> asc,
     # ser_var1 = ser_var1.reset_index()
-
-    var1_list = []
-    rsv_hist_list = []
-    eema_b_list = []
     for indic in eema_indic:
         var1_list.append(round(indic['var1'],2))
         if len(rsv_hist_list) < 2:
             rsv_hist_list.append(round(indic['rsv'],2))
             eema_b_list.append(round(indic['eema_b'],2))
-
-
+                            
     # 4
-    var2 = EMA_diff(var1, var2_ema_param,
-                    var1_list, eema_indic[len(eema_indic)-1]['var2'])
+    if hist_count < var2_ema_param:
+        # 4
+        var2 = [np.NAN] * len(df_var)
+    else:
+        # 4
+        var2 = EMA_diff(var1, var2_ema_param,
+                        var1_list, eema_indic[0]['var2'])
     temp = copy.copy(var2)
-    temp.insert(0, round(eema_indic[len(eema_indic)-1]['var2'],2))
+    temp.insert(0, round(eema_indic[0]['var2'],2))
     var3 = temp[0:len(temp)-1]
     # var3.insert(0, )
 
-    # 5
+    # 5 计算RSV
     rsv_new_list = []
     for idx, row in df_rsv.iterrows():
-        if idx-rsv_param+1 >= 0:
-            v = round((row['close'] - df_rsv['low'].loc[idx-rsv_param+1:idx].min()) / \
-                (df_rsv['high'].loc[idx-rsv_param+1:idx].max() -
-                 df_rsv['low'].loc[idx-rsv_param+1:idx].min()) * 100, 2)
-            rsv_new_list.append(v)
+        # if idx-rsv_param+1 >= 0:
+        v = round((row['close'] - df_rsv['low'].loc[idx-rsv_param+1:idx].min()) / \
+            (df_rsv['high'].loc[idx-rsv_param+1:idx].max() -
+                df_rsv['low'].loc[idx-rsv_param+1:idx].min()) * 100, 2)
+        rsv_new_list.append(v)
         # pass
-
-    # 6
-    # 7
-
-    b = SMA_diff(rsv_new_list, bs_param, rsv_hist_list, )
-    s = SMA_diff(b, bs_param, eema_b_list, )
+    rsv_new_list = rsv_new_list[len(df_rsv)-len(df_var):]
+    # 6 Buy
+    # 7 Sell
+    '''
+    
+    '''
+    if hist_count < bs_param:
+        b = [np.NAN] * len(df_var)
+        s = [np.NAN] * len(df_var)
+    else:
+        b = SMA_diff(rsv_new_list+rsv_hist_list, bs_param, )
+        try:
+            s = SMA_diff(b+eema_b_list, bs_param,)
+        except Exception as err:
+            s = [np.NAN] * len(b)
 
     # slice to only new history
     # var2 = var2[9:]

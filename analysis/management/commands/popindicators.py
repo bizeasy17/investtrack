@@ -2,8 +2,8 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 from django.core.management.base import BaseCommand, CommandError
-from analysis.algorithm import enhanced_ema
-from analysis.commands import pop_eema_indic
+from analysis.algorithm import calc_enhanced_rsv
+from analysis.commands import pop_rsv_indic
 from analysis.models import StockHistoryDaily, StockHistory, StockHistoryIndicators
 from stockmarket.models import StockNameCodeMap
 
@@ -24,11 +24,11 @@ class Command(BaseCommand):
             type=str,
             help='Which freq you want to apply the collect',
         )
-        # parser.add_argument(
-        #     '--period',
-        #     type=str,
-        #     help='Which start date you want to apply the collect',
-        # )
+        parser.add_argument(
+            '--type',
+            type=str,
+            help='Which start date you want to apply the collect',
+        )
 
         parser.add_argument(
             '--update_flag',
@@ -40,7 +40,7 @@ class Command(BaseCommand):
         # sys_event_list = ['MARK_CP']
         freq = options['freq']
         ts_code = options['ts_code']
-        # period = options['period']
+        type = options['type']
         update_flag = options['update_flag']
 
         # if period is None:
@@ -55,7 +55,8 @@ class Command(BaseCommand):
         if ts_code is None:
             return
 
-        pop_eema_indic(ts_code, freq=freq, update_flag_p=update_flag)
+        if type == 'rsv+':
+            pop_rsv_indic(ts_code, freq=freq,)
         
         # end_date = date.today()
         # if freq == 'D':

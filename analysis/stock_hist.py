@@ -79,10 +79,10 @@ def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_l
                 last_date = last_download_date(
                     listed_company.ts_code, 'HIST_DOWNLOAD', freq)
                 if sdate is not None and edate is not None:  # 给定下载开始和结束时间
-                    start_date = sdate
-                    end_date = edate
+                    start_date = datetime.strptime(sdate, '%Y-%m-%d')
+                    end_date = datetime.strptime(edate, '%Y-%m-%d')
                     download_stock_hist(listed_company,
-                        listed_company.ts_code, listed_company.list_date, today, listed_company.asset, freq, )
+                        listed_company.ts_code, start_date, end_date, listed_company.asset, freq, )
                 else:  # 根据日志记录下载相应历史记录
                     print(last_date)
                     if last_date is not None:
