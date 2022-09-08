@@ -30,18 +30,18 @@ class Command(BaseCommand):
             help='Which start date you want to apply the collect',
         )
 
-        parser.add_argument(
-            '--update_flag',
-            type=str,
-            help='Which start date you want to apply the collect',
-        )
+        # parser.add_argument(
+        #     '--update_flag',
+        #     type=str,
+        #     help='Which start date you want to apply the collect',
+        # )
 
     def handle(self, *args, **options):
         # sys_event_list = ['MARK_CP']
         freq = options['freq']
         ts_code = options['ts_code']
         type = options['type']
-        update_flag = options['update_flag']
+        # update_flag = options['update_flag']
 
         # if period is None:
         #     period = '60'
@@ -52,8 +52,8 @@ class Command(BaseCommand):
         # if update_flag is None:
         #     update_flag = 0
 
-        if ts_code is None:
-            return
+        # if ts_code is None:
+        #     return
 
         if type == 'rsv+':
             pop_rsv_indic(ts_code, freq=freq,)

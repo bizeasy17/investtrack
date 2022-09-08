@@ -26,52 +26,53 @@ def pop_rsv_indic(ts_code, freq='D', ):
             # if update_flag_p == 1:
             #     update_flag = update_flag_p
 
-            if freq == 'D':
+            # if freq == 'D':
                 # count = int(period)+int(2 * int(period)/7)
                 # if period is not None:
                 #     hist = StockHistoryDaily.objects.filter(
                 #         ts_code=ts_code, freq=freq).values('close','high','low','ts_code','vol','trade_date').order_by('trade_date')[:int(period)]
                 # else:
-                if company.pop2eema_date is None: # 全新计算RSV
-                    if freq == 'D':
-                        hist = StockHistoryDaily.objects.filter(
-                            ts_code=company.ts_code, freq=freq).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
-                    else:
-                        hist = StockHistory.objects.filter(
-                            ts_code=company.ts_code, freq=freq).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
-                    
+            if company.pop2eema_date is None: # 全新计算RSV
+                if freq == 'D':
+                    hist = StockHistoryDaily.objects.filter(
+                        ts_code=company.ts_code, freq=freq).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
+                else:
+                    hist = StockHistory.objects.filter(
+                        ts_code=company.ts_code, freq=freq).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
+                
+                if len(hist) > 0:
                     df_hist = pd.DataFrame(hist)
                     df_ema = calc_enhanced_rsv(df_var=df_hist, )
 
-                else: # 更新指标
-                    if freq == 'D':
-                        # 从上次运行开始到今天的交易历史
-                        var_hist = StockHistoryDaily.objects.filter(
-                            ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
-   
-                        # 至少9条老的交易历史?
-                        rsv_hist = StockHistoryDaily.objects.filter(
-                            ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
-                        
-                        hist_count = StockHistoryDaily.objects.filter(ts_code=ts_code).count()
-                    else:
-                        # 从上次运行开始到今天的交易历史
-                        var_hist = StockHistory.objects.filter(
-                            ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
-                        
-                        # 至少9条老的交易历史?
-                        rsv_hist = StockHistory.objects.filter(
-                            ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
-                        
-                        hist_count = StockHistory.objects.filter(ts_code=ts_code).count()
+            else: # 更新指标
+                if freq == 'D':
+                    # 从上次运行开始到今天的交易历史
+                    var_hist = StockHistoryDaily.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
 
-                    if len(var_hist) > 0:
-                        df_var = pd.DataFrame.from_records(var_hist)
-                        df_rsv_hist = pd.DataFrame.from_records(rsv_hist)
+                    # 至少9条老的交易历史?
+                    rsv_hist = StockHistoryDaily.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
+                    
+                    hist_count = StockHistoryDaily.objects.filter(ts_code=ts_code).count()
+                else:
+                    # 从上次运行开始到今天的交易历史
+                    var_hist = StockHistory.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
+                    
+                    # 至少9条老的交易历史?
+                    rsv_hist = StockHistory.objects.filter(
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
+                    
+                    hist_count = StockHistory.objects.filter(ts_code=ts_code).count()
 
-                        df_rsv = pd.concat([df_rsv_hist[::-1], df_var ]) # df[::-1]
-                        # update_flag = len(df_var) 
-                        df_ema = calc_enhanced_rsv_diff(company.ts_code, df_var, df_rsv, hist_count) # reverse dataframe
+                if len(var_hist) > 0:
+                    df_var = pd.DataFrame.from_records(var_hist)
+                    df_rsv_hist = pd.DataFrame.from_records(rsv_hist)
+
+                    df_rsv = pd.concat([df_rsv_hist[::-1], df_var ]) # df[::-1]
+                    # update_flag = len(df_var) 
+                    df_ema = calc_enhanced_rsv_diff(company.ts_code, df_var, df_rsv, hist_count) # reverse dataframe
 
                     # print(hist)
             # elif freq == 'W' or freq == 'M':
@@ -106,10 +107,11 @@ def pop_rsv_indic(ts_code, freq='D', ):
                                                var3=row['var3'], rsv=row['rsv'], eema_b=row['b'], eema_s=row['s'], freq=freq, company=company)
                 ema_list.append(indic)
 
-            StockHistoryIndicators.objects.bulk_create(ema_list)
-            company.pop2eema_date = ema_list[-1].trade_date #date.today()
-            company.save()
-            ema_list.clear()
+            if len(ema_list) > 0:
+                StockHistoryIndicators.objects.bulk_create(ema_list)
+                company.pop2eema_date = ema_list[-1].trade_date #date.today()
+                company.save()
+                ema_list.clear()
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + company.ts_code +
                 ' pop RSV enahnced Indicator ended.')
         except Exception as err:
