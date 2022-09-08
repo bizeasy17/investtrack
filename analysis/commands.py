@@ -43,7 +43,10 @@ def pop_rsv_indic(ts_code, freq='D', ):
                 if len(hist) > 0:
                     df_hist = pd.DataFrame(hist)
                     df_ema = calc_enhanced_rsv(df_var=df_hist, )
-
+                else:
+                    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + company.ts_code +
+                        ' pop RSV enahnced Indicator ended.')
+                    continue
             else: # 更新指标
                 if freq == 'D':
                     # 从上次运行开始到今天的交易历史
@@ -73,7 +76,10 @@ def pop_rsv_indic(ts_code, freq='D', ):
                     df_rsv = pd.concat([df_rsv_hist[::-1], df_var ]) # df[::-1]
                     # update_flag = len(df_var) 
                     df_ema = calc_enhanced_rsv_diff(company.ts_code, df_var, df_rsv, hist_count) # reverse dataframe
-
+                else:
+                    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + company.ts_code +
+                        ' pop RSV enahnced Indicator ended.')
+                    continue
                     # print(hist)
             # elif freq == 'W' or freq == 'M':
             #     if company.pop2eema_date is None:
