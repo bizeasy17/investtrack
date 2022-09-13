@@ -57,7 +57,7 @@ def pop_rsv_indic(ts_code, freq='D', ):
                     rsv_hist = StockHistoryDaily.objects.filter(
                         ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
                     
-                    hist_count = StockHistoryDaily.objects.filter(ts_code=ts_code).count()
+                    hist_count = StockHistoryDaily.objects.filter(ts_code=company.ts_code).count()
                 else:
                     # 从上次运行开始到今天的交易历史
                     var_hist = StockHistory.objects.filter(
@@ -67,7 +67,7 @@ def pop_rsv_indic(ts_code, freq='D', ):
                     rsv_hist = StockHistory.objects.filter(
                         ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
                     
-                    hist_count = StockHistory.objects.filter(ts_code=ts_code).count()
+                    hist_count = StockHistory.objects.filter(ts_code=company.ts_code).count()
 
                 if len(var_hist) > 0:
                     df_var = pd.DataFrame.from_records(var_hist)
