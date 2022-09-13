@@ -9,7 +9,7 @@ from analysis.utils import (generate_task, init_eventlog,
                             get_event_status, last_download_date,
                             log_download_hist, set_event_completed)
 
-from .models import StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
+from .models import StockHistory, StockHistoryDaily, StockStrategyTestLog, StockIndexHistory
 
 '''
 check the missing history sql query
@@ -201,9 +201,14 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
         hist = object
 
         if asset == 'E':
-            hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                     amount=v[10], freq=freq, company=company)
+            if freq == 'D':
+                hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                                        low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                                        amount=v[10], freq=freq, company=company)
+            else:
+                hist = StockHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+                                        low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+                                        amount=v[10], freq=freq, company=company)
         else: # 指数信息
             hist = StockIndexHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
                                      low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
@@ -223,7 +228,11 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
         '''
         hist_list.append(hist)
     if asset == 'E':
-        StockHistoryDaily.objects.bulk_create(hist_list)
+        if freq == 'D':
+            StockHistoryDaily.objects.bulk_create(hist_list)
+        else:
+            StockHistory.objects.bulk_create(hist_list)
+
     else:  # 指数信息
         StockIndexHistory.objects.bulk_create(hist_list)
 
