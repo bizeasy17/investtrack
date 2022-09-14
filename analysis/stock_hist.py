@@ -46,6 +46,59 @@ def process_stock_download(ts_code, start_date, end_date, asset='E', freq='D', s
                              asset, freq, sys_event_list)
 
 
+def proess_stock_download_new(ts_code, start_date, freq='D',):
+    start_date = None
+    # end_date = None
+    today = date.today()
+
+    try:
+        if ts_code is not None:
+            ts_code_list = ts_code.split(',')
+            if ts_code_list is not None:
+                if len(ts_code_list) > 1:
+                    companies = StockNameCodeMap.objects.filter(
+                        ts_code__in=ts_code_list)
+                else:
+                    companies = StockNameCodeMap.objects.filter(
+                        ts_code=ts_code)
+        else:
+            companies = StockNameCodeMap.objects.filter()
+
+        for company in companies:
+            # end_date = today
+            if freq == 'D':
+
+                start_date = company.last_update_date
+                company.last_update_date = today
+            if freq == 'W':
+
+                start_date = company.hist_download_date_w
+                company.hist_download_date_w = today
+            if freq == 'M':
+
+                start_date = company.hist_download_date_m
+                company.hist_download_date_m = today
+            
+            if start_date is not None: # 如果有差异就下载，不然就退出
+                # 已完成首次下载
+                print('hist update time')
+                if start_date >= today: 
+                    print('ran it today, exit...')
+                    continue
+
+                download_stock_hist(company,
+                    company.ts_code, start_date + timedelta(days=1), today, company.asset, freq, )
+            else:
+                # 需要进行首次下载
+                print('first time')
+                download_stock_hist(company,
+                    company.ts_code, company.list_date, today, company.asset, freq, )
+
+            company.save()
+    except Exception as err:
+        print(err)
+    pass
+
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
     '''
     可以接受的输入参数
@@ -167,7 +220,7 @@ def split_trade_cal(start_date, end_date):
     return split_date_list
 
 
-def download_hist_data(stock_symbol, start_date, end_date, freq='D', asset='E'):
+def download_hist_data(ts_code, start_date, end_date, freq='D', asset='E'):
     '''
     将每次的收盘历史数据按照10年分隔从tushare接口获取
     再按照时间先后顺序拼接
@@ -178,12 +231,12 @@ def download_hist_data(stock_symbol, start_date, end_date, freq='D', asset='E'):
         df_list = []
         for trade_cal in split_cal_list:
             # 增加指数数据
-            print(stock_symbol)
+            print(ts_code)
             print(asset)
             print(freq)
             print(trade_cal[0].strftime('%Y%m%d'))
             print(trade_cal[1].strftime('%Y%m%d'))
-            df = ts.pro_bar(ts_code=stock_symbol, asset=asset, freq=freq,
+            df = ts.pro_bar(ts_code=ts_code, asset=asset, freq=freq,
                             start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
             # df = df.iloc[::-1]  # 将数据按照时间顺序排列
             df_list.append(df)

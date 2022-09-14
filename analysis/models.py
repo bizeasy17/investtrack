@@ -440,17 +440,17 @@ class StockHistoryIndicators(BaseModel):
     amount = models.FloatField(
         _('金额'), blank=True, null=True)
     var1 = models.FloatField(
-        _('九转序列B'),  blank=True, null=True)
+        _('var1'),  blank=True, null=True)
     var2 = models.FloatField(
-        _('九转序列S'),  blank=True, null=True)
+        _('var2'),  blank=True, null=True)
     var3 = models.FloatField(
-        _('MA25'),  blank=True, null=True)
+        _('var3'),  blank=True, null=True)
     rsv = models.FloatField(
-        _('MA25斜率'),  blank=True, null=True)
+        _('rsv'),  blank=True, null=True)
     eema_b = models.FloatField(
-        _('MA60'),  blank=True, null=True)
+        _('b'),  blank=True, null=True)
     eema_s = models.FloatField(
-        _('MA60斜率'),  blank=True, null=True)
+        _('s'),  blank=True, null=True)
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
 
@@ -463,6 +463,8 @@ class StockHistoryIndicators(BaseModel):
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 
+class CompanyTechIndicatorFilters(BaseModel):
+    pass
 
 class StockQuantileStat(BaseModel):
     '''

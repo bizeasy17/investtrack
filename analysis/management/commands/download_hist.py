@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from users.models import User
-from analysis.stock_hist import process_stock_download
+from analysis.stock_hist import process_stock_download, proess_stock_download_new
 from stockmarket.models import StockNameCodeMap
 # from analysis.utils import init_eventlog, set_event_completed, is_event_completed
 
@@ -55,5 +55,8 @@ class Command(BaseCommand):
         if asset is None:
             asset = 'E'  # 股票， I - 指数
 
-        process_stock_download(ts_code, start_date,
-                               end_date, asset, freq, ['MARK_CP'])
+        # if freq == 'D':
+        #     process_stock_download(ts_code, start_date,
+        #                         end_date, asset, freq, ['MARK_CP'])
+        # else:
+        proess_stock_download_new(ts_code, start_date, freq)
