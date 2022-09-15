@@ -62,11 +62,18 @@ def calc_enhanced_rsv(df_var, var2_ema_param=10, rsv_param=9, bs_param=3, ):
     # RSV
     rsv = []
     for idx, row in df_var.iterrows():
-        v = (row['close'] - df_var['low'].loc[idx-rsv_param+1:idx].min()) / \
-            (df_var['high'].loc[idx-rsv_param+1:idx].max() -
-             df_var['low'].loc[idx-rsv_param+1:idx].min()) * 100
+        if df_var['high'].loc[idx-rsv_param+1:idx].max() - \
+            df_var['low'].loc[idx-rsv_param+1:idx].min() == 0:
+            v = 100
+        else:
+            v = (row['close'] - df_var['low'].loc[idx-rsv_param+1:idx].min()) / \
+                (df_var['high'].loc[idx-rsv_param+1:idx].max() -
+                df_var['low'].loc[idx-rsv_param+1:idx].min()) * 100
         rsv.append(round(v,2))
         # pass
+    # print(rsv[0])
+    # if rsv[0] is -np.Inf or rsv[0] is np.Inf:
+    #     rsv[0] = np.nan
     # pass
     b = talib.SMA(np.array(rsv), bs_param)
     try:

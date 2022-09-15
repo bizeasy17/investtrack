@@ -67,15 +67,12 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
         for company in companies:
             # end_date = today
             if freq == 'D':
-
                 start_date = company.last_update_date
                 company.last_update_date = today
             if freq == 'W':
-
                 start_date = company.hist_download_date_w
                 company.hist_download_date_w = today
             if freq == 'M':
-
                 start_date = company.hist_download_date_m
                 company.hist_download_date_m = today
             
@@ -86,14 +83,23 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
                     print('ran it today, exit...')
                     continue
 
-                download_stock_hist(company,
+                last_trade_date = download_stock_hist(company,
                     company.ts_code, start_date + timedelta(days=1), today, company.asset, freq, )
             else:
                 # 需要进行首次下载
                 print('first time')
-                download_stock_hist(company,
+                last_trade_date = download_stock_hist(company,
                     company.ts_code, company.list_date, today, company.asset, freq, )
 
+            if freq == 'D':
+                # start_date = company.last_update_date
+                company.last_update_date = last_trade_date
+            if freq == 'W':
+                # start_date = company.hist_download_date_w
+                company.hist_download_date_w = last_trade_date
+            if freq == 'M':
+                # start_date = company.hist_download_date_m
+                company.hist_download_date_m = last_trade_date
             company.save()
     except Exception as err:
         print(err)
@@ -250,22 +256,37 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
     # print(listed_company.ts_code)
     df = download_hist_data(ts_code, start_date, end_date, freq, asset,)
     hist_list = []
-    for v in df.values:
-        hist = object
-
+    for idx, row in df.iterrows():
+        hist = None
         if asset == 'E':
             if freq == 'D':
-                hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                        low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                        amount=v[10], freq=freq, company=company)
+                hist = StockHistoryDaily(ts_code=row['ts_code'], trade_date=datetime.strptime(row['trade_date'], '%Y%m%d'), open=row['open'], high=row['high'],
+                                        low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
+                                        amount=row['amount'], freq=freq, company=company)
             else:
-                hist = StockHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                        low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                        amount=v[10], freq=freq, company=company)
+                hist = StockHistory(ts_code=row['ts_code'], trade_date=datetime.strptime(row['trade_date'], '%Y%m%d'), open=row['open'], high=row['high'],
+                                        low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
+                                        amount=row['amount'], freq=freq, company=company)
         else: # 指数信息
-            hist = StockIndexHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
-                                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
-                                     amount=v[10], freq=freq, company=company)
+            hist = StockIndexHistory(ts_code=row['ts_code'], trade_date=datetime.strptime(row['trade_date'], '%Y%m%d'), open=row['open'], high=row['high'],
+                                        low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
+                                        amount=row['amount'], freq=freq, company=company)
+    # for v in df.values:
+    #     hist = object
+
+    #     if asset == 'E':
+    #         if freq == 'D':
+    #             hist = StockHistoryDaily(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+    #                                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+    #                                     amount=v[10], freq=freq, company=company)
+    #         else:
+    #             hist = StockHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+    #                                     low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+    #                                     amount=v[10], freq=freq, company=company)
+    #     else: # 指数信息
+    #         hist = StockIndexHistory(ts_code=v[0], trade_date=datetime.strptime(v[1], '%Y%m%d'), open=v[2], high=v[3],
+    #                                  low=v[4], close=v[5], pre_close=v[6], change=v[7], pct_chg=v[8], vol=v[9],
+    #                                  amount=v[10], freq=freq, company=company)
         '''
         ts_code	str	股票代码
         trade_date	str	交易日期
@@ -291,3 +312,4 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
 
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info downloaded.')
+    return hist_list[0].trade_date

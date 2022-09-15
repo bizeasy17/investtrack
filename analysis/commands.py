@@ -32,7 +32,15 @@ def pop_rsv_indic(ts_code, freq='D', ):
                 #     hist = StockHistoryDaily.objects.filter(
                 #         ts_code=ts_code, freq=freq).values('close','high','low','ts_code','vol','trade_date').order_by('trade_date')[:int(period)]
                 # else:
-            if company.pop2eema_date is None: # 全新计算RSV
+            pop_date = None
+            if freq == 'D':
+                pop_date = company.pop2eema_date
+            if freq == 'W':
+                pop_date = company.pop2eema_date_w
+            if freq == 'M':
+                pop_date = company.pop2eema_date_m
+
+            if pop_date is None: # 全新计算RSV
                 if freq == 'D':
                     hist = StockHistoryDaily.objects.filter(
                         ts_code=company.ts_code, freq=freq).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
@@ -51,21 +59,21 @@ def pop_rsv_indic(ts_code, freq='D', ):
                 if freq == 'D':
                     # 从上次运行开始到今天的交易历史
                     var_hist = StockHistoryDaily.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=pop_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
 
                     # 至少9条老的交易历史?
                     rsv_hist = StockHistoryDaily.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=pop_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
                     
                     hist_count = StockHistoryDaily.objects.filter(ts_code=company.ts_code).count()
                 else:
                     # 从上次运行开始到今天的交易历史
                     var_hist = StockHistory.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=date.today(), trade_date__gt=pop_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('trade_date')
                     
                     # 至少9条老的交易历史?
                     rsv_hist = StockHistory.objects.filter(
-                        ts_code=company.ts_code, freq=freq, trade_date__lte=company.pop2eema_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
+                        ts_code=company.ts_code, freq=freq, trade_date__lte=pop_date).values('close', 'high', 'low', 'ts_code', 'vol', 'amount', 'trade_date').order_by('-trade_date')[:8]
                     
                     hist_count = StockHistory.objects.filter(ts_code=company.ts_code).count()
 
@@ -115,7 +123,13 @@ def pop_rsv_indic(ts_code, freq='D', ):
 
             if len(ema_list) > 0:
                 StockHistoryIndicators.objects.bulk_create(ema_list)
-                company.pop2eema_date = ema_list[-1].trade_date #date.today()
+                if freq == 'D':
+                    company.pop2eema_date = ema_list[-1].trade_date #date.today()
+                if freq == 'W':
+                    company.pop2eema_date_w = ema_list[-1].trade_date #date.today()
+                if freq == 'M':
+                    company.pop2eema_date_m = ema_list[-1].trade_date #date.today()
+
                 company.save()
                 ema_list.clear()
             print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + company.ts_code +
