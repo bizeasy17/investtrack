@@ -57,12 +57,12 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
             if ts_code_list is not None:
                 if len(ts_code_list) > 1:
                     companies = StockNameCodeMap.objects.filter(
-                        ts_code__in=ts_code_list)
+                        ts_code__in=ts_code_list).order_by('ts_code')
                 else:
                     companies = StockNameCodeMap.objects.filter(
-                        ts_code=ts_code)
+                        ts_code=ts_code).order_by('ts_code')
         else:
-            companies = StockNameCodeMap.objects.filter()
+            companies = StockNameCodeMap.objects.filter().order_by('ts_code')
 
         for company in companies:
             # end_date = today
