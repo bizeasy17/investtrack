@@ -68,13 +68,13 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
             # end_date = today
             if freq == 'D':
                 start_date = company.last_update_date
-                company.last_update_date = today
+                # company.last_update_date = today
             if freq == 'W':
                 start_date = company.hist_download_date_w
-                company.hist_download_date_w = today
+                # company.hist_download_date_w = today
             if freq == 'M':
                 start_date = company.hist_download_date_m
-                company.hist_download_date_m = today
+                # company.hist_download_date_m = today
             
             if start_date is not None: # 如果有差异就下载，不然就退出
                 # 已完成首次下载
@@ -301,15 +301,22 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
         amount	float	成交额 （千元）
         '''
         hist_list.append(hist)
-    if asset == 'E':
-        if freq == 'D':
-            StockHistoryDaily.objects.bulk_create(hist_list)
-        else:
-            StockHistory.objects.bulk_create(hist_list)
+    if len(hist_list) > 0:
+        if asset == 'E':
+            if freq == 'D':
+                StockHistoryDaily.objects.bulk_create(hist_list)
+            else:
+                StockHistory.objects.bulk_create(hist_list)
 
-    else:  # 指数信息
-        StockIndexHistory.objects.bulk_create(hist_list)
+        else:  # 指数信息
+            StockIndexHistory.objects.bulk_create(hist_list)
 
-    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info downloaded.')
-    return hist_list[0].trade_date
+        return hist_list[0].trade_date  
+    else:
+        print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
+          ' history trade info downloaded. Empty datafram')
+        return None
+
+    
