@@ -83,27 +83,33 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
                     print('ran it today, exit...')
                     continue
 
-                last_trade_date = download_stock_hist(company,
+                download_stock_hist(company,
                     company.ts_code, start_date + timedelta(days=1), today, company.asset, freq, )
             else:
                 # 需要进行首次下载
                 print('first time')
-                last_trade_date = download_stock_hist(company,
+                download_stock_hist(company,
                     company.ts_code, company.list_date, today, company.asset, freq, )
 
+            if company.asset == 'E':
+                if freq == 'D':
+                    # start_date = company.last_update_date
+                    hist = StockHistoryDaily.objects.filter(ts_code=company.ts_code, freq=freq).order_by('-trade_date').first()
+                if freq in ['W','M']:
+                    hist = StockHistory.objects.filter(ts_code=company.ts_code, freq=freq).order_by('-trade_date').first()
+            else:
+                hist = StockIndexHistory.objects.filter(ts_code=company.ts_code, freq=freq).order_by('-trade_date').first()   
+            
             if freq == 'D':
-                # start_date = company.last_update_date
-                company.last_update_date = last_trade_date
+                company.last_update_date = hist.trade_date
             if freq == 'W':
-                # start_date = company.hist_download_date_w
-                company.hist_download_date_w = last_trade_date
+                company.hist_download_date_w = hist.trade_date
             if freq == 'M':
-                # start_date = company.hist_download_date_m
-                company.hist_download_date_m = last_trade_date
+                company.hist_download_date_m = hist.trade_date
             company.save()
     except Exception as err:
         print(err)
-    pass
+    # pass
 
 def handle_hist_download(ts_code, sdate, edate, asset='E', freq='D', sys_event_list=['MARK_CP']):
     '''
@@ -313,10 +319,11 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
 
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info downloaded.')
-        return hist_list[0].trade_date  
+        
+        # return hist_list[0].trade_date  
     else:
         print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ':' + ts_code +
           ' history trade info downloaded. Empty datafram')
-        return None
+        # return None
 
     
