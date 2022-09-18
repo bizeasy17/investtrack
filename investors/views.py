@@ -121,10 +121,17 @@ class CompanyHistoryDailyBasicList(APIView):
                 my_stocks = my_stocks.filter(
                     basic_filter__ps=int(filter_list[6]))
 
-            # PS高低过滤
+            # 持仓高低过滤
             if filter_list[7] != '0':
                 my_stocks = my_stocks.filter(
                     top10_holder_pct__hold_pct__gte=float(filter_list[7]))
+
+            # RSV高低过滤
+            freq = filter_list[8].split(':')[0]
+            filter = filter_list[8].split(':')[1]
+            if filter != '0':
+                my_stocks = my_stocks.filter(
+                    indicator_filter__eema_b__lte=float(filter), indicator_filter__freq=freq)
 
             total_count = len(my_stocks)
             my_stocks = my_stocks[start_idx:end_idx]

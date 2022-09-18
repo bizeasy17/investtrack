@@ -13,11 +13,13 @@ urlpatterns = [
     path('industry-basic/<industry>/<basic_type>/<quantile>/<start_date>/<end_date>/',
          views.IndustryBasicList.as_view(), name='industry_list'),  # ??
     path('companies/<input_text>/',
-         views.CompanyList.as_view(), name='company_list'),#views.get_companies),
-#     path('industries/<industry>/companies/',
-#          views.IndustryCompanyList.as_view(), name='company_list_industry'),
+         views.CompanyList.as_view(), name='company_list'),  # views.get_companies),
+    #     path('industries/<industry>/companies/',
+    #          views.IndustryCompanyList.as_view(), name='company_list_industry'),
     path('stock-close-history/<ts_code>/<freq>/<int:period>/',
          views.StockCloseHistoryList.as_view(), name='close_history'),  # ??
+    path('stock-indic/<ts_code>/<freq>/<int:period>/',
+         views.StockRSVPlusList.as_view(), name='stock_indicator'),  # ??
     path('daily-basic-history/<ts_code>/<start_date>/<end_date>/',
          views.StockDailyBasicHistoryList.as_view(), name='daily_basic_history'),
     path('top10-holders-stat/<ts_code>/<int:period>/',

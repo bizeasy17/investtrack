@@ -9,6 +9,8 @@ $(function () {
     var pe = "0";
     var ps = "0";
     var holdPct = "0";
+    var rsvPlus = "0";
+    var freq = 'D';
 
     var prevIndFilter = undefined;
     var prevIndMoreFilter = undefined;
@@ -70,8 +72,8 @@ $(function () {
         // });
     });
 
-    var buildFilter = function (board, province, city, industry, pe, pb, ps, holdPct) {
-        return board + "," + province + "," + city + "," + industry + "," + pe + "," + pb + "," + ps + "," + holdPct;
+    var buildFilter = function (board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus) {
+        return board + "," + province + "," + city + "," + industry + "," + pe + "," + pb + "," + ps + "," + holdPct + "," + freq + ":" + rsvPlus;
     }
 
     var showBasicFilter = function () {
@@ -99,7 +101,7 @@ $(function () {
         $("#message").addClass("d-none");
 
         city = $(this).val();
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         showFilterResult(filter, startIdx, endIdx);
     }
 
@@ -243,7 +245,7 @@ $(function () {
         $("#message").addClass("d-none");
 
         board = $(this).val();
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
@@ -262,7 +264,7 @@ $(function () {
         }
         showCityFilter(province);
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
@@ -280,7 +282,7 @@ $(function () {
         industry = $(this).val();
         bindIndustryBasic($(this).val());
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
 
@@ -306,7 +308,7 @@ $(function () {
         // }
         industry = $(this).text();
         bindIndustryBasic($(this).text());
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         showFilterResult(filter, startIdx, endIdx);
 
         // $(prevIndFilter).parent().removeClass("active");
@@ -328,7 +330,7 @@ $(function () {
 
         pe = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
@@ -341,7 +343,7 @@ $(function () {
 
         pb = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
@@ -354,7 +356,7 @@ $(function () {
 
         ps = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
@@ -367,7 +369,33 @@ $(function () {
 
         holdPct = $(this).val();
 
-        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
+        resetIndex();
+        showFilterResult(filter, startIdx, endIdx);
+    });
+
+    $('input:radio[name="freq"]').change(function () {
+        // alert($(this).val());
+
+        $("#spinner").removeClass("d-none");
+        $("#message").addClass("d-none");
+
+        freq = $(this).val();
+
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
+        resetIndex();
+        showFilterResult(filter, startIdx, endIdx);
+    });
+
+    $('input:radio[name="rsvplus"]').change(function () {
+        // alert($(this).val());
+
+        $("#spinner").removeClass("d-none");
+        $("#message").addClass("d-none");
+
+        rsvPlus = $(this).val();
+
+        filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
         resetIndex();
         showFilterResult(filter, startIdx, endIdx);
     });
@@ -397,6 +425,6 @@ $(function () {
     });
 
 
-    filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct);
+    filter = buildFilter(board, province, city, industry, pe, pb, ps, holdPct, freq, rsvPlus);
     showFilterResult(filter, currentIdx, endIdx);
 });

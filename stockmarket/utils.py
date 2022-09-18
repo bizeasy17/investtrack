@@ -2,12 +2,14 @@ import ast
 import decimal
 import time
 from datetime import date, datetime, timedelta
+from typing import List
 
 import numpy as np
 import pandas as pd
 import tushare as ts
 from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
                              StockHistoryDaily)
+from sklearn import preprocessing
 
 from stockmarket.models import CompanyFinIndicators, StockNameCodeMap
 
@@ -1046,3 +1048,18 @@ def pop_dailybasic_to_balancesheet(ts_code):
                   datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as err:
         print(err)
+
+
+def process_min_max(data : List):
+    temp = []
+    temp_list = []
+    for d in data:
+        # temp.append(d)
+        temp_list.append([d])
+    x = np.array(temp_list)
+    min_max_scaler = preprocessing.MinMaxScaler(feature_range=[0, 100])#默认为范围0~1，拷贝操作
+    x_minmax = min_max_scaler.fit_transform(x)
+    # print('x_minmax = ',x_minmax)
+    for x in x_minmax:
+        temp.append(round(x[0],2))
+    return temp

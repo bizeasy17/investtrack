@@ -118,10 +118,11 @@
       <hr/>
       <div class="row">
           <div class="col-lg-12 mt-2">
-              <div class="card mb-4">
+              <div class=" mb-4">
                 <!-- Card Header - Dropdown -->
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <div class=" py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-muted">收盘 - <span class="stock_name">{{search_single.stock_name}}</span></h6>
+                    <hr/>
                     <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                         <label class="btn btn-light active">
                             <input type="radio" name="closePeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
@@ -136,14 +137,29 @@
                             <input type="radio" name="closePeriod" autocomplete="off" value="10">{% trans '10年' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="closePeriod" autocomplete="off" value="0">{% trans '全部' %} 
+                            <input type="radio" name="closePeriod" autocomplete="off" value="99">{% trans '全部' %} 
                         </label>
+                    </div>
+                    <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
+                      <label class="btn btn-light active">
+                          <input type="radio" name="freq" autocomplete="off" value="D" checked>{% trans '日' %} 
+                      </label>
+                      <label class="btn btn-light">
+                          <input type="radio" name="freq" autocomplete="off" value="W">{% trans '周' %} 
+                      </label>
+                      <label class="btn btn-light">
+                          <input type="radio" name="freq" autocomplete="off" value="M">{% trans '月' %} 
+                      </label>
+                      </label>
                     </div>
                 </div>
                 <!-- Card Body -->
-                <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
+                <div class="">
+                    <div class="">
                       <div id="closeChart" style="height: 400px"></div>
+                    </div>
+                    <div class="">
+                      <div id="indicChart" style="height: 200px"></div>
                     </div>
                 </div>
             </div>

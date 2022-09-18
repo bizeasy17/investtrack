@@ -1,11 +1,12 @@
 from datetime import date, datetime, timedelta
+from tracemalloc import start
 
 import pandas as pd
 import tushare as ts
 from django.db.models import Q
 from stockmarket.models import StockNameCodeMap
 
-from analysis.utils import (generate_task, init_eventlog,
+from analysis.utils import (days_between, generate_task, init_eventlog,
                             get_event_status, last_download_date,
                             log_download_hist, set_event_completed)
 
@@ -82,6 +83,17 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
                 if start_date >= today: 
                     print('ran it today, exit...')
                     continue
+                
+                days_btw = days_between(start_date, today)
+                if freq == 'D':
+                    if days_btw < 1:
+                        continue
+                if freq == 'W':
+                    if days_btw < 7:
+                        continue
+                if freq == 'M':
+                    if days_btw < 28:
+                        continue
 
                 download_stock_hist(company,
                     company.ts_code, start_date + timedelta(days=1), today, company.asset, freq, )
@@ -100,13 +112,14 @@ def proess_stock_download_new(ts_code, start_date, freq='D',):
             else:
                 hist = StockIndexHistory.objects.filter(ts_code=company.ts_code, freq=freq).order_by('-trade_date').first()   
             
-            if freq == 'D':
-                company.last_update_date = hist.trade_date
-            if freq == 'W':
-                company.hist_download_date_w = hist.trade_date
-            if freq == 'M':
-                company.hist_download_date_m = hist.trade_date
-            company.save()
+            if hist is not None:
+                if freq == 'D':
+                    company.last_update_date = hist.trade_date
+                if freq == 'W':
+                    company.hist_download_date_w = hist.trade_date
+                if freq == 'M':
+                    company.hist_download_date_m = hist.trade_date
+                company.save()
     except Exception as err:
         print(err)
     # pass
@@ -243,11 +256,11 @@ def download_hist_data(ts_code, start_date, end_date, freq='D', asset='E'):
         df_list = []
         for trade_cal in split_cal_list:
             # 增加指数数据
-            print(ts_code)
-            print(asset)
-            print(freq)
-            print(trade_cal[0].strftime('%Y%m%d'))
-            print(trade_cal[1].strftime('%Y%m%d'))
+            # print(ts_code)
+            # print(asset)
+            # print(freq)
+            # print(trade_cal[0].strftime('%Y%m%d'))
+            # print(trade_cal[1].strftime('%Y%m%d'))
             df = ts.pro_bar(ts_code=ts_code, asset=asset, freq=freq,
                             start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
             # df = df.iloc[::-1]  # 将数据按照时间顺序排列

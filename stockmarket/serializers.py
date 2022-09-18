@@ -1,5 +1,5 @@
 import numpy as np
-from analysis.models import IndustryBasicQuantileStat, StockHistoryDaily
+from analysis.models import IndustryBasicQuantileStat, StockHistoryDaily, StockHistoryIndicators
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
@@ -143,6 +143,26 @@ class StockCloseHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = StockHistoryDaily
         fields = ['close', 'trade_date']
+
+# Serializers define the API representation.
+class StockIndicRSVSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'vol': instance['vol'],
+            'trade_date': instance['trade_date'],
+            'amount': instance['amount'],
+            'rsv': instance['rsv'] if not np.isnan(instance['rsv']) else 0,
+            'eema_b': instance['eema_b'] if not np.isnan(instance['eema_b']) else 0,
+            'eema_s': instance['eema_s'] if not np.isnan(instance['eema_s']) else 0,
+            'var1': instance['var1'],
+            'var2': instance['var2'] if not np.isnan(instance['var2']) else 0,
+            'var3': instance['var3'] if not np.isnan(instance['var3'])  else 0
+        }
+
+    class Meta:
+        model = StockHistoryIndicators
+        fields = ['vol', 'trade_date', 'amount', 'rsv', 'eema_b', 'eema_s', 'var1', 'var2', 'var3']
 
 
 class CompanyDailyBasicSerializer(serializers.ModelSerializer):

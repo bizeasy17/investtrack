@@ -15,6 +15,7 @@ from django.views.generic import TemplateView
 from analysis.commands import pop_rsv_indic
 
 from analysis.dailybasic import process_industrybasic_quantile
+from analysis.stock_hist import proess_stock_download_new
 from analysis.utils import next_date
 
 
@@ -33,7 +34,9 @@ def analysis_command(request, cmd, params):
             process_industrybasic_quantile(
                 quantile, next_dates,)
         elif cmd == 'indic':
-            pop_rsv_indic(plist[0],plist[1])
+            pop_rsv_indic(None if plist[0] == '' else plist[0],'D' if plist[1] == '' else plist[1])
+        elif cmd == 'download':
+            proess_stock_download_new(None if plist[0] == '' else plist[0], None if plist[1] == '' else plist[1], plist[2])
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)

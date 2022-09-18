@@ -166,6 +166,10 @@ class StockNameCodeMap(BaseModel):
         _('是否沪深港通标的'), choices=HS_CHOICES, max_length=10, blank=True, null=True)
     last_update_date = models.DateField(
         _('上次更新日期'), blank=True, null=True)
+    hist_download_date_w = models.DateField(
+        _('周线下载日期'), blank=True, null=True)
+    hist_download_date_m = models.DateField(
+        _('月线下载日期'), blank=True, null=True)
     last_analyze_date = models.DateField(
         _('上次分析日期'), blank=True, null=True)
     asset = models.CharField(
@@ -200,8 +204,12 @@ class StockNameCodeMap(BaseModel):
         _('推送每日指标日期'), blank=True, null=True)
     # 0416/2022
     pop2eema_date = models.DateField(
-        _('推送加强ema指标日期(短线窥探)'), blank=True, null=True)
-
+        _('短线窥探D'), blank=True, null=True)
+    # 0915/2022
+    pop2eema_date_w = models.DateField(
+        _('短线窥探W'), blank=True, null=True)
+    pop2eema_date_m = models.DateField(
+        _('短线窥探M'), blank=True, null=True)
     def __str__(self):
         return self.stock_name
 
@@ -233,6 +241,9 @@ class StockNameCodeMap(BaseModel):
 
     def get_company_top10_holders_pct(self):
         return self.top10_holder_pct
+
+    def get_latest_indicator(self, freq):
+        return self.eema_indicator_history.filter(freq=freq).first()
 
     class Meta:
         ordering = ['-last_mod_time']

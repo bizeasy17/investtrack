@@ -22,6 +22,7 @@ $(function () {
     var endDate = "";
 
     var closeChart = echarts.init(document.getElementById('closeChart'));
+    var indicChart = echarts.init(document.getElementById('indicChart'));
     var top10HoldersChart = echarts.init(document.getElementById('top10HoldersChart'));
     var top10HoldersPetChart = echarts.init(document.getElementById('top10HoldersPETChart'));
     var top10HoldersPbChart = echarts.init(document.getElementById('top10HoldersPBChart'));
@@ -39,6 +40,7 @@ $(function () {
 
     var renderChart = function () {
         renderCloseChart(tsCode);
+        renderIndicChart(tsCode);
         renderCompanyBasicChart(tsCode, startDate, endDate);
         // renderUpdownByPeriodChart();
         // renderPeriodByUpRangeChart();
@@ -121,7 +123,7 @@ $(function () {
     }
 
     var renderCloseChart = function (tsCode) {
-        var zoomMin = 75;
+        var zoomMin = 0;
         var zoomMax = 100;
         $.ajax({
             url: stockmarketEndpoint + "stock-close-history/" + tsCode + "/" + freq + "/" + closePeriod + "/?format=json",
@@ -273,6 +275,153 @@ $(function () {
                 };
 
                 closeChart.setOption(option);
+            }
+        });
+    }
+
+    var renderIndicChart = function (tsCode) {
+        var zoomMin = 0;
+        var zoomMax = 100;
+        $.ajax({
+            url: stockmarketEndpoint + "stock-indic/" + tsCode + "/" + freq + "/" + closePeriod + "/?format=json",
+            success: function (data) {
+                if ($(".error-msg").hasClass("d-none") == false) {
+                    $(".error-msg").addClass("d-none");
+                }
+                if ($(".dashboard").hasClass("d-none")) {
+                    $(".dashboard").removeClass("d-none");
+                }
+                const colors = ['#5470C6', '#EE6666'];
+
+                var chartData = jsonToChartFormat(data, "eema_b");
+                var eemaSData = jsonToChartFormat(data, "eema_s");
+                var volData = jsonToChartFormat(data, "vol");
+                
+                var indicQuantile = getQuantile(chartData);
+                option = {
+                    color: colors,
+                    tooltip: {
+                        trigger: 'axis',
+                        position: function (pt) {
+                            return [pt[0], '10%'];
+                        }
+                    },
+                    legend: {
+                        data: ['短线窥探']
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: chartData.label//data.label
+                    },
+                    yAxis: [{
+                        name: '指标',
+                        min:0,
+                        max: 120,
+                        type: 'value',
+                        boundaryGap: [0, '100%']
+                    }
+                    ,{
+                        type: 'value',
+                        name: '成交量',
+                        position: 'right',
+                        axisLine: {
+                            show: true,
+                            lineStyle: {
+                                color: colors[0]
+                            }
+                        },
+                        axisLabel: {
+                            formatter: '{value}'
+                        }
+                    }
+                    ],
+                    dataZoom: [{
+                        type: 'inside',
+                        start: zoomMin,
+                        end: zoomMax
+                    }, {
+                        start: 0,
+                        end: 10,
+                        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                        handleSize: '100%',
+                        handleStyle: {
+                            color: '#fff',
+                            shadowBlur: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.6)',
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 2
+                        }
+                    }],
+                    series: [
+                        {
+                            name: '红买',
+                            type: 'line',
+                            // smooth: true,
+                            symbol: 'none',
+                            sampling: 'average',
+                            itemStyle: {
+                                color: 'rgb(255, 0, 0)'
+                            },
+                            data: chartData.value, //data.close,
+                            markPoint: {
+                                data: [
+                                    { type: 'max', name: '最大值' },
+                                    { type: 'min', name: '最小值' }
+                                ]
+                            }
+                        },
+                        {
+                            name: '蓝卖',
+                            type: 'line',
+                            symbol: 'none',
+
+                            smooth: true,
+                            itemStyle: {
+                                color: 'rgb(0, 0, 255)'
+                            },
+                            data: eemaSData.value
+                        },
+                        {
+                            name: '成交量',
+                            type: 'bar',
+                            data: volData.value,
+                            yAxis: 2
+                        },
+                        {
+                            name: '买入低位',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'none',
+                            itemStyle: {
+                                color: 'rgb(0, 255, 0)'
+                            },
+                            data: indicQuantile.qt10
+                        },
+                        {
+                            name: '买入中位',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'none',
+                            itemStyle: {
+                                color: 'rgb(25, 70, 131)'
+                            },
+                            data: indicQuantile.qt50
+                        },
+                        {
+                            name: '买入高位',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'none',
+                            itemStyle: {
+                                color: 'rgb(255, 0, 0)'
+                            },
+                            data: indicQuantile.qt90
+                        }
+                    ]
+                };
+
+                indicChart.setOption(option);
             }
         });
     }
@@ -858,7 +1007,19 @@ $(function () {
         // closeChart.clear();
         closeChart.showLoading();
         renderCloseChart(tsCode);
+        renderIndicChart(tsCode);
         closeChart.hideLoading();
+        // closeChart.resize();
+    });
+
+    $('input:radio[name="freq"]').change(function () {
+        // alert($(this).val());
+        freq = $(this).val();
+        // closeChart.clear();
+        // closeChart.showLoading();
+        renderCloseChart(tsCode);
+        renderIndicChart(tsCode);
+        // closeChart.hideLoading();
         // closeChart.resize();
     });
 

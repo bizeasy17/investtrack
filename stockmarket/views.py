@@ -5,8 +5,8 @@ from datetime import date, datetime, timedelta
 import numpy as np
 import pandas as pd
 import tushare as ts
-from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat,
-                             StockHistoryDaily, StockIndexHistory)
+from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat, StockHistory,
+                             StockHistoryDaily, StockHistoryIndicators, StockIndexHistory)
 from analysis.utils import get_ip
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Count, Q
@@ -26,8 +26,8 @@ from .models import (CompanyBasic, CompanyDailyBasic, CompanyFinIndicators, Comp
                      StockNameCodeMap)
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, IndexDailyBasicSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
-                          StockCloseHistorySerializer, CitySerializer, ProvinceSerializer)
-from .utils import get_ind_basic, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
+                          StockCloseHistorySerializer, CitySerializer, ProvinceSerializer, StockIndicRSVSerializer)
+from .utils import get_ind_basic, process_min_max, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
 
 # Create your views here.
 
@@ -155,24 +155,32 @@ class StockCloseHistoryList(APIView):
 
     def get(self, request, ts_code, freq='D', period=3):
         try:
-            if period <= 5:
+            if period <= 10:
                 start_date = date.today() - timedelta(days=365 * period)
                 if ts_code in index_list:
                     close_history = StockIndexHistory.objects.filter(
                         ts_code=ts_code, freq=freq, trade_date__gte=start_date,
                         trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
                 else:
-                    close_history = StockHistoryDaily.objects.filter(
-                        ts_code=ts_code, freq=freq, trade_date__gte=start_date,
-                        trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                    if freq == 'D':
+                        close_history = StockHistoryDaily.objects.filter(
+                            ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                            trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                    if freq in ['W', 'M']:
+                        close_history = StockHistory.objects.filter(
+                            ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                            trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
             else:  # period = 0 means all stock history
                 if ts_code in index_list:
                     close_history = StockIndexHistory.objects.filter(
                         ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
                 else:
-                    close_history = StockHistoryDaily.objects.filter(
-                        ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
-
+                    if freq == 'D':
+                        close_history = StockHistoryDaily.objects.filter(
+                            ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
+                    if freq in ['W', 'M']:
+                        close_history = StockHistory.objects.filter(
+                            ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('close', 'trade_date').order_by('trade_date')
             # df = pd.DataFrame(close_history, columns=['close','trade_date'])
             # close_qtiles = df.close.quantile(
             #     [0.1, 0.25, 0.5, 0.75, 0.9])
@@ -184,6 +192,54 @@ class StockCloseHistoryList(APIView):
             serializer = StockCloseHistorySerializer(close_history, many=True)
             return Response(serializer.data)
         except StockHistoryDaily.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+class StockRSVPlusList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, ts_code, freq='D', period=3):
+        try:
+            if period <= 10:
+                start_date = date.today() - timedelta(days=365 * period)
+                if ts_code in index_list:
+                    indic_rsvp = StockHistoryIndicators.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                        trade_date__lte=date.today()).values('vol', 'trade_date', 'amount', 'rsv', 'eema_b', 'eema_s', 'var1', 'var2', 'var3').order_by('trade_date')
+                else:
+                    indic_rsvp = StockHistoryIndicators.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__gte=start_date,
+                        trade_date__lte=date.today()).values('vol', 'trade_date', 'amount', 'rsv', 'eema_b', 'eema_s', 'var1', 'var2', 'var3').order_by('trade_date')
+            else:  # period = 0 means all stock history
+                if ts_code in index_list:
+                    indic_rsvp = StockHistoryIndicators.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('vol', 'trade_date', 'amount', 'rsv', 'eema_b', 'eema_s', 'var1', 'var2', 'var3').order_by('trade_date')
+                else:
+                    indic_rsvp = StockHistoryIndicators.objects.filter(
+                        ts_code=ts_code, freq=freq, trade_date__lte=date.today()).values('vol', 'trade_date', 'amount', 'rsv', 'eema_b', 'eema_s', 'var1', 'var2', 'var3').order_by('trade_date')
+            temp = []
+            for indic in indic_rsvp:
+                temp.append(indic['vol'])
+            
+            scaled_vol = process_min_max(temp)
+            i = 0
+            for item in indic_rsvp:
+                item['vol'] = scaled_vol[i]
+                i += 1
+            # df = pd.DataFrame(close_history, columns=['close','trade_date'])
+            # close_qtiles = df.close.quantile(
+            #     [0.1, 0.25, 0.5, 0.75, 0.9])
+
+            # df['close_10pct'] = close_qtiles[.1]
+            # df['close_50pct'] = close_qtiles[.5]
+            # df['close_90pct'] = close_qtiles[.9]
+
+            serializer = StockIndicRSVSerializer(indic_rsvp, many=True)
+            return Response(serializer.data)
+        except StockHistoryIndicators.DoesNotExist:
             raise Http404
         except Exception as err:
             print(err)
