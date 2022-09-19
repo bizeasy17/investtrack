@@ -124,7 +124,7 @@ class CompanyHistoryDailyBasicList(APIView):
             # 持仓高低过滤
             if filter_list[7] != '0':
                 my_stocks = my_stocks.filter(
-                    top10_holder_pct__hold_pct__gte=float(filter_list[7]))
+                    top10_holder_pct__hold_pct__gte=float(filter_list[7])/100)
 
             # RSV高低过滤
             freq = filter_list[8].split(':')[0]
@@ -198,7 +198,7 @@ class CompanyHistoryDailyBasicList(APIView):
                 cdbext = CompanyDailyBasicExt(ts_code=stock.ts_code, stock_name=stock.stock_name, 
                                             industry=stock.industry, pe=db.pe, pe_ttm=db.pe_ttm, ps=db.ps,
                                               ps_ttm=db.ps_ttm, pb=db.pb, close=db.close, chg_pct=dc.pct_chg, 
-                                              total_mv=db.total_mv, trade_date=dc.trade_date, float_hold_pct=top10_holders.hold_pct)
+                                              total_mv=db.total_mv, trade_date=dc.trade_date, float_hold_pct=top10_holders.hold_pct * 100)
 
                 cdbext_list.append(cdbext)
 
