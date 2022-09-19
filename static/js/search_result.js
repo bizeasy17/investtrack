@@ -296,7 +296,8 @@ $(function () {
                 var chartData = jsonToChartFormat(data, "eema_b");
                 var eemaSData = jsonToChartFormat(data, "eema_s");
                 var volData = jsonToChartFormat(data, "vol");
-                
+                var rsvData = jsonToChartFormat(data, "rsv");
+
                 var indicQuantile = getQuantile(chartData);
                 option = {
                     color: colors,
@@ -307,7 +308,7 @@ $(function () {
                         }
                     },
                     legend: {
-                        data: ['短线窥探']
+                        data: ['红买',"蓝卖",'RSV']
                     },
                     xAxis: {
                         type: 'category',
@@ -381,6 +382,16 @@ $(function () {
                                 color: 'rgb(0, 0, 255)'
                             },
                             data: eemaSData.value
+                        },
+                        {
+                            name: 'RSV',
+                            type: 'line',
+                            symbol: 'none',
+                            smooth: true,
+                            itemStyle: {
+                                color: 'rgb(0, 0, 139)'
+                            },
+                            data: rsvData.value
                         },
                         {
                             name: '成交量',
