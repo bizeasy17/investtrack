@@ -131,7 +131,7 @@ class CompanyHistoryDailyBasicList(APIView):
             filter = filter_list[8].split(':')[1]
             if filter != '0':
                 my_stocks = my_stocks.filter(
-                    indicator_filter__eema_b__lte=float(filter), indicator_filter__freq=freq)
+                    indicator_filter__rsv__lte=float(filter), indicator_filter__freq=freq)
 
             total_count = len(my_stocks)
             my_stocks = my_stocks[start_idx:end_idx]
