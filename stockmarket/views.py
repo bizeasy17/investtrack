@@ -27,7 +27,7 @@ from .models import (CompanyBasic, CompanyDailyBasic, CompanyFinIndicators, Comp
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, IndexDailyBasicSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
                           StockCloseHistorySerializer, CitySerializer, ProvinceSerializer, StockIndicRSVSerializer)
-from .utils import get_ind_basic, process_min_max, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
+from .utils import collect_top10_holders, get_ind_basic, process_min_max, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
 
 # Create your views here.
 
@@ -526,6 +526,8 @@ def analysis_command(request, cmd, params):
             collect_fin_indicators(plist[0])
         if cmd == 'popdb2fin':
             pop_dailybasic_to_finindicator(plist[0])
+        if cmd == 'coltop10holders':
+            collect_top10_holders(plist[0] if plist[0] != '' else None)
         return HttpResponse(status=200)
     except Exception as e:
         return HttpResponse(status=500)
