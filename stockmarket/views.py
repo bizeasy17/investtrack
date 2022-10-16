@@ -1,6 +1,12 @@
 
 import logging
 from datetime import date, datetime, timedelta
+from mimetypes import init
+from multiprocessing.resource_sharer import stop
+from backtesting import Backtest, Strategy
+from backtesting.lib import crossover
+# from backtesting.test import SMA
+from backtesting.lib import SignalStrategy, TrailingStrategy
 
 import numpy as np
 import pandas as pd
@@ -8,6 +14,7 @@ import tushare as ts
 from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat, StockHistory,
                              StockHistoryDaily, StockHistoryIndicators, StockIndexHistory)
 from analysis.utils import get_ip
+from django.views.generic import TemplateView
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Count, Q
 from django.http import (Http404, HttpResponse, HttpResponseServerError,
@@ -18,7 +25,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from search.utils import pinyin_abbrev
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
-
+from stockmarket.backtesting import get_data, get_ta_indicator, get_strategy_by_category
 from stockmarket.models import (City, CompanyBasic, Industry, Province,
                                 StockNameCodeMap)
 
@@ -34,6 +41,138 @@ from .utils import collect_top10_holders, get_ind_basic, process_min_max, str_ev
 logger = logging.getLogger(__name__)
 
 index_list = ['000001.SH', '399001.SZ', '399006.SZ']
+
+
+class HuiCeView(TemplateView):
+    # template_name属性用于指定使用哪个模板进行渲染
+    template_name = 'toolset/huice.html'
+    # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
+    context_object_name = 'huice'
+
+    def get(self, request, *args, **kwargs):
+        req_user = request.user
+        # if req_user is not None:
+        #     pass
+        # else:
+        #     pass
+        return render(request, self.template_name)
+
+
+class CrossoverBacktestingList(APIView):
+    def get(self, request, ts_code, tech_indicator, indicator_param, strategy_category, cash=10-000, commission=0.1, leverage=1, freq='D'):
+        '''
+        tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
+        indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
+        strategy: cross, crossover, 
+        trailing_strategy: 2 * ATR
+        capital: 10,000
+        commission: 0.05
+        leverage: 0.02 mean 50 leverage
+        '''
+        if freq == 'D':
+            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
+                'close', 'high', 'low', 'open', 'trade_date', 'vol')
+        else:
+            data = StockHistory.objects.filter(
+                ts_code=ts_code, freq=freq).values('close')
+
+        data_df = pd.DataFrame.from_records(data)
+        data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
+                       'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
+
+        # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
+        if type(eval(tech_indicator)) == str:
+            ta_func = get_ta_indicator(tech_indicator)
+        # if type(eval(tech_indicator)) == str:
+        #     ta_func = eval(tech_indicator)
+        # strategy_param = {}
+        '''
+        indicator_param - indic10:10,indic20:20,buy: indic10 xover indic20,sell: indic20 xover indic10,
+        indicator params example
+        输入序列，{'indic5':SMA(close,5)}, {'indic5':EMA(close,5)}
+        next condition example:
+        b: indic10 xover indic20, or indic10.level < 10
+        s: indic20 xover indic10, or indic10.level > 90
+        '''
+
+        # param_list = indicator_param.split(',')
+        # for p in param_list:
+        #     if p.split(':')[0][:5] == 'indic':
+        #         strategy_param[p.split(':')[0]] = ta_func(
+        #             data_df['Close'].values, int(p.split(':')[1]))
+        #     else:
+        #         strategy_param[p.split(':')[0]] = p.split(':')[1]
+
+        # TranStrategy = type(
+        #     'TranStrategy',
+        #     Strategy,
+        #     {
+        #         ''
+        #         'init': init,
+        #         'next': next
+        #     })
+        backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage), trade_on_close=False,
+                               hedging=False, exclusive_orders=False)
+
+        if strategy_category == 'simple_crossover':
+            results = backtesting.run(ta_func=ta_func, n1=int(
+                indicator_param.split(',')[0]), n2=int(indicator_param.split(',')[1]))
+
+        backtesting.plot()
+
+
+class SystemBacktestingList(APIView):
+    # http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
+    #   %7B'SMA_10':%2010,'SMA_20':20,'RSI_20':20%7D/%7B'attr':%7B'sma_level':'10','rsi_level':'20'%7D,'condition':%7B'threshold':%7B'RSI_20':'RSI_20%3E30'%7D,'crossover':%7B'a10':'cross(a(10),%20a(20))'%7D,'pair_comp':%20%7B'a10':'a(10)%20%3E%20a(20)'%7D%7D%7D/%
+    #   7B'attr':%7B'sma_level':'10','rsi_level':'90'%7D,'condition':%7B'threshold':%7B'RSI_20':'RSI_20%3E90'%7D,'crossover':%7B'a20':'cross(a(20),%20a(10))'%7D,'pair_comp':%20%7B'a10':'a(20)%20%3E%20a(10)'%7D%7D%7D/.95/10000/.001/1/D/
+    def get(self, request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, freq='D'):
+        '''
+        tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
+        indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
+        strategy: cross, crossover, 
+        trailing_strategy: 2 * ATR
+        capital: 10,000
+        commission: 0.05
+        leverage: 0.02 mean 50 leverage
+        '''
+        data_df = get_data(ts_code, freq)
+
+        # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
+        if type(eval(ta_indicator_dict)) == dict:
+            ta_indicator_dict = eval(ta_indicator_dict)
+        else:
+            raise TypeError('技术指标应为dict类型')
+
+        if type(eval(buy_cond_dict)) == dict:
+            buy_cond_dict = eval(buy_cond_dict)
+        else:
+            raise TypeError('买入条件应为dict类型')
+
+        if type(eval(sell_cond_dict)) == dict:
+            sell_cond_dict = eval(sell_cond_dict)
+        else:
+            raise TypeError('卖出条件应为dict类型')
+        # strategy_param = {}
+        '''
+        indicator_param - indic10:10,indic20:20,buy: indic10 xover indic20,sell: indic20 xover indic10,
+        indicator params example
+        输入序列，{'indic5':SMA(close,5)}, {'indic5':EMA(close,5)}
+        next condition example:
+        b: indic10 xover indic20, or indic10.level < 10
+        s: indic20 xover indic10, or indic10.level > 90
+        '''
+        backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage), trade_on_close=False,
+                               hedging=False, exclusive_orders=False)
+
+        if strategy_category == 'system':
+            bt_results = backtesting.run(ta_indicator_dict=ta_indicator_dict, buy_cond_dict=buy_cond_dict,
+                                      sell_cond_dict=sell_cond_dict, stoploss=stoploss)
+        
+        print(bt_results.loc['_strategy'])
+        print(bt_results.loc['_equity_curve'])
+        print(bt_results.loc['_trades'])
+        # backtesting.plot()
+        return HttpResponse('200')
 
 
 class IndustryList(APIView):
@@ -223,7 +362,7 @@ class StockRSVPlusList(APIView):
             temp = []
             for indic in indic_rsvp:
                 temp.append(indic['vol'])
-            
+
             scaled_vol = process_min_max(temp)
             i = 0
             for item in indic_rsvp:
@@ -297,6 +436,7 @@ class StockTop10HoldersStatList(APIView):
             print(err)
             raise HttpResponseServerError
 
+
 class StockFinanceIndicatorStatList(APIView):
     # queryset = StockHistoryDaily.objects.filter(freq='D')
 
@@ -306,14 +446,18 @@ class StockFinanceIndicatorStatList(APIView):
             ctfshs = CompanyFinIndicators.objects.filter(
                 ts_code=ts_code, end_date__gte=start_date,
                 end_date__lte=date.today(),).order_by('end_date').values(
-                    'total_revenue_ps','revenue_ps','surplus_rese_ps','undist_profit_ps','current_ratio', #neg current_ratio 
-                    'ar_turn','interst_income','daa','ebit','ebitda','current_exint','noncurrent_exint','interestdebt',
-                    'fcff','fcfe','netdebt','tangible_asset','working_capital','invest_capital','retained_earnings',
-                    'bps','retainedps','roa2_yearly','assets_to_eqt','dp_assets_to_eqt','ca_to_assets','nca_to_assets',#neg roa2_yearly,ca_to_assets
-                    'tbassets_to_totalassets','eqt_to_talcapital','debt_to_eqt','tangibleasset_to_debt', # neg tangibleasset_to_debt,tbassets_to_totalassets,tangibleasset_to_debt
-                    'longdebt_to_workingcapital','fixed_assets','total_fa_trun','q_opincome','q_investincome','q_dtprofit','q_eps', #neg roa_yearly,total_fa_trun
-                    #'','','','','','','','','','',
-                )
+                    # neg current_ratio
+                    'total_revenue_ps', 'revenue_ps', 'surplus_rese_ps', 'undist_profit_ps', 'current_ratio',
+                    'ar_turn', 'interst_income', 'daa', 'ebit', 'ebitda', 'current_exint', 'noncurrent_exint', 'interestdebt',
+                    'fcff', 'fcfe', 'netdebt', 'tangible_asset', 'working_capital', 'invest_capital', 'retained_earnings',
+                    # neg roa2_yearly,ca_to_assets
+                    'bps', 'retainedps', 'roa2_yearly', 'assets_to_eqt', 'dp_assets_to_eqt', 'ca_to_assets', 'nca_to_assets',
+                    # neg tangibleasset_to_debt,tbassets_to_totalassets,tangibleasset_to_debt
+                    'tbassets_to_totalassets', 'eqt_to_talcapital', 'debt_to_eqt', 'tangibleasset_to_debt',
+                    # neg roa_yearly,total_fa_trun
+                    'longdebt_to_workingcapital', 'fixed_assets', 'total_fa_trun', 'q_opincome', 'q_investincome', 'q_dtprofit', 'q_eps',
+                    # '','','','','','','','','','',
+            )
 
             serializer = CompanyTop10HoldersStatSerializer(ctfshs, many=True)
             # serializer.fields = basic_type.split(',')
