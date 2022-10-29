@@ -43,6 +43,54 @@ BOARD_LIST = {
 #         return self.industry
 
 
+class Equity(models.Model):
+    date = models.DateField(
+        _('日期'), blank=False, null=False, )
+    equity = models.FloatField(_('资产净值'), blank=False, null=True, )
+    drawdownpct = models.FloatField(_('最大资金回撤率'), blank=False, null=True, )
+    drawdownduration = models.IntegerField(_('最大回撤周期'), blank=False, null=True, )
+
+    class Meta:
+        ordering = ['date']
+        verbose_name = _('资产净值')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.ts_code
+
+class EquitySerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'dt': instance.date,
+            'eq': round(instance.equity,2),
+            # 'ddp': instance.drawdownpct,
+            # 'ddd': instance.drawdownduration,
+        }
+
+    class Meta:
+        model = Equity
+
+class TradesSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'size': instance.Size,
+            'entrybar': instance.Equity,
+            'exitbar': instance.DrawdownPct,
+            'entryprice': instance.DrawdownDuration,
+            'exitprice': instance.DrawdownDuration,
+            'pnl': instance.DrawdownDuration,
+            'returnpct': instance.DrawdownDuration,
+            'entrytime': instance.DrawdownDuration,
+            'exittime': instance.DrawdownDuration,
+            'duration': instance.DrawdownDuration,
+        }
+
+    # class Meta:
+    #     model = Trades
+
+
 class CompanyDailyBasicExt(CompanyDailyBasic):
     stock_name = models.CharField(
         _('股票名称'), max_length=50, blank=False, null=False, )

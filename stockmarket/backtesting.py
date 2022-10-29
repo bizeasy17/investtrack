@@ -105,16 +105,20 @@ class SimpleCrossoverStrategy(Strategy):
         #     self.indic25 = self.I(func, close, self.param25)
 
     def next(self):
-        if crossover(self.indic_series1, self.indic_series2):
+        b = crossover(self.indic_series1, self.indic_series2)
+        s = crossover(self.indic_series2, self.indic_series1)
+        if b:
             self.position.close()
             self.buy()
-        elif crossover(self.indic_series2, self.indic_series1):
+        elif s:
             self.position.close()
             self.sell()
 
 
 class System(Strategy):
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20}
+    # SMA_10 = None
+    # SMA_20 = None
     ta_indicator_dict = {}
     '''
     e.g. self.daily_rsi[-1] > self.level and
@@ -164,13 +168,17 @@ class System(Strategy):
     def init(self):
         # Compute moving averages the strategy demands
         for k,v in self.ta_indicator_dict.items():
-            setattr(System, k, self.I(get_ta_indicator(k.split('_')[0]), self.data.Close, v))
+            setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]), self.data.Close, v))
         
-        for k,v in self.buy_cond_dict['attr'].items():
-            setattr(System, k, v)
+        # self.SMA_10 = self.I(get_ta_indicator('SMA'), self.data.Close, 10)
+        # self.SMA_20 = self.I(get_ta_indicator('SMA'), self.data.Close, 20)
 
-        for k,v in self.sell_cond_dict['attr'].items():
-            setattr(System, k, v)
+
+        # for k,v in self.buy_cond_dict['attr'].items():
+        #     setattr(System, k, v)
+
+        # for k,v in self.sell_cond_dict['attr'].items():
+        #     setattr(System, k, v)
 
         # Compute daily RSI(30)
         # self.daily_rsi = self.I(RSI, self.data.Close, self.d_rsi)
@@ -182,11 +190,44 @@ class System(Strategy):
         
         
     def next(self):
+        
+        price = self.data.Close[-1]
+
+        # b = crossover(getattr(self, 'SMA_10'), getattr(self, 'SMA_20'))
+        for k,v in self.buy_cond_dict['condition'].items():
+            for kk,vv in self.buy_cond_dict['condition'][k].items():
+                self._long_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
+
+                # if k == 'crossover':
+                #     self._long_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
+                # if k == 'pair_comp':
+                #     self._long_order = crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
+                # if k == 'threshold':
+                #     self._long_order = crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
+
+        # s = crossover(getattr(self, 'SMA_20'), getattr(self, 'SMA_10'))
+        for k,v in self.sell_cond_dict['condition'].items():
+            for kk,vv in self.sell_cond_dict['condition'][k].items():
+                self._short_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1])) #eval(vv)
+
+        if self._long_order:
+            self.position.close()
+            if self.stoploss:
+                self.buy(sl=float(self.stoploss) * price)
+            else:
+                self.buy()
+        elif self._short_order:
+            self.position.close()
+            self.sell()
+        '''
+        return
+        
         price = self.data.Close[-1]
         # 判断属性是否存在？
         for k,v in self.buy_cond_dict['condition'].items():
             for kk,vv in self.buy_cond_dict['condition'][k].items():
-                self._long_order = eval(vv)
+                if k == 'crossover':
+                    self._long_order = crossover(getattr(self, 'SMA_10'), getattr(self, 'SMA_20'))
             # sign = v.split(':')[0]
             # threshhold = v.split(':')[1]
             # if k == 'threshold':
@@ -212,7 +253,8 @@ class System(Strategy):
 
         for k,v in self.sell_cond_dict['condition'].items():
             for kk,vv in self.sell_cond_dict['condition'][k].items():
-                self.short_order = eval(vv)
+                if k == 'crossover':
+                    self._short_order = crossover(getattr(self, 'SMA_20'), getattr(self, 'SMA_10')) #eval(vv)
             # sign = v.split(':')[0]
             # threshhold = v.split(':')[1]
             # if sign == 'gt':
@@ -229,6 +271,7 @@ class System(Strategy):
         # If we don't already have a position, and
         # if all conditions are satisfied, enter long.
         if self._long_order and not self.position:
+            self.position.close()
             if self.stoploss:
                 self.buy(sl=float(self.stoploss) * price)
             else:
@@ -242,9 +285,10 @@ class System(Strategy):
 
         # If the price closes 2% or more below 10-day MA
         # close the position, if any.
-        elif self.short_order:
+        elif self._short_order:
             self.position.close()
-
+            self.sell()
+        '''
 
 class SignalStrategy(SignalStrategy, TrailingStrategy):
     n1 = 10

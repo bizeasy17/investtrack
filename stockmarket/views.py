@@ -31,7 +31,7 @@ from stockmarket.models import (City, CompanyBasic, Industry, Province,
 
 from .models import (CompanyBasic, CompanyDailyBasic, CompanyFinIndicators, CompanyTop10FloatHoldersStat, IndexDailyBasic, Industry, ManagerRewards,
                      StockNameCodeMap)
-from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, IndexDailyBasicSerializer,
+from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, Equity, EquitySerializer, IndexDailyBasicSerializer,
                           IndustryBasicQuantileSerializer, IndustrySerializer,
                           StockCloseHistorySerializer, CitySerializer, ProvinceSerializer, StockIndicRSVSerializer)
 from .utils import collect_top10_holders, get_ind_basic, process_min_max, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
@@ -69,20 +69,11 @@ class CrossoverBacktestingList(APIView):
         commission: 0.05
         leverage: 0.02 mean 50 leverage
         '''
-        if freq == 'D':
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
-                'close', 'high', 'low', 'open', 'trade_date', 'vol')
-        else:
-            data = StockHistory.objects.filter(
-                ts_code=ts_code, freq=freq).values('close')
-
-        data_df = pd.DataFrame.from_records(data)
-        data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
-                       'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
+        data_df = get_data(ts_code, freq)
 
         # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
-        if type(eval(tech_indicator)) == str:
-            ta_func = get_ta_indicator(tech_indicator)
+        # if type(eval(tech_indicator)) == str:
+        ta_func = get_ta_indicator(tech_indicator)
         # if type(eval(tech_indicator)) == str:
         #     ta_func = eval(tech_indicator)
         # strategy_param = {}
@@ -115,10 +106,17 @@ class CrossoverBacktestingList(APIView):
                                hedging=False, exclusive_orders=False)
 
         if strategy_category == 'simple_crossover':
-            results = backtesting.run(ta_func=ta_func, n1=int(
+            bt_results = backtesting.run(ta_func=ta_func, n1=int(
                 indicator_param.split(',')[0]), n2=int(indicator_param.split(',')[1]))
 
         backtesting.plot()
+
+        print('equity')
+        equity = bt_results.loc['_equity_curve']
+        print(equity)
+        print('trades')
+        trades = bt_results.loc['_trades']
+        print(trades)
 
 
 class SystemBacktestingList(APIView):
@@ -161,18 +159,68 @@ class SystemBacktestingList(APIView):
         b: indic10 xover indic20, or indic10.level < 10
         s: indic20 xover indic10, or indic10.level > 90
         '''
-        backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage), trade_on_close=False,
-                               hedging=False, exclusive_orders=False)
+        try:
+            backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage), trade_on_close=False,
+                                   hedging=False, exclusive_orders=False)
 
-        if strategy_category == 'system':
-            bt_results = backtesting.run(ta_indicator_dict=ta_indicator_dict, buy_cond_dict=buy_cond_dict,
-                                      sell_cond_dict=sell_cond_dict, stoploss=stoploss)
-        
-        print(bt_results.loc['_strategy'])
-        print(bt_results.loc['_equity_curve'])
-        print(bt_results.loc['_trades'])
-        # backtesting.plot()
-        return HttpResponse('200')
+            if strategy_category == 'system':
+                bt_results = backtesting.run(ta_indicator_dict=ta_indicator_dict, buy_cond_dict=buy_cond_dict,
+                                             sell_cond_dict=sell_cond_dict, stoploss=stoploss)
+
+            # print('strategy')
+            # print(bt_results.loc['_strategy'])
+            # print('equity')
+            eq_list = []
+            equity = bt_results.loc['_equity_curve']
+            for index, row in equity.iterrows():
+                q = Equity(date=index, equity=row['Equity'], drawdownpct=row['DrawdownPct'],
+                           drawdownduration=row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT else None)
+                eq_list.append(q)
+            # print(equity)
+            # print('trades')
+            # trades = bt_results.loc['_trades']
+            # print(trades)
+            serializer = EquitySerializer(eq_list, many=True)
+            # backtesting.plot()
+
+            return Response(serializer.data)
+        except Equity.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+def realtime_quotes(request, symbols):
+    '''
+    根据请求的股票代码列表，获得实时报价
+    '''
+    if request.method == 'GET':
+        quote_list = []
+        symbol_list = symbols.split(',')
+        try:
+            realtime_df = ts.get_realtime_quotes(symbol_list)
+            realtime_df = realtime_df[['code', 'open', 'pre_close', 'price',
+                                       'high', 'low', 'bid', 'ask', 'volume', 'amount', 'date', 'time']]
+            for quote in realtime_df.values:
+                quote_list.append(
+                    {
+                        'code': quote[0],
+                        'open': quote[1],
+                        'pre_close': round(float(quote[2]), 2),
+                        'price': round(float(quote[3]), 2),
+                        'high': quote[4],
+                        'low': quote[5],
+                        'bid': quote[6],
+                        'volume': quote[8],
+                        'amount': quote[9],
+                        'datetime': datetime.strptime(quote[10] + ' ' + quote[11], "%Y-%m-%d %H:%M:%S"),
+                    }
+                )
+            return JsonResponse(quote_list, safe=False)
+        except Exception as err:
+            logging.error(err)
+            return HttpResponse(status=500)
 
 
 class IndustryList(APIView):

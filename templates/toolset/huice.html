@@ -23,15 +23,15 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
     <a class="navbar-brand text-muted" href="{% url 'search:home' %}">
-      <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;">
-      <span class="text-white">{% trans '投呗' %}</span>   
+      <img src="{% static 'img/logo.jpg' %}" height="40" width="40" style="border-radius: 10%;" class="">
+      <span class="text-white mt-2">{% trans 'BT - Backtesting' %}</span>   
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarColor01">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link text-white" href="{% url 'zixuan:home' %}">{% trans '自选股' %}</a>
         </li>
         <li class="nav-item">
@@ -39,11 +39,12 @@
         </li>
         <li class="nav-item">
           <a class="nav-link text-white" href="{% url 'stock_market:huice' %}">{% trans '策略模拟' %}</a>
-        </li>
+        </li> -->
       </ul>
     </div>
     <div class="d-flex col-lg-4" id="searchForm" >
       <input type="text" class="form-control form-control-sm me-sm-2" id="searchText" autocomplete="off" name="q" placeholder="{% trans '股票名称, 代码或首字母' %}" value="{{search_single.ts_code}}">
+      <input type="hidden" id="hiddenTscode" value="000001.SZ"/>
     </div>
     {% if request.user.is_authenticated %}
       <div class="nav-item dropdown">
@@ -63,7 +64,7 @@
       </div>
     {% else %}
     <!-- <a class="btn btn-primary" href="#">{% trans '快速登录' %}</a> -->
-    <div><a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a></div>
+    <!-- <div><a class="btn btn-light" href="{% url 'account:login' %}">{% trans '登录' %}</a></div> -->
     {% endif %}
   </div>
 </nav>
@@ -84,27 +85,193 @@
         <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
           <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
           
-          <label class="btn btn-light active small">
-              <input type="radio" name="board" autocomplete="off" value="60" checked/>{% trans 'RSV' %}
+          <label class="btn btn-light active small" >
+              <input type="radio" name="board" autocomplete="off" value="SMA,1,2" checked/>{% trans 'SMA' %}
           </label>
           <label class="btn btn-light">
-              <input type="radio" name="board" autocomplete="off" value="0"/>{% trans 'KDJ' %}
+              <input type="radio" name="board" autocomplete="off" value="KDJ,0,1,2"/>{% trans 'KDJ' %}
           </label>
           <label class="btn btn-light">
-              <input type="radio" name="board" autocomplete="off" value="3" />{% trans 'RSI' %}
+              <input type="radio" name="board" autocomplete="off" value="RSI,0,1,2" />{% trans 'RSI' %}
           </label>
           <label class="btn btn-light">
-              <input type="radio" name="board" autocomplete="off" value="688"/>{% trans 'MACD' %}
+              <input type="radio" name="board" autocomplete="off" value="MACD,0,1,2"/>{% trans 'MACD' %}
           </label>
         </div>
       </div>
-      <div class="col-lg-12">
+      <hr>
+      <!-- Example single danger button -->
+
+      <div class="col-lg-12 mt-2">
+        <div class="small mr-1">
+          {% trans '买入策略' %}
+        </div>
+        <!-- Small button groups (default and split) -->
+        <div class="btn-group" id="bStrategyCategory">
+          <button id="bSCPicked" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            策略类型
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="#type0" value="0">指标穿越 (上穿/下穿)</a>
+            <a class="dropdown-item" href="#type1" value="1">技术指标值比较</a>
+            <a class="dropdown-item" href="#type2" value="2">指标高低风险位</a>
+          </div>
+          <input type="hidden" id="hiddenStrategyCategory"/>
+        </div>
+        <!-- Small button groups (default and split) -->
+        <div class="btn-group" id="bMenuTI1">
+          <button  id="bTIPicked1" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            SMA(10)
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" value="SMA_10">SMA(10)</a>
+            <a class="dropdown-item" value="SMA_20">SMA(20)</a>
+            <a class="dropdown-item" value="SMA_60">SMA(60)</a>
+            <a class="dropdown-item" value="SMA_120">SMA(120)</a>
+            <a class="dropdown-item" value="SMA_200">SMA(200)</a>
+            <input type="hidden" id="hiddenBTI1"/>
+
+            <!-- <a class="dropdown-item" href="#">自定义</a> -->
+          </div>
+        </div>
+        <div class="btn-group" id="bMenuCond">
+          <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" id="bCondPicked">
+            上穿
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" value="crossover">上穿</a>
+            <a class="dropdown-item"  value="crossover">下穿</a>
+            <a class="dropdown-item"  value=">">大于</a>
+            <a class="dropdown-item"  value="<">小于</a>
+            <input type="hidden" id="hiddenBCond"/>
+            <!-- <a class="dropdown-item" href="#">Separated link</a> -->
+          </div>
+        </div>
+        <div class="btn-group" id="bMenuTI2">
+          <button id="bTIPicked2" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            SMA(20)
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" value="SMA_10">SMA(10)</a>
+            <a class="dropdown-item" value="SMA_20">SMA(20)</a>
+            <a class="dropdown-item" value="SMA_60">SMA(60)</a>
+            <a class="dropdown-item" value="SMA_120">SMA(120)</a>
+            <a class="dropdown-item" value="SMA_200">SMA(200)</a>
+            <input type="hidden" id="hiddenBTI2"/>
+          </div>
+        </div>
+        <input type="text" class="form-control form-control-sm col-sm-2" id="bTIValue" autocomplete="off" name="indicator_value" 
+                placeholder="{% trans '自定义' %}" value="10">
+        <button class="btn btn-primary btn-sm" type="button" id="addBStrategy">
+          添加
+        </button>
+      </div>
+      <div class="col-lg-8 mt-2" id="bStrategyList">
+        <ul class="list-group small">
+          <!-- <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
+            <span class="text-primary small" >SMA(10) 上穿 SMA(20)</span>
+            <a class="badge rounded-pill" href="javascript:void(0)">x</a>
+            <input type="hidden" value="0:crossover(self.SMA_10,self.SMA_20)">
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
+            <span class="text-primary small">SMA(10) > SMA(20)</span>
+            <a class="badge rounded-pill" href="javascript:void(0)">x</a>
+            <input type="hidden" value="1:self.SMA_10[-1]>self.SMA_20[-1]">
+          </li> -->
+        </ul>
+      </div>
+      <hr>
+      <div class="col-lg-12 mt-1">
+        <div class="small mr-1">
+          {% trans '买出策略' %}
+        </div>
+        <!-- Small button groups (default and split) -->
+        <div class="btn-group" id="sStrategyCategory">
+          <button id="sSCPicked" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            策略类型
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="#type0" value="0">指标穿越 (上穿/下穿)</a>
+            <a class="dropdown-item" href="#type1" value="1">技术指标值比较</a>
+            <a class="dropdown-item" href="#type2" value="2">指标高低风险位</a>
+          </div>
+          <input type="hidden" id="hiddenSStrategyCategory"/>
+        </div>
+        <!-- Small button groups (default and split) -->
+        <div class="btn-group" id="sMenuTI1">
+          <button  id="sTIPicked1" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            SMA(10)
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" value="SMA_10">SMA(10)</a>
+            <a class="dropdown-item" value="SMA_20">SMA(20)</a>
+            <a class="dropdown-item" value="SMA_60">SMA(60)</a>
+            <a class="dropdown-item" value="SMA_120">SMA(120)</a>
+            <a class="dropdown-item" value="SMA_200">SMA(200)</a>
+            <input type="hidden" id="hiddenSTI1"/>
+
+            <!-- <a class="dropdown-item" href="#">自定义</a> -->
+          </div>
+        </div>
+        <div class="btn-group" id="sMenuCond">
+          <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" id="sCondPicked">
+            上穿
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" value="crossover">上穿</a>
+            <a class="dropdown-item"  value="crossover">下穿</a>
+            <a class="dropdown-item"  value=">">大于</a>
+            <a class="dropdown-item"  value="<">小于</a>
+            <input type="hidden" id="hiddenSCond"/>
+            <!-- <a class="dropdown-item" href="#">Separated link</a> -->
+          </div>
+        </div>
+        <div class="btn-group" id="sMenuTI2">
+          <button id="sTIPicked2" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+            SMA(20)
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" value="SMA_10">SMA(10)</a>
+            <a class="dropdown-item" value="SMA_20">SMA(20)</a>
+            <a class="dropdown-item" value="SMA_60">SMA(60)</a>
+            <a class="dropdown-item" value="SMA_120">SMA(120)</a>
+            <a class="dropdown-item" value="SMA_200">SMA(200)</a>
+            <input type="hidden" id="hiddenSTI2"/>
+          </div>
+        </div>
+        <input type="text" class="form-control form-control-sm col-sm-2" id="sTIValue" autocomplete="off" name="indicator_value" 
+                placeholder="{% trans '自定义' %}" value="10">
+        <button class="btn btn-primary btn-sm" type="button" id="addSStrategy">
+          添加
+        </button>
+      </div>
+      <div class="col-lg-8 mt-2" id="sStrategyList">
+        <ul class="list-group small">
+          <!-- <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
+            <span class="text-primary small" >SMA(10) 上穿 SMA(20)</span>
+            <a class="badge rounded-pill" href="javascript:void(0)">x</a>
+            <input type="hidden" value="0:crossover(self.SMA_10,self.SMA_20)">
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-action">
+            <span class="text-primary small">SMA(10) > SMA(20)</span>
+            <a class="badge rounded-pill" href="javascript:void(0)">x</a>
+            <input type="hidden" value="1:self.SMA_10[-1]>self.SMA_20[-1]">
+          </li> -->
+        </ul>
+      </div>
+      <hr>
+      <!-- <div class="col-lg-12">
         <label class="small mr-1">
           {% trans '投入资金' %}
         </label>
-        <div>
-          <input type="text" class="form-control form-control-sm me-sm-2" id="cash" autocomplete="off" name="cash" placeholder="{% trans '投入资金' %}" value="10,000">
-        </div>
+        
+        <input type="text" class="form-control form-control-sm me-sm-2" id="cash" autocomplete="off" name="cash" placeholder="{% trans '投入资金' %}" value="10,000">
+        
+      </div> -->
+      <div class="col-lg-12 input-group mb-3 small">
+        <span class="input-group-text small">￥</span>
+        <input type="text" class="form-control small" placeholder="{% trans '投入资金' %}" aria-label="Amount (to the nearest dollar)">
+        <span class="input-group-text small">.00</span>
       </div>
       <div class="col-lg-12 mt-1">
         <label class="small mr-1">
@@ -123,9 +290,6 @@
         <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
           <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
           <label class="btn btn-light active small">
-            <input type="radio" name="board" autocomplete="off" value="0"/>{% trans '0' %}
-          </label>
-          <label class="btn btn-light active small">
               <input type="radio" name="board" autocomplete="off" value="1"/>{% trans '1' %}
           </label>
           <label class="btn btn-light">
@@ -134,6 +298,46 @@
           <label class="btn btn-light">
               <input type="radio" name="board" autocomplete="off" value="5" />{% trans '5' %}
           </label>
+        </div>
+      </div>
+      <div class="col-lg-12">
+        <label class="small mr-1">
+          {% trans '交易方式' %}
+        </label>
+        <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
+          <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+          
+          <label class="btn btn-light active small">
+              <input type="radio" name="board" autocomplete="off" value="SMA" checked/>{% trans 'T+0' %}
+          </label>
+          <label class="btn btn-light">
+              <input type="radio" name="board" autocomplete="off" value="KDJ"/>{% trans 'T+1' %}
+          </label>
+        </div>
+      </div>
+      <div class="col-lg-12">
+        <label class="small mr-1">
+          {% trans '应用周期' %}
+        </label>
+        <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
+          <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+          
+          <label class="btn btn-light active small">
+              <input type="radio" name="board" autocomplete="off" value="SMA" checked/>{% trans '日线' %}
+          </label>
+          <label class="btn btn-light">
+              <input type="radio" name="board" autocomplete="off" value="KDJ"/>{% trans '周线' %}
+          </label>
+          <label class="btn btn-light">
+            <input type="radio" name="board" autocomplete="off" value="KDJ"/>{% trans '月线' %}
+        </label>
+        </div>
+      </div>
+      <div class="col-lg-12 strategy-list mt-1">
+        <div class="text-white mt-1">
+          <button class="btn btn-primary btn-sm" type="button" id="executeBT">
+            执行回测
+          </button>
         </div>
       </div>
     </div>
@@ -194,6 +398,16 @@
           </div>
       </div>
       <hr>
+      <div class="row">
+        <div class="col-lg-12">
+          <div id="equityChart"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div id="ohlcChart"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -209,7 +423,7 @@
 <!-- <script src="https://pagecdn.io/lib/mathjs/10.4.0/math.min.js"></script> -->
 <script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
 <script
-  src="{% static 'js/search_result.js' %}"
+  src="{% static 'js/backtesting.js' %}"
   type="text/javascript"
 ></script>
 {% endblock javascript %}
