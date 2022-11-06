@@ -21,13 +21,13 @@ from analysis.models import StockHistory, StockHistoryDaily
 # from backtesting.lib import resample_apply
 
 
-def get_data(ts_code, freq='D'):
+def get_data(ts_code, freq='D', sort='asc'):
     if freq == 'D':
         data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
-            'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('-trade_date')
+            'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort=='asc' else '-trade_date')
     else:
         data = StockHistory.objects.filter(
-            ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('-trade_date')
+            ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort=='asc' else '-trade_date')
 
     data_df = pd.DataFrame.from_records(data)
     data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
@@ -108,11 +108,11 @@ class SimpleCrossoverStrategy(Strategy):
         b = crossover(self.indic_series1, self.indic_series2)
         s = crossover(self.indic_series2, self.indic_series1)
         if b:
-            self.position.close()
+            # self.position.close()
             self.buy()
         elif s:
             self.position.close()
-            self.sell()
+            # self.sell()
 
 
 class System(Strategy):
@@ -211,14 +211,14 @@ class System(Strategy):
                 self._short_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1])) #eval(vv)
 
         if self._long_order:
-            self.position.close()
+            # self.position.close()
             if self.stoploss:
                 self.buy(sl=float(self.stoploss) * price)
             else:
                 self.buy()
         elif self._short_order:
+            # self.sell()
             self.position.close()
-            self.sell()
         '''
         return
         
