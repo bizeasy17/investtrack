@@ -18,6 +18,8 @@ urlpatterns = [
     #          views.IndustryCompanyList.as_view(), name='company_list_industry'),
     path('stock-close-history/<ts_code>/<freq>/<int:period>/',
          views.StockCloseHistoryList.as_view(), name='close_history'),  # ??
+    path('ohlc/<ts_code>/<freq>/<int:period>/',
+         views.OHLCList.as_view(), name='ohlc'),  # ??
     path('stock-indic/<ts_code>/<freq>/<int:period>/',
          views.StockRSVPlusList.as_view(), name='stock_indicator'),  # ??
     path('daily-basic-history/<ts_code>/<start_date>/<end_date>/',
@@ -30,9 +32,11 @@ urlpatterns = [
          views.get_latest_daily_basic),
     path('industry-latest-daily-basic/<industry>/<type>/',
          views.get_industry_basic),
-    path('toolset/huice/', views.HuiCeView.as_view(), name='huice'),
-    path('bt-crossover/<ts_code>/<tech_indicator>/<indicator_param>/<strategy_category>/<cash>/<commission>/<leverage>/<freq>/', views.CrossoverBacktestingList.as_view(), name='backtesting_list'),
-    path('bt-system/<ts_code>/<strategy_category>/<ta_indicator_dict>/<buy_cond_dict>/<sell_cond_dict>/<stoploss>/<cash>/<commission>/<leverage>/<freq>/', views.SystemBacktestingList.as_view(), name='backtesting_list'),
+    path('bt/', views.HuiCeView.as_view(), name='huice'),
+    path('bt-crossover/<ts_code>/<tech_indicator>/<indicator_param>/<strategy_category>/<cash>/<commission>/<leverage>/<freq>/',
+         views.CrossoverBacktestingList.as_view(), name='backtesting_list'),
+    path('bt-system/<ts_code>/<strategy_category>/<ta_indicator_dict>/<buy_cond_dict>/<sell_cond_dict>/<stoploss>/<cash>/<commission>/<leverage>/<trade_on_close>/<freq>/',
+         views.SystemBacktestingList.as_view(), name='backtesting_list'),
     path('command/',
          views.command_test),
     path('cmd/<cmd>/<params>/', views.analysis_command),

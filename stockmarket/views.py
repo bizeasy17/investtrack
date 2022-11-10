@@ -32,8 +32,8 @@ from stockmarket.models import (City, CompanyBasic, Industry, Province,
 from .models import (CompanyBasic, CompanyDailyBasic, CompanyFinIndicators, CompanyTop10FloatHoldersStat, IndexDailyBasic, Industry, ManagerRewards,
                      StockNameCodeMap)
 from .serializers import (CompanyDailyBasicSerializer, CompanySerializer, CompanyTop10HoldersStatSerializer, Equity, EquitySerializer, IndexDailyBasicSerializer,
-                          IndustryBasicQuantileSerializer, IndustrySerializer,
-                          StockCloseHistorySerializer, CitySerializer, ProvinceSerializer, StockIndicRSVSerializer)
+                          IndustryBasicQuantileSerializer, IndustrySerializer, OHLCSerializer,
+                          StockCloseHistorySerializer, CitySerializer, ProvinceSerializer, StockHistoryOHLC, StockIndicRSVSerializer)
 from .utils import collect_top10_holders, get_ind_basic, process_min_max, str_eval, collect_fin_indicators, pop_dailybasic_to_finindicator
 
 # Create your views here.
@@ -45,7 +45,7 @@ index_list = ['000001.SH', '399001.SZ', '399006.SZ']
 
 class HuiCeView(TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
-    template_name = 'toolset/huice.html'
+    template_name = 'toolset/backtesting.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
     context_object_name = 'huice'
 
@@ -123,7 +123,7 @@ class SystemBacktestingList(APIView):
     # http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
     #   %7B'SMA_10':%2010,'SMA_20':20,'RSI_20':20%7D/%7B'attr':%7B'sma_level':'10','rsi_level':'20'%7D,'condition':%7B'threshold':%7B'RSI_20':'RSI_20%3E30'%7D,'crossover':%7B'a10':'cross(a(10),%20a(20))'%7D,'pair_comp':%20%7B'a10':'a(10)%20%3E%20a(20)'%7D%7D%7D/%
     #   7B'attr':%7B'sma_level':'10','rsi_level':'90'%7D,'condition':%7B'threshold':%7B'RSI_20':'RSI_20%3E90'%7D,'crossover':%7B'a20':'cross(a(20),%20a(10))'%7D,'pair_comp':%20%7B'a10':'a(20)%20%3E%20a(10)'%7D%7D%7D/.95/10000/.001/1/D/
-    def get(self, request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, freq='D'):
+    def get(self, request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, trade_on_close=False, freq='D'):
         '''
         tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
         indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
@@ -133,7 +133,7 @@ class SystemBacktestingList(APIView):
         commission: 0.05
         leverage: 0.02 mean 50 leverage
         '''
-        data_df = get_data(ts_code, freq)
+        data_df = get_data(ts_code, freq, 'desc')
 
         # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
         if type(eval(ta_indicator_dict)) == dict:
@@ -160,7 +160,8 @@ class SystemBacktestingList(APIView):
         s: indic20 xover indic10, or indic10.level > 90
         '''
         try:
-            backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage), trade_on_close=False,
+            backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage),
+                                   trade_on_close=True if trade_on_close == 1 else False,
                                    hedging=False, exclusive_orders=False)
 
             if strategy_category == 'system':
@@ -178,13 +179,39 @@ class SystemBacktestingList(APIView):
                 eq_list.append(q)
             # print(equity)
             # print('trades')
-            # trades = bt_results.loc['_trades']
+            trades = bt_results.loc['_trades']
             # print(trades)
             serializer = EquitySerializer(eq_list, many=True)
             # backtesting.plot()
 
             return Response(serializer.data)
         except Equity.DoesNotExist:
+            raise Http404
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
+
+
+class OHLCList(APIView):
+    # queryset = StockHistoryDaily.objects.filter(freq='D')
+
+    def get(self, request, ts_code, freq, period=3):
+        try:
+            ohlc_list = []
+            data_df = get_data(ts_code, freq, )
+
+            if period <= 10:
+                start_date = date.today() - timedelta(days=365 * period)
+                data_df = data_df.loc[start_date:]
+
+            for idx, rows in data_df.iterrows():
+                ohlc = StockHistoryOHLC(
+                    trade_date=idx, open=rows['Open'], close=rows['Close'], high=rows['High'], low=rows['Low'], vol=rows['Volume'])
+                ohlc_list.append(ohlc)
+
+            serializer = OHLCSerializer(ohlc_list, many=True)
+            return Response(serializer.data)
+        except StockHistoryDaily.DoesNotExist:
             raise Http404
         except Exception as err:
             print(err)

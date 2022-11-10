@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, routers, serializers, status, viewsets
 
-from .models import CompanyDailyBasic, CompanyTop10FloatHoldersStat, IndexDailyBasic, Province, StockNameCodeMap, Industry, City
+from .models import BaseModel, CompanyDailyBasic, CompanyTop10FloatHoldersStat, IndexDailyBasic, Province, StockNameCodeMap, Industry, City
 
 BOARD_LIST = {
     'SHZB': '上海主板',
@@ -57,6 +57,56 @@ class Equity(models.Model):
 
     def __str__(self):
         return self.ts_code
+
+
+class StockHistoryOHLC(BaseModel):
+    '''
+    ts_code	str	股票代码
+    trade_date	str	交易日期
+    open	float	开盘价
+    high	float	最高价
+    low	float	最低价
+    close	float	收盘价
+    pre_close	float	昨收价
+    change	float	涨跌额
+    pct_chg	float	涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    vol	float	成交量 （手）
+    amount	float	成交额 （千元）
+    '''
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    open = models.FloatField(
+        _('开盘价'), blank=True, null=True)
+    high = models.FloatField(
+        _('最高价'), blank=True, null=True)
+    low = models.FloatField(
+        _('最低价'), blank=True, null=True)
+    close = models.FloatField(_('收盘价'), blank=True, null=True)
+    pct_chg = models.FloatField(
+        _('价格变化%'), blank=True, null=True)
+    vol = models.FloatField(
+        _('交易量'), blank=True, null=True)
+    amount = models.FloatField(
+        _('金额'), blank=True, null=True)
+
+class OHLCSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'd': instance.trade_date,
+            'o': instance.open,
+            'h': instance.high,
+            'l': instance.low,
+            'c': instance.close,
+            'v': instance.vol,
+        }
+
+    class Meta:
+        model = StockHistoryOHLC
+
 
 class EquitySerializer(serializers.ModelSerializer):
 

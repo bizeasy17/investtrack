@@ -69,13 +69,35 @@ var getStartDate = function (period, format) {
     return formatDate(priorDate, format);
 }
 
-
+var jsonToArray = function (jsonData, dataType) {
+    var chartFormat = { 'value': []};
+    $(jsonData).each(function (idx, obj) {
+        chartFormat.value.push(obj[dataType]);
+    });
+    return chartFormat;
+}
 
 var jsonToChartFormat = function (jsonData, dataType) {
     var chartFormat = { 'value': [], 'label': [] };
     $(jsonData).each(function (idx, obj) {
         chartFormat.value.push(obj[dataType]);
         chartFormat.label.push(obj.trade_date);
+    });
+    return chartFormat;
+}
+
+var jsonToChartOHLCFormat = function (jsonData) {
+    var chartFormat = { 'value': [], 'label': [], 'volume': [] };
+    // var ohlc = [];
+    $(jsonData).each(function (idx, obj) {
+        // ohlc.push(obj['o']);
+        // ohlc.push(obj['c']);
+        // ohlc.push(obj['l']);
+        // ohlc.push(obj['h']);
+        chartFormat.value.push([obj['o'],obj['c'],obj['l'],obj['h']]);
+        chartFormat.label.push(obj['d']);
+        chartFormat.volume.push(obj['v']);
+        // ohlc.splice(0);
     });
     return chartFormat;
 }

@@ -294,7 +294,7 @@
           <label class="btn btn-light">
               <input type="radio" name="commission" autocomplete="off" value="6" />{% trans '6' %}
           </label>
-          <label class="btn btn-light active small">
+          <label class="btn btn-light">
             <input type="radio" name="commission" autocomplete="off" value="7"/>{% trans '7' %}
           </label>
           <label class="btn btn-light">
@@ -318,7 +318,7 @@
           </label>
         </div>
       </div> -->
-      <div class="col-lg-12">
+      <!-- <div class="col-lg-12">
         <label class="small mr-1">
           {% trans '双向操作' %}
         </label>
@@ -330,21 +330,21 @@
               <input type="radio" name="bi-direction" autocomplete="off" value="bi"/>{% trans '可做空' %}
           </label>
         </div>
-      </div>
-      <div class="col-lg-12">
+      </div> -->
+      <div class="col-lg-12 mt-1">
         <label class="small mr-1">
           {% trans '买入时点' %}
         </label>
         <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
           <label class="btn btn-light active small">
-              <input type="radio" name="bi-direction" autocomplete="off" value="single" checked/>{% trans '隔日开盘价买入' %}
+              <input type="radio" name="trade-on-close" autocomplete="off" value="0" checked/>{% trans '隔日开盘价买入' %}
           </label>
           <label class="btn btn-light">
-              <input type="radio" name="bi-direction" autocomplete="off" value="bi"/>{% trans '当日收盘买入' %}
+              <input type="radio" name="trade-on-close" autocomplete="off" value="1"/>{% trans '当日收盘买入' %}
           </label>
         </div>
       </div>
-      <div class="col-lg-12">
+      <div class="col-lg-12 mt-1">
         <label class="small mr-1">
           {% trans '复权方式' %}
         </label>
@@ -357,7 +357,7 @@
           </label>
         </div>
       </div>
-      <div class="col-lg-12">
+      <div class="col-lg-12 mt-1">
         <label class="small mr-1">
           {% trans '应用周期' %}
         </label>
@@ -430,7 +430,7 @@
                       <div id="pnlChart" style="height: 150px"></div>
                     </div> -->
                     <div class="col-lg-12">
-                      <div id="btMixChart" style="height: 400px"></div>
+                      <div id="btMixChart" style="height: 1750px"></div>
                     </div>
                     <!-- <div class="col-lg-12">
                       <div id="indicChart" style="height: 150px"></div>
@@ -439,94 +439,10 @@
             </div>
           </div>
       </div>
-      <hr>
-      <div class="row">
-        <div class="col-lg-6">
-          <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-              <h7 class="m-0 font-weight-bold text-muted">市盈率 - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-          </div>
-          <div class="">
-            <div class="col-lg-12">
-                <div id="peChart" style="height: 250px" class="funda-chart" name="pe"></div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="">
-            <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-                <h7 class="m-0 font-weight-bold text-muted">市盈率(动) - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-            </div>
-            <div class="">
-              <div class="col-lg-12">
-                  <div id="peTTMChart" style="height: 250px"  class="funda-chart" name="pe_ttm"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="row">
-        <div class="col-lg-6">
-          <div class="">
-            <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-                <h7 class="m-0 font-weight-bold text-muted">市销率 - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-            </div>
-            <div class="">
-              <div id="psChart" style="height: 250px"  class="funda-chart" name="ps"></div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="">
-            <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-                <h7 class="m-0 font-weight-bold text-muted">市销率(动) - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-            </div>
-            <div class="">
-              <div id="psTTMChart" style="height: 250px" class="funda-chart" name="ps_ttm"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-12">
-          <div class="">
-            <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-                <h7 class="m-0 font-weight-bold text-muted">市净率 - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-            </div>
-            <div class="card-body">
-              <div id="pbChart" style="height: 250px"  class="funda-chart" name="pb"></div>
-            </div>
-            </div>
-        </div>
-    </div>
-      <div class="row">
-        <div class="col-lg-6">
-        <div class="">
-          <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-              <h7 class="m-0 font-weight-bold text-muted">换手率 - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-          </div>
-          <div class="">
-            <div class="col-lg-12">
-                <div id="toChart" style="height: 300px"  class="funda-chart" name="turnover_rate"></div>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div class="col-lg-6">
-        <div class="">
-          <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-              <h7 class="m-0 font-weight-bold text-muted">量比 - <span class="stock_name">{{search_single.stock_name}}</span></h7>
-          </div>
-          <div class="">
-            <div id="vrChart" style="height: 300px" class="funda-chart" name="volume_ratio"></div>
-          </div>
-        </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
-<input type="hidden" id="currentTsCode" value="000001.SZ" />
+<input type="hidden" id="hiddenTsCode" value="000001.SZ" />
 
 {% endblock content %} 
 
