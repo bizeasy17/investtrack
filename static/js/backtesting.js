@@ -3,7 +3,8 @@ $(function () {
     const upColor = '#ec0000';
     const downColor = '#00da3c';
 
-    let taIndicatorSet = new Set();
+    let taBIndicatorSet = new Set();
+    let taSIndicatorSet = new Set();
     const bStrategyTextSet = new Set();
     const sStrategyTextSet = new Set();
 
@@ -64,6 +65,7 @@ $(function () {
 
     var initParam = function () {
         tsCode = $("#hiddenTsCode").val();
+        $(".stock_name").text($("#hiddenTsCode").attr("name")  + " [" + $("#hiddenTsCode").val() + "]");
         stockHistPeriod = $('input:radio[name="stockHistPeriod"]:checked').val();
         capital = $("#capital").val();
         stoploss = (100 - parseInt($("#stoploss").val()))/100;
@@ -82,7 +84,7 @@ $(function () {
         startDate = formatDate(new Date(today.getTime() - (365 * stockHistPeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
 
-        fundaChart = $(".funda-chart");
+        fundaChart = ["pe:6","pe_ttm:7","pb:8","ps:9","ps_ttm:10","turnover_rate:11","volume_ratio:12"];
         btMixChart = echarts.init(document.getElementById('btMixChart'));
         // ohlcChart = echarts.init(document.getElementById('ohlcChart'));
         // indicChart = echarts.init(document.getElementById('indicChart'));
@@ -200,54 +202,55 @@ $(function () {
                     // },
                     grid: [
                         //OHLC grid index 0
-                        {left: '4%',right: '3%',top: "2%",height: '20%'},
-                        // reserved for equity + OHLC grid index 0
+                        {left: '4%',right: '3%',top: "2%",height: '12%'},
+                        // reserved for equity + OHLC grid index 1
                         // {left: '4%',right: '1%',top: "2%",height: '13%'},
-                        // {left: '4%',right: '1%',top: "16%",height: '7%'},
+                        {left: '4%',right: '3%',top: "18%",height: '4%'},
 
-                        //OHLC grid index 1, volume成交量
+                        //OHLC grid index 2, volume成交量
                         {left: '4%',right: '3%',top: '24%',height: '4%'},
                         
-                        //OHLC grid index 2, RSI
-                        {left: '4%',right: '3%',top: '29%',height: '5%'},
-                        //OHLC grid index 3, MACD
-                        {left: '4%',right: '3%',top: '35%',height: '5%'},
-                        //OHLC grid index 4, KDJ
-                        {left: '4%',right: '3%',top: '41%',height: '5%'},
+                        //OHLC grid index 3, RSI
+                        {left: '4%',right: '3%',top: '30%',height: '4%'},
+                        //OHLC grid index 4, MACD
+                        {left: '4%',right: '3%',top: '37%',height: '4%'},
+                        //OHLC grid index 5, KDJ
+                        {left: '4%',right: '3%',top: '44%',height: '4%'},
 
                         //Fundamental grid index 5, PE
-                        {left: '4%', top: '48%',height:'10%',width: '38%'},
+                        {left: '4%', top: '52%',height:'7%',width: '42%'},
                         //Fundamental grid index 6, PE TTM
-                        {right: '3%',top: '48%',height:'10%',width: '38%'},
+                        {right: '3%',top: '52%',height:'7%',width: '42%'},
 
                         //Fundamental grid index 7, PB
-                        {left: '4%', right: '3%',top: '59%',height: '10%'},
+                        {left: '4%', right: '3%',top: '63%',height: '7%'},
 
                         //Fundamental grid index 8, PS
-                        {left: '4%',top: '70%',height:'10%',width: '38%'},
+                        {left: '4%',top: '76%',height:'7%',width: '42%'},
                         //Fundamental grid index 9, PS TTM
-                        {right: '3%',top: '70%',height:'10%',width: '38%'},
+                        {right: '3%',top: '76%',height:'7%',width: '42%'},
                         
                         //Fundamental grid index 10, Turnover ratio
-                        {left: '4%',top: '81%',height: '10%', width: '38%'},
+                        {left: '4%',top: '89%',height: '7%', width: '42%'},
                         //Fundamental grid index 11, Vol ratio
-                        {right: '3%',top: '81%',height: '10%', width: '38%'}
+                        {right: '3%',top: '89%',height: '7%', width: '42%'}
                     ],
                     xAxis: [
                         {gridIndex: 0, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }}, // OHLC
-                        {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
+                        {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax', id: 'equityAxis'}, // Equity资产净值
+                        {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
                         
-                        {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // RSI
-                        {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // MACD
-                        {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // KDJ
+                        {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // RSI
+                        {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // MACD
+                        {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // KDJ
 
-                        {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE
-                        {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE TTM
-                        {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PB
-                        {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS
-                        {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS TTM
-                        {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // TO 换手率 
-                        {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax'} // VO 量比 
+                        {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE
+                        {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE TTM
+                        {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PB
+                        {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS
+                        {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS TTM
+                        {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // TO 换手率 
+                        {gridIndex: 12, data: chartData.label, min: 'dataMin', max: 'dataMax'} // VO 量比 
 
                         // {
                         //     type: 'category',
@@ -264,19 +267,20 @@ $(function () {
                     ],
                     yAxis: [
                         {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax'}, // OHLC
-                        {gridIndex: 1, scale: true, min: 'dataMin', max: 'dataMax',axisLine: { show: false, onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
+                        {gridIndex: 1, scale: true, min: 0, name: '资产净值', nameLocation: 'end',}, // OHLC
+                        {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '成交量', nameLocation: 'middle', axisLine: { show: false, onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
                         
-                        {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax'}, // RSI
-                        {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax'}, // MACD
-                        {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax'}, // KDJ
+                        {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: 'RSI(6,12,24)', nameLocation: 'end'}, // RSI
+                        {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end'}, // MACD
+                        {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end'}, // KDJ
 
-                        {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax'}, // PE
-                        {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax'}, // PE TTM
-                        {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax'}, // PB
-                        {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax'}, // PS
-                        {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax'}, // PS TTM
-                        {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax'}, // TO 换手率 
-                        {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax'} // VO 量比 
+                        {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率PE', nameLocation: 'end'}, // PE
+                        {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率PE(TTM)', nameLocation: 'end'}, // PE TTM
+                        {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率PB', nameLocation: 'end'}, // PB
+                        {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率PS', nameLocation: 'end'}, // PS
+                        {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率PS(TTM)', nameLocation: 'end'}, // PS TTM
+                        {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
+                        {gridIndex: 12, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
 
                         // { scale: true,
                         //     splitArea: {
@@ -296,7 +300,7 @@ $(function () {
                     dataZoom: [
                         {
                             type: 'inside',
-                            xAxisIndex: [0, 1],
+                            xAxisIndex: [0,1],
                             start: 0,
                             end: 100
                         }
@@ -375,37 +379,266 @@ $(function () {
                         {
                             name: 'Volume',
                             type: 'bar',
+                            xAxisIndex: 2,
+                            yAxisIndex: 2,
+                            data: chartData.volume
+                        },
+                        {
+                            id: 'equity',
+                            name: '净值',
+                            type: 'line',
+                            smooth: true,
+                            showSymbol: false,
                             xAxisIndex: 1,
                             yAxisIndex: 1,
-                            data: chartData.volume
+                            data: chartData.equity
                         }
-                        // ,{
-                        //     name: '净值',
-                        //     type: 'line',
-                        //     yAxisIndex: 2
-                        //     // data: chartData.volume
-                        // }
                     ]
                 };
-                btMixChart.setOption(mixChartOption);
+                btMixChart.setOption(mixChartOption, true);
+            },
+            complete: function (request, status) {
+                renderCompanyFundaChart(tsCode, startDate, endDate);
+                renderRSIChart(tsCode);
+                renderKDJChart(tsCode);
+                renderMACDChart(tsCode);
             }
         });
     }
 
-    var pushEquityData = function (data, legend, yAxisIdx, type) {
+    var pushEquityData = function (data) {
         //添加series
         var equity = jsonToArray(data, "eq");
+        var date = jsonToArray(data, "dt");
+
+        // mixChartOption.series.slice(7,1);
+        var equitySerierOpt = 
+        {
+            xAxis: [
+                {
+                    id: 'equityAxis',
+                    data: date.value
+                }
+            ],
+            series: [
+                {
+                    id: 'equity',
+                    // name: '资产净值',
+                    type: 'line',
+                    showSymbol: true,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    data: equity.value,
+                    markPoint: {
+                        data: [
+                            { type: 'max', name: '最大值' },
+                            { type: 'min', name: '最小值' }
+                        ]
+                    }
+                }
+            ]
+        }
+
+        btMixChart.setOption(equitySerierOpt);
+    }
+
+    var pushRSI2MixChart = function (jsonData) {
+        var chartData = jsonToChartRSIFormat(jsonData);
+
+        //动态添加series
         mixChartOption.series.push({
-            name: legend,
-            color: upColor,
-            type: type,
-            yAxisIndex: yAxisIdx,
-            data: equity.value.slice(-ohlcCount)
+            name: "RSI(6)",
+            type: 'line',
+            xAxisIndex: 3,
+            yAxisIndex: 3,
+            smooth: true,
+            showSymbol: false,
+            data: chartData.rsi_6,
+            itemStyle: {
+                color: 'rgb(118, 118, 118)'
+            }
+        },
+        {
+            name: "RSI(12)",
+            xAxisIndex: 3,
+            yAxisIndex: 3,
+            type: 'line',
+            // smooth: true,
+            showSymbol: false,
+            itemStyle: {
+                color: 'rgb(0, 255, 0)'
+            },
+            data: chartData.rsi_12
+        },
+        {
+            name: "RSI(24)",
+            type: 'line',
+            xAxisIndex: 3,
+            yAxisIndex: 3,
+            smooth: true,
+            showSymbol: false,
+            itemStyle: {
+                color: 'rgb(25, 70, 131)'
+            },
+            data: chartData.rsi_24
         });
 
-        //添加 legend
-        mixChartOption.legend.data.push(legend)
-        btMixChart.setOption(mixChartOption);
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(mixChartOption, true);
+    }
+
+    var renderRSIChart = function(tsCode){
+        
+        $.ajax({
+            url: stockmarketEndpoint + "rsi/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            success: function (data) {
+                pushRSI2MixChart($.parseJSON(data));
+            },
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
+            }
+        });
+    }
+
+    var pushKDJ2MixChart = function (jsonData) {
+        var chartData = jsonToChartKDJFormat(jsonData);
+
+        //动态添加series
+        mixChartOption.series.push({
+            name: "K",
+            type: 'line',
+            xAxisIndex: 5,
+            yAxisIndex: 5,
+            smooth: true,
+            showSymbol: false,
+            data: chartData.k,
+            itemStyle: {
+                color: 'rgb(118, 118, 118)'
+            }
+        },
+        {
+            name: "D",
+            xAxisIndex: 5,
+            yAxisIndex: 5,
+            type: 'line',
+            // smooth: true,
+            showSymbol: false,
+            itemStyle: {
+                color: 'rgb(0, 255, 0)'
+            },
+            data: chartData.d
+        },
+        {
+            name: "J",
+            type: 'line',
+            xAxisIndex: 5,
+            yAxisIndex: 5,
+            smooth: true,
+            showSymbol: false,
+            itemStyle: {
+                color: 'rgb(25, 70, 131)'
+            },
+            data: chartData.j
+        });
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(mixChartOption, true);
+    }
+
+    var renderKDJChart = function(tsCode){
+        
+        $.ajax({
+            url: stockmarketEndpoint + "kdj/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            success: function (data) {
+                pushKDJ2MixChart($.parseJSON(data));
+            },
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
+            }
+        });
+    }
+
+    var pushMACD2MixChart = function (jsonData) {
+        var chartData = jsonToChartMACDFormat(jsonData);
+
+        //动态添加series
+        mixChartOption.series.push({
+            name: "DIF",
+            type: 'line',
+            xAxisIndex: 4,
+            yAxisIndex: 4,
+            smooth: true,
+            showSymbol: false,
+            data: chartData.dif,
+            itemStyle: {
+                color: 'rgb(118, 118, 118)'
+            }
+        },
+        {
+            name: "DEA",
+            xAxisIndex: 4,
+            yAxisIndex: 4,
+            type: 'line',
+            // smooth: true,
+            showSymbol: false,
+            itemStyle: {
+                color: 'rgb(0, 255, 0)'
+            },
+            data: chartData.dea
+        },
+        {
+            name: "BAR",
+            type: 'bar',
+            xAxisIndex: 4,
+            yAxisIndex: 4,
+            // itemStyle: {
+            //     color: 'rgb(25, 70, 131)'
+            // },
+            data: chartData.bar
+        });
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(mixChartOption, true);
+    }
+
+    var renderMACDChart = function(tsCode){
+        
+        $.ajax({
+            url: stockmarketEndpoint + "macd/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            success: function (data) {
+                pushMACD2MixChart($.parseJSON(data));
+            },
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
+            }
+        });
     }
 
     var renderCompanyFundaChart = function (tsCode, startDate, endDate) {
@@ -418,7 +651,7 @@ $(function () {
                             pushFunda2MixChart(data, obj, $(obj).attr("name"));
                         }
                     } else {
-                        pushFunda2MixChart(data, obj, $(obj).attr("name"));
+                        pushFunda2MixChart(data, obj);
                     }
                 });
                 // renderPETTMChart(data.pe_ttm);
@@ -443,17 +676,22 @@ $(function () {
     }
 
     var pushFunda2MixChart = function (jsonData, fundaType) {
-        var chartData = jsonToChartFormat(jsonData, fundaType);
+        var chartData = jsonToChartFormat(jsonData, fundaType.split(":")[0]);
         var peQuantile = getQuantile(chartData);
         // var chartCanvas = echarts.init(canvas);
 
         //动态添加series
         mixChartOption.series.push({
-            name: fundaType,
+            name: fundaType.split(":")[0],
             type: 'line',
+            xAxisIndex: parseInt(fundaType.split(":")[1]),
+            yAxisIndex: parseInt(fundaType.split(":")[1]),
             smooth: true,
             showSymbol: false,
             data: chartData.value,
+            itemStyle: {
+                color: 'rgb(118, 118, 118)'
+            },
             markPoint: {
                 data: [
                     { type: 'max', name: '最大值' },
@@ -463,6 +701,8 @@ $(function () {
         },
         {
             name: fundaType + '低位',
+            xAxisIndex: parseInt(fundaType.split(":")[1]),
+            yAxisIndex: parseInt(fundaType.split(":")[1]),
             type: 'line',
             // smooth: true,
             showSymbol: false,
@@ -474,6 +714,8 @@ $(function () {
         {
             name: fundaType + '中位',
             type: 'line',
+            xAxisIndex: parseInt(fundaType.split(":")[1]),
+            yAxisIndex: parseInt(fundaType.split(":")[1]),
             smooth: true,
             showSymbol: false,
             itemStyle: {
@@ -484,6 +726,8 @@ $(function () {
         {
             name: fundaType + '高位',
             type: 'line',
+            xAxisIndex: parseInt(fundaType.split(":")[1]),
+            yAxisIndex: parseInt(fundaType.split(":")[1]),
             smooth: true,
             showSymbol: false,
             itemStyle: {
@@ -494,8 +738,8 @@ $(function () {
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(mixChartOption);
-
+        btMixChart.setOption(mixChartOption, true);
+        /*    
         mixChartOption = {
             tooltip: {
                 trigger: 'axis',
@@ -603,6 +847,7 @@ $(function () {
                 }
             ]
         };
+        */
 
         // chartCanvas.setOption(mixChartOption);
     }
@@ -610,7 +855,6 @@ $(function () {
     var renderChart = function () {
         renderBTMixChart(tsCode);
         // renderIndicChart(tsCode);
-        renderCompanyFundaChart(tsCode, startDate, endDate);
         // if (tsCode == "000001.SH" || tsCode == "399001.SZ" || tsCode == "399006.SZ") {
         //     $("#psChart").addClass("d-none");
         //     $("#psTTMChart").addClass("d-none");
@@ -878,10 +1122,18 @@ $(function () {
 
     var buildTAIndicator = function () {
         var count = 0;
+        var taIndicatorSet = new Set();
+        for(let b of taBIndicatorSet){
+            taIndicatorSet.add(b);
+        }
+        for(let s of taSIndicatorSet){
+            taIndicatorSet.add(s);
+        }
+
         taIndicator = "";
         taIndicator += "{";
         for (let indic of taIndicatorSet) {
-            var techIndic = indic.split("_")[0];
+            // var techIndic = indic.split("_")[0];
             var techIndicParam = indic.split("_")[1];
             taIndicator += "'" + indic + "':" + techIndicParam;
             count++;
@@ -959,7 +1211,7 @@ $(function () {
         sSystem = "";
         sSystem += "{'attr':{'level':0},'condition':{";
 
-        $.each($("#sStrategyList ul li"), function (index, value) {
+        $.each($("#sStrategyList").children(), function (index, value) {
             var sCond = $(value).children()[2].value;
             if (sCond.split(":")[0] == "0") {
                 sCrossover += "'" + index.toString() + "':'" + sCond.split(":")[1] + "',";
@@ -969,7 +1221,7 @@ $(function () {
                 sThreshold += "'" + index.toString() + "':'" + sCond.split(":")[1] + "',";
             }
 
-            if (index == $("#sStrategyList ul li").length - 1) {
+            if (index == $("#sStrategyList").children().length - 1) {
                 sCrossover += "},";
                 sPairComp += "},";
                 sThreshold += "}";
@@ -992,7 +1244,7 @@ $(function () {
             success: function (data) {
                 // console.log(data)
                 // equityJsonData = data;
-                // pushEquityData(equityJsonData, "净值", 2, "line");
+                pushEquityData(data);
             }
         });
     }
@@ -1008,24 +1260,25 @@ $(function () {
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "0:" + $("#hiddenBCond").val() + "(self." + $("#hiddenBTI1").val() + "," + "self." + $("#hiddenBTI2").val() + ")";
 
-            taIndicatorSet.add($("#hiddenBTI1").val())
-            taIndicatorSet.add($("#hiddenBTI2").val())
+            taBIndicatorSet.add($("#hiddenBTI1").val())
+            taBIndicatorSet.add($("#hiddenBTI2").val())
         } else if ($("#hiddenStrategyCategory").val() == "1") {//tech indicator pair compare
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "1:self." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + "self." + $("#hiddenBTI2").val() + "[-1]";
 
-            taIndicatorSet.add($("#hiddenBTI1").val())
-            taIndicatorSet.add($("#hiddenBTI2").val())
+            taBIndicatorSet.add($("#hiddenBTI1").val())
+            taBIndicatorSet.add($("#hiddenBTI2").val())
         } else if ($("#hiddenStrategyCategory").val() == "2") {//tech indicator value threshold
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "2:self." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + $("#hiddenBTI2").val();
 
-            taIndicatorSet.add($("#hiddenBTI1").val())
+            taBIndicatorSet.add($("#hiddenBTI1").val())
         } else if ($("#hiddenStrategyCategory").val() == "3") {//OHLC - close ta compare
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "3:self.data." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + "self." + $("#hiddenBTI2").val() + "[-1]";
 
-            taIndicatorSet.add($("#hiddenBTI1").val())
+            // 收盘价不需要加到TA set
+            // taIndicatorSet.add($("#hiddenBTI1").val())
         }
 
         if (!bStrategyTextSet.has(bStrategyText)) {
@@ -1037,9 +1290,13 @@ $(function () {
                 "</div>";
 
             $("#bStrategyList").append(newItem);
-            $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount") }, function (event) {
+            $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount"), indic1: $("#hiddenBTI1").val(), indic2: $("#hiddenBTI2").val()}, function (event) {
                 bStrategyCount--;
                 bStrategyTextSet.delete(bStrategyText);
+                if(event.data.indic1!="")
+                    taBIndicatorSet.delete(event.data.indic1);
+                if(event.data.indic2!="")
+                    taBIndicatorSet.delete(event.data.indic2);
                 event.data.holder.text(bStrategyCount.toString());
                 $(this).parent().remove();
             });
@@ -1063,24 +1320,24 @@ $(function () {
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "0:" + $("#hiddenSCond").val() + "(self." + $("#hiddenSTI2").val() + "," + "self." + $("#hiddenSTI1").val() + ")";
 
-            taIndicatorSet.add($("#hiddenSTI1").val())
-            taIndicatorSet.add($("#hiddenSTI2").val())
+            taSIndicatorSet.add($("#hiddenSTI1").val())
+            taSIndicatorSet.add($("#hiddenSTI2").val())
         } else if ($("#hiddenSStrategyCategory").val() == "1") {//tech indicator pair compare
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "1:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
 
-            taIndicatorSet.add($("#hiddenSTI1").val())
-            taIndicatorSet.add($("#hiddenSTI2").val())
+            taSIndicatorSet.add($("#hiddenSTI1").val())
+            taSIndicatorSet.add($("#hiddenSTI2").val())
         } else if ($("#hiddenSStrategyCategory").val() == "2") {//tech indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "2:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + $("#hiddenSTI2").val();
 
-            taIndicatorSet.add($("#hiddenSTI1").val())
+            taSIndicatorSet.add($("#hiddenSTI1").val())
         } else if ($("#hiddenSStrategyCategory").val() == "3") {//tech indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "2:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
 
-            taIndicatorSet.add($("#hiddenSTI1").val())
+            taSIndicatorSet.add($("#hiddenSTI1").val())
         }
 
         if (!sStrategyTextSet.has(sStrategyText)) {
@@ -1093,9 +1350,13 @@ $(function () {
                 "</div>";
             $("#sStrategyList").append(newItem);
             // $("#sStrategyList div a").on("click", {count: sStrategyCount, holder: $("#sStrategyCount")}, removeElement)
-            $("#sRM" + sStrategyCount).on("click", { strategyText: sStrategyText, holder: $("#sStrategyCount") }, function (event) {
+            $("#sRM" + sStrategyCount).on("click", { strategyText: sStrategyText, holder: $("#sStrategyCount"), indic1: $("#hiddenSTI1").val(), indic2: $("#hiddenSTI2").val() }, function (event) {
                 sStrategyCount--;
                 sStrategyTextSet.delete(sStrategyText);
+                if(event.data.indic1!="")
+                    taSIndicatorSet.delete(event.data.indic1);
+                if(event.data.indic2!="")
+                    taSIndicatorSet.delete(event.data.indic2);
                 event.data.holder.text(sStrategyCount.toString());
                 $(this).parent().remove();
             });
@@ -1220,10 +1481,6 @@ $(function () {
         // alert(event.data.a);
         $(event.data.txtHolder).text($(this).text());
         $(event.data.vHolder).val($(this).attr("value"));
-    }
-
-    var removeElement = function (event) {
-        event.data.count--;
     }
 
     var strategyValueInputOnchange = function (event) {

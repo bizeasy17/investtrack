@@ -91,6 +91,8 @@ class StockHistoryOHLC(BaseModel):
         _('交易量'), blank=True, null=True)
     amount = models.FloatField(
         _('金额'), blank=True, null=True)
+    equity = models.FloatField(
+        _('资产净值'), blank=True, null=True, default=1.0)
 
 class OHLCSerializer(serializers.ModelSerializer):
 
@@ -102,10 +104,88 @@ class OHLCSerializer(serializers.ModelSerializer):
             'l': instance.low,
             'c': instance.close,
             'v': instance.vol,
+            'e': instance.equity,
         }
 
     class Meta:
         model = StockHistoryOHLC
+
+class RSI(BaseModel):
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    rsi_1 = models.FloatField(
+        _('RSI_1'), blank=True, null=True)
+    rsi_2 = models.FloatField(
+        _('RSI_2'), blank=True, null=True)
+    rsi_3 = models.FloatField(
+        _('RSI_3'), blank=True, null=True)
+
+
+class RSISerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'rsi_1': instance.rsi_1,
+            'rsi_2': instance.rsi_2,
+            'rsi_3': instance.rsi_3,
+        }
+
+    class Meta:
+        model = RSI
+
+class KDJ(BaseModel):
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    k = models.FloatField(
+        _('K'), blank=True, null=True)
+    d = models.FloatField(
+        _('D'), blank=True, null=True)
+    j = models.FloatField(
+        _('J'), blank=True, null=True)
+
+
+class KDJSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'k': instance.k,
+            'd': instance.d,
+            'j': instance.j,
+        }
+
+    class Meta:
+        model = KDJ
+
+class MACD(BaseModel):
+    ts_code = models.CharField(
+        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
+    trade_date = models.DateField(
+        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
+    # new fields
+    diff = models.FloatField(
+        _('diff'), blank=True, null=True)
+    dea = models.FloatField(
+        _('dea'), blank=True, null=True)
+    bar = models.FloatField(
+        _('bar'), blank=True, null=True)
+
+class MACDSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        return {
+            'diff': instance.diff,
+            'dea': instance.dea,
+            'bar': instance.bar,
+        }
+
+    class Meta:
+        model = MACD
 
 
 class EquitySerializer(serializers.ModelSerializer):

@@ -20,6 +20,12 @@ urlpatterns = [
          views.StockCloseHistoryList.as_view(), name='close_history'),  # ??
     path('ohlc/<ts_code>/<freq>/<int:period>/',
          views.OHLCList.as_view(), name='ohlc'),  # ??
+    path('rsi/<ts_code>/<freq>/<int:period>/',
+         views.get_rsi),  # ??
+    path('kdj/<ts_code>/<freq>/<int:period>/',
+         views.get_kdj),  # ??
+    path('macd/<ts_code>/<freq>/<int:period>/',
+         views.get_macd),  # ??
     path('stock-indic/<ts_code>/<freq>/<int:period>/',
          views.StockRSVPlusList.as_view(), name='stock_indicator'),  # ??
     path('daily-basic-history/<ts_code>/<start_date>/<end_date>/',

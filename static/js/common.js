@@ -87,7 +87,7 @@ var jsonToChartFormat = function (jsonData, dataType) {
 }
 
 var jsonToChartOHLCFormat = function (jsonData) {
-    var chartFormat = { 'value': [], 'label': [], 'volume': [] };
+    var chartFormat = { 'value': [], 'label': [], 'volume': [], 'equity': [] };
     // var ohlc = [];
     $(jsonData).each(function (idx, obj) {
         // ohlc.push(obj['o']);
@@ -97,7 +97,87 @@ var jsonToChartOHLCFormat = function (jsonData) {
         chartFormat.value.push([obj['o'],obj['c'],obj['l'],obj['h']]);
         chartFormat.label.push(obj['d']);
         chartFormat.volume.push(obj['v']);
+        chartFormat.equity.push(obj['e']);
+
         // ohlc.splice(0);
+    });
+    return chartFormat;
+}
+
+var jsonToChartRSIFormat = function (jsonData) {
+    var chartFormat = { 'rsi_6': [], 'label': [], 'rsi_12': [], 'rsi_24': [] };
+    // var ohlc = []
+    $(jsonData).each(function (idx, obj) {
+        $(obj.rsi_6).each(function(idx, o){
+            // for(var key in o) {
+            //     chartFormat.rsi_6.push(o[key]);
+            //  }
+            $.each(o, function(k){
+                chartFormat.rsi_6.push(o[k]);
+            });
+        });
+    
+        $(obj.rsi_12).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.rsi_12.push(o[k]);
+            });
+        });
+    
+        $(obj.rsi_24).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.rsi_24.push(o[k]);
+            });
+        });
+    });
+    return chartFormat;
+}
+
+var jsonToChartKDJFormat = function (jsonData) {
+    var chartFormat = { 'k': [], 'label': [], 'd': [], 'j': [] };
+    // var ohlc = []
+    $(jsonData).each(function (idx, obj) {
+        $(obj.k).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.k.push(o[k]);
+            });
+        });
+    
+        $(obj.d).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.d.push(o[k]);
+            });
+        });
+    
+        $(obj.j).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.j.push(o[k]);
+            });
+        });
+    });
+    return chartFormat;
+}
+
+var jsonToChartMACDFormat = function (jsonData) {
+    var chartFormat = { 'dif': [], 'label': [], 'dea': [], 'bar': [] };
+    // var ohlc = []
+    $(jsonData).each(function (idx, obj) {
+        $(obj.dif).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.dif.push(o[k]);
+            });
+        });
+    
+        $(obj.dea).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.dea.push(o[k]);
+            });
+        });
+    
+        $(obj.bar).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.bar.push(o[k]);
+            });
+        });
     });
     return chartFormat;
 }

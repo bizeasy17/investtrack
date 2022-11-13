@@ -7,10 +7,11 @@ from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 # from backtesting.test import SMA
 from backtesting.lib import SignalStrategy, TrailingStrategy
-
+import json
 import numpy as np
 import pandas as pd
 import tushare as ts
+import talib as ta
 from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat, StockHistory,
                              StockHistoryDaily, StockHistoryIndicators, StockIndexHistory)
 from analysis.utils import get_ip
@@ -174,7 +175,7 @@ class SystemBacktestingList(APIView):
             eq_list = []
             equity = bt_results.loc['_equity_curve']
             for index, row in equity.iterrows():
-                q = Equity(date=index, equity=row['Equity'], drawdownpct=row['DrawdownPct'],
+                q = Equity(date=index, equity=row['Equity']/float(cash), drawdownpct=row['DrawdownPct'],
                            drawdownduration=row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT else None)
                 eq_list.append(q)
             # print(equity)
@@ -217,6 +218,91 @@ class OHLCList(APIView):
             print(err)
             raise HttpResponseServerError
 
+
+def get_rsi(request, ts_code, freq, period=3):
+    try:
+        ohlc_list = []
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_rsi = pd.DataFrame()
+        df_rsi['rsi_6'] = ta.RSI(data_df['Close'], timeperiod=6)
+        df_rsi['rsi_12'] = ta.RSI(data_df['Close'], timeperiod=12)
+        df_rsi['rsi_24'] = ta.RSI(data_df['Close'], timeperiod=24)
+        
+        rsi_list = []
+        # rsi_list.append({
+        #     'rsi_6': df_rsi['rsi_6'],
+        #     'rsi_12': df_rsi['rsi_12'],
+        #     'rsi_24': df_rsi['rsi_24'],
+        # })
+        # parsed = json.load(df_rsi.to_json())
+
+        # return HttpResponse(df_rsi.to_json(), 200) #JsonResponse({'results': rsi_list}, safe=False)
+        return JsonResponse(df_rsi.to_json(), safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_kdj(request, ts_code, freq, period=3):
+    try:
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_kdj = pd.DataFrame()
+        df_kdj['k'], df_kdj['d'] = ta.STOCH(data_df['High'], 
+                        data_df['Low'],
+                        data_df['Close'],
+                        fastk_period=9,
+                        slowk_period=3,
+                        slowk_matype=0,
+                        slowd_period=3,
+                        slowd_matype=0)
+        df_kdj['j'] = list(map(lambda x,y: 3*x-2*y,df_kdj['k'],df_kdj['d']))
+        return JsonResponse(df_kdj.to_json(), safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+
+def get_macd(request, ts_code, freq, period=3):
+    try:
+        ohlc_list = []
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_macd = pd.DataFrame()
+        df_macd['dif'], df_macd['dea'], df_macd['bar'] = ta.MACD(data_df['Close'].values, fastperiod=12, slowperiod=26, signalperiod=9)
+        # dif[np.isnan(dif)], dea[np.isnan(dea)], bar[np.isnan(bar)] = 0, 0, 0        
+        
+        rsi_list = []
+        # rsi_list.append({
+        #     'rsi_6': df_rsi['rsi_6'],
+        #     'rsi_12': df_rsi['rsi_12'],
+        #     'rsi_24': df_rsi['rsi_24'],
+        # })
+        # parsed = json.load(df_rsi.to_json())
+
+        # return HttpResponse(df_rsi.to_json(), 200) #JsonResponse({'results': rsi_list}, safe=False)
+        return JsonResponse(df_macd.to_json(), safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
 
 def realtime_quotes(request, symbols):
     '''
