@@ -3,6 +3,8 @@ $(function () {
     const upColor = '#ec0000';
     const downColor = '#00da3c';
 
+    let ohlcChartData = "";
+
     let taBIndicatorSet = new Set();
     let taSIndicatorSet = new Set();
     const bStrategyTextSet = new Set();
@@ -21,6 +23,7 @@ $(function () {
     var freq = "D";
     // <tech_indicator>/<indicator_param>/<strategy_category>/<cash>/<commission>/<leverage>/<freq>/</freq>
     var tsCode;
+    var stockName;
 
     var INDIC_CROSSOVER = "0";
     var INDIC_PAIR_COMP = "1";
@@ -53,30 +56,30 @@ $(function () {
     var indicatorParamOHLC = ["收盘价,Close"];
     var smaParam = ["10", "20", "60", "120", "200"];
     var emaParam = ["10", "20", "60", "120", "200"];
+    var bbiParam = ["BBI"];
     var bollParam = ["MID", "UPPER", "LOWER"];
+
     var kdjParam = ["K", "D", "J"];
     var macdParam = ["MACD", "DIFF", "DEA"];
     var rsiParam = ["6", "12", "24"];
-    var bbiParam = ["BBI多空指标"];
+
+    var typeAParam = ["SMA","EMA","RSI","BBI"];
+    var typeBParam = ["KDJ","MACD","BOLL"];
+
     var indicaMap = new Map();
 
 
     // var basicCharts
 
     var initParam = function () {
+        // global param
         tsCode = $("#hiddenTsCode").val();
-        $(".stock_name").text($("#hiddenTsCode").attr("name")  + " [" + $("#hiddenTsCode").val() + "]");
-        stockHistPeriod = $('input:radio[name="stockHistPeriod"]:checked').val();
+        stockName = $("#hiddenTsCode").attr("name");
+
         capital = $("#capital").val();
         stoploss = (100 - parseInt($("#stoploss").val()))/100;
 
-        var unit = $('input:radio[name="commission-unit"]:checked').val();
-        var commissionOpt = $('input:radio[name="commission"]:checked').val();
-        if (unit == "tth") {
-            commission = parseInt(commissionOpt) / 10000;
-        } else {
-            commission = parseInt(commissionOpt) / 1000;
-        }
+        stockHistPeriod = $('input:radio[name="period"]:checked').val();
         tradeOnClose = $('input:radio[name="trade-on-close"]:checked').val();
         restoration = $('input:radio[name="restoration"]:checked').val();
         freq = $('input:radio[name="freq"]:checked').val();
@@ -86,6 +89,7 @@ $(function () {
 
         fundaChart = ["pe:6","pe_ttm:7","pb:8","ps:9","ps_ttm:10","turnover_rate:11","volume_ratio:12"];
         btMixChart = echarts.init(document.getElementById('btMixChart'));
+
         // ohlcChart = echarts.init(document.getElementById('ohlcChart'));
         // indicChart = echarts.init(document.getElementById('indicChart'));
         // fundaChart = echarts.init(document.getElementById('top10HoldersChart'));
@@ -97,8 +101,327 @@ $(function () {
         indicaMap.set("RSI", rsiParam);
         indicaMap.set("BBI", bbiParam);
 
+        // local
+        var unit = $('input:radio[name="commission-unit"]:checked').val();
+        var commissionOpt = $('input:radio[name="commission"]:checked').val();
+
+        if (unit == "tth") {
+            commission = parseInt(commissionOpt) / 10000;
+        } else {
+            commission = parseInt(commissionOpt) / 1000;
+        }
+
         setupStrategyCategories("#bStrategyCategory");
         setupStrategyCategories("#sStrategyCategory");
+
+        // stockname display global
+        $(".stock_name").text($("#hiddenTsCode").attr("name")  + " [" + $("#hiddenTsCode").val() + "]");
+    }
+
+    var initializeBTMixChart = function (tsCode) {
+        // 初始化OHLC，MA，VOL，Equity，MACD，KDJ，RSI，Fundamental Chart Data
+        var zoomMin = 0;
+        var zoomMax = 100;
+        $.ajax({
+            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/?format=json",
+            success: function (data) {
+                var chartData = jsonToChartOHLCFormat(data);
+                var maChartData = jsonToChartMAFormat(data);
+                // global OHLC数据
+                ohlcChartData = data;
+                ohlcCount = chartData.label.length;
+
+                option = initMixChartOption();
+                btMixChart.setOption(option);
+
+                initOHLCChart(ohlcChartData);
+                initVolumeChart();
+                initEquityChart();
+                initDefaultCascadeTechInidicator(maChartData);
+                initKDJChart();
+                initMACDChart();
+                initRSIChart();
+            },
+            complete: function (request, status) {
+                renderCompanyFundaChart(tsCode, startDate, endDate);
+                renderRSIChart(tsCode);
+                renderKDJChart(tsCode);
+                renderMACDChart(tsCode);
+            }
+        });
+    }
+
+    var initMixChartOption = function() {
+        mixChartOption = {
+            animation: true,
+            legend: {
+                top: 5,
+                data: ['MA10','MA20','MA60','MA120','MA200']
+            },
+            // tooltip: {
+            //     trigger: 'axis',
+            //     axisPointer: {
+            //         type: 'cross'
+            //     },
+            //     borderWidth: 1,
+            //     borderColor: '#ccc',
+            //     padding: 10,
+            //     textStyle: {
+            //         color: '#000'
+            //     },
+            //     position: function (pos, params, el, elRect, size) {
+            //         const obj = {
+            //             top: 10
+            //         };
+            //         obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+            //         return obj;
+            //     }
+            //     // extraCssText: 'width: 170px'
+            // },
+            axisPointer: {
+                link: [
+                    {
+                        xAxisIndex: 'all'
+                    }
+                ],
+                label: {
+                    backgroundColor: '#777'
+                }
+            },
+            // toolbox: {
+            //     feature: {
+            //         dataZoom: {
+            //             yAxisIndex: false
+            //         },
+            //         brush: {
+            //             type: ['lineX', 'clear']
+            //         }
+            //     }
+            // },
+            brush: {
+                xAxisIndex: 'all',
+                brushLink: 'all',
+                outOfBrush: {
+                    colorAlpha: 0.1
+                }
+            },
+            // visualMap: {
+            //     show: false,
+            //     seriesIndex: 5,
+            //     dimension: 2,
+            //     pieces: [
+            //         {
+            //             value: 1,
+            //             color: downColor
+            //         },
+            //         {
+            //             value: -1,
+            //             color: upColor
+            //         }
+            //     ]
+            // },
+            grid: [
+                //OHLC grid index 0
+                {left: '4%',right: '3%',top: "2%",height: '12%'},
+                // reserved for equity + OHLC grid index 1
+                // {left: '4%',right: '1%',top: "2%",height: '13%'},
+                {left: '4%',right: '3%',top: "18%",height: '4%'},
+
+                //OHLC grid index 2, volume成交量
+                {left: '4%',right: '3%',top: '24%',height: '4%'},
+                
+                //OHLC grid index 3, RSI
+                {left: '4%',right: '3%',top: '30%',height: '4%'},
+                //OHLC grid index 4, MACD
+                {left: '4%',right: '3%',top: '37%',height: '4%'},
+                //OHLC grid index 5, KDJ
+                {left: '4%',right: '3%',top: '44%',height: '4%'},
+
+                //Fundamental grid index 5, PE
+                {left: '4%', top: '52%',height:'7%',width: '42%'},
+                //Fundamental grid index 6, PE TTM
+                {right: '3%',top: '52%',height:'7%',width: '42%'},
+
+                //Fundamental grid index 7, PB
+                {left: '4%', right: '3%',top: '63%',height: '7%'},
+
+                //Fundamental grid index 8, PS
+                {left: '4%',top: '76%',height:'7%',width: '42%'},
+                //Fundamental grid index 9, PS TTM
+                {right: '3%',top: '76%',height:'7%',width: '42%'},
+                
+                //Fundamental grid index 10, Turnover ratio
+                {left: '4%',top: '89%',height: '7%', width: '42%'},
+                //Fundamental grid index 11, Vol ratio
+                {right: '3%',top: '89%',height: '7%', width: '42%'}
+            ],
+            xAxis: [
+                {gridIndex: 0, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcXAxis"}, // OHLC
+                {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax', id: 'equityAxis'}, // Equity资产净值
+                {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
+                
+                {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // RSI
+                {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // MACD
+                {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // KDJ
+
+                {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE
+                {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE TTM
+                {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PB
+                {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS
+                {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS TTM
+                {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // TO 换手率 
+                {gridIndex: 12, data: chartData.label, min: 'dataMin', max: 'dataMax'} // VO 量比 
+
+                // {
+                //     type: 'category',
+                //     gridIndex: 1,
+                //     data: chartData.label,
+                //     boundaryGap: false,
+                //     axisLine: { onZero: false },
+                //     axisTick: { show: false },                                                                                
+                //     splitLine: { show: false },
+                //     axisLabel: { show: false },
+                //     min: 'dataMin',
+                //     max: 'dataMax'
+                // }
+            ],
+            yAxis: [
+                {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax'}, // OHLC
+                {gridIndex: 1, scale: true, min: 0, name: '资产净值', nameLocation: 'end',}, // OHLC
+                {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '成交量', nameLocation: 'middle', axisLine: { show: false, onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
+                
+                {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: 'RSI(6,12,24)', nameLocation: 'end'}, // RSI
+                {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end'}, // MACD
+                {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end'}, // KDJ
+
+                {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率PE', nameLocation: 'end'}, // PE
+                {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率PE(TTM)', nameLocation: 'end'}, // PE TTM
+                {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率PB', nameLocation: 'end'}, // PB
+                {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率PS', nameLocation: 'end'}, // PS
+                {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率PS(TTM)', nameLocation: 'end'}, // PS TTM
+                {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
+                {gridIndex: 12, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
+
+                // { scale: true,
+                //     splitArea: {
+                //         show: true
+                //     }
+                // },
+                // {
+                //     scale: true,
+                //     gridIndex: 1,
+                //     splitNumber: 2,
+                //     axisLabel: { show: false },
+                //     axisLine: { show: false },
+                //     axisTick: { show: false },
+                //     splitLine: { show: false }
+                // }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: [0,1],
+                    start: 0,
+                    end: 100
+                }
+                // ,
+                // {
+                //     show: true,
+                //     xAxisIndex: [0, 1],
+                //     type: 'slider',
+                //     top: '85%',
+                //     start: 0,
+                //     end: 100
+                // }
+            ],
+            series: [
+                {
+                    id: "ohlc",
+                    name: 'k线',
+                    type: 'candlestick',
+                    data: chartData.value,
+                    itemStyle: {
+                        color: upColor,
+                        color0: downColor,
+                        borderColor: undefined,
+                        borderColor0: undefined
+                    }
+                },
+                {
+                    id: "indic1",
+                    // name: 'MA10',
+                    type: 'line',
+                    data: calculateMA(10, chartData),
+                    showSymbol: false,
+                    smooth: true,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic2",
+                    // name: 'MA20',
+                    type: 'line',
+                    data: calculateMA(20, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic3",
+                    // name: 'MA60',
+                    type: 'line',
+                    data: calculateMA(60, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic4",
+                    // name: 'MA120',
+                    type: 'line',
+                    data: calculateMA(120, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic5",
+                    // name: 'MA200',
+                    type: 'line',
+                    data: calculateMA(200, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "vol",
+                    name: 'Volume',
+                    type: 'bar',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    data: chartData.volume
+                },
+                {
+                    id: 'equity',
+                    name: '净值',
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    data: chartData.equity
+                }
+            ]
+        };
     }
 
     //  http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
@@ -124,284 +447,63 @@ $(function () {
         return result;
     }
 
-    var renderBTMixChart = function (tsCode) {
-        var zoomMin = 0;
-        var zoomMax = 100;
+    
+
+    var pushOHLC2MixChart = function (chartData) {
+        // var chartData = jsonToChartOHLCFormat(jsonData);
+
+        //动态添加series
+        var ohlcChartOption = {
+            xAxis: [
+                {id: "ohlcXAxis", data: chartData.label}, // OHLC
+            ],
+            series:[
+                {
+                    id: "ohlc",
+                    // name: 'k线',
+                    // type: 'candlestick',
+                    data: chartData.value,
+                    // itemStyle: {
+                    //     color: upColor,
+                    //     color0: downColor,
+                    //     borderColor: undefined,
+                    //     borderColor0: undefined
+                    // }
+                },
+                {
+                    id: 'vol',
+                    // type: 'bar',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    data: chartData.volume
+                }
+            ]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(ohlcChartOption);
+    }
+
+    var renderOHLCChart = function(tsCode){
+        
         $.ajax({
             url: stockmarketEndpoint + "ohlc/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/?format=json",
             success: function (data) {
+                ohlcChartData = data;
                 var chartData = jsonToChartOHLCFormat(data);
-                ohlcCount = chartData.label.length;
-                mixChartOption = {
-                    animation: true,
-                    legend: {
-                        top: 5,
-                        data: ['MA10','MA20','MA60','MA120','MA200']
-                    },
-                    // tooltip: {
-                    //     trigger: 'axis',
-                    //     axisPointer: {
-                    //         type: 'cross'
-                    //     },
-                    //     borderWidth: 1,
-                    //     borderColor: '#ccc',
-                    //     padding: 10,
-                    //     textStyle: {
-                    //         color: '#000'
-                    //     },
-                    //     position: function (pos, params, el, elRect, size) {
-                    //         const obj = {
-                    //             top: 10
-                    //         };
-                    //         obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
-                    //         return obj;
-                    //     }
-                    //     // extraCssText: 'width: 170px'
-                    // },
-                    axisPointer: {
-                        link: [
-                            {
-                                xAxisIndex: 'all'
-                            }
-                        ],
-                        label: {
-                            backgroundColor: '#777'
-                        }
-                    },
-                    // toolbox: {
-                    //     feature: {
-                    //         dataZoom: {
-                    //             yAxisIndex: false
-                    //         },
-                    //         brush: {
-                    //             type: ['lineX', 'clear']
-                    //         }
-                    //     }
-                    // },
-                    brush: {
-                        xAxisIndex: 'all',
-                        brushLink: 'all',
-                        outOfBrush: {
-                            colorAlpha: 0.1
-                        }
-                    },
-                    // visualMap: {
-                    //     show: false,
-                    //     seriesIndex: 5,
-                    //     dimension: 2,
-                    //     pieces: [
-                    //         {
-                    //             value: 1,
-                    //             color: downColor
-                    //         },
-                    //         {
-                    //             value: -1,
-                    //             color: upColor
-                    //         }
-                    //     ]
-                    // },
-                    grid: [
-                        //OHLC grid index 0
-                        {left: '4%',right: '3%',top: "2%",height: '12%'},
-                        // reserved for equity + OHLC grid index 1
-                        // {left: '4%',right: '1%',top: "2%",height: '13%'},
-                        {left: '4%',right: '3%',top: "18%",height: '4%'},
-
-                        //OHLC grid index 2, volume成交量
-                        {left: '4%',right: '3%',top: '24%',height: '4%'},
-                        
-                        //OHLC grid index 3, RSI
-                        {left: '4%',right: '3%',top: '30%',height: '4%'},
-                        //OHLC grid index 4, MACD
-                        {left: '4%',right: '3%',top: '37%',height: '4%'},
-                        //OHLC grid index 5, KDJ
-                        {left: '4%',right: '3%',top: '44%',height: '4%'},
-
-                        //Fundamental grid index 5, PE
-                        {left: '4%', top: '52%',height:'7%',width: '42%'},
-                        //Fundamental grid index 6, PE TTM
-                        {right: '3%',top: '52%',height:'7%',width: '42%'},
-
-                        //Fundamental grid index 7, PB
-                        {left: '4%', right: '3%',top: '63%',height: '7%'},
-
-                        //Fundamental grid index 8, PS
-                        {left: '4%',top: '76%',height:'7%',width: '42%'},
-                        //Fundamental grid index 9, PS TTM
-                        {right: '3%',top: '76%',height:'7%',width: '42%'},
-                        
-                        //Fundamental grid index 10, Turnover ratio
-                        {left: '4%',top: '89%',height: '7%', width: '42%'},
-                        //Fundamental grid index 11, Vol ratio
-                        {right: '3%',top: '89%',height: '7%', width: '42%'}
-                    ],
-                    xAxis: [
-                        {gridIndex: 0, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }}, // OHLC
-                        {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax', id: 'equityAxis'}, // Equity资产净值
-                        {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
-                        
-                        {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // RSI
-                        {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // MACD
-                        {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // KDJ
-
-                        {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE
-                        {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE TTM
-                        {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PB
-                        {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS
-                        {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS TTM
-                        {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // TO 换手率 
-                        {gridIndex: 12, data: chartData.label, min: 'dataMin', max: 'dataMax'} // VO 量比 
-
-                        // {
-                        //     type: 'category',
-                        //     gridIndex: 1,
-                        //     data: chartData.label,
-                        //     boundaryGap: false,
-                        //     axisLine: { onZero: false },
-                        //     axisTick: { show: false },                                                                                
-                        //     splitLine: { show: false },
-                        //     axisLabel: { show: false },
-                        //     min: 'dataMin',
-                        //     max: 'dataMax'
-                        // }
-                    ],
-                    yAxis: [
-                        {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax'}, // OHLC
-                        {gridIndex: 1, scale: true, min: 0, name: '资产净值', nameLocation: 'end',}, // OHLC
-                        {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '成交量', nameLocation: 'middle', axisLine: { show: false, onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
-                        
-                        {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: 'RSI(6,12,24)', nameLocation: 'end'}, // RSI
-                        {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end'}, // MACD
-                        {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end'}, // KDJ
-
-                        {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率PE', nameLocation: 'end'}, // PE
-                        {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率PE(TTM)', nameLocation: 'end'}, // PE TTM
-                        {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率PB', nameLocation: 'end'}, // PB
-                        {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率PS', nameLocation: 'end'}, // PS
-                        {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率PS(TTM)', nameLocation: 'end'}, // PS TTM
-                        {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
-                        {gridIndex: 12, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
-
-                        // { scale: true,
-                        //     splitArea: {
-                        //         show: true
-                        //     }
-                        // },
-                        // {
-                        //     scale: true,
-                        //     gridIndex: 1,
-                        //     splitNumber: 2,
-                        //     axisLabel: { show: false },
-                        //     axisLine: { show: false },
-                        //     axisTick: { show: false },
-                        //     splitLine: { show: false }
-                        // }
-                    ],
-                    dataZoom: [
-                        {
-                            type: 'inside',
-                            xAxisIndex: [0,1],
-                            start: 0,
-                            end: 100
-                        }
-                        // ,
-                        // {
-                        //     show: true,
-                        //     xAxisIndex: [0, 1],
-                        //     type: 'slider',
-                        //     top: '85%',
-                        //     start: 0,
-                        //     end: 100
-                        // }
-                    ],
-                    series: [
-                        {
-                            name: 'k线',
-                            type: 'candlestick',
-                            data: chartData.value,
-                            itemStyle: {
-                                color: upColor,
-                                color0: downColor,
-                                borderColor: undefined,
-                                borderColor0: undefined
-                            }
-                        },
-                        {
-                            name: 'MA10',
-                            type: 'line',
-                            data: calculateMA(10, chartData),
-                            showSymbol: false,
-                            smooth: true,
-                            lineStyle: {
-                                opacity: 0.5
-                            }
-                        },
-                        {
-                            name: 'MA20',
-                            type: 'line',
-                            data: calculateMA(20, chartData),
-                            smooth: true,
-                            showSymbol: false,
-                            lineStyle: {
-                                opacity: 0.5
-                            }
-                        },
-                        {
-                            name: 'MA60',
-                            type: 'line',
-                            data: calculateMA(60, chartData),
-                            smooth: true,
-                            showSymbol: false,
-                            lineStyle: {
-                                opacity: 0.5
-                            }
-                        },
-                        {
-                            name: 'MA120',
-                            type: 'line',
-                            data: calculateMA(120, chartData),
-                            smooth: true,
-                            showSymbol: false,
-                            lineStyle: {
-                                opacity: 0.5
-                            }
-                        },
-                        {
-                            name: 'MA200',
-                            type: 'line',
-                            data: calculateMA(200, chartData),
-                            smooth: true,
-                            showSymbol: false,
-                            lineStyle: {
-                                opacity: 0.5
-                            }
-                        },
-                        {
-                            name: 'Volume',
-                            type: 'bar',
-                            xAxisIndex: 2,
-                            yAxisIndex: 2,
-                            data: chartData.volume
-                        },
-                        {
-                            id: 'equity',
-                            name: '净值',
-                            type: 'line',
-                            smooth: true,
-                            showSymbol: false,
-                            xAxisIndex: 1,
-                            yAxisIndex: 1,
-                            data: chartData.equity
-                        }
-                    ]
-                };
-                btMixChart.setOption(mixChartOption, true);
+                // ohlcCount = chartData.label.length;
+                pushOHLC2MixChart(chartData);
             },
-            complete: function (request, status) {
-                renderCompanyFundaChart(tsCode, startDate, endDate);
-                renderRSIChart(tsCode);
-                renderKDJChart(tsCode);
-                renderMACDChart(tsCode);
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
             }
         });
     }
@@ -440,6 +542,295 @@ $(function () {
         }
 
         btMixChart.setOption(equitySerierOpt);
+    }
+
+    var pushMA2MixChart = function (jsonData) {
+        var chartData = jsonToChartMAFormat(jsonData);
+
+        //动态添加series
+        var emaChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'MA10',
+                type: 'line',
+                data: chartData.ema_10,
+                showSymbol: false,
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic2",
+                name: 'MA20',
+                type: 'line',
+                data: chartData.ema_20,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic3",
+                name: 'MA60',
+                type: 'line',
+                data: chartData.ema_60,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic4",
+                name: 'MA120',
+                type: 'line',
+                data: chartData.ema_120,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic5",
+                name: 'MA200',
+                type: 'line',
+                data: chartData.ema_200,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(emaChartOption);
+    }
+
+    var pushEMA2MixChart = function (jsonData) {
+        var chartData = jsonToChartEMAFormat(jsonData);
+
+        //动态添加series
+        var emaChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'EMA10',
+                type: 'line',
+                data: chartData.ema_10,
+                showSymbol: false,
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic2",
+                name: 'EMA20',
+                type: 'line',
+                data: chartData.ema_20,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic3",
+                name: 'EMA60',
+                type: 'line',
+                data: chartData.ema_60,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic4",
+                name: 'EMA120',
+                type: 'line',
+                data: chartData.ema_120,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic5",
+                name: 'EMA200',
+                type: 'line',
+                data: chartData.ema_200,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(emaChartOption);
+    }
+
+    var renderEMAChart = function(tsCode){
+        
+        $.ajax({
+            url: stockmarketEndpoint + "ema/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            success: function (data) {
+                pushEMA2MixChart($.parseJSON(data));
+            },
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
+            }
+        });
+    }
+
+    var pushBOLL2MixChart = function (jsonData) {
+        var chartData = jsonToChartBOLLFormat(jsonData);
+
+        //动态添加series
+        var bollChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'BOLL_HIGH',
+                type: 'line',
+                data: chartData.boll_high,
+                showSymbol: false,
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic2",
+                name: 'BOLL_MID',
+                type: 'line',
+                data: chartData.boll_mid,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic3",
+                name: 'BOLL_LOW',
+                type: 'line',
+                data: chartData.boll_low,
+                smooth: true,
+                showSymbol: false,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic4",
+                data: undefined,
+            },
+            {
+                id: "indic5",
+                data: undefined,
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(bollChartOption);
+    }
+
+    var renderBollChart = function(tsCode){
+        
+        $.ajax({
+            url: stockmarketEndpoint + "boll/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            success: function (data) {
+                pushBOLL2MixChart(data);
+            },
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
+            }
+        });
+    }
+
+    var pushBBI2MixChart = function (jsonData) {
+        var chartData = jsonToChartBBIFormat(jsonData);
+
+        //动态添加series
+        var bbiChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'BBI',
+                type: 'line',
+                data: chartData.bbi,
+                showSymbol: false,
+                smooth: true,
+                lineStyle: {
+                    opacity: 0.5
+                }
+            },
+            {
+                id: "indic2",
+                data: undefined,
+            },
+            {
+                id: "indic3",
+                data: undefined,
+            },
+            {
+                id: "indic4",
+                data: undefined,
+            },
+            {
+                id: "indic5",
+                data: undefined,
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(bbiChartOption);
+    }
+
+    var renderBBIChart = function(tsCode){
+        
+        $.ajax({
+            url: stockmarketEndpoint + "bbi/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            success: function (data) {
+                pushBBI2MixChart(data);
+            },
+            statusCode: {
+                403: function () {
+                    console.info(403);
+                },
+                404: function () {
+                    console.info(404);
+                },
+                500: function () {
+                    console.info(500);
+                }
+            }
+        });
     }
 
     var pushRSI2MixChart = function (jsonData) {
@@ -852,21 +1243,6 @@ $(function () {
         // chartCanvas.setOption(mixChartOption);
     }
 
-    var renderChart = function () {
-        renderBTMixChart(tsCode);
-        // renderIndicChart(tsCode);
-        // if (tsCode == "000001.SH" || tsCode == "399001.SZ" || tsCode == "399006.SZ") {
-        //     $("#psChart").addClass("d-none");
-        //     $("#psTTMChart").addClass("d-none");
-        //     $("#vrChart").addClass("d-none");
-        // } else {
-        //     // showCompanyBasic(tsCode);
-        //     $("#psChart").removeClass("d-none");
-        //     $("#psTTMChart").removeClass("d-none");
-        //     $("#vrChart").removeClass("d-none");
-        // }
-    }
-
     $('#searchText').autoComplete({
         resolver: 'custom',
         // preventEnter: true,
@@ -906,8 +1282,14 @@ $(function () {
         // $("#industryUrl").attr("href", "/industry/" + item.industry);
 
         // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
-        renderChart();
+        // renderChart();
         // showIndBasic(item.industry);
+        renderOHLCChart();
+        renderTechIndicator();
+        renderCompanyFundaChart(tsCode, startDate, endDate);
+        renderRSIChart(tsCode);
+        renderKDJChart(tsCode);
+        renderMACDChart(tsCode);
     });
 
     var setupStrategyCategories = function (strategyCategory) {
@@ -928,6 +1310,22 @@ $(function () {
         setupStrategyCategories("#bStrategyCategory");
         setupStrategyCategories("#sStrategyCategory");
         // showIndicatorChart(indic);
+        renderTechIndicator();
+    }
+
+    var renderTechIndicator = function(){
+        if(curIndicator[0]=="EMA"){
+            renderEMAChart(tsCode);
+        }
+        if(curIndicator[0]=="SMA"){
+            // renderSMAChart();
+        }
+        if(curIndicator[0]=="BOLL"){
+            renderBollChart(tsCode);
+        }
+        if(curIndicator[0]=="BBI"){
+            renderBBIChart(tsCode);
+        }
     }
 
     var onPresetOptChange = function (event) {
@@ -977,9 +1375,27 @@ $(function () {
 
     $('input:radio[name="freq"]').change(function () {
         freq = $(this).val();
+        // renderChart();
+        renderOHLCChart(tsCode);
+        renderTechIndicator();
+        renderCompanyFundaChart(tsCode, startDate, endDate);
+        renderRSIChart(tsCode);
+        renderKDJChart(tsCode);
+        renderMACDChart(tsCode);
     });
 
+    $('input:radio[name="period"]').change(function () {
+        stockHistPeriod = $(this).val();
+        // renderChart();
+        renderOHLCChart(tsCode);
+        renderTechIndicator();
+        renderCompanyFundaChart(tsCode, startDate, endDate);
+        renderRSIChart(tsCode);
+        renderKDJChart(tsCode);
+        renderMACDChart(tsCode);
+    });
 
+    
     /**** 
     var pushBCondition = function () {
         taIndicatorType = $("#bStrategyCategory").val();
@@ -1135,6 +1551,7 @@ $(function () {
         for (let indic of taIndicatorSet) {
             // var techIndic = indic.split("_")[0];
             var techIndicParam = indic.split("_")[1];
+            if(techIndicParam == undefined) techIndicParam = -1;
             taIndicator += "'" + indic + "':" + techIndicParam;
             count++;
             if (count < taIndicatorSet.size) {
@@ -1168,6 +1585,8 @@ $(function () {
         var bCrossover = "'crossver':{";
         var bPairComp = "'pair_comp':{";
         var bThreshold = "'threshold':{";
+        var bClose = "'close':{";
+
         bSystem = "";
         bSystem += "{'attr':{'level':0},'condition':{";
 
@@ -1179,13 +1598,16 @@ $(function () {
                 bPairComp += "'" + index.toString() + "':'" + bStrategy.split(":")[1] + "',";
             } else if (bStrategy.split(":")[0] == "2") {
                 bThreshold += "'" + index.toString() + "':'" + bStrategy.split(":")[1] + "',";
+            } else if (bStrategy.split(":")[0] == "3") {
+                bClose += "'" + index.toString() + "':'" + bStrategy.split(":")[1] + "',";
             }
 
             if (index == $("#bStrategyList").children().length - 1) {
                 bCrossover += "},";
                 bPairComp += "},";
-                bThreshold += "}";
-                bSystem += bCrossover + bPairComp + bThreshold + "}}";
+                bThreshold += "},";
+                bClose += "}";
+                bSystem += bCrossover + bPairComp + bThreshold + bClose + "}}";
             }
         });
 
@@ -1208,24 +1630,30 @@ $(function () {
         var sCrossover = "'crossver':{";
         var sPairComp = "'pair_comp':{";
         var sThreshold = "'threshold':{";
+        var sClose = "'close':{";
+
         sSystem = "";
         sSystem += "{'attr':{'level':0},'condition':{";
 
         $.each($("#sStrategyList").children(), function (index, value) {
-            var sCond = $(value).children()[2].value;
-            if (sCond.split(":")[0] == "0") {
-                sCrossover += "'" + index.toString() + "':'" + sCond.split(":")[1] + "',";
-            } else if (sCond.split(":")[0] == "1") {
-                sPairComp += "'" + index.toString() + "':'" + sCond.split(":")[1] + "',";
-            } else if (sCond.split(":")[0] == "2") {
-                sThreshold += "'" + index.toString() + "':'" + sCond.split(":")[1] + "',";
+            var sStrategy = $(value).children()[2].value;
+            if (sStrategy.split(":")[0] == "0") {
+                sCrossover += "'" + index.toString() + "':'" + sStrategy.split(":")[1] + "',";
+            } else if (sStrategy.split(":")[0] == "1") {
+                sPairComp += "'" + index.toString() + "':'" + sStrategy.split(":")[1] + "',";
+            } else if (sStrategy.split(":")[0] == "2") {
+                sThreshold += "'" + index.toString() + "':'" + sStrategy.split(":")[1] + "',";
+            } else if (sStrategy.split(":")[0] == "3") {
+                sClose += "'" + index.toString() + "':'" + sStrategy.split(":")[1] + "',";
             }
 
             if (index == $("#sStrategyList").children().length - 1) {
                 sCrossover += "},";
                 sPairComp += "},";
-                sThreshold += "}";
-                sSystem += sCrossover + sPairComp + sThreshold + "}}";
+                sThreshold += "},";
+                sClose += "}";
+
+                sSystem += sCrossover + sPairComp + sThreshold + sClose + "}}";
             }
         });
 
@@ -1233,7 +1661,14 @@ $(function () {
         // executeBT();
     }
 
+    var isEmptyStrategySet = function() {
+        if(taBIndicatorSet.size==0 || taSIndicatorSet.size==0) return true;
+        return false; 
+    }
+
     var executeBT = function () {
+        if(isEmptyStrategySet()) return;
+
         capital = $("#capital").val();
         stoploss = (100 - parseInt($("#stoploss").val()))/100;
 
@@ -1249,6 +1684,18 @@ $(function () {
         });
     }
 
+    var getIndicatorFrom = function(param){
+        var indic = "";
+        var prefix = param.split("_");
+
+        if(typeAParam.includes(prefix[0])){
+            indic = param;
+        } else if(typeBParam.includes(prefix[0])){
+            indic = prefix[0]
+        }
+        return indic;
+    }
+
     $("#addBStrategy").click(function () {
         var newItem = "";
         var bStrategyText = ""; //$("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
@@ -1256,29 +1703,29 @@ $(function () {
 
         if ($("#hiddenStrategyCategory").val() == "") return;
 
-        if ($("#hiddenStrategyCategory").val() == "0") { //crossover
+        if ($("#hiddenStrategyCategory").val() == "0") { //crossover，KDJ, MACD (Not Bar), RSI, crossover(self.KDJ_K, self.KDJ_D), crossover(self.MACD.DEA, MACD_DIFF)
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "0:" + $("#hiddenBCond").val() + "(self." + $("#hiddenBTI1").val() + "," + "self." + $("#hiddenBTI2").val() + ")";
 
-            taBIndicatorSet.add($("#hiddenBTI1").val())
-            taBIndicatorSet.add($("#hiddenBTI2").val())
-        } else if ($("#hiddenStrategyCategory").val() == "1") {//tech indicator pair compare
+            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI1").val()));
+            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI2").val()));
+        } else if ($("#hiddenStrategyCategory").val() == "1") {//tech indicator pair compare, SMA, EMA, KDJ, MACD, RSI, 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "1:self." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + "self." + $("#hiddenBTI2").val() + "[-1]";
 
-            taBIndicatorSet.add($("#hiddenBTI1").val())
-            taBIndicatorSet.add($("#hiddenBTI2").val())
-        } else if ($("#hiddenStrategyCategory").val() == "2") {//tech indicator value threshold
+            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI1").val()));
+            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI2").val()));
+        } else if ($("#hiddenStrategyCategory").val() == "2") {//tech indicator value threshold, KDJ, MACD, RSI, 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "2:self." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + $("#hiddenBTI2").val();
 
-            taBIndicatorSet.add($("#hiddenBTI1").val())
-        } else if ($("#hiddenStrategyCategory").val() == "3") {//OHLC - close ta compare
+            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI1").val()));
+        } else if ($("#hiddenStrategyCategory").val() == "3") {//OHLC - close ta compare,  SMA, EMA, BOLL, BBI 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "3:self.data." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + "self." + $("#hiddenBTI2").val() + "[-1]";
 
             // 收盘价不需要加到TA set
-            // taIndicatorSet.add($("#hiddenBTI1").val())
+            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI2").val()));
         }
 
         if (!bStrategyTextSet.has(bStrategyText)) {
@@ -1293,10 +1740,21 @@ $(function () {
             $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount"), indic1: $("#hiddenBTI1").val(), indic2: $("#hiddenBTI2").val()}, function (event) {
                 bStrategyCount--;
                 bStrategyTextSet.delete(bStrategyText);
-                if(event.data.indic1!="")
-                    taBIndicatorSet.delete(event.data.indic1);
-                if(event.data.indic2!="")
-                    taBIndicatorSet.delete(event.data.indic2);
+                
+                if(event.data.indic1!=""){
+                    if(typeAParam.includes(event.data.indic1.split("_")[0])){
+                        taBIndicatorSet.delete(event.data.indic1);
+                    }else if(typeBParam.includes(event.data.indic1.split("_")[0])){
+                        taBIndicatorSet.delete(event.data.indic1.split("_")[0]);
+                    }
+                }
+                if(event.data.indic2!=""){
+                    if(typeAParam.includes(event.data.indic2.split("_")[0])){
+                        taBIndicatorSet.delete(event.data.indic2);
+                    }else if(typeBParam.includes(event.data.indic2.split("_")[0])){
+                        taBIndicatorSet.delete(event.data.indic2.split("_")[0]);
+                    }
+                }
                 event.data.holder.text(bStrategyCount.toString());
                 $(this).parent().remove();
             });
@@ -1320,24 +1778,24 @@ $(function () {
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "0:" + $("#hiddenSCond").val() + "(self." + $("#hiddenSTI2").val() + "," + "self." + $("#hiddenSTI1").val() + ")";
 
-            taSIndicatorSet.add($("#hiddenSTI1").val())
-            taSIndicatorSet.add($("#hiddenSTI2").val())
+            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI1").val()));
+            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI2").val()));
         } else if ($("#hiddenSStrategyCategory").val() == "1") {//tech indicator pair compare
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "1:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
 
-            taSIndicatorSet.add($("#hiddenSTI1").val())
-            taSIndicatorSet.add($("#hiddenSTI2").val())
+            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI1").val()));
+            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI2").val()));
         } else if ($("#hiddenSStrategyCategory").val() == "2") {//tech indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "2:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + $("#hiddenSTI2").val();
 
-            taSIndicatorSet.add($("#hiddenSTI1").val())
-        } else if ($("#hiddenSStrategyCategory").val() == "3") {//tech indicator value threshold
+            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI1").val()));
+        } else if ($("#hiddenSStrategyCategory").val() == "3") {//Close indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
-            sStrategyValue = "2:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
+            sStrategyValue = "3:self.data." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
 
-            taSIndicatorSet.add($("#hiddenSTI1").val())
+            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI2").val()));
         }
 
         if (!sStrategyTextSet.has(sStrategyText)) {
@@ -1345,7 +1803,7 @@ $(function () {
             // strategyCount[1]++;
             newItem += "<div class='col-lg-8 d-flex justify-content-between align-items-center'>" +
                 "<span class='text-primary small'>" + sStrategyText + "</span>" +
-                "<a class='badge rounded-pill' href='javascript:void(0)' id='sRM" + sStrategyCount + "'>x</a>" +
+                "<a href='javascript:void(0)' id='sRM" + sStrategyCount + "'>x</a>" +
                 "<input type='hidden' value='" + sStrategyValue + "'>" +
                 "</div>";
             $("#sStrategyList").append(newItem);
@@ -1353,10 +1811,20 @@ $(function () {
             $("#sRM" + sStrategyCount).on("click", { strategyText: sStrategyText, holder: $("#sStrategyCount"), indic1: $("#hiddenSTI1").val(), indic2: $("#hiddenSTI2").val() }, function (event) {
                 sStrategyCount--;
                 sStrategyTextSet.delete(sStrategyText);
-                if(event.data.indic1!="")
-                    taSIndicatorSet.delete(event.data.indic1);
-                if(event.data.indic2!="")
-                    taSIndicatorSet.delete(event.data.indic2);
+                if(event.data.indic1!=""){
+                    if(typeAParam.includes(event.data.indic1.split("_")[0])){
+                        taSIndicatorSet.delete(event.data.indic1);
+                    }else if(typeBParam.includes(event.data.indic1.split("_")[0])){
+                        taSIndicatorSet.delete(event.data.indic1.split("_")[0]);
+                    }
+                }
+                if(event.data.indic2!=""){
+                    if(typeAParam.includes(event.data.indic2.split("_")[0])){
+                        taSIndicatorSet.delete(event.data.indic2);
+                    }else if(typeBParam.includes(event.data.indic2.split("_")[0])){
+                        taSIndicatorSet.delete(event.data.indic2.split("_")[0]);
+                    }
+                }
                 event.data.holder.text(sStrategyCount.toString());
                 $(this).parent().remove();
             });
@@ -1366,6 +1834,7 @@ $(function () {
             $("#sMsg").text("");
         } else {
             $("#sMsg").text("勿重复添加");
+            $("#sMsg").addClass("text-warning");
         }
     });
 
@@ -1522,7 +1991,7 @@ $(function () {
     });
 
     initParam();
-    renderChart();
+    initializeBTMixChart(tsCode);
 
     // $('input:radio[name="strategyCategory"]').change(function () {
     //     strategyCategory = $(this).val();

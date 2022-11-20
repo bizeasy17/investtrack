@@ -104,6 +104,81 @@ var jsonToChartOHLCFormat = function (jsonData) {
     return chartFormat;
 }
 
+var jsonToChartEMAFormat = function (jsonData) {
+    var chartFormat = { 'ema_10': [], 'label': [], 'ema_20': [], 'ema_60': [] , 'ema_120': [] , 'ema_200': [] };
+    // var ohlc = []
+    $(jsonData).each(function (idx, obj) {
+        $(obj.ema_10).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.ema_10.push(o[k]);
+            });
+        });
+    
+        $(obj.ema_20).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.ema_20.push(o[k]);
+            });
+        });
+    
+        $(obj.ema_60).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.ema_60.push(o[k]);
+            });
+        });
+
+        $(obj.ema_120).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.ema_120.push(o[k]);
+            });
+        });
+
+        $(obj.ema_200).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.ema_200.push(o[k]);
+            });
+        });
+    });
+    return chartFormat;
+}
+
+var jsonToChartBOLLFormat = function (jsonData) {
+    var chartFormat = { 'boll_high': [], 'label': [], 'boll_mid': [], 'boll_low': []};
+    // var ohlc = []
+    $(jsonData).each(function (idx, obj) {
+        $($.parseJSON(obj.high)).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.boll_high.push(o[k]);
+            });
+        });
+    
+        $($.parseJSON(obj.mid)).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.boll_mid.push(o[k]);
+            });
+        });
+    
+        $($.parseJSON(obj.low)).each(function(idx, o){
+            $.each(o, function(k){
+                chartFormat.boll_low.push(o[k]);
+            });
+        });
+    });
+    return chartFormat;
+}
+
+var jsonToChartBBIFormat = function (jsonData) {
+    var chartFormat = { 'bbi': [], 'label': []};
+    // var ohlc = []
+    $($.parseJSON(jsonData).bbi).each(function (idx, obj) {
+        // $(obj).each(function(id, o){
+        $.each(obj, function(k){
+            chartFormat.bbi.push(obj[k]);
+        });
+        // });
+    });
+    return chartFormat;
+}
+
 var jsonToChartRSIFormat = function (jsonData) {
     var chartFormat = { 'rsi_6': [], 'label': [], 'rsi_12': [], 'rsi_24': [] };
     // var ohlc = []
