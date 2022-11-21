@@ -123,30 +123,31 @@ $(function () {
         var zoomMin = 0;
         var zoomMax = 100;
         $.ajax({
-            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/?format=json",
+            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
                 var chartData = jsonToChartOHLCFormat(data);
                 var maChartData = jsonToChartMAFormat(data);
                 // global OHLC数据
                 ohlcChartData = data;
-                ohlcCount = chartData.label.length;
+                // ohlcCount = chartData.label.length;
 
                 option = initMixChartOption();
                 btMixChart.setOption(option);
 
-                initOHLCChart(ohlcChartData);
-                initVolumeChart();
-                initEquityChart();
-                initDefaultCascadeTechInidicator(maChartData);
-                initKDJChart();
-                initMACDChart();
-                initRSIChart();
+                updateOHLCChart(ohlcChartData);
+                updateVolumeChart();
+                // initEquityChart();
+                // initDefaultCascadeTechInidicator(maChartData);
+                // initKDJChart();
+                // initMACDChart();
+                // initRSIChart();
+                // initCompanyFundamentalChart();
             },
             complete: function (request, status) {
-                renderCompanyFundaChart(tsCode, startDate, endDate);
-                renderRSIChart(tsCode);
-                renderKDJChart(tsCode);
-                renderMACDChart(tsCode);
+                // renderCompanyFundaChart(tsCode, startDate, endDate);
+                // renderRSIChart(tsCode);
+                // renderKDJChart(tsCode);
+                // renderMACDChart(tsCode);
             }
         });
     }
@@ -256,21 +257,21 @@ $(function () {
                 {right: '3%',top: '89%',height: '7%', width: '42%'}
             ],
             xAxis: [
-                {gridIndex: 0, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcXAxis"}, // OHLC
-                {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax', id: 'equityAxis'}, // Equity资产净值
-                {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
+                {gridIndex: 0, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcxAxis"}, // OHLC
+                {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax', id: 'equityxAxis'}, // Equity资产净值
+                {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }, id:'volxAxis'}, // VOL
                 
-                {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // RSI
-                {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // MACD
-                {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // KDJ
+                {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"rsixAxis"}, // RSI
+                {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"macdxAxis"}, // MACD
+                {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"kdjxAxis"}, // KDJ
 
-                {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE
-                {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PE TTM
-                {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PB
-                {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS
-                {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // PS TTM
-                {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax'}, // TO 换手率 
-                {gridIndex: 12, data: chartData.label, min: 'dataMin', max: 'dataMax'} // VO 量比 
+                {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
+                {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
+                {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
+                {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
+                {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
+                {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
+                {gridIndex: 12, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
 
                 // {
                 //     type: 'category',
@@ -294,11 +295,11 @@ $(function () {
                 {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end'}, // MACD
                 {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end'}, // KDJ
 
-                {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率PE', nameLocation: 'end'}, // PE
-                {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率PE(TTM)', nameLocation: 'end'}, // PE TTM
-                {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率PB', nameLocation: 'end'}, // PB
-                {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率PS', nameLocation: 'end'}, // PS
-                {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率PS(TTM)', nameLocation: 'end'}, // PS TTM
+                {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
+                {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
+                {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end'}, // PB
+                {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end'}, // PS
+                {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率', nameLocation: 'end'}, // PS TTM
                 {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
                 {gridIndex: 12, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
 
@@ -339,7 +340,7 @@ $(function () {
                     id: "ohlc",
                     name: 'k线',
                     type: 'candlestick',
-                    data: chartData.value,
+                    // data: chartData.value,
                     itemStyle: {
                         color: upColor,
                         color0: downColor,
@@ -351,7 +352,7 @@ $(function () {
                     id: "indic1",
                     // name: 'MA10',
                     type: 'line',
-                    data: calculateMA(10, chartData),
+                    // data: calculateMA(10, chartData),
                     showSymbol: false,
                     smooth: true,
                     lineStyle: {
@@ -362,7 +363,7 @@ $(function () {
                     id: "indic2",
                     // name: 'MA20',
                     type: 'line',
-                    data: calculateMA(20, chartData),
+                    // data: calculateMA(20, chartData),
                     smooth: true,
                     showSymbol: false,
                     lineStyle: {
@@ -373,7 +374,7 @@ $(function () {
                     id: "indic3",
                     // name: 'MA60',
                     type: 'line',
-                    data: calculateMA(60, chartData),
+                    // data: calculateMA(60, chartData),
                     smooth: true,
                     showSymbol: false,
                     lineStyle: {
@@ -384,7 +385,7 @@ $(function () {
                     id: "indic4",
                     // name: 'MA120',
                     type: 'line',
-                    data: calculateMA(120, chartData),
+                    // data: calculateMA(120, chartData),
                     smooth: true,
                     showSymbol: false,
                     lineStyle: {
@@ -395,7 +396,7 @@ $(function () {
                     id: "indic5",
                     // name: 'MA200',
                     type: 'line',
-                    data: calculateMA(200, chartData),
+                    // data: calculateMA(200, chartData),
                     smooth: true,
                     showSymbol: false,
                     lineStyle: {
@@ -408,7 +409,7 @@ $(function () {
                     type: 'bar',
                     xAxisIndex: 2,
                     yAxisIndex: 2,
-                    data: chartData.volume
+                    // data: chartData.volume
                 },
                 {
                     id: 'equity',
@@ -418,10 +419,42 @@ $(function () {
                     showSymbol: false,
                     xAxisIndex: 1,
                     yAxisIndex: 1,
-                    data: chartData.equity
+                    // data: chartData.equity
                 }
             ]
         };
+    }
+
+    var updateOHLCChart = function(ohlcChartData){
+        var ohlcChartOption = {
+            xAxis: [
+                {id: "ohlcxAxis", data: ohlcChartData.label}, // OHLC
+            ],
+            series:[
+                {
+                    id: "ohlc",
+                    data: ohlcChartData.value,
+                }
+            ]};
+
+        //动态添加 legend.data
+        btMixChart.setOption(ohlcChartOption);
+    }
+
+    var updateVolumeChart = function(volChartData){
+        var volChartOption = {
+            xAxis: [
+                {id: "volxAxis", data: volChartData.label}, // OHLC
+            ],
+            series:[
+                {
+                    id: "vol",
+                    data: volChartData.value,
+                }
+            ]};
+
+        //动态添加 legend.data
+        btMixChart.setOption(volChartOption);
     }
 
     //  http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
@@ -446,8 +479,6 @@ $(function () {
         }
         return result;
     }
-
-    
 
     var pushOHLC2MixChart = function (chartData) {
         // var chartData = jsonToChartOHLCFormat(jsonData);
@@ -484,15 +515,15 @@ $(function () {
         btMixChart.setOption(ohlcChartOption);
     }
 
-    var renderOHLCChart = function(tsCode){
-        
+    var updateMixedOHLCChart = function(tsCode){
         $.ajax({
-            url: stockmarketEndpoint + "ohlc/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/?format=json",
+            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
                 ohlcChartData = data;
                 var chartData = jsonToChartOHLCFormat(data);
                 // ohlcCount = chartData.label.length;
-                pushOHLC2MixChart(chartData);
+                updateOHLCChart(chartData);
+                updateVolumeChart(chartData);
             },
             statusCode: {
                 403: function () {
@@ -1284,7 +1315,7 @@ $(function () {
         // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
         // renderChart();
         // showIndBasic(item.industry);
-        renderOHLCChart();
+        updateMixedOHLCChart();
         renderTechIndicator();
         renderCompanyFundaChart(tsCode, startDate, endDate);
         renderRSIChart(tsCode);
@@ -1376,7 +1407,7 @@ $(function () {
     $('input:radio[name="freq"]').change(function () {
         freq = $(this).val();
         // renderChart();
-        renderOHLCChart(tsCode);
+        updateMixedOHLCChart(tsCode);
         renderTechIndicator();
         renderCompanyFundaChart(tsCode, startDate, endDate);
         renderRSIChart(tsCode);
@@ -1387,7 +1418,7 @@ $(function () {
     $('input:radio[name="period"]').change(function () {
         stockHistPeriod = $(this).val();
         // renderChart();
-        renderOHLCChart(tsCode);
+        updateMixedOHLCChart(tsCode);
         renderTechIndicator();
         renderCompanyFundaChart(tsCode, startDate, endDate);
         renderRSIChart(tsCode);
