@@ -11,11 +11,12 @@
 '''
 import talib
 import pandas as pd
+from datetime import date, datetime, timedelta
 
 from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 # from backtesting.test import SMA
-from backtesting.lib import SignalStrategy, TrailingStrategy,resample_apply
+from backtesting.lib import SignalStrategy, TrailingStrategy, resample_apply
 
 from analysis.models import StockHistory, StockHistoryDaily
 # from backtesting.lib import resample_apply
@@ -24,17 +25,48 @@ from analysis.models import StockHistory, StockHistoryDaily
 def get_data(ts_code, freq='D', sort='asc'):
     if freq == 'D':
         data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
-            'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort=='asc' else '-trade_date')
+            'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
     else:
         data = StockHistory.objects.filter(
-            ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort=='asc' else '-trade_date')
+            ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
 
     data_df = pd.DataFrame.from_records(data)
     data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
-                    'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
+                            'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
     # data_df = data_df.sort_values(by=['Date'],ascending=False)
     data_df = data_df.set_index('Date')
     return data_df
+
+
+def get_data_since(ts_code, freq='D', sort='asc', period=3):
+    start_date = None
+    if period <= 10:
+        start_date = date.today() - timedelta(days=365 * period)
+
+        # data_df = data_df.loc[start_date:]
+
+    if freq == 'D':
+        if start_date is None:
+            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
+                'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+        else:
+            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq, trade_date__gte=start_date).values(
+                'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+    else:
+        if start_date is None:
+            data = StockHistory.objects.filter(
+                ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+        else:
+            data = StockHistory.objects.filter(
+                ts_code=ts_code, freq=freq, trade_date__gte=start_date).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+
+    data_df = pd.DataFrame.from_records(data)
+    data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
+                            'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
+    # data_df = data_df.sort_values(by=['Date'],ascending=False)
+    data_df = data_df.set_index('Date')
+    return data_df
+
 
 def get_ta_indicator(name):
     if name == 'SMA':
@@ -43,6 +75,14 @@ def get_ta_indicator(name):
         return talib.EMA
     if name == 'RSI':
         return talib.RSI
+    if name == 'KDJ':
+        return talib.STOCH
+    if name == 'MACD':
+        return talib.MACD
+    if name == 'BOLL':
+        return talib.BBANDS
+
+
 
 def get_strategy_by_category(category):
     if category == 'simple_crossover':
@@ -51,6 +91,7 @@ def get_strategy_by_category(category):
         return System
     if category == 'signal':
         return SignalStrategy
+
 
 class SimpleCrossoverStrategy(Strategy):
     # defalt TECH indicator param
@@ -73,7 +114,7 @@ class SimpleCrossoverStrategy(Strategy):
     # buy_cond8 = ''
     # buy_cond9 = ''
     # buy_cond10 = ''
-    
+
     # sell_cond1 = ''
     # sell_cond2 = ''
     # sell_cond3 = ''
@@ -86,7 +127,7 @@ class SimpleCrossoverStrategy(Strategy):
     # sell_cond10 = ''
 
     # func is a function that returns the indicator array(s) of same length as Strategy.data
-    
+
     def init(self):
         # super.init()
         self.indic_series1 = self.I(self.ta_func, self.data.Close, self.n1)
@@ -94,12 +135,12 @@ class SimpleCrossoverStrategy(Strategy):
 
         # close = self.data.Close
         # indic_name = func.__name__
-        
+
         # # Compute moving averages the strategy demands
         # if len(kwargs) >= 1:
         #     for k,v in kwargs.items():
         #         setattr(self, indic_name+k, self.I(func, close, v))
-        #         # setattr(self, indic+'2', self.I(func, close, kwargs['indic2']))   
+        #         # setattr(self, indic+'2', self.I(func, close, kwargs['indic2']))
         # else:
         #     self.indic10 = self.I(func, close, self.param10)
         #     self.indic25 = self.I(func, close, self.param25)
@@ -119,6 +160,9 @@ class System(Strategy):
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20}
     # SMA_10 = None
     # SMA_20 = None
+    ta_type_a = ['SMA', 'EMA', 'RSI', 'BBI']
+    ta_type_b = ['KDJ', 'MACD', 'BOLL']
+
     ta_indicator_dict = {}
     '''
     e.g. self.daily_rsi[-1] > self.level and
@@ -164,15 +208,79 @@ class System(Strategy):
 
     stoploss = None
     # stoploss = .92
-    
+
     def init(self):
         # Compute moving averages the strategy demands
-        for k,v in self.ta_indicator_dict.items():
-            setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]), self.data.Close, v))
-        
+        for k, v in self.ta_indicator_dict.items():
+            # 需要重构一下
+            if k.split('_')[0] in self.ta_type_a:  # SMA, EMA, RSI, BBI
+                setattr(self, k, self.I(get_ta_indicator(
+                    k.split('_')[0]), self.data.Close, v))
+
+            if k.split('_')[0] in self.ta_type_b:  # KDJ, MACD, BOLL
+                # KDJ
+                if k.split('_')[0] == 'KDJ':
+                    setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]), self.data.High, 
+                                                self.data.Low,
+                                                self.data.Close,
+                                                fastk_period=9,
+                                                slowk_period=3,
+                                                slowk_matype=0,
+                                                slowd_period=3,
+                                                slowd_matype=0,
+                                                ))
+                    setattr(self, k+'_K', getattr(self, k)[0])
+                    setattr(self, k+'_D', getattr(self, k)[1])
+                    setattr(self, k+'_J',
+                            list(map(lambda x, y: 3*x-2*y, getattr(self, k)[0], getattr(self, k)[1])))
+
+                    # setattr(self, k, talib.STOCH(self.data.High, 
+                    #                             self.data.Low,
+                    #                             self.data.Close,
+                    #                             fastk_period=9,
+                    #                             slowk_period=3,
+                    #                             slowk_matype=0,
+                    #                             slowd_period=3,
+                    #                             slowd_matype=0))
+                    # setattr(self, k+'_K', getattr(self, k)[0])
+                    # setattr(self, k+'_D', getattr(self, k)[1])
+                    # setattr(self, k+'_J',
+                    #         list(map(lambda x, y: 3*x-2*y, getattr(self, k)[0], getattr(self, k)[1])))
+
+                # MACD
+                if k.split('_')[0] == 'MACD':
+                    setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]),
+                        self.data.Close, fastperiod=12, slowperiod=26, signalperiod=9))
+                    setattr(self, k+'_DIFF', getattr(self, k)[0])
+                    setattr(self, k+'_DEA', getattr(self, k)[1])
+                    setattr(self, k+'_MACD', getattr(self, k)[2])
+
+                    # setattr(self, k, talib.MACD(
+                    #     self.data.Close, fastperiod=12, slowperiod=26, signalperiod=9))
+                    # setattr(self, k+'_DIFF', getattr(self, k)[0])
+                    # setattr(self, k+'_DEA', getattr(self, k)[1])
+                    # setattr(self, k+'_MACD', getattr(self, k)[2])
+
+                # BOLL
+                # upper,middle,lower=talib.BBANDS(closed, matype=talib.MA_Type.T3)
+                if k.split('_')[0] == 'BOLL':
+                    setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]),
+                        self.data.Close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0))
+                    setattr(self, k+'_UPPER', getattr(self, k)[0])
+                    setattr(self, k+'_MID', getattr(self, k)[1])
+                    setattr(self, k+'_LOWER', getattr(self, k)[2])
+
+                    # setattr(self, k, talib.BBANDS(
+                    #     self.data.Close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0))
+                    # setattr(self, k+'_HIGH', getattr(self, k)[0])
+                    # setattr(self, k+'_MID', getattr(self, k)[1])
+                    # setattr(self, k+'_LOW', getattr(self, k)[2])   
+
+                # setattr(self, k, self.I(get_ta_indicator(
+                #     k.split('_')[0]), self.data.Close, v))
+
         # self.SMA_10 = self.I(get_ta_indicator('SMA'), self.data.Close, 10)
         # self.SMA_20 = self.I(get_ta_indicator('SMA'), self.data.Close, 20)
-
 
         # for k,v in self.buy_cond_dict['attr'].items():
         #     setattr(System, k, v)
@@ -182,21 +290,21 @@ class System(Strategy):
 
         # Compute daily RSI(30)
         # self.daily_rsi = self.I(RSI, self.data.Close, self.d_rsi)
-        
+
         # To construct weekly RSI, we can use `resample_apply()`
         # helper function from the library
         # self.weekly_rsi = resample_apply(
         #     'W-FRI', RSI, self.data.Close, self.w_rsi)
-        
-        
+
     def next(self):
-        
+
         price = self.data.Close[-1]
 
         # b = crossover(getattr(self, 'SMA_10'), getattr(self, 'SMA_20'))
-        for k,v in self.buy_cond_dict['condition'].items():
-            for kk,vv in self.buy_cond_dict['condition'][k].items():
-                self._long_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
+        for k, v in self.buy_cond_dict['condition'].items():
+            for kk, vv in self.buy_cond_dict['condition'][k].items():
+                # crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
+                self._long_order = eval(vv)
 
                 # if k == 'crossover':
                 #     self._long_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
@@ -206,9 +314,10 @@ class System(Strategy):
                 #     self._long_order = crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
 
         # s = crossover(getattr(self, 'SMA_20'), getattr(self, 'SMA_10'))
-        for k,v in self.sell_cond_dict['condition'].items():
-            for kk,vv in self.sell_cond_dict['condition'][k].items():
-                self._short_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1])) #eval(vv)
+        for k, v in self.sell_cond_dict['condition'].items():
+            for kk, vv in self.sell_cond_dict['condition'][k].items():
+                # crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1])) #eval(vv)
+                self._short_order = eval(vv)
 
         if self._long_order:
             # self.position.close()
@@ -290,31 +399,32 @@ class System(Strategy):
             self.sell()
         '''
 
+
 class SignalStrategy(SignalStrategy, TrailingStrategy):
     n1 = 10
     n2 = 25
-    
+
     def init(self):
         # In init() and in next() it is important to call the
         # super method to properly initialize the parent classes
         super().init()
-        
+
         # Precompute the two moving averages
         ema1 = self.I(talib.EMA, self.data.Close, self.n1)
         ema2 = self.I(talib.EMA, self.data.Close, self.n2)
-        
+
         # Where sma1 crosses sma2 upwards. Diff gives us [-1,0, *1*]
         signal = (pd.Series(ema1) > ema2).astype(int).diff().fillna(0)
         signal = signal.replace(-1, 0)  # Upwards/long only
-        
+
         # Use 95% of available liquidity (at the time) on each order.
         # (Leaving a value of 1. would instead buy a single share.)
         entry_size = signal * .95
-                
-        # Set order entry sizes using the method provided by 
+
+        # Set order entry sizes using the method provided by
         # `SignalStrategy`. See the docs.
         self.set_signal(entry_size=entry_size)
-        
+
         # Set trailing stop-loss to 2x ATR using
         # the method provided by `TrailingStrategy`
         self.set_trailing_sl(2)
