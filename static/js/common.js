@@ -54,6 +54,7 @@ var isOpenForTrade = function (inputDatetime) {
     return false;
 }
 
+
 var getStartDate = function (period, format) {
     var dt = new Date();
     var priorDate;
@@ -69,8 +70,10 @@ var getStartDate = function (period, format) {
     return formatDate(priorDate, format);
 }
 
+
+
 var jsonToArray = function (jsonData, dataType) {
-    var chartFormat = { 'value': []};
+    var chartFormat = { 'value': [] };
     $(jsonData).each(function (idx, obj) {
         chartFormat.value.push(obj[dataType]);
     });
@@ -87,53 +90,146 @@ var jsonToChartFormat = function (jsonData, dataType) {
 }
 
 var jsonToChartOHLCFormat = function (jsonData) {
-    var chartFormat = { 'value': [], 'label': [], 'volume': [], 'equity': [] };
+    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [] };
     // var ohlc = [];
     $(jsonData).each(function (idx, obj) {
         // ohlc.push(obj['o']);
         // ohlc.push(obj['c']);
         // ohlc.push(obj['l']);
         // ohlc.push(obj['h']);
-        chartFormat.value.push([obj['o'],obj['c'],obj['l'],obj['h']]);
+        chartFormat.ohlc.push([obj['o'], obj['c'], obj['l'], obj['h']]);
         chartFormat.label.push(obj['d']);
         chartFormat.volume.push(obj['v']);
-        chartFormat.equity.push(obj['e']);
+    });
+    return chartFormat;
+}
 
-        // ohlc.splice(0);
+var jsonToMixChartFormat = function (jsonData) {
+    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [] };
+    var maFormat = {'ma10':[],'ma20':[],'ma60':[],'ma120':[],'ma200':[]};
+    var emaFormat = {'ema10':[],'ema20':[],'ema60':[],'ema120':[],'ema200':[]};
+    var bollFormat = {'upper':[],'mid':[],'lower':[]};
+    var macdFormat = {'dif':[],'dea':[],'bar':[]};
+    var kdjFormat = {'k':[],'d':[],'j':[]};
+    var rsiFormat = {'rsi6':[],'rsi12':[],'rsi24':[]};
+
+    chartFormat.ma.push(maFormat);
+    chartFormat.ema.push(emaFormat);
+    chartFormat.boll.push(bollFormat);
+    chartFormat.macd.push(macdFormat);
+    chartFormat.kdj.push(kdjFormat);
+    chartFormat.rsi.push(rsiFormat);
+    
+    // var ohlc = [];
+    $(jsonData).each(function (idx, obj) {
+        // ohlc.push(obj['o']);
+        // ohlc.push(obj['c']);
+        // ohlc.push(obj['l']);
+        // ohlc.push(obj['h']);
+        chartFormat.ohlc.push([obj['o'], obj['c'], obj['l'], obj['h']]);
+        chartFormat.label.push(obj['d']);
+        chartFormat.volume.push(obj['v']);
+
+        chartFormat.ma[0].ma10.push(obj['ma10']);
+        chartFormat.ma[0].ma20.push(obj['ma20']);
+        chartFormat.ma[0].ma60.push(obj['ma60']);
+        chartFormat.ma[0].ma120.push(obj['ma120']);
+        chartFormat.ma[0].ma200.push(obj['ma200']);
+
+        chartFormat.ema[0].ema10.push(obj['ema10']);
+        chartFormat.ema[0].ema20.push(obj['ema20']);
+        chartFormat.ema[0].ema60.push(obj['ema60']);
+        chartFormat.ema[0].ema120.push(obj['ema120']);
+        chartFormat.ema[0].ema200.push(obj['ema200']);
+
+        chartFormat.boll[0].upper.push(obj['bollupper']);
+        chartFormat.boll[0].mid.push(obj['bollmid'])
+        chartFormat.boll[0].lower.push(obj['bolllower']);
+
+        chartFormat.bbi.push(obj['bbi']);
+
+        chartFormat.kdj[0].k.push(obj['kdjk']);
+        chartFormat.kdj[0].d.push(obj['kdjd']);
+        chartFormat.kdj[0].j.push(obj['kdjj']);
+
+        chartFormat.macd[0].dif.push(obj['macddif']);
+        chartFormat.macd[0].dea.push(obj['macddea']);
+        chartFormat.macd[0].bar.push(obj['macdbar']);
+
+        chartFormat.rsi[0].rsi6.push(obj['rsi6']);
+        chartFormat.rsi[0].rsi12.push(obj['rsi12']);
+        chartFormat.rsi[0].rsi24.push(obj['rsi24']);
+    });
+    return chartFormat;
+}
+
+var jsonToChartMAFormat = function (jsonData) {
+    var chartFormat = { 'ma_10': [], 'label': [], 'ma_20': [], 'ma_60': [], 'ma_120': [], 'ma_200': [] };
+    // var ohlc = []
+    $(jsonData).each(function (idx, obj) {
+        $(obj.ma_10).each(function (idx, o) {
+            $.each(o, function (k) {
+                chartFormat.ma_10.push(o[k]);
+            });
+        });
+
+        $(obj.ma_20).each(function (idx, o) {
+            $.each(o, function (k) {
+                chartFormat.ma_20.push(o[k]);
+            });
+        });
+
+        $(obj.ma_60).each(function (idx, o) {
+            $.each(o, function (k) {
+                chartFormat.ma_60.push(o[k]);
+            });
+        });
+
+        $(obj.ma_120).each(function (idx, o) {
+            $.each(o, function (k) {
+                chartFormat.ma_120.push(o[k]);
+            });
+        });
+
+        $(obj.ma_200).each(function (idx, o) {
+            $.each(o, function (k) {
+                chartFormat.ma_200.push(o[k]);
+            });
+        });
     });
     return chartFormat;
 }
 
 var jsonToChartEMAFormat = function (jsonData) {
-    var chartFormat = { 'ema_10': [], 'label': [], 'ema_20': [], 'ema_60': [] , 'ema_120': [] , 'ema_200': [] };
+    var chartFormat = { 'ema_10': [], 'label': [], 'ema_20': [], 'ema_60': [], 'ema_120': [], 'ema_200': [] };
     // var ohlc = []
     $(jsonData).each(function (idx, obj) {
-        $(obj.ema_10).each(function(idx, o){
-            $.each(o, function(k){
+        $(obj.ma_10).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.ema_10.push(o[k]);
             });
         });
-    
-        $(obj.ema_20).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.ma_20).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.ema_20.push(o[k]);
             });
         });
-    
-        $(obj.ema_60).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.ma_60).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.ema_60.push(o[k]);
             });
         });
 
-        $(obj.ema_120).each(function(idx, o){
-            $.each(o, function(k){
+        $(obj.ma_120).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.ema_120.push(o[k]);
             });
         });
 
-        $(obj.ema_200).each(function(idx, o){
-            $.each(o, function(k){
+        $(obj.ma_200).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.ema_200.push(o[k]);
             });
         });
@@ -142,23 +238,23 @@ var jsonToChartEMAFormat = function (jsonData) {
 }
 
 var jsonToChartBOLLFormat = function (jsonData) {
-    var chartFormat = { 'boll_high': [], 'label': [], 'boll_mid': [], 'boll_low': []};
+    var chartFormat = { 'boll_high': [], 'label': [], 'boll_mid': [], 'boll_low': [] };
     // var ohlc = []
     $(jsonData).each(function (idx, obj) {
-        $($.parseJSON(obj.high)).each(function(idx, o){
-            $.each(o, function(k){
+        $($.parseJSON(obj.high)).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.boll_high.push(o[k]);
             });
         });
-    
-        $($.parseJSON(obj.mid)).each(function(idx, o){
-            $.each(o, function(k){
+
+        $($.parseJSON(obj.mid)).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.boll_mid.push(o[k]);
             });
         });
-    
-        $($.parseJSON(obj.low)).each(function(idx, o){
-            $.each(o, function(k){
+
+        $($.parseJSON(obj.low)).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.boll_low.push(o[k]);
             });
         });
@@ -167,11 +263,11 @@ var jsonToChartBOLLFormat = function (jsonData) {
 }
 
 var jsonToChartBBIFormat = function (jsonData) {
-    var chartFormat = { 'bbi': [], 'label': []};
+    var chartFormat = { 'bbi': [], 'label': [] };
     // var ohlc = []
     $($.parseJSON(jsonData).bbi).each(function (idx, obj) {
         // $(obj).each(function(id, o){
-        $.each(obj, function(k){
+        $.each(obj, function (k) {
             chartFormat.bbi.push(obj[k]);
         });
         // });
@@ -183,23 +279,23 @@ var jsonToChartRSIFormat = function (jsonData) {
     var chartFormat = { 'rsi_6': [], 'label': [], 'rsi_12': [], 'rsi_24': [] };
     // var ohlc = []
     $(jsonData).each(function (idx, obj) {
-        $(obj.rsi_6).each(function(idx, o){
+        $(obj.rsi_6).each(function (idx, o) {
             // for(var key in o) {
             //     chartFormat.rsi_6.push(o[key]);
             //  }
-            $.each(o, function(k){
+            $.each(o, function (k) {
                 chartFormat.rsi_6.push(o[k]);
             });
         });
-    
-        $(obj.rsi_12).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.rsi_12).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.rsi_12.push(o[k]);
             });
         });
-    
-        $(obj.rsi_24).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.rsi_24).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.rsi_24.push(o[k]);
             });
         });
@@ -211,20 +307,20 @@ var jsonToChartKDJFormat = function (jsonData) {
     var chartFormat = { 'k': [], 'label': [], 'd': [], 'j': [] };
     // var ohlc = []
     $(jsonData).each(function (idx, obj) {
-        $(obj.k).each(function(idx, o){
-            $.each(o, function(k){
+        $(obj.k).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.k.push(o[k]);
             });
         });
-    
-        $(obj.d).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.d).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.d.push(o[k]);
             });
         });
-    
-        $(obj.j).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.j).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.j.push(o[k]);
             });
         });
@@ -236,20 +332,20 @@ var jsonToChartMACDFormat = function (jsonData) {
     var chartFormat = { 'dif': [], 'label': [], 'dea': [], 'bar': [] };
     // var ohlc = []
     $(jsonData).each(function (idx, obj) {
-        $(obj.dif).each(function(idx, o){
-            $.each(o, function(k){
+        $(obj.dif).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.dif.push(o[k]);
             });
         });
-    
-        $(obj.dea).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.dea).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.dea.push(o[k]);
             });
         });
-    
-        $(obj.bar).each(function(idx, o){
-            $.each(o, function(k){
+
+        $(obj.bar).each(function (idx, o) {
+            $.each(o, function (k) {
                 chartFormat.bar.push(o[k]);
             });
         });

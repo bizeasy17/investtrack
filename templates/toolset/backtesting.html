@@ -61,27 +61,30 @@
     <div class="col-lg-4">
       <div class="col-lg-12">
         <label class="small mr-1">
-          {% trans '常用技术指标' %}
+          {% trans '常用指标' %}
         </label>
         <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
           <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
           <!-- 0 - 穿越，1 - 指标值（不同period）之间比较，2 - 指标值与某一固定值，3 - 收盘价与某一指标值之间比较 -->
           <!-- 叠加主图指标 -->
-          <label class="btn btn-light active small" >
-              <input type="radio" name="indicator" autocomplete="off" value="SMA,0,1,3" checked/>{% trans 'SMA' %}
+          <!-- <label class="btn btn-light active small" >
+            <input type="radio" name="indicator" autocomplete="off" value="MA,0,1,3" checked/>{% trans 'MA' %}
+          </label> -->
+          <label class="btn btn-light active " >
+              <input type="radio" name="indicator" autocomplete="off" value="SMA,0,1,3" checked/>{% trans 'MA' %}
           </label>
-          <label class="btn btn-light  small" >
+          <label class="btn btn-light  " >
             <input type="radio" name="indicator" autocomplete="off" value="EMA,0,1,3" />{% trans 'EMA' %}
           </label>
-          <label class="btn btn-light small" >
-            <input type="radio" name="indicator" autocomplete="off" value="BBANDS,3" />{% trans 'BOLL' %}
+          <label class="btn btn-light " >
+            <input type="radio" name="indicator" autocomplete="off" value="BOLL,3" />{% trans 'BOLL' %}
           </label>
-          <label class="btn btn-light  sall" >
+          <label class="btn btn-light " >
             <input type="radio" name="indicator" autocomplete="off" value="BBI,3" />{% trans 'BBI' %}
           </label>
           <!-- 动量指标 STOCH -->
           <label class="btn btn-light">
-              <input type="radio" name="indicator" autocomplete="off" value="STOCH,0,1,2"/>{% trans 'KDJ' %}
+              <input type="radio" name="indicator" autocomplete="off" value="KDJ,0,1,2"/>{% trans 'KDJ' %}
           </label>
           <label class="btn btn-light">
             <input type="radio" name="indicator" autocomplete="off" value="MACD,0,1,2"/>{% trans 'MACD' %}
@@ -90,9 +93,9 @@
               <input type="radio" name="indicator" autocomplete="off" value="RSI,2" />{% trans 'RSI' %}
           </label>
           <!-- 成交量指标 -->
-          <label class="btn btn-light">
+          <!-- <label class="btn btn-light">
               <input type="radio" name="indicator" autocomplete="off" value="OBV,2"/>{% trans 'OBV' %}
-          </label>
+          </label> -->
         </div>
       </div>
       <!-- <hr> -->
@@ -349,11 +352,11 @@
           {% trans '复权方式' %}
         </label>
         <div class="btn-group btn-group-sm btn-group-toggle " data-toggle="buttons">
-          <label class="btn btn-light active small">
-              <input type="radio" name="restoration" autocomplete="off" value="qfq" checked/>{% trans '前复权' %}
+          <label class="btn btn-light active">
+            <input type="radio" name="restoration" autocomplete="off" value="bfq" checked/>{% trans '不复权' %}
           </label>
           <label class="btn btn-light">
-              <input type="radio" name="restoration" autocomplete="off" value="bfq"/>{% trans '不复权' %}
+              <input type="radio" name="restoration" autocomplete="off" value="qfq" />{% trans '前复权' %}
           </label>
         </div>
       </div>
@@ -387,25 +390,25 @@
       <div class="row">
           <div class="col-lg-12">
               <div class="">
-                <!-- Card Header - Dropdown -->
+                <!--  Header - Dropdown -->
                 <div class="d-flex flex-row align-items-center justify-content-between">
                     <h6 class="font-weight-bold text-muted"><span class="stock_name ml-2"></span></h6>
                     <hr/>
                     <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                         <label class="btn btn-light active">
-                            <input type="radio" name="stockHistPeriod" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                            <input type="radio" name="period" autocomplete="off" value="1" checked>{% trans '1年' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="stockHistPeriod" autocomplete="off" value="3">{% trans '3年' %} 
+                            <input type="radio" name="period" autocomplete="off" value="3">{% trans '3年' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="stockHistPeriod" autocomplete="off" value="5">{% trans '5年' %} 
+                            <input type="radio" name="period" autocomplete="off" value="5">{% trans '5年' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="stockHistPeriod" autocomplete="off" value="10">{% trans '10年' %} 
+                            <input type="radio" name="period" autocomplete="off" value="10">{% trans '10年' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="stockHistPeriod" autocomplete="off" value="99">{% trans '全部' %} 
+                            <input type="radio" name="period" autocomplete="off" value="99">{% trans '全部' %} 
                         </label>
                     </div>
                     <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
@@ -421,8 +424,7 @@
                       </label>
                     </div>
                 </div>
-                <!-- Card Body -->
-                <div class="col-lg-12 mb-3">
+                <div class="col-lg-12 mt-2 mb-2">
                     <!-- <div class="">
                       <div id="equityChart" style="height: 200px"></div>
                     </div>

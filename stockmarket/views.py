@@ -26,7 +26,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from search.utils import pinyin_abbrev
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
-from stockmarket.backtesting import get_data, get_ta_indicator, get_strategy_by_category
+from stockmarket.backtesting import get_data, get_data_since, get_ta_indicator, get_strategy_by_category
 from stockmarket.models import (City, CompanyBasic, Industry, Province,
                                 StockNameCodeMap)
 
@@ -218,6 +218,300 @@ class OHLCList(APIView):
             print(err)
             raise HttpResponseServerError
 
+def to_ohlc_list(df):
+    ohlc_list = []
+    get_ma_df(df)
+    get_ema_df(df)
+    get_bbi_df(df)
+    get_boll_df(df)
+    get_rsi_df(df)
+    get_macd_df(df)
+    get_kdj_df(df)
+
+    for idx,rows in df.iterrows():
+        ohlc_list.append({
+            'o': rows['Open'],
+            'h': rows['High'],
+            'l': rows['Low'],
+            'c': rows['Close'],
+            'v': rows['Volume'],
+            'ma10': rows['ma_10'] if not np.isnan(rows['ma_10']) else None, 
+            'ma20': rows['ma_20'] if not np.isnan(rows['ma_20']) else None,
+            'ma60': rows['ma_60'] if not np.isnan(rows['ma_60']) else None,
+            'ma120': rows['ma_120'] if not np.isnan(rows['ma_120']) else None,
+            'ma200': rows['ma_200'] if not np.isnan(rows['ma_200']) else None,
+            'ema10': rows['ema_10'] if not np.isnan(rows['ema_10']) else None,
+            'ema20': rows['ema_20'] if not np.isnan(rows['ema_20']) else None,
+            'ema60': rows['ema_60'] if not np.isnan(rows['ema_60']) else None,
+            'ema120': rows['ema_120'] if not np.isnan(rows['ema_120']) else None,
+            'ema200': rows['ema_200'] if not np.isnan(rows['ema_200']) else None,
+            'rsi6': rows['rsi_6'] if not np.isnan(rows['rsi_6']) else None,
+            'rsi12': rows['rsi_12'] if not np.isnan(rows['rsi_12']) else None,
+            'rsi24': rows['rsi_24'] if not np.isnan(rows['rsi_24']) else None,
+            'bollupper': rows['boll_upper'] if not np.isnan(rows['boll_upper']) else None,
+            'bollmid': rows['boll_mid'] if not np.isnan(rows['boll_mid']) else None,
+            'bolllower': rows['boll_lower'] if not np.isnan(rows['boll_lower']) else None,
+            'bbi': rows['bbi'] if not np.isnan(rows['bbi']) else None,
+            'kdjk': rows['k'] if not np.isnan(rows['k']) else None,
+            'kdjd': rows['d'] if not np.isnan(rows['d']) else None,
+            'kdjj': rows['j'] if not np.isnan(rows['j']) else None,
+            'macddif': rows['dif'] if not np.isnan(rows['dif']) else None,
+            'macddea': rows['dea'] if not np.isnan(rows['dea']) else None,
+            'macdbar': rows['bar'] if not np.isnan(rows['bar']) else None,
+            'd': idx,
+        })
+    return ohlc_list
+
+def get_ohlc(request, ts_code, freq, period=3):
+    try:
+        # ohlc_list = []
+        ohlc_df = get_data_since(ts_code, freq, period=period)
+        ohlc_data = to_ohlc_list(ohlc_df)
+        
+        return JsonResponse(ohlc_data, safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_ma_df(data_df):
+    try:
+        # df_ma = pd.DataFrame()
+        data_df['ma_10'] = ta.MA(data_df['Close'], timeperiod=10, matype=0)
+        data_df['ma_20'] = ta.MA(data_df['Close'], timeperiod=20, matype=0)
+        data_df['ma_60'] = ta.MA(data_df['Close'], timeperiod=60, matype=0)
+        data_df['ma_120'] = ta.MA(data_df['Close'], timeperiod=120, matype=0)
+        data_df['ma_200'] = ta.MA(data_df['Close'], timeperiod=200, matype=0)
+
+        return data_df
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_ema_df(data_df):
+    try:
+        # df_ema = pd.DataFrame()
+        data_df['ema_10'] = ta.MA(data_df['Close'], timeperiod=10, matype=1)
+        data_df['ema_20'] = ta.MA(data_df['Close'], timeperiod=20, matype=1)
+        data_df['ema_60'] = ta.MA(data_df['Close'], timeperiod=60, matype=1)
+        data_df['ema_120'] = ta.MA(data_df['Close'], timeperiod=120, matype=1)
+        data_df['ema_200'] = ta.MA(data_df['Close'], timeperiod=200, matype=1)
+
+        return data_df
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+        
+def get_boll_df(data_df):
+    try:
+        data_df['boll_upper'],data_df['boll_mid'],data_df['boll_lower'] = ta.BBANDS(data_df['Close'], timeperiod=20,
+                         nbdevup=2, nbdevdn=2, matype=0)
+        
+        return data_df
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_bbi_df(data_df):
+    try:
+        df_ma = pd.DataFrame()
+        df_ma['ma_3'] = ta.MA(data_df['Close'], timeperiod=3)
+        df_ma['ma_6'] = ta.MA(data_df['Close'], timeperiod=6)
+        df_ma['ma_12'] = ta.MA(data_df['Close'], timeperiod=12)
+        df_ma['ma_24'] = ta.MA(data_df['Close'], timeperiod=24)
+
+        # df_bbi = pd.DataFrame()
+        data_df['bbi'] = (df_ma['ma_3'] + df_ma['ma_6'] +
+                         df_ma['ma_12']+df_ma['ma_24'])/4
+        return data_df
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_rsi_df(data_df):
+    try:
+        # df_rsi = pd.DataFrame()
+        data_df['rsi_6'] = ta.RSI(data_df['Close'], timeperiod=6)
+        data_df['rsi_12'] = ta.RSI(data_df['Close'], timeperiod=12)
+        data_df['rsi_24'] = ta.RSI(data_df['Close'], timeperiod=24)
+
+        return data_df
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_kdj_df(data_df):
+    try:
+        # df_kdj = pd.DataFrame()
+        data_df['k'], data_df['d'] = ta.STOCH(data_df['High'],
+                                            data_df['Low'],
+                                            data_df['Close'],
+                                            fastk_period=9,
+                                            slowk_period=3,
+                                            slowk_matype=0,
+                                            slowd_period=3,
+                                            slowd_matype=0)
+        data_df['j'] = list(map(lambda x, y: 3*x-2*y, data_df['k'], data_df['d']))
+        return data_df
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_macd_df(data_df):
+    try:
+        # df_macd = pd.DataFrame()
+        data_df['dif'], data_df['dea'], data_df['bar'] = ta.MACD(
+            data_df['Close'].values, fastperiod=12, slowperiod=26, signalperiod=9)
+        return data_df
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+
+def get_ema(request, ts_code, freq, period=3):
+    try:
+        ohlc_list = []
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_ema = pd.DataFrame()
+        df_ema['ema_10'] = ta.EMA(data_df['Close'], timeperiod=10)
+        df_ema['ema_20'] = ta.EMA(data_df['Close'], timeperiod=20)
+        df_ema['ema_60'] = ta.EMA(data_df['Close'], timeperiod=60)
+        df_ema['ema_120'] = ta.EMA(data_df['Close'], timeperiod=120)
+        df_ema['ema_200'] = ta.EMA(data_df['Close'], timeperiod=200)
+
+        # rsi_list = []
+        # rsi_list.append({
+        #     'rsi_6': df_rsi['rsi_6'],
+        #     'rsi_12': df_rsi['rsi_12'],
+        #     'rsi_24': df_rsi['rsi_24'],
+        # })
+        # parsed = json.load(df_rsi.to_json())
+
+        # return HttpResponse(df_rsi.to_json(), 200) #JsonResponse({'results': rsi_list}, safe=False)
+        return JsonResponse(df_ema.to_json(), safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_ma(request, ts_code, freq, period=3):
+    try:
+        ohlc_list = []
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_ma = pd.DataFrame()
+        df_ma['ma_10'] = ta.MA(data_df['Close'], timeperiod=10)
+        df_ma['ma_20'] = ta.MA(data_df['Close'], timeperiod=20)
+        df_ma['ma_60'] = ta.MA(data_df['Close'], timeperiod=60)
+        df_ma['ma_120'] = ta.MA(data_df['Close'], timeperiod=120)
+        df_ma['ma_200'] = ta.MA(data_df['Close'], timeperiod=200)
+
+        # rsi_list = []
+        # rsi_list.append({
+        #     'rsi_6': df_rsi['rsi_6'],
+        #     'rsi_12': df_rsi['rsi_12'],
+        #     'rsi_24': df_rsi['rsi_24'],
+        # })
+        # parsed = json.load(df_rsi.to_json())
+
+        # return HttpResponse(df_rsi.to_json(), 200) #JsonResponse({'results': rsi_list}, safe=False)
+        return JsonResponse(df_ma.to_json(), safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_sma(request, ts_code, freq, period=3):
+    try:
+        ohlc_list = []
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_sma = pd.DataFrame()
+        df_sma['sma_10'] = ta.SMA(data_df['Close'], 10)
+        df_sma['sma_20'] = ta.SMA(data_df['Close'], 20)
+        df_sma['sma_60'] = ta.SMA(data_df['Close'], 60)
+        df_sma['sma_120'] = ta.SMA(data_df['Close'], 120)
+        df_sma['sma_200'] = ta.SMA(data_df['Close'], 200)
+
+        # rsi_list = []
+        # rsi_list.append({
+        #     'rsi_6': df_rsi['rsi_6'],
+        #     'rsi_12': df_rsi['rsi_12'],
+        #     'rsi_24': df_rsi['rsi_24'],
+        # })
+        # parsed = json.load(df_rsi.to_json())
+
+        # return HttpResponse(df_rsi.to_json(), 200) #JsonResponse({'results': rsi_list}, safe=False)
+        return JsonResponse(df_sma.to_json(), safe=False)
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_boll(request, ts_code, freq, period=3):
+    try:
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        boll = ta.BBANDS(data_df['Close'], timeperiod=20,
+                         nbdevup=2, nbdevdn=2, matype=0)
+        return JsonResponse({'high': boll[0].to_json(), 'mid': boll[1].to_json(), 'low': boll[2].to_json()}, safe=False)
+
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+def get_bbi(request, ts_code, freq, period=3):
+    try:
+        data_df = get_data(ts_code, freq, )
+
+        if period <= 10:
+            start_date = date.today() - timedelta(days=365 * period)
+            data_df = data_df.loc[start_date:]
+
+        df_ma = pd.DataFrame()
+        df_ma['ma_3'] = ta.MA(data_df['Close'], timeperiod=3)
+        df_ma['ma_6'] = ta.MA(data_df['Close'], timeperiod=6)
+        df_ma['ma_12'] = ta.MA(data_df['Close'], timeperiod=12)
+        df_ma['ma_24'] = ta.MA(data_df['Close'], timeperiod=24)
+
+        df_bbi = pd.DataFrame()
+        df_bbi['bbi'] = (df_ma['ma_3'] + df_ma['ma_6'] +
+                         df_ma['ma_12']+df_ma['ma_24'])/4
+        return JsonResponse(df_bbi.to_json(), safe=False)
+
+    except StockHistoryDaily.DoesNotExist:
+        raise Http404
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
 
 def get_rsi(request, ts_code, freq, period=3):
     try:
@@ -232,7 +526,7 @@ def get_rsi(request, ts_code, freq, period=3):
         df_rsi['rsi_6'] = ta.RSI(data_df['Close'], timeperiod=6)
         df_rsi['rsi_12'] = ta.RSI(data_df['Close'], timeperiod=12)
         df_rsi['rsi_24'] = ta.RSI(data_df['Close'], timeperiod=24)
-        
+
         rsi_list = []
         # rsi_list.append({
         #     'rsi_6': df_rsi['rsi_6'],
@@ -249,6 +543,7 @@ def get_rsi(request, ts_code, freq, period=3):
         print(err)
         raise HttpResponseServerError
 
+
 def get_kdj(request, ts_code, freq, period=3):
     try:
         data_df = get_data(ts_code, freq, )
@@ -258,15 +553,15 @@ def get_kdj(request, ts_code, freq, period=3):
             data_df = data_df.loc[start_date:]
 
         df_kdj = pd.DataFrame()
-        df_kdj['k'], df_kdj['d'] = ta.STOCH(data_df['High'], 
-                        data_df['Low'],
-                        data_df['Close'],
-                        fastk_period=9,
-                        slowk_period=3,
-                        slowk_matype=0,
-                        slowd_period=3,
-                        slowd_matype=0)
-        df_kdj['j'] = list(map(lambda x,y: 3*x-2*y,df_kdj['k'],df_kdj['d']))
+        df_kdj['k'], df_kdj['d'] = ta.STOCH(data_df['High'],
+                                            data_df['Low'],
+                                            data_df['Close'],
+                                            fastk_period=9,
+                                            slowk_period=3,
+                                            slowk_matype=0,
+                                            slowd_period=3,
+                                            slowd_matype=0)
+        df_kdj['j'] = list(map(lambda x, y: 3*x-2*y, df_kdj['k'], df_kdj['d']))
         return JsonResponse(df_kdj.to_json(), safe=False)
     except StockHistoryDaily.DoesNotExist:
         raise Http404
@@ -285,9 +580,10 @@ def get_macd(request, ts_code, freq, period=3):
             data_df = data_df.loc[start_date:]
 
         df_macd = pd.DataFrame()
-        df_macd['dif'], df_macd['dea'], df_macd['bar'] = ta.MACD(data_df['Close'].values, fastperiod=12, slowperiod=26, signalperiod=9)
-        # dif[np.isnan(dif)], dea[np.isnan(dea)], bar[np.isnan(bar)] = 0, 0, 0        
-        
+        df_macd['dif'], df_macd['dea'], df_macd['bar'] = ta.MACD(
+            data_df['Close'].values, fastperiod=12, slowperiod=26, signalperiod=9)
+        # dif[np.isnan(dif)], dea[np.isnan(dea)], bar[np.isnan(bar)] = 0, 0, 0
+
         rsi_list = []
         # rsi_list.append({
         #     'rsi_6': df_rsi['rsi_6'],
@@ -303,6 +599,7 @@ def get_macd(request, ts_code, freq, period=3):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def realtime_quotes(request, symbols):
     '''

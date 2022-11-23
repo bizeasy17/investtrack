@@ -3,7 +3,7 @@ $(function () {
     const upColor = '#ec0000';
     const downColor = '#00da3c';
 
-    let ohlcChartData = "";
+    let ohlcMixChartData = "";
 
     let taBIndicatorSet = new Set();
     let taSIndicatorSet = new Set();
@@ -67,8 +67,11 @@ $(function () {
     var typeBParam = ["KDJ","MACD","BOLL"];
 
     var indicaMap = new Map();
-
-
+    var ohlcChartData;
+    var maChartData;
+    var emaChartData;
+    var bbiChartData;
+    var bollChartData;
     // var basicCharts
 
     var initParam = function () {
@@ -118,47 +121,61 @@ $(function () {
         $(".stock_name").text($("#hiddenTsCode").attr("name")  + " [" + $("#hiddenTsCode").val() + "]");
     }
 
-    var initializeBTMixChart = function (tsCode) {
+    // 此处会有新的chart数据更新
+    var updateBTMixChart = function (tsCode) {
         // 初始化OHLC，MA，VOL，Equity，MACD，KDJ，RSI，Fundamental Chart Data
         var zoomMin = 0;
         var zoomMax = 100;
         $.ajax({
             url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                var chartData = jsonToChartOHLCFormat(data);
-                var maChartData = jsonToChartMAFormat(data);
+                ohlcChartData = jsonToMixChartFormat(data);
+                // = jsonToChartOHLCFormat(data[0]);
+                // maChartData = jsonToChartMAFormat($.parseJSON(data[1]));
+                // emaChartData = jsonToChartEMAFormat($.parseJSON(data[2]));
+
+                // bbiChartData = jsonToChartBBIFormat(data[3]);
+                // bollChartData = jsonToChartBOLLFormat($.parseJSON(data[4]));
+                // var rsiChartData = jsonToChartRSIFormat(data[5]);
+                // var macdChartData = jsonToChartMACDFormat(data[6]);
+                // var kdjChartData = jsonToChartKDJFormat(data[7]);
+
                 // global OHLC数据
-                ohlcChartData = data;
+                ohlcMixChartData = data;
                 // ohlcCount = chartData.label.length;
 
-                option = initMixChartOption();
+                option = initMixChartOption(ohlcChartData);
                 btMixChart.setOption(option);
 
                 updateOHLCChart(ohlcChartData);
-                updateVolumeChart();
+                updateTechIndicatorChart();
+                updateVolumeChart(ohlcChartData);
+                updateRSIChart(ohlcChartData);
+                updateMACDChart(ohlcChartData);
+                updateKDJChart(ohlcChartData);
                 // initEquityChart();
                 // initDefaultCascadeTechInidicator(maChartData);
-                // initKDJChart();
-                // initMACDChart();
-                // initRSIChart();
+                
                 // initCompanyFundamentalChart();
-            },
+            }
+            ,
             complete: function (request, status) {
                 // renderCompanyFundaChart(tsCode, startDate, endDate);
                 // renderRSIChart(tsCode);
                 // renderKDJChart(tsCode);
                 // renderMACDChart(tsCode);
+                // alert('do smthing');
             }
         });
     }
 
-    var initMixChartOption = function() {
-        mixChartOption = {
+    var initMixChartOption = function(ohlcChartData) {
+        var mixChartOption = {
             animation: true,
-            legend: {
-                top: 5,
-                data: ['MA10','MA20','MA60','MA120','MA200']
-            },
+            // legend: {
+            //     top: 5,
+            //     data: ['MA10','MA20','MA60','MA120','MA200']
+            // },
             // tooltip: {
             //     trigger: 'axis',
             //     axisPointer: {
@@ -257,21 +274,21 @@ $(function () {
                 {right: '3%',top: '89%',height: '7%', width: '42%'}
             ],
             xAxis: [
-                {gridIndex: 0, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcxAxis"}, // OHLC
-                {gridIndex: 1, data: chartData.label, min: 'dataMin', max: 'dataMax', id: 'equityxAxis'}, // Equity资产净值
-                {gridIndex: 2, data: chartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }, id:'volxAxis'}, // VOL
+                {gridIndex: 0, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcxAxis"}, // OHLC
+                {gridIndex: 1, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id: 'equityxAxis'}, // Equity资产净值
+                {gridIndex: 2, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }, id:'volxAxis'}, // VOL
                 
-                {gridIndex: 3, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"rsixAxis"}, // RSI
-                {gridIndex: 4, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"macdxAxis"}, // MACD
-                {gridIndex: 5, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"kdjxAxis"}, // KDJ
+                {gridIndex: 3, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"rsixAxis"}, // RSI
+                {gridIndex: 4, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"macdxAxis"}, // MACD
+                {gridIndex: 5, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"kdjxAxis"}, // KDJ
 
-                {gridIndex: 6, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
-                {gridIndex: 7, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
-                {gridIndex: 8, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
-                {gridIndex: 9, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
-                {gridIndex: 10, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
-                {gridIndex: 11, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
-                {gridIndex: 12, data: chartData.label, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
+                {gridIndex: 6, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
+                {gridIndex: 7, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
+                {gridIndex: 8, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
+                {gridIndex: 9, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
+                {gridIndex: 10, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
+                {gridIndex: 11, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
+                {gridIndex: 12, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
 
                 // {
                 //     type: 'category',
@@ -404,14 +421,6 @@ $(function () {
                     }
                 },
                 {
-                    id: "vol",
-                    name: 'Volume',
-                    type: 'bar',
-                    xAxisIndex: 2,
-                    yAxisIndex: 2,
-                    // data: chartData.volume
-                },
-                {
                     id: 'equity',
                     name: '净值',
                     type: 'line',
@@ -420,20 +429,110 @@ $(function () {
                     xAxisIndex: 1,
                     yAxisIndex: 1,
                     // data: chartData.equity
+                },
+                {
+                    id: "vol",
+                    name: 'Volume',
+                    type: 'bar',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    // data: chartData.volume
+                },
+                {
+                    id: "rsi6",
+                    name: "RSI(6)",
+                    type: 'line',
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "rsi12",
+                    name: "RSI(12)",
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "rsi24",
+                    name: "RSI(24)",
+                    type: 'line',
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "macddif",
+                    name: "MACD_DIF",
+                    type: 'line',
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "macddea",
+                    name: "MACD_DEA",
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "macdbar",
+                    name: "MACD_BAR",
+                    type: 'bar',
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "kdjk",
+                    name: "KDJ_K",
+                    type: 'line',
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "kdjd",
+                    name: "KDJ_D",
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "kdjj",
+                    name: "KDJ_J",
+                    type: 'line',
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    smooth: true,
+                    showSymbol: false
                 }
             ]
         };
+        return mixChartOption;
     }
 
     var updateOHLCChart = function(ohlcChartData){
         var ohlcChartOption = {
-            xAxis: [
-                {id: "ohlcxAxis", data: ohlcChartData.label}, // OHLC
-            ],
+            // xAxis:[ 
+            //     {id: "ohlcxAxis", data: ohlcChartData.label} // OHLC
+            // ],
             series:[
                 {
                     id: "ohlc",
-                    data: ohlcChartData.value,
+                    data: ohlcChartData.ohlc,
                 }
             ]};
 
@@ -443,18 +542,222 @@ $(function () {
 
     var updateVolumeChart = function(volChartData){
         var volChartOption = {
-            xAxis: [
-                {id: "volxAxis", data: volChartData.label}, // OHLC
-            ],
+            // xAxis: 
+            //     {id: "volxAxis", data: volChartData.label} // OHLC
+            // ,
             series:[
                 {
                     id: "vol",
-                    data: volChartData.value,
+                    data: volChartData.volume,
                 }
             ]};
 
         //动态添加 legend.data
         btMixChart.setOption(volChartOption);
+    }
+
+    var updateMAChart = function (maChartData) {
+        //动态添加series
+        var maChartOption = {
+            series:[
+            {
+                id: "indic1",
+                data: maChartData.ma[0].ma10
+            },
+            {
+                id: "indic2",
+                // name: 'MA20',
+                data: maChartData.ma[0].ma20,
+            },
+            {
+                id: "indic3",
+                // name: 'MA60',
+                data: maChartData.ma[0].ma60,
+            },
+            {
+                id: "indic4",
+                // name: 'MA120',
+                data: maChartData.ma[0].ma120,
+            },
+            {
+                id: "indic5",
+                // name: 'MA200',
+                data: maChartData.ma[0].ma200,
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(maChartOption);
+    }
+
+    var updateEMAChart = function (chartData) {
+        //动态添加series
+        var emaChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'EMA10',
+                data: chartData.ema[0].ema10
+            },
+            {
+                id: "indic2",
+                name: 'EMA20',
+                data: chartData.ema[0].ema20
+            },
+            {
+                id: "indic3",
+                name: 'EMA60',
+                data: chartData.ema[0].ema60
+            },
+            {
+                id: "indic4",
+                name: 'EMA120',
+                data: chartData.ema[0].ema120
+            },
+            {
+                id: "indic5",
+                name: 'EMA200',
+                data: chartData.ema[0].ema200
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(emaChartOption);
+    }
+
+    var updateBOLLChart = function (chartData) {
+        //动态添加series
+        var bollChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'BOLL_UPPER',
+                data: chartData.boll[0].upper,
+            },
+            {
+                id: "indic2",
+                name: 'BOLL_MID',
+                data: chartData.boll[0].mid,
+            },
+            {
+                id: "indic3",
+                name: 'BOLL_LOW',
+                data: chartData.boll[0].lower,
+            },
+            {
+                id: "indic4",
+                data: undefined,
+            },
+            {
+                id: "indic5",
+                data: undefined,
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(bollChartOption);
+    }
+
+    var updateBBIChart = function (chartData) {
+        //动态添加series
+        var bbiChartOption = {
+            series:[
+            {
+                id: "indic1",
+                name: 'BBI',
+                data: chartData.bbi,
+            },
+            {
+                id: "indic2",
+                data: undefined,
+            },
+            {
+                id: "indic3",
+                data: undefined,
+            },
+            {
+                id: "indic4",
+                data: undefined,
+            },
+            {
+                id: "indic5",
+                data: undefined,
+            }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(bbiChartOption);
+    }
+
+    var updateRSIChart = function (chartData) {
+
+        //动态添加series
+        var mixChartOption = {
+            series: [
+            {
+                id: "rsi6",
+                data: chartData.rsi[0].rsi6,
+            },
+            {
+                id: "rsi12",
+                data: chartData.rsi[0].rsi12
+            },
+            {
+                id: "rsi24",
+                data: chartData.rsi[0].rsi24
+            }
+        ]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(mixChartOption);
+    }
+
+    var updateMACDChart = function (chartData) {
+        // var chartData = jsonToChartMACDFormat(jsonData);
+        //动态添加series
+        var macdChartOption = {
+            series: [
+                {
+                    id: "macddif",
+                    data: chartData.macd[0].dif
+                },
+                {
+                    id: "macddea",
+                    data: chartData.macd[0].dea
+                },
+                {
+                    id: "macdbar",
+                    data: chartData.macd[0].bar
+                }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(macdChartOption);
+    }
+
+    var updateKDJChart = function (chartData) {
+        // var chartData = jsonToChartKDJFormat(jsonData);
+
+        //动态添加series
+        var kdjChartOption = {
+            series:[
+                {
+                    id: "kdjk",
+                    data: chartData.kdj[0].k
+                },
+                {
+                    id: "kdjd",
+                    data: chartData.kdj[0].d
+                },
+                {
+                    id: "kdjj",
+                    data: chartData.kdj[0].j
+                }]};
+
+        //动态添加 legend.data
+        // mixChartOption.legend.data.push('其他');
+        btMixChart.setOption(kdjChartOption);
     }
 
     //  http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
@@ -519,7 +822,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                ohlcChartData = data;
+                ohlcMixChartData = data;
                 var chartData = jsonToChartOHLCFormat(data);
                 // ohlcCount = chartData.label.length;
                 updateOHLCChart(chartData);
@@ -575,146 +878,12 @@ $(function () {
         btMixChart.setOption(equitySerierOpt);
     }
 
-    var pushMA2MixChart = function (jsonData) {
-        var chartData = jsonToChartMAFormat(jsonData);
-
-        //动态添加series
-        var emaChartOption = {
-            series:[
-            {
-                id: "indic1",
-                name: 'MA10',
-                type: 'line',
-                data: chartData.ema_10,
-                showSymbol: false,
-                smooth: true,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic2",
-                name: 'MA20',
-                type: 'line',
-                data: chartData.ema_20,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic3",
-                name: 'MA60',
-                type: 'line',
-                data: chartData.ema_60,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic4",
-                name: 'MA120',
-                type: 'line',
-                data: chartData.ema_120,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic5",
-                name: 'MA200',
-                type: 'line',
-                data: chartData.ema_200,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            }]};
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(emaChartOption);
-    }
-
-    var pushEMA2MixChart = function (jsonData) {
-        var chartData = jsonToChartEMAFormat(jsonData);
-
-        //动态添加series
-        var emaChartOption = {
-            series:[
-            {
-                id: "indic1",
-                name: 'EMA10',
-                type: 'line',
-                data: chartData.ema_10,
-                showSymbol: false,
-                smooth: true,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic2",
-                name: 'EMA20',
-                type: 'line',
-                data: chartData.ema_20,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic3",
-                name: 'EMA60',
-                type: 'line',
-                data: chartData.ema_60,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic4",
-                name: 'EMA120',
-                type: 'line',
-                data: chartData.ema_120,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic5",
-                name: 'EMA200',
-                type: 'line',
-                data: chartData.ema_200,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            }]};
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(emaChartOption);
-    }
-
     var renderEMAChart = function(tsCode){
         
         $.ajax({
             url: stockmarketEndpoint + "ema/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                pushEMA2MixChart($.parseJSON(data));
+                updateEMAChart($.parseJSON(data));
             },
             statusCode: {
                 403: function () {
@@ -728,59 +897,6 @@ $(function () {
                 }
             }
         });
-    }
-
-    var pushBOLL2MixChart = function (jsonData) {
-        var chartData = jsonToChartBOLLFormat(jsonData);
-
-        //动态添加series
-        var bollChartOption = {
-            series:[
-            {
-                id: "indic1",
-                name: 'BOLL_HIGH',
-                type: 'line',
-                data: chartData.boll_high,
-                showSymbol: false,
-                smooth: true,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic2",
-                name: 'BOLL_MID',
-                type: 'line',
-                data: chartData.boll_mid,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic3",
-                name: 'BOLL_LOW',
-                type: 'line',
-                data: chartData.boll_low,
-                smooth: true,
-                showSymbol: false,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic4",
-                data: undefined,
-            },
-            {
-                id: "indic5",
-                data: undefined,
-            }]};
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(bollChartOption);
     }
 
     var renderBollChart = function(tsCode){
@@ -788,7 +904,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "boll/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                pushBOLL2MixChart(data);
+                updateBOLLChart(data);
             },
             statusCode: {
                 403: function () {
@@ -802,45 +918,6 @@ $(function () {
                 }
             }
         });
-    }
-
-    var pushBBI2MixChart = function (jsonData) {
-        var chartData = jsonToChartBBIFormat(jsonData);
-
-        //动态添加series
-        var bbiChartOption = {
-            series:[
-            {
-                id: "indic1",
-                name: 'BBI',
-                type: 'line',
-                data: chartData.bbi,
-                showSymbol: false,
-                smooth: true,
-                lineStyle: {
-                    opacity: 0.5
-                }
-            },
-            {
-                id: "indic2",
-                data: undefined,
-            },
-            {
-                id: "indic3",
-                data: undefined,
-            },
-            {
-                id: "indic4",
-                data: undefined,
-            },
-            {
-                id: "indic5",
-                data: undefined,
-            }]};
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(bbiChartOption);
     }
 
     var renderBBIChart = function(tsCode){
@@ -848,7 +925,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "bbi/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                pushBBI2MixChart(data);
+                updateBBIChart(data);
             },
             statusCode: {
                 403: function () {
@@ -862,52 +939,6 @@ $(function () {
                 }
             }
         });
-    }
-
-    var pushRSI2MixChart = function (jsonData) {
-        var chartData = jsonToChartRSIFormat(jsonData);
-
-        //动态添加series
-        mixChartOption.series.push({
-            name: "RSI(6)",
-            type: 'line',
-            xAxisIndex: 3,
-            yAxisIndex: 3,
-            smooth: true,
-            showSymbol: false,
-            data: chartData.rsi_6,
-            itemStyle: {
-                color: 'rgb(118, 118, 118)'
-            }
-        },
-        {
-            name: "RSI(12)",
-            xAxisIndex: 3,
-            yAxisIndex: 3,
-            type: 'line',
-            // smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(0, 255, 0)'
-            },
-            data: chartData.rsi_12
-        },
-        {
-            name: "RSI(24)",
-            type: 'line',
-            xAxisIndex: 3,
-            yAxisIndex: 3,
-            smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(25, 70, 131)'
-            },
-            data: chartData.rsi_24
-        });
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(mixChartOption, true);
     }
 
     var renderRSIChart = function(tsCode){
@@ -915,7 +946,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "rsi/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                pushRSI2MixChart($.parseJSON(data));
+                updateRSIChart($.parseJSON(data));
             },
             statusCode: {
                 403: function () {
@@ -929,52 +960,6 @@ $(function () {
                 }
             }
         });
-    }
-
-    var pushKDJ2MixChart = function (jsonData) {
-        var chartData = jsonToChartKDJFormat(jsonData);
-
-        //动态添加series
-        mixChartOption.series.push({
-            name: "K",
-            type: 'line',
-            xAxisIndex: 5,
-            yAxisIndex: 5,
-            smooth: true,
-            showSymbol: false,
-            data: chartData.k,
-            itemStyle: {
-                color: 'rgb(118, 118, 118)'
-            }
-        },
-        {
-            name: "D",
-            xAxisIndex: 5,
-            yAxisIndex: 5,
-            type: 'line',
-            // smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(0, 255, 0)'
-            },
-            data: chartData.d
-        },
-        {
-            name: "J",
-            type: 'line',
-            xAxisIndex: 5,
-            yAxisIndex: 5,
-            smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(25, 70, 131)'
-            },
-            data: chartData.j
-        });
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(mixChartOption, true);
     }
 
     var renderKDJChart = function(tsCode){
@@ -982,7 +967,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "kdj/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                pushKDJ2MixChart($.parseJSON(data));
+                updateKDJChart($.parseJSON(data));
             },
             statusCode: {
                 403: function () {
@@ -998,56 +983,12 @@ $(function () {
         });
     }
 
-    var pushMACD2MixChart = function (jsonData) {
-        var chartData = jsonToChartMACDFormat(jsonData);
-
-        //动态添加series
-        mixChartOption.series.push({
-            name: "DIF",
-            type: 'line',
-            xAxisIndex: 4,
-            yAxisIndex: 4,
-            smooth: true,
-            showSymbol: false,
-            data: chartData.dif,
-            itemStyle: {
-                color: 'rgb(118, 118, 118)'
-            }
-        },
-        {
-            name: "DEA",
-            xAxisIndex: 4,
-            yAxisIndex: 4,
-            type: 'line',
-            // smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(0, 255, 0)'
-            },
-            data: chartData.dea
-        },
-        {
-            name: "BAR",
-            type: 'bar',
-            xAxisIndex: 4,
-            yAxisIndex: 4,
-            // itemStyle: {
-            //     color: 'rgb(25, 70, 131)'
-            // },
-            data: chartData.bar
-        });
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(mixChartOption, true);
-    }
-
     var renderMACDChart = function(tsCode){
         
         $.ajax({
             url: stockmarketEndpoint + "macd/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
-                pushMACD2MixChart($.parseJSON(data));
+                updateMACDChart($.parseJSON(data));
             },
             statusCode: {
                 403: function () {
@@ -1316,7 +1257,7 @@ $(function () {
         // renderChart();
         // showIndBasic(item.industry);
         updateMixedOHLCChart();
-        renderTechIndicator();
+        updateTechIndicatorChart();
         renderCompanyFundaChart(tsCode, startDate, endDate);
         renderRSIChart(tsCode);
         renderKDJChart(tsCode);
@@ -1338,24 +1279,27 @@ $(function () {
     var onIndicatorChange = function () {
         // alert($(this).val());
         curIndicator = $(this).val().split(",");
+
         setupStrategyCategories("#bStrategyCategory");
         setupStrategyCategories("#sStrategyCategory");
+
         // showIndicatorChart(indic);
-        renderTechIndicator();
+        updateTechIndicatorChart();
     }
 
-    var renderTechIndicator = function(){
+    // 无服务器端数据更新情况下，只是更改技术指标
+    var updateTechIndicatorChart = function(){
         if(curIndicator[0]=="EMA"){
-            renderEMAChart(tsCode);
+            updateEMAChart(ohlcChartData);
         }
         if(curIndicator[0]=="SMA"){
-            // renderSMAChart();
+            updateMAChart(ohlcChartData);
         }
         if(curIndicator[0]=="BOLL"){
-            renderBollChart(tsCode);
+            updateBOLLChart(ohlcChartData);
         }
         if(curIndicator[0]=="BBI"){
-            renderBBIChart(tsCode);
+            updateBBIChart(ohlcChartData);
         }
     }
 
@@ -1406,27 +1350,17 @@ $(function () {
 
     $('input:radio[name="freq"]').change(function () {
         freq = $(this).val();
-        // renderChart();
-        updateMixedOHLCChart(tsCode);
-        renderTechIndicator();
-        renderCompanyFundaChart(tsCode, startDate, endDate);
-        renderRSIChart(tsCode);
-        renderKDJChart(tsCode);
-        renderMACDChart(tsCode);
+        // initializeBTMixChart(tsCode);
+        updateBTMixChart(tsCode);
+
     });
 
     $('input:radio[name="period"]').change(function () {
         stockHistPeriod = $(this).val();
-        // renderChart();
-        updateMixedOHLCChart(tsCode);
-        renderTechIndicator();
-        renderCompanyFundaChart(tsCode, startDate, endDate);
-        renderRSIChart(tsCode);
-        renderKDJChart(tsCode);
-        renderMACDChart(tsCode);
+        // initializeBTMixChart(tsCode);
+        updateBTMixChart(tsCode);
     });
 
-    
     /**** 
     var pushBCondition = function () {
         taIndicatorType = $("#bStrategyCategory").val();
@@ -2022,7 +1956,7 @@ $(function () {
     });
 
     initParam();
-    initializeBTMixChart(tsCode);
+    updateBTMixChart(tsCode);
 
     // $('input:radio[name="strategyCategory"]').change(function () {
     //     strategyCategory = $(this).val();
