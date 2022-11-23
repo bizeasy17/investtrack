@@ -240,38 +240,38 @@ $(function () {
             // },
             grid: [
                 //OHLC grid index 0
-                {left: '4%',right: '3%',top: "2%",height: '12%'},
-                // reserved for equity + OHLC grid index 1
-                // {left: '4%',right: '1%',top: "2%",height: '13%'},
-                {left: '4%',right: '3%',top: "18%",height: '4%'},
+                {left: '4%',right: '3%',top: "2%",height: '24%'},
+                // reserved for equity grid index 1
+                // {left: '4%',right: '1%',top: "2%",height: '13%'},+8
+                {left: '4%',right: '3%',top: "34%",height: '8%'},
 
-                //OHLC grid index 2, volume成交量
-                {left: '4%',right: '3%',top: '24%',height: '4%'},
+                //OHLC grid index 2, volume成交量 +4
+                {left: '4%',right: '3%',top: '46%',height: '8%'},
                 
-                //OHLC grid index 3, RSI
-                {left: '4%',right: '3%',top: '30%',height: '4%'},
-                //OHLC grid index 4, MACD
-                {left: '4%',right: '3%',top: '37%',height: '4%'},
-                //OHLC grid index 5, KDJ
-                {left: '4%',right: '3%',top: '44%',height: '4%'},
+                //OHLC grid index 3, RSI +4
+                {left: '4%',right: '3%',top: '58%',height: '8%'},
+                //OHLC grid index 4, MACD +7
+                {left: '4%',right: '3%',top: '73%',height: '8%'},
+                //OHLC grid index 5, KDJ +7
+                {left: '4%',right: '3%',top: '88%',height: '8%'},
 
                 //Fundamental grid index 5, PE
-                {left: '4%', top: '52%',height:'7%',width: '42%'},
+                // {left: '4%', top: '52%',height:'7%',width: '42%'},
                 //Fundamental grid index 6, PE TTM
-                {right: '3%',top: '52%',height:'7%',width: '42%'},
+                // {right: '3%',top: '52%',height:'7%',width: '42%'},
 
                 //Fundamental grid index 7, PB
-                {left: '4%', right: '3%',top: '63%',height: '7%'},
+                // {left: '4%', right: '3%',top: '63%',height: '7%'},
 
                 //Fundamental grid index 8, PS
-                {left: '4%',top: '76%',height:'7%',width: '42%'},
+                // {left: '4%',top: '76%',height:'7%',width: '42%'},
                 //Fundamental grid index 9, PS TTM
-                {right: '3%',top: '76%',height:'7%',width: '42%'},
+                // {right: '3%',top: '76%',height:'7%',width: '42%'},
                 
                 //Fundamental grid index 10, Turnover ratio
-                {left: '4%',top: '89%',height: '7%', width: '42%'},
+                // {left: '4%',top: '89%',height: '7%', width: '42%'},
                 //Fundamental grid index 11, Vol ratio
-                {right: '3%',top: '89%',height: '7%', width: '42%'}
+                // {right: '3%',top: '89%',height: '7%', width: '42%'}
             ],
             xAxis: [
                 {gridIndex: 0, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcxAxis"}, // OHLC
@@ -282,13 +282,13 @@ $(function () {
                 {gridIndex: 4, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"macdxAxis"}, // MACD
                 {gridIndex: 5, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"kdjxAxis"}, // KDJ
 
-                {gridIndex: 6, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
-                {gridIndex: 7, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
-                {gridIndex: 8, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
-                {gridIndex: 9, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
-                {gridIndex: 10, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
-                {gridIndex: 11, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
-                {gridIndex: 12, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
+                // {gridIndex: 6, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
+                // {gridIndex: 7, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
+                // {gridIndex: 8, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
+                // {gridIndex: 9, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
+                // {gridIndex: 10, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
+                // {gridIndex: 11, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
+                // {gridIndex: 12, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
 
                 // {
                 //     type: 'category',
@@ -312,13 +312,13 @@ $(function () {
                 {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end'}, // MACD
                 {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end'}, // KDJ
 
-                {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
-                {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
-                {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end'}, // PB
-                {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end'}, // PS
-                {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率', nameLocation: 'end'}, // PS TTM
-                {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
-                {gridIndex: 12, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
+                // {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
+                // {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
+                // {gridIndex: 8, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end'}, // PB
+                // {gridIndex: 9, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end'}, // PS
+                // {gridIndex: 10, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率', nameLocation: 'end'}, // PS TTM
+                // {gridIndex: 11, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
+                // {gridIndex: 12, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
 
                 // { scale: true,
                 //     splitArea: {
@@ -338,7 +338,7 @@ $(function () {
             dataZoom: [
                 {
                     type: 'inside',
-                    xAxisIndex: [0,1],
+                    xAxisIndex: [0,1,2,3,4,5],
                     start: 0,
                     end: 100
                 }
@@ -758,6 +758,316 @@ $(function () {
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
         btMixChart.setOption(kdjChartOption);
+    }
+
+    var initFundaChartOption = function(ohlcChartData) {
+        var mixChartOption = {
+            animation: true,
+            // legend: {
+            //     top: 5,
+            //     data: ['MA10','MA20','MA60','MA120','MA200']
+            // },
+            // tooltip: {
+            //     trigger: 'axis',
+            //     axisPointer: {
+            //         type: 'cross'
+            //     },
+            //     borderWidth: 1,
+            //     borderColor: '#ccc',
+            //     padding: 10,
+            //     textStyle: {
+            //         color: '#000'
+            //     },
+            //     position: function (pos, params, el, elRect, size) {
+            //         const obj = {
+            //             top: 10
+            //         };
+            //         obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+            //         return obj;
+            //     }
+            //     // extraCssText: 'width: 170px'
+            // },
+            axisPointer: {
+                link: [
+                    {
+                        xAxisIndex: 'all'
+                    }
+                ],
+                label: {
+                    backgroundColor: '#777'
+                }
+            },
+            // toolbox: {
+            //     feature: {
+            //         dataZoom: {
+            //             yAxisIndex: false
+            //         },
+            //         brush: {
+            //             type: ['lineX', 'clear']
+            //         }
+            //     }
+            // },
+            brush: {
+                xAxisIndex: 'all',
+                brushLink: 'all',
+                outOfBrush: {
+                    colorAlpha: 0.1
+                }
+            },
+            // visualMap: {
+            //     show: false,
+            //     seriesIndex: 5,
+            //     dimension: 2,
+            //     pieces: [
+            //         {
+            //             value: 1,
+            //             color: downColor
+            //         },
+            //         {
+            //             value: -1,
+            //             color: upColor
+            //         }
+            //     ]
+            // },
+            grid: [
+                //Fundamental grid index 5, PE
+                {left: '4%', top: '2%',height:'14%',width: '42%'},
+                //Fundamental grid index 6, PE TTM
+                {right: '3%',top: '2%',height:'14%',width: '42%'},
+
+                //Fundamental grid index 7, PB
+                {left: '4%', right: '3%',top: '20%',height: '14%'},
+
+                //Fundamental grid index 8, PS
+                {left: '4%',top: '38%',height:'14%',width: '42%'},
+                //Fundamental grid index 9, PS TTM
+                {right: '3%',top: '38%',height:'14%',width: '42%'},
+                
+                //Fundamental grid index 10, Turnover ratio
+                {left: '4%',top: '54%',height: '14%', width: '42%'},
+                //Fundamental grid index 11, Vol ratio
+                {right: '3%',top: '54%',height: '14%', width: '42%'}
+            ],
+            xAxis: [
+                {gridIndex: 0, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
+                {gridIndex: 1, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
+                {gridIndex: 2, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
+                {gridIndex: 3, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
+                {gridIndex: 4, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
+                {gridIndex: 5, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
+                {gridIndex: 6, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
+            ],
+            yAxis: [
+                {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
+                {gridIndex: 1, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
+                {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end'}, // PB
+                {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end'}, // PS
+                {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率', nameLocation: 'end'}, // PS TTM
+                {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
+                {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
+
+                // { scale: true,
+                //     splitArea: {
+                //         show: true
+                //     }
+                // },
+                // {
+                //     scale: true,
+                //     gridIndex: 1,
+                //     splitNumber: 2,
+                //     axisLabel: { show: false },
+                //     axisLine: { show: false },
+                //     axisTick: { show: false },
+                //     splitLine: { show: false }
+                // }
+            ],
+            dataZoom: [
+                {
+                    type: 'inside',
+                    xAxisIndex: [0,1,2,3,4,5,6],
+                    start: 0,
+                    end: 100
+                }
+                // ,
+                // {
+                //     show: true,
+                //     xAxisIndex: [0, 1],
+                //     type: 'slider',
+                //     top: '85%',
+                //     start: 0,
+                //     end: 100
+                // }
+            ],
+            series: [
+                {
+                    id: "pe",
+                    name: 'k线',
+                    type: 'line',
+                    // data: chartData.value,
+                    itemStyle: {
+                        color: upColor,
+                        color0: downColor,
+                        borderColor: undefined,
+                        borderColor0: undefined
+                    }
+                },
+                {
+                    id: "indic1",
+                    // name: 'MA10',
+                    type: 'line',
+                    // data: calculateMA(10, chartData),
+                    showSymbol: false,
+                    smooth: true,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic2",
+                    // name: 'MA20',
+                    type: 'line',
+                    // data: calculateMA(20, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic3",
+                    // name: 'MA60',
+                    type: 'line',
+                    // data: calculateMA(60, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic4",
+                    // name: 'MA120',
+                    type: 'line',
+                    // data: calculateMA(120, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "indic5",
+                    // name: 'MA200',
+                    type: 'line',
+                    // data: calculateMA(200, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: 'equity',
+                    name: '净值',
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false,
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    // data: chartData.equity
+                },
+                {
+                    id: "vol",
+                    name: 'Volume',
+                    type: 'bar',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    // data: chartData.volume
+                },
+                {
+                    id: "rsi6",
+                    name: "RSI(6)",
+                    type: 'line',
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "rsi12",
+                    name: "RSI(12)",
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "rsi24",
+                    name: "RSI(24)",
+                    type: 'line',
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "macddif",
+                    name: "MACD_DIF",
+                    type: 'line',
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "macddea",
+                    name: "MACD_DEA",
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "macdbar",
+                    name: "MACD_BAR",
+                    type: 'bar',
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "kdjk",
+                    name: "KDJ_K",
+                    type: 'line',
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "kdjd",
+                    name: "KDJ_D",
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false
+                },
+                {
+                    id: "kdjj",
+                    name: "KDJ_J",
+                    type: 'line',
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    smooth: true,
+                    showSymbol: false
+                }
+            ]
+        };
+        return mixChartOption;
     }
 
     //  http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
