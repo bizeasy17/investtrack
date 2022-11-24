@@ -35,7 +35,7 @@ $(function () {
     var stockHistPeriod = "3";
 
     var btMixChart;
-    // var ohlcChart;
+    var btFundamentalChart;
     var indicChart;
     var fundaChart;
     var mixChartOption;
@@ -92,6 +92,7 @@ $(function () {
 
         fundaChart = ["pe:6","pe_ttm:7","pb:8","ps:9","ps_ttm:10","turnover_rate:11","volume_ratio:12"];
         btMixChart = echarts.init(document.getElementById('btMixChart'));
+        btFundamentalChart = echarts.init(document.getElementById('btFundamentalChart'));
 
         // ohlcChart = echarts.init(document.getElementById('ohlcChart'));
         // indicChart = echarts.init(document.getElementById('indicChart'));
@@ -760,8 +761,8 @@ $(function () {
         btMixChart.setOption(kdjChartOption);
     }
 
-    var initFundaChartOption = function(ohlcChartData) {
-        var mixChartOption = {
+    var initFundaChartOption = function(fundaChartData) {
+        var fundaChartOption = {
             animation: true,
             // legend: {
             //     top: 5,
@@ -831,31 +832,31 @@ $(function () {
             // },
             grid: [
                 //Fundamental grid index 5, PE
-                {left: '4%', top: '2%',height:'20%',width: '42%'},
+                {left: '4%', top: '5%',height:'15%',width: '42%'},
                 //Fundamental grid index 6, PE TTM
-                {right: '3%',top: '2%',height:'20%',width: '42%'},
+                {right: '3%',top: '5%',height:'15%',width: '42%'},
 
                 //Fundamental grid index 7, PB
-                {left: '4%', right: '3%',top: '25%',height: '20%'},
+                {left: '4%', right: '3%',top: '30%',height: '15%'},
 
                 //Fundamental grid index 8, PS
-                {left: '4%',top: '48%',height:'20%',width: '42%'},
+                {left: '4%',top: '55%',height:'15%',width: '42%'},
                 //Fundamental grid index 9, PS TTM
-                {right: '3%',top: '48%',height:'20%',width: '42%'},
+                {right: '3%',top: '55%',height:'15%',width: '42%'},
                 
                 //Fundamental grid index 10, Turnover ratio
-                {left: '4%',top: '71%',height: '20%', width: '42%'},
+                {left: '4%',top: '80%',height: '15%', width: '42%'},
                 //Fundamental grid index 11, Vol ratio
-                {right: '3%',top: '71%',height: '20%', width: '42%'}
+                {right: '3%',top: '80%',height: '15%', width: '42%'}
             ],
             xAxis: [
-                {gridIndex: 0, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
-                {gridIndex: 1, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
-                {gridIndex: 2, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
-                {gridIndex: 3, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
-                {gridIndex: 4, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
-                {gridIndex: 5, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
-                {gridIndex: 6, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
+                {gridIndex: 0, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
+                {gridIndex: 1, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
+                {gridIndex: 2, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
+                {gridIndex: 3, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
+                {gridIndex: 4, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
+                {gridIndex: 5, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
+                {gridIndex: 6, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
             ],
             yAxis: [
                 {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
@@ -901,173 +902,399 @@ $(function () {
             series: [
                 {
                     id: "pe",
-                    name: 'k线',
                     type: 'line',
-                    // data: chartData.value,
+                    xAxisIndex: 0,
+                    yAxisIndex: 0,
+                    showSymbol: false,
+                    smooth: true,
                     itemStyle: {
-                        color: upColor,
-                        color0: downColor,
-                        borderColor: undefined,
-                        borderColor0: undefined
-                    }
-                },
-                {
-                    id: "indic1",
-                    // name: 'MA10',
-                    type: 'line',
-                    // data: calculateMA(10, chartData),
-                    showSymbol: false,
-                    smooth: true,
+                        color: 'rgb(25, 70, 131)'
+                    },
                     lineStyle: {
                         opacity: 0.5
                     }
                 },
                 {
-                    id: "indic2",
-                    // name: 'MA20',
+                    id: "peL",
                     type: 'line',
-                    // data: calculateMA(20, chartData),
-                    smooth: true,
+                    xAxisIndex: 0,
+                    yAxisIndex: 0,
                     showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
                     lineStyle: {
                         opacity: 0.5
                     }
                 },
                 {
-                    id: "indic3",
-                    // name: 'MA60',
+                    id: "peM",
                     type: 'line',
-                    // data: calculateMA(60, chartData),
-                    smooth: true,
+                    xAxisIndex: 0,
+                    yAxisIndex: 0,
                     showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
                     lineStyle: {
                         opacity: 0.5
                     }
                 },
                 {
-                    id: "indic4",
-                    // name: 'MA120',
+                    id: "peH",
                     type: 'line',
-                    // data: calculateMA(120, chartData),
-                    smooth: true,
+                    xAxisIndex: 0,
+                    yAxisIndex: 0,
                     showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
                     lineStyle: {
                         opacity: 0.5
                     }
                 },
                 {
-                    id: "indic5",
-                    // name: 'MA200',
+                    id: "pettm",
                     type: 'line',
-                    // data: calculateMA(200, chartData),
-                    smooth: true,
-                    showSymbol: false,
-                    lineStyle: {
-                        opacity: 0.5
-                    }
-                },
-                {
-                    id: 'equity',
-                    name: '净值',
-                    type: 'line',
-                    smooth: true,
-                    showSymbol: false,
                     xAxisIndex: 1,
                     yAxisIndex: 1,
-                    // data: chartData.equity
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "vol",
-                    name: 'Volume',
-                    type: 'bar',
+                    id: "pettmL",
+                    type: 'line',
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "pettmM",
+                    type: 'line',
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "pettmH",
+                    type: 'line',
+                    xAxisIndex: 1,
+                    yAxisIndex: 1,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "pb",
+                    type: 'line',
                     xAxisIndex: 2,
                     yAxisIndex: 2,
-                    // data: chartData.volume
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "rsi6",
-                    name: "RSI(6)",
+                    id: "pbL",
+                    type: 'line',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "pbM",
+                    type: 'line',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "pbH",
+                    type: 'line',
+                    xAxisIndex: 2,
+                    yAxisIndex: 2,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "ps",
                     type: 'line',
                     xAxisIndex: 3,
                     yAxisIndex: 3,
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "rsi12",
-                    name: "RSI(12)",
-                    xAxisIndex: 3,
-                    yAxisIndex: 3,
-                    type: 'line',
-                    smooth: true,
-                    showSymbol: false
-                },
-                {
-                    id: "rsi24",
-                    name: "RSI(24)",
+                    id: "psL",
                     type: 'line',
                     xAxisIndex: 3,
                     yAxisIndex: 3,
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "macddif",
-                    name: "MACD_DIF",
+                    id: "psM",
+                    type: 'line',
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "psH",
+                    type: 'line',
+                    xAxisIndex: 3,
+                    yAxisIndex: 3,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "psttm",
                     type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "macddea",
-                    name: "MACD_DEA",
+                    id: "psttmL",
+                    type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
-                    type: 'line',
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "macdbar",
-                    name: "MACD_BAR",
-                    type: 'bar',
+                    id: "psttmM",
+                    type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "kdjk",
-                    name: "KDJ_K",
+                    id: "psttmH",
+                    type: 'line',
+                    xAxisIndex: 4,
+                    yAxisIndex: 4,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "tr",
                     type: 'line',
                     xAxisIndex: 5,
                     yAxisIndex: 5,
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 },
                 {
-                    id: "kdjd",
-                    name: "KDJ_D",
-                    xAxisIndex: 5,
-                    yAxisIndex: 5,
-                    type: 'line',
-                    smooth: true,
-                    showSymbol: false
-                },
-                {
-                    id: "kdjj",
-                    name: "KDJ_J",
+                    id: "trL",
                     type: 'line',
                     xAxisIndex: 5,
                     yAxisIndex: 5,
+                    showSymbol: false,
                     smooth: true,
-                    showSymbol: false
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "trM",
+                    type: 'line',
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "trH",
+                    type: 'line',
+                    xAxisIndex: 5,
+                    yAxisIndex: 5,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "vr",
+                    type: 'line',
+                    xAxisIndex: 6,
+                    yAxisIndex: 6,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "vrL",
+                    type: 'line',
+                    xAxisIndex: 6,
+                    yAxisIndex: 6,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(0, 255, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "vrM",
+                    type: 'line',
+                    xAxisIndex: 6,
+                    yAxisIndex: 6,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(25, 70, 131)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
+                },
+                {
+                    id: "vrH",
+                    type: 'line',
+                    xAxisIndex: 6,
+                    yAxisIndex: 6,
+                    showSymbol: false,
+                    smooth: true,
+                    itemStyle: {
+                        color: 'rgb(255, 0, 0)'
+                    },
+                    lineStyle: {
+                        opacity: 0.5
+                    }
                 }
             ]
         };
-        return mixChartOption;
+        return fundaChartOption;
     }
 
     //  http://127.0.0.1:8000/stockmarket/bt-system/000001.SZ/system/
@@ -1314,20 +1541,20 @@ $(function () {
         });
     }
 
+    const fundaList = [ 'pe','pettm','pb','ps','psttm','vr','tr' ];
+
     var updateFundaChart = function (tsCode, startDate, endDate) {
         $.ajax({
             url: stockmarketEndpoint + "daily-basic-history/" + tsCode + "/" + startDate + "/" + endDate + "/?format=json",
             success: function (data) {
-                $(fundaChart).each(function (idx, obj) {
-                    
-                    pushFunda2MixChart(data, obj);
+                var chartData = jsonToFundaChartFormat(data);
+                
+                var option = initFundaChartOption(chartData);
+                btFundamentalChart.setOption(option);
+
+                $(fundaList).each(function (idx, obj) {
+                    addFundaSeriesData(obj, chartData[obj]);
                 });
-                // renderPETTMChart(data.pe_ttm);
-                // renderPSChart(data.ps);
-                // renderPSTTMChart(data.ps_ttm);
-                // renderPBChart(data.pb);
-                // renderTOChart(data.turnover_rate);
-                // renderVRChart(data.volume_ratio);
             },
             statusCode: {
                 403: function () {
@@ -1343,181 +1570,33 @@ $(function () {
         });
     }
 
-    var pushFunda2MixChart = function (jsonData, fundaType) {
-        var chartData = jsonToChartFormat(jsonData, fundaType.split(":")[0]);
-        var peQuantile = getQuantile(chartData);
+    var addFundaSeriesData = function (fundaId, fundaData) {
+        var fundaQuantile = getQuantileOfArray(fundaData);
         // var chartCanvas = echarts.init(canvas);
 
         //动态添加series
-        mixChartOption.series.push({
-            name: fundaType.split(":")[0],
-            type: 'line',
-            xAxisIndex: parseInt(fundaType.split(":")[1]),
-            yAxisIndex: parseInt(fundaType.split(":")[1]),
-            smooth: true,
-            showSymbol: false,
-            data: chartData.value,
-            itemStyle: {
-                color: 'rgb(118, 118, 118)'
-            },
-            markPoint: {
-                data: [
-                    { type: 'max', name: '最大值' },
-                    { type: 'min', name: '最小值' }
-                ]
-            }
-        },
-        {
-            name: fundaType + '低位',
-            xAxisIndex: parseInt(fundaType.split(":")[1]),
-            yAxisIndex: parseInt(fundaType.split(":")[1]),
-            type: 'line',
-            // smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(0, 255, 0)'
-            },
-            data: peQuantile.qt10
-        },
-        {
-            name: fundaType + '中位',
-            type: 'line',
-            xAxisIndex: parseInt(fundaType.split(":")[1]),
-            yAxisIndex: parseInt(fundaType.split(":")[1]),
-            smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(25, 70, 131)'
-            },
-            data: peQuantile.qt50
-        },
-        {
-            name: fundaType + '高位',
-            type: 'line',
-            xAxisIndex: parseInt(fundaType.split(":")[1]),
-            yAxisIndex: parseInt(fundaType.split(":")[1]),
-            smooth: true,
-            showSymbol: false,
-            itemStyle: {
-                color: 'rgb(255, 0, 0)'
-            },
-            data: peQuantile.qt90
-        });
+        var mixChartOption = 
+            {
+                series:[
+                {
+                    id: fundaId,
+                    data: fundaData
+                },
+                {
+                    id: fundaId + "L",
+                    data: fundaQuantile.qt10
+                },
+                {
+                    id: fundaId + "M",
+                    data: fundaQuantile.qt50
+                },
+                {
+                    id: fundaId + 'H',
+                    data: fundaQuantile.qt90
+                }]
+            };
 
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(mixChartOption, true);
-        /*    
-        mixChartOption = {
-            tooltip: {
-                trigger: 'axis',
-                position: function (pt) {
-                    return [pt[0], '10%'];
-                }
-            },
-            legend: {
-                data: [fundaType, fundaType + "中位"]
-            },
-            // title: {
-            //     text: '市盈',
-            //     left: '5%',
-            // },
-            toolbox: {
-                feature: {
-                    // dataZoom: {
-                    //     yAxisIndex: 'none'
-                    // },
-                    // restore: {},
-                    saveAsImage: {}
-                }
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: chartData.label
-            },
-            yAxis: {
-                type: 'value',
-                boundaryGap: [0, '100%']
-            },
-            dataZoom: [{
-                type: 'inside',
-                start: 0,
-                end: 100
-            }
-                // , {
-                //     start: 0,
-                //     end: 10,
-                //     handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                //     handleSize: '100%',
-                //     handleStyle: {
-                //         color: '#fff',
-                //         shadowBlur: 3,
-                //         shadowColor: 'rgba(0, 0, 0, 0.6)',
-                //         shadowOffsetX: 2,
-                //         shadowOffsetY: 2
-                //     }
-                // }
-            ],
-            series: [
-                {
-                    name: fundaType,
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-                    data: chartData.value,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    },
-                    markLine: {
-                        data: [
-                            { type: 'average', name: '平均值' }
-                        ]
-                    }
-                },
-                {
-                    name: fundaType + '低位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(0, 255, 0)'
-                    },
-                    data: peQuantile.qt10
-                },
-                {
-                    name: fundaType + '中位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    sampling: 'average',
-                    itemStyle: {
-                        color: 'rgb(25, 70, 131)'
-                    },
-                    data: peQuantile.qt50
-                },
-                {
-                    name: fundaType + '高位',
-                    type: 'line',
-                    smooth: true,
-                    symbol: 'none',
-                    itemStyle: {
-                        color: 'rgb(255, 0, 0)'
-                    },
-                    data: peQuantile.qt90
-                }
-            ]
-        };
-        */
-
-        // chartCanvas.setOption(mixChartOption);
+        btFundamentalChart.setOption(mixChartOption);
     }
 
     $('#searchText').autoComplete({
@@ -1564,9 +1643,6 @@ $(function () {
         updateMixedOHLCChart();
         updateTechIndicatorChart();
         updateFundaChart(tsCode, startDate, endDate);
-        renderRSIChart(tsCode);
-        renderKDJChart(tsCode);
-        renderMACDChart(tsCode);
     });
 
     var setupStrategyCategories = function (strategyCategory) {
@@ -2262,6 +2338,7 @@ $(function () {
 
     initParam();
     updateBTMixChart(tsCode);
+    updateFundaChart(tsCode, startDate, endDate);
 
     // $('input:radio[name="strategyCategory"]').change(function () {
     //     strategyCategory = $(this).val();

@@ -89,6 +89,21 @@ var jsonToChartFormat = function (jsonData, dataType) {
     return chartFormat;
 }
 
+var jsonToFundaChartFormat = function (jsonData) {
+    var chartFormat = { 'pe': [], 'pettm': [],'pb': [],'ps': [],'psttm': [],'vr': [],'tr': [],'label': [] };
+    $(jsonData).each(function (idx, obj) {
+        chartFormat.pe.push(obj["pe"]);
+        chartFormat.pettm.push(obj["pe_ttm"]);
+        chartFormat.pb.push(obj["pb"]);
+        chartFormat.ps.push(obj["ps"]);
+        chartFormat.psttm.push(obj["ps_ttm"]);
+        chartFormat.tr.push(obj["turnover_rate"]);
+        chartFormat.vr.push(obj["volume_ratio"]);
+        chartFormat.label.push(obj["trade_date"]);
+    });
+    return chartFormat;
+}
+
 var jsonToChartOHLCFormat = function (jsonData) {
     var chartFormat = { 'ohlc': [], 'label': [], 'volume': [] };
     // var ohlc = [];
@@ -357,6 +372,17 @@ var getQuantile = function (chartData) {
     var quantileData = { 'qt10': [], 'qt50': [], 'qt90': [] };
     var quantileSeq = math.quantileSeq(chartData.value, [0.1, 0.5, 0.9]);
     for (var i = 0; i < chartData.value.length; i++) {
+        quantileData.qt10.push(math.format(quantileSeq[0], 2));
+        quantileData.qt50.push(math.format(quantileSeq[1], 2));
+        quantileData.qt90.push(math.format(quantileSeq[2], 2));
+    }
+    return quantileData;
+}
+
+var getQuantileOfArray = function (dataArray) {
+    var quantileData = { 'qt10': [], 'qt50': [], 'qt90': [] };
+    var quantileSeq = math.quantileSeq(dataArray, [0.1, 0.5, 0.9]);
+    for (var i = 0; i < dataArray.length; i++) {
         quantileData.qt10.push(math.format(quantileSeq[0], 2));
         quantileData.qt50.push(math.format(quantileSeq[1], 2));
         quantileData.qt90.push(math.format(quantileSeq[2], 2));
