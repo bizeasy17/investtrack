@@ -1314,18 +1314,13 @@ $(function () {
         });
     }
 
-    var renderCompanyFundaChart = function (tsCode, startDate, endDate) {
+    var updateFundaChart = function (tsCode, startDate, endDate) {
         $.ajax({
             url: stockmarketEndpoint + "daily-basic-history/" + tsCode + "/" + startDate + "/" + endDate + "/?format=json",
             success: function (data) {
                 $(fundaChart).each(function (idx, obj) {
-                    if (tsCode == "000001.SH" || tsCode == "399001.SZ" || tsCode == "399006.SZ") {
-                        if ($(obj).attr("name") == "pe" || $(obj).attr("name") == "pe_ttm" || $(obj).attr("name") == "trade_date" || $(obj).attr("name") == "pb" || $(obj).attr("name") == "turnover_rate") {
-                            pushFunda2MixChart(data, obj, $(obj).attr("name"));
-                        }
-                    } else {
-                        pushFunda2MixChart(data, obj);
-                    }
+                    
+                    pushFunda2MixChart(data, obj);
                 });
                 // renderPETTMChart(data.pe_ttm);
                 // renderPSChart(data.ps);
@@ -1568,7 +1563,7 @@ $(function () {
         // showIndBasic(item.industry);
         updateMixedOHLCChart();
         updateTechIndicatorChart();
-        renderCompanyFundaChart(tsCode, startDate, endDate);
+        updateFundaChart(tsCode, startDate, endDate);
         renderRSIChart(tsCode);
         renderKDJChart(tsCode);
         renderMACDChart(tsCode);

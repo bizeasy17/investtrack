@@ -5,6 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Attach to Edge",
+      "port": 9222,
+      "request": "attach",
+      "type": "msedge",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "vscode-edge-devtools.debug",
+      "request": "attach",
+      "name": "Attach to Microsoft Edge and open the Edge DevTools",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
       "name": "Python: 当前文件",
       "type": "python",
       "request": "launch",
@@ -16,8 +30,9 @@
       "name": "Python: Django",
       "type": "python",
       "request": "launch",
+      "justMyCode": false,
       "program": "${workspaceFolder}/manage.py",
-      "args": ["runserver", "0.0.0.0:8000", "--noreload"],
+      "args": ["runserver", "0.0.0.0:8000",],
       "django": true
     }
   ]
