@@ -831,22 +831,22 @@ $(function () {
             // },
             grid: [
                 //Fundamental grid index 5, PE
-                {left: '4%', top: '2%',height:'14%',width: '42%'},
+                {left: '4%', top: '2%',height:'20%',width: '42%'},
                 //Fundamental grid index 6, PE TTM
-                {right: '3%',top: '2%',height:'14%',width: '42%'},
+                {right: '3%',top: '2%',height:'20%',width: '42%'},
 
                 //Fundamental grid index 7, PB
-                {left: '4%', right: '3%',top: '20%',height: '14%'},
+                {left: '4%', right: '3%',top: '25%',height: '20%'},
 
                 //Fundamental grid index 8, PS
-                {left: '4%',top: '38%',height:'14%',width: '42%'},
+                {left: '4%',top: '48%',height:'20%',width: '42%'},
                 //Fundamental grid index 9, PS TTM
-                {right: '3%',top: '38%',height:'14%',width: '42%'},
+                {right: '3%',top: '48%',height:'20%',width: '42%'},
                 
                 //Fundamental grid index 10, Turnover ratio
-                {left: '4%',top: '54%',height: '14%', width: '42%'},
+                {left: '4%',top: '71%',height: '20%', width: '42%'},
                 //Fundamental grid index 11, Vol ratio
-                {right: '3%',top: '54%',height: '14%', width: '42%'}
+                {right: '3%',top: '71%',height: '20%', width: '42%'}
             ],
             xAxis: [
                 {gridIndex: 0, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
