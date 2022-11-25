@@ -71,7 +71,6 @@ var getStartDate = function (period, format) {
 }
 
 
-
 var jsonToArray = function (jsonData, dataType) {
     var chartFormat = { 'value': [] };
     $(jsonData).each(function (idx, obj) {
@@ -120,7 +119,7 @@ var jsonToChartOHLCFormat = function (jsonData) {
 }
 
 var jsonToMixChartFormat = function (jsonData) {
-    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [] };
+    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [] , 'equity': []};
     var maFormat = {'ma10':[],'ma20':[],'ma60':[],'ma120':[],'ma200':[]};
     var emaFormat = {'ema10':[],'ema20':[],'ema60':[],'ema120':[],'ema200':[]};
     var bollFormat = {'upper':[],'mid':[],'lower':[]};
@@ -174,196 +173,8 @@ var jsonToMixChartFormat = function (jsonData) {
         chartFormat.rsi[0].rsi6.push(obj['rsi6']);
         chartFormat.rsi[0].rsi12.push(obj['rsi12']);
         chartFormat.rsi[0].rsi24.push(obj['rsi24']);
-    });
-    return chartFormat;
-}
 
-var jsonToChartMAFormat = function (jsonData) {
-    var chartFormat = { 'ma_10': [], 'label': [], 'ma_20': [], 'ma_60': [], 'ma_120': [], 'ma_200': [] };
-    // var ohlc = []
-    $(jsonData).each(function (idx, obj) {
-        $(obj.ma_10).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ma_10.push(o[k]);
-            });
-        });
-
-        $(obj.ma_20).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ma_20.push(o[k]);
-            });
-        });
-
-        $(obj.ma_60).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ma_60.push(o[k]);
-            });
-        });
-
-        $(obj.ma_120).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ma_120.push(o[k]);
-            });
-        });
-
-        $(obj.ma_200).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ma_200.push(o[k]);
-            });
-        });
-    });
-    return chartFormat;
-}
-
-var jsonToChartEMAFormat = function (jsonData) {
-    var chartFormat = { 'ema_10': [], 'label': [], 'ema_20': [], 'ema_60': [], 'ema_120': [], 'ema_200': [] };
-    // var ohlc = []
-    $(jsonData).each(function (idx, obj) {
-        $(obj.ma_10).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ema_10.push(o[k]);
-            });
-        });
-
-        $(obj.ma_20).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ema_20.push(o[k]);
-            });
-        });
-
-        $(obj.ma_60).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ema_60.push(o[k]);
-            });
-        });
-
-        $(obj.ma_120).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ema_120.push(o[k]);
-            });
-        });
-
-        $(obj.ma_200).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.ema_200.push(o[k]);
-            });
-        });
-    });
-    return chartFormat;
-}
-
-var jsonToChartBOLLFormat = function (jsonData) {
-    var chartFormat = { 'boll_high': [], 'label': [], 'boll_mid': [], 'boll_low': [] };
-    // var ohlc = []
-    $(jsonData).each(function (idx, obj) {
-        $($.parseJSON(obj.high)).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.boll_high.push(o[k]);
-            });
-        });
-
-        $($.parseJSON(obj.mid)).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.boll_mid.push(o[k]);
-            });
-        });
-
-        $($.parseJSON(obj.low)).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.boll_low.push(o[k]);
-            });
-        });
-    });
-    return chartFormat;
-}
-
-var jsonToChartBBIFormat = function (jsonData) {
-    var chartFormat = { 'bbi': [], 'label': [] };
-    // var ohlc = []
-    $($.parseJSON(jsonData).bbi).each(function (idx, obj) {
-        // $(obj).each(function(id, o){
-        $.each(obj, function (k) {
-            chartFormat.bbi.push(obj[k]);
-        });
-        // });
-    });
-    return chartFormat;
-}
-
-var jsonToChartRSIFormat = function (jsonData) {
-    var chartFormat = { 'rsi_6': [], 'label': [], 'rsi_12': [], 'rsi_24': [] };
-    // var ohlc = []
-    $(jsonData).each(function (idx, obj) {
-        $(obj.rsi_6).each(function (idx, o) {
-            // for(var key in o) {
-            //     chartFormat.rsi_6.push(o[key]);
-            //  }
-            $.each(o, function (k) {
-                chartFormat.rsi_6.push(o[k]);
-            });
-        });
-
-        $(obj.rsi_12).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.rsi_12.push(o[k]);
-            });
-        });
-
-        $(obj.rsi_24).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.rsi_24.push(o[k]);
-            });
-        });
-    });
-    return chartFormat;
-}
-
-var jsonToChartKDJFormat = function (jsonData) {
-    var chartFormat = { 'k': [], 'label': [], 'd': [], 'j': [] };
-    // var ohlc = []
-    $(jsonData).each(function (idx, obj) {
-        $(obj.k).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.k.push(o[k]);
-            });
-        });
-
-        $(obj.d).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.d.push(o[k]);
-            });
-        });
-
-        $(obj.j).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.j.push(o[k]);
-            });
-        });
-    });
-    return chartFormat;
-}
-
-var jsonToChartMACDFormat = function (jsonData) {
-    var chartFormat = { 'dif': [], 'label': [], 'dea': [], 'bar': [] };
-    // var ohlc = []
-    $(jsonData).each(function (idx, obj) {
-        $(obj.dif).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.dif.push(o[k]);
-            });
-        });
-
-        $(obj.dea).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.dea.push(o[k]);
-            });
-        });
-
-        $(obj.bar).each(function (idx, o) {
-            $.each(o, function (k) {
-                chartFormat.bar.push(o[k]);
-            });
-        });
+        chartFormat.equity.push(obj['eq']);
     });
     return chartFormat;
 }

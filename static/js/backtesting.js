@@ -131,16 +131,6 @@ $(function () {
             url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
             success: function (data) {
                 ohlcChartData = jsonToMixChartFormat(data);
-                // = jsonToChartOHLCFormat(data[0]);
-                // maChartData = jsonToChartMAFormat($.parseJSON(data[1]));
-                // emaChartData = jsonToChartEMAFormat($.parseJSON(data[2]));
-
-                // bbiChartData = jsonToChartBBIFormat(data[3]);
-                // bollChartData = jsonToChartBOLLFormat($.parseJSON(data[4]));
-                // var rsiChartData = jsonToChartRSIFormat(data[5]);
-                // var macdChartData = jsonToChartMACDFormat(data[6]);
-                // var kdjChartData = jsonToChartKDJFormat(data[7]);
-
                 // global OHLC数据
                 ohlcMixChartData = data;
                 // ohlcCount = chartData.label.length;
@@ -149,15 +139,12 @@ $(function () {
                 btMixChart.setOption(option);
 
                 updateOHLCChart(ohlcChartData);
+                updateEquityChart(ohlcChartData);
                 updateTechIndicatorChart();
                 updateVolumeChart(ohlcChartData);
                 updateRSIChart(ohlcChartData);
                 updateMACDChart(ohlcChartData);
                 updateKDJChart(ohlcChartData);
-                // initEquityChart();
-                // initDefaultCascadeTechInidicator(maChartData);
-                
-                // initCompanyFundamentalChart();
             }
             ,
             complete: function (request, status) {
@@ -859,7 +846,7 @@ $(function () {
                 {gridIndex: 6, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
             ],
             yAxis: [
-                {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
+                {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率', nameLocation: 'end'}, // PE
                 {gridIndex: 1, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
                 {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end'}, // PB
                 {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end'}, // PS
@@ -1304,241 +1291,20 @@ $(function () {
     //   7B'attr':%7B'sma_level':'10','rsi_level':'90'%7D,'condition':%7B'threshold':%7B'RSI_20':'RSI_20%3E90'%7D,
     //  'crossover':%7B'a20':'cross(a(20),%20a(10))'%7D,'pair_comp':%20%7B'a10':'a(20)%20%3E%20a(10)'%7D%7D%7D/.95/10000/.001/1/D/
 
-    function calculateMA(dayCount, data) {
-        var result = [];
-        for (var i = 0, len = data.value.length; i < len; i++) {
-            if (i < dayCount) {
-                result.push('-');
-                continue;
-            }
-            var sum = 0;
-            for (var j = 0; j < dayCount; j++) {
-                sum += data.value[i - j][1];
-            }
-            result.push(+(sum / dayCount).toFixed(3));
-        }
-        return result;
-    }
-
-    var pushOHLC2MixChart = function (chartData) {
-        // var chartData = jsonToChartOHLCFormat(jsonData);
-
-        //动态添加series
-        var ohlcChartOption = {
-            xAxis: [
-                {id: "ohlcXAxis", data: chartData.label}, // OHLC
-            ],
-            series:[
-                {
-                    id: "ohlc",
-                    // name: 'k线',
-                    // type: 'candlestick',
-                    data: chartData.value,
-                    // itemStyle: {
-                    //     color: upColor,
-                    //     color0: downColor,
-                    //     borderColor: undefined,
-                    //     borderColor0: undefined
-                    // }
-                },
-                {
-                    id: 'vol',
-                    // type: 'bar',
-                    xAxisIndex: 2,
-                    yAxisIndex: 2,
-                    data: chartData.volume
-                }
-            ]};
-
-        //动态添加 legend.data
-        // mixChartOption.legend.data.push('其他');
-        btMixChart.setOption(ohlcChartOption);
-    }
-
-    var updateMixedOHLCChart = function(tsCode){
-        $.ajax({
-            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                ohlcMixChartData = data;
-                var chartData = jsonToChartOHLCFormat(data);
-                // ohlcCount = chartData.label.length;
-                updateOHLCChart(chartData);
-                updateVolumeChart(chartData);
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
-
-    var pushEquityData = function (data) {
+    var updateEquityChart = function (chartData) {
         //添加series
-        var equity = jsonToArray(data, "eq");
-        var date = jsonToArray(data, "dt");
-
         // mixChartOption.series.slice(7,1);
-        var equitySerierOpt = 
+        var equityOption = 
         {
-            xAxis: [
-                {
-                    id: 'equityAxis',
-                    data: date.value
-                }
-            ],
             series: [
                 {
                     id: 'equity',
-                    // name: '资产净值',
-                    type: 'line',
-                    showSymbol: true,
-                    xAxisIndex: 1,
-                    yAxisIndex: 1,
-                    data: equity.value,
-                    markPoint: {
-                        data: [
-                            { type: 'max', name: '最大值' },
-                            { type: 'min', name: '最小值' }
-                        ]
-                    }
+                    data: chartData.equity,
                 }
             ]
         }
 
-        btMixChart.setOption(equitySerierOpt);
-    }
-
-    var renderEMAChart = function(tsCode){
-        
-        $.ajax({
-            url: stockmarketEndpoint + "ema/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                updateEMAChart($.parseJSON(data));
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
-
-    var renderBollChart = function(tsCode){
-        
-        $.ajax({
-            url: stockmarketEndpoint + "boll/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                updateBOLLChart(data);
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
-
-    var renderBBIChart = function(tsCode){
-        
-        $.ajax({
-            url: stockmarketEndpoint + "bbi/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                updateBBIChart(data);
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
-
-    var renderRSIChart = function(tsCode){
-        
-        $.ajax({
-            url: stockmarketEndpoint + "rsi/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                updateRSIChart($.parseJSON(data));
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
-
-    var renderKDJChart = function(tsCode){
-        
-        $.ajax({
-            url: stockmarketEndpoint + "kdj/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                updateKDJChart($.parseJSON(data));
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
-    }
-
-    var renderMACDChart = function(tsCode){
-        
-        $.ajax({
-            url: stockmarketEndpoint + "macd/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
-            success: function (data) {
-                updateMACDChart($.parseJSON(data));
-            },
-            statusCode: {
-                403: function () {
-                    console.info(403);
-                },
-                404: function () {
-                    console.info(404);
-                },
-                500: function () {
-                    console.info(500);
-                }
-            }
-        });
+        btMixChart.setOption(equityOption);
     }
 
     const fundaList = [ 'pe','pettm','pb','ps','psttm','vr','tr' ];
@@ -1635,12 +1401,8 @@ $(function () {
         $(".stock_name").each(function (idx, obj) {
             $(obj).text(item.stock_name + " [" + tsCode + "]");
         });
-        // $("#industryUrl").attr("href", "/industry/" + item.industry);
 
-        // window.history.pushState("", stockName + "基本信息一览", homeEndpoint + "?q=" + tsCode);
-        // renderChart();
-        // showIndBasic(item.industry);
-        updateMixedOHLCChart();
+        updateBTMixChart();
         updateTechIndicatorChart();
         updateFundaChart(tsCode, startDate, endDate);
     });
@@ -1733,13 +1495,16 @@ $(function () {
         freq = $(this).val();
         // initializeBTMixChart(tsCode);
         updateBTMixChart(tsCode);
-
+        updateFundaChart(tsCode, startDate, endDate);
     });
 
     $('input:radio[name="period"]').change(function () {
         stockHistPeriod = $(this).val();
+        startDate = formatDate(new Date(today.getTime() - (365 * stockHistPeriod * 24 * 60 * 60 * 1000)), "");
         // initializeBTMixChart(tsCode);
         updateBTMixChart(tsCode);
+        updateFundaChart(tsCode, startDate, endDate);
+
     });
 
     /**** 
@@ -2025,7 +1790,7 @@ $(function () {
             success: function (data) {
                 // console.log(data)
                 // equityJsonData = data;
-                pushEquityData(data);
+                updateEquityChart(data);
             }
         });
     }
@@ -2339,17 +2104,4 @@ $(function () {
     initParam();
     updateBTMixChart(tsCode);
     updateFundaChart(tsCode, startDate, endDate);
-
-    // $('input:radio[name="strategyCategory"]').change(function () {
-    //     strategyCategory = $(this).val();
-    // });
-
-    // $('input:radio[name="taIndicator"]').change(function () {
-    //     taIndicator = $(this).val();
-    // });
-
-    // $('input:radio[name="taIndicator"]').change(function () {
-    //     taIndicator = $(this).val();
-    // });
-
 });

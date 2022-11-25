@@ -258,6 +258,7 @@ def to_ohlc_list(df):
             'macddif': rows['dif'] if not np.isnan(rows['dif']) else None,
             'macddea': rows['dea'] if not np.isnan(rows['dea']) else None,
             'macdbar': rows['bar'] if not np.isnan(rows['bar']) else None,
+            'eq': 1.0,
             'd': idx,
         })
     return ohlc_list
@@ -371,7 +372,6 @@ def get_macd_df(data_df):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
-
 
 def get_ema(request, ts_code, freq, period=3):
     try:
@@ -511,7 +511,6 @@ def get_bbi(request, ts_code, freq, period=3):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
-
 
 def get_rsi(request, ts_code, freq, period=3):
     try:
