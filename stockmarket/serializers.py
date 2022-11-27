@@ -47,8 +47,13 @@ class Equity(models.Model):
     date = models.DateField(
         _('日期'), blank=False, null=False, )
     equity = models.FloatField(_('资产净值'), blank=False, null=True, )
-    drawdownpct = models.FloatField(_('最大资金回撤率'), blank=False, null=True, )
-    drawdownduration = models.IntegerField(_('最大回撤周期'), blank=False, null=True, )
+    drawdownpct = models.FloatField(_('资金回撤率'), blank=False, null=True, )
+    drawdownduration = models.IntegerField(_('回撤周期'), blank=False, null=True, )
+    direction = models.CharField(_('交易放向'), max_length=1, blank=False, null=True, default=None)
+    entry_price = models.FloatField(_('买入价'), blank=False, null=True, default=None)
+    exit_price = models.FloatField(_('卖出价'), blank=False, null=True, default=None)
+    duration = models.CharField(_('持仓时间'), max_length=10, blank=False, null=True, default=None)
+    pnl = models.FloatField(_('损益'), blank=False, null=True, default=None)
 
     class Meta:
         ordering = ['date']
@@ -194,8 +199,11 @@ class EquitySerializer(serializers.ModelSerializer):
         return {
             'dt': instance.date,
             'eq': round(instance.equity,2),
-            # 'ddp': instance.drawdownpct,
-            # 'ddd': instance.drawdownduration,
+            'd': instance.direction,
+            'dur': instance.duration,
+            'en_p': instance.entry_price if not np.isnan(instance.entry_price) else None,
+            'ex_p': instance.exit_price if not np.isnan(instance.exit_price) else None,
+            'pnl': instance.pnl if not np.isnan(instance.pnl) else None,
         }
 
     class Meta:

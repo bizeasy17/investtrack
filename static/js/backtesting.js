@@ -43,7 +43,7 @@ $(function () {
     var sStrategyCount = 0;
     // let strategyCount = [0, 0];
 
-    var equityJsonData;
+    var equityJsonData = undefined;
     var ohlcCount = 0;
 
     var stockmarketEndpoint = "/stockmarket/";
@@ -139,12 +139,15 @@ $(function () {
                 btMixChart.setOption(option);
 
                 updateOHLCChart(ohlcChartData);
-                updateEquityChart(ohlcChartData);
                 updateTechIndicatorChart();
                 updateVolumeChart(ohlcChartData);
                 updateRSIChart(ohlcChartData);
                 updateMACDChart(ohlcChartData);
                 updateKDJChart(ohlcChartData);
+
+                if(equityJsonData == undefined){
+                    updateEquityChart(ohlcChartData.equity);
+                }
             }
             ,
             complete: function (request, status) {
@@ -351,6 +354,9 @@ $(function () {
                         color0: downColor,
                         borderColor: undefined,
                         borderColor0: undefined
+                    },
+                    markPoint: {
+                        symbol: "triangle", 
                     }
                 },
                 {
@@ -408,6 +414,15 @@ $(function () {
                         opacity: 0.5
                     }
                 },
+                // {
+                //     id: "ohlctrades",
+                //     // name: 'MA200',
+                //     type: 'line',
+                //     showSymbol: false,
+                //     lineStyle: {
+                //         opacity: 0.5
+                //     }
+                // },
                 {
                     id: 'equity',
                     name: '净值',
@@ -1291,7 +1306,7 @@ $(function () {
     //   7B'attr':%7B'sma_level':'10','rsi_level':'90'%7D,'condition':%7B'threshold':%7B'RSI_20':'RSI_20%3E90'%7D,
     //  'crossover':%7B'a20':'cross(a(20),%20a(10))'%7D,'pair_comp':%20%7B'a10':'a(20)%20%3E%20a(10)'%7D%7D%7D/.95/10000/.001/1/D/
 
-    var updateEquityChart = function (chartData) {
+    var updateEquityChart = function (equityChartData) {
         //添加series
         // mixChartOption.series.slice(7,1);
         var equityOption = 
@@ -1299,12 +1314,101 @@ $(function () {
             series: [
                 {
                     id: 'equity',
-                    data: chartData.equity,
+                    data: equityChartData,
                 }
             ]
         }
 
         btMixChart.setOption(equityOption);
+    }
+
+    var updateTradesChart = function (tradeChartData) {
+        //添加series
+        // mixChartOption.series.slice(7,1);
+        var markData = [];
+        var tooltipsData = [];
+
+        $(ohlcChartData).each(function(id, ohlcObj){
+            $(tradeChartData).each(function(idx, tradeObj){
+                if(ohlcObj.label == tradeObj[5]){
+                    if(tradeObj[0]!=null){
+                        if(tradeObj[0]=="b"){
+                            markData.push(
+                                {
+                                    coord: [ohlcObj.label, ohlcObj.ohlc[2]],
+                                    value: "b",
+                                    symbol: "triangle",
+                                    // symbolSize: 20,
+                                    symbolRotate: 180,
+                                    itemStyle: {
+                                      //设置标记点的样式
+                                      normal: { color: "red" },
+                                    },
+                                }
+                            );
+                        }
+                        if(tradeObj[0]=="s"){
+                            markData.push(
+                                {
+                                    coord: [ohlcObj.label, ohlcObj.ohlc[3]],
+                                    value: "s",
+                                    symbol: "triangle",
+                                    symbolSize: 20,
+                                    symbolRotate: 180,
+                                    itemStyle: {
+                                      //设置标记点的样式
+                                      normal: { color: "green" },
+                                    },
+                                }
+                            );
+                        }
+                        if(tradeObj[0]=="b&s"){
+                            markData.push(
+                                [{
+                                    coord: [ohlcObj.label, ohlcObj.ohlc[2]],
+                                    value: "b",
+                                    symbol: "triangle",
+                                    symbolRotate: 180,
+                                    // symbolSize: 20,
+                                    itemStyle: {
+                                      //设置标记点的样式
+                                      normal: { color: "red" },
+                                    },
+                                },
+                                {
+                                    coord: [ohlcObj.label, ohlcObj.ohlc[3]],
+                                    value: "s",
+                                    symbol: "triangle",
+                                    // symbolSize: 20,
+                                    itemStyle: {
+                                      //设置标记点的样式
+                                      normal: { color: "green" },
+                                    },
+                                }]
+                            );
+                        }
+                    }
+                } 
+            });
+        });
+        
+
+        var tradeOption = 
+        {
+            series: [
+                {
+                    id: 'ohlc',
+                    // tooltip:{
+
+                    // } ,
+                    markPoint:{
+                        data: markData,
+                    }
+                }
+            ]
+        }
+
+        btMixChart.setOption(tradeOption);
     }
 
     const fundaList = [ 'pe','pettm','pb','ps','psttm','vr','tr' ];
@@ -1496,6 +1600,14 @@ $(function () {
         // initializeBTMixChart(tsCode);
         updateBTMixChart(tsCode);
         updateFundaChart(tsCode, startDate, endDate);
+
+        if(equityJsonData != undefined){
+            var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
+            var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
+            // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
+            updateEquityChart(resampledEquityData);
+            updateTradesChart(resampledTradesData);
+        }
     });
 
     $('input:radio[name="period"]').change(function () {
@@ -1505,6 +1617,13 @@ $(function () {
         updateBTMixChart(tsCode);
         updateFundaChart(tsCode, startDate, endDate);
 
+        if(equityJsonData != undefined){
+            var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
+            var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
+            // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
+            updateEquityChart(resampledEquityData);
+            updateTradesChart(resampledTradesData);
+        }
     });
 
     /**** 
@@ -1789,8 +1908,13 @@ $(function () {
                 "/" + leverage.toString() + "/" + tradeOnClose.toString() + "/" + freq + "/",
             success: function (data) {
                 // console.log(data)
-                // equityJsonData = data;
-                updateEquityChart(data);
+                // 全局equity json
+                equityJsonData = jsonToBTResultFormat(data);
+                var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
+                var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
+                // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
+                updateEquityChart(resampledEquityData);
+                updateTradesChart(resampledTradesData);
             }
         });
     }

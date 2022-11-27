@@ -89,7 +89,7 @@ var jsonToChartFormat = function (jsonData, dataType) {
 }
 
 var jsonToFundaChartFormat = function (jsonData) {
-    var chartFormat = { 'pe': [], 'pettm': [],'pb': [],'ps': [],'psttm': [],'vr': [],'tr': [],'label': [] };
+    var chartFormat = { 'pe': [], 'pettm': [], 'pb': [], 'ps': [], 'psttm': [], 'vr': [], 'tr': [], 'label': [] };
     $(jsonData).each(function (idx, obj) {
         chartFormat.pe.push(obj["pe"]);
         chartFormat.pettm.push(obj["pe_ttm"]);
@@ -119,13 +119,13 @@ var jsonToChartOHLCFormat = function (jsonData) {
 }
 
 var jsonToMixChartFormat = function (jsonData) {
-    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [] , 'equity': []};
-    var maFormat = {'ma10':[],'ma20':[],'ma60':[],'ma120':[],'ma200':[]};
-    var emaFormat = {'ema10':[],'ema20':[],'ema60':[],'ema120':[],'ema200':[]};
-    var bollFormat = {'upper':[],'mid':[],'lower':[]};
-    var macdFormat = {'dif':[],'dea':[],'bar':[]};
-    var kdjFormat = {'k':[],'d':[],'j':[]};
-    var rsiFormat = {'rsi6':[],'rsi12':[],'rsi24':[]};
+    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [], 'equity': [] };
+    var maFormat = { 'ma10': [], 'ma20': [], 'ma60': [], 'ma120': [], 'ma200': [] };
+    var emaFormat = { 'ema10': [], 'ema20': [], 'ema60': [], 'ema120': [], 'ema200': [] };
+    var bollFormat = { 'upper': [], 'mid': [], 'lower': [] };
+    var macdFormat = { 'dif': [], 'dea': [], 'bar': [] };
+    var kdjFormat = { 'k': [], 'd': [], 'j': [] };
+    var rsiFormat = { 'rsi6': [], 'rsi12': [], 'rsi24': [] };
 
     chartFormat.ma.push(maFormat);
     chartFormat.ema.push(emaFormat);
@@ -133,7 +133,7 @@ var jsonToMixChartFormat = function (jsonData) {
     chartFormat.macd.push(macdFormat);
     chartFormat.kdj.push(kdjFormat);
     chartFormat.rsi.push(rsiFormat);
-    
+
     // var ohlc = [];
     $(jsonData).each(function (idx, obj) {
         // ohlc.push(obj['o']);
@@ -177,6 +177,67 @@ var jsonToMixChartFormat = function (jsonData) {
         chartFormat.equity.push(obj['eq']);
     });
     return chartFormat;
+}
+
+var jsonToBTResultFormat = function (jsonData) {
+    var chartFormat = { 'equity': [], 'label': [], 'drawdownpct': [], 'drawdowndur': [], 'trades': [], 'entryprice': [], 'exitprice': [], 'duration': [], 'pnl': [] };
+
+    // var ohlc = [];
+    $(jsonData).each(function (idx, obj) {
+        // ohlc.push(obj['o']);
+        // ohlc.push(obj['c']);
+        // ohlc.push(obj['l']);
+        // ohlc.push(obj['h']);
+        chartFormat.equity.push(obj['eq']);
+        chartFormat.label.push(obj['dt']);
+        chartFormat.drawdownpct.push(obj['ddp']);
+        chartFormat.drawdowndur.push(obj['ddd']);
+        chartFormat.trades.push([obj['bs'],obj['en_p'],obj['ex_p'],obj['dur'],obj['pnl'],obj['dt']]);
+        // chartFormat.entryprice.push();
+        // chartFormat.exitprice.push();
+        // chartFormat.duration.push();
+        // chartFormat.pnl.push();
+
+    });
+    return chartFormat;
+}
+
+var resampleEquity = function (equityData, xAxisOHLCLabel) {
+    var equityDataOnly = equityData.equity;
+    var equityLabel = equityData.label;
+    return equityDataOnly.slice(-xAxisOHLCLabel.length);
+}
+
+var resampleTrades = function (equityData, xAxisOHLCLabel) {
+    var trades = equityData.trades;
+    return trades.slice(-xAxisOHLCLabel.length);
+}
+
+var resampleTradesFundamental = function (equityData, xAxisFundaLabel) {
+    var equityDataOnly = equityData.equity;
+    var equityLabel = equityData.label;
+    var partEquity = [];
+    // 先判断下xAxisFundaLabel的label最早的日期，只截取equityData大于最早日期的数据
+    var earlistFundaLabel = xAxisFundaLabel[0];
+    var earlistIndex = equityLabel.indexOf(earlistFundaLabel);
+    if (earlistIndex != -1) {
+        partEquity = equityDataOnly.splice(-(equityLabel.length - earlistIndex));
+    } else {
+        console.log("something goes wrong");
+        return undefined;
+    }
+    var partEquityLength = equityLabel.length - earlistIndex;
+    // 判断slice完以后的equity长度和aAxisFundaLabel的长度是否一致，如果一致就返回，如果不一致，需要插值
+    if (partEquityLength != xAxisFundaLabel.length) {
+        if (partEquityLength > xAxisFundaLabel.length) {
+            
+        }
+        else {
+            console.log("something goes wrong");
+        }
+    } else {
+        return partEquity;
+    }
 }
 
 var getQuantile = function (chartData) {

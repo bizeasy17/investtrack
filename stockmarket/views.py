@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 index_list = ['000001.SH', '399001.SZ', '399006.SZ']
 
 
-class HuiCeView(TemplateView):
+class BTView(TemplateView):
     # template_name属性用于指定使用哪个模板进行渲染
     template_name = 'toolset/backtesting.html'
     # context_object_name属性用于给上下文变量取名（在模板中使用该名字）
@@ -110,7 +110,7 @@ class CrossoverBacktestingList(APIView):
             bt_results = backtesting.run(ta_func=ta_func, n1=int(
                 indicator_param.split(',')[0]), n2=int(indicator_param.split(',')[1]))
 
-        backtesting.plot()
+        # backtesting.plot()
 
         print('equity')
         equity = bt_results.loc['_equity_curve']
@@ -174,13 +174,35 @@ class SystemBacktestingList(APIView):
             # print('equity')
             eq_list = []
             equity = bt_results.loc['_equity_curve']
+            trades = bt_results.loc['_trades']
+
+            trades_entry = trades[[
+                'EntryBar', 'EntryPrice', 'EntryTime', 'Duration', 'PnL']]
+            trades_entry = trades_entry.set_index('EntryTime')
+
+            trades_exit = trades[['ExitBar', 'ExitPrice', 'ExitTime']]
+            trades_exit = trades_exit.set_index('ExitTime')
+
+            equity = pd.concat([equity, trades_entry], axis=1)
+            equity = pd.concat([equity, trades_exit], axis=1)
+
             for index, row in equity.iterrows():
                 q = Equity(date=index, equity=row['Equity']/float(cash), drawdownpct=row['DrawdownPct'],
-                           drawdownduration=row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT else None)
+                           drawdownduration=row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT else None,
+                           entry_price=row['EntryPrice'], exit_price=row['ExitPrice'], pnl=row['PnL'], duration=row['Duration'])
+
+                if not np.isnan(row['EntryPrice']):
+                    q.direction = 'b'
+                if not np.isnan(row['ExitPrice']):
+                    q.direction = 's'
+                if not np.isnan(row['EntryPrice']) and not np.isnan(row['ExitPrice']):
+                    q.direction = 'b&s'
+                # q.direction = None
+
                 eq_list.append(q)
+
             # print(equity)
             # print('trades')
-            trades = bt_results.loc['_trades']
             # print(trades)
             serializer = EquitySerializer(eq_list, many=True)
             # backtesting.plot()
@@ -192,6 +214,95 @@ class SystemBacktestingList(APIView):
             print(err)
             raise HttpResponseServerError
 
+
+def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, trade_on_close=False, freq='D'):
+        '''
+        tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
+        indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
+        strategy: cross, crossover, 
+        trailing_strategy: 2 * ATR
+        capital: 10,000
+        commission: 0.05
+        leverage: 0.02 mean 50 leverage
+        '''
+        data_df = get_data(ts_code, freq, 'desc')
+
+        # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
+        if type(eval(ta_indicator_dict)) == dict:
+            ta_indicator_dict = eval(ta_indicator_dict)
+        else:
+            raise TypeError('技术指标应为dict类型')
+
+        if type(eval(buy_cond_dict)) == dict:
+            buy_cond_dict = eval(buy_cond_dict)
+        else:
+            raise TypeError('买入条件应为dict类型')
+
+        if type(eval(sell_cond_dict)) == dict:
+            sell_cond_dict = eval(sell_cond_dict)
+        else:
+            raise TypeError('卖出条件应为dict类型')
+        # strategy_param = {}
+        '''
+        indicator_param - indic10:10,indic20:20,buy: indic10 xover indic20,sell: indic20 xover indic10,
+        indicator params example
+        输入序列，{'indic5':SMA(close,5)}, {'indic5':EMA(close,5)}
+        next condition example:
+        b: indic10 xover indic20, or indic10.level < 10
+        s: indic20 xover indic10, or indic10.level > 90
+        '''
+        try:
+            backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage),
+                                   trade_on_close=True if trade_on_close == 1 else False,
+                                   hedging=False, exclusive_orders=False)
+
+            if strategy_category == 'system':
+                bt_results = backtesting.run(ta_indicator_dict=ta_indicator_dict, buy_cond_dict=buy_cond_dict,
+                                             sell_cond_dict=sell_cond_dict, stoploss=stoploss)
+
+            # print('strategy')
+            # print(bt_results.loc['_strategy'])
+            # print('equity')
+            eq_list = []
+            equity = bt_results.loc['_equity_curve']
+            trades = bt_results.loc['_trades']
+
+            trades_entry = trades[[
+                'EntryBar', 'EntryPrice', 'EntryTime', 'Duration', 'PnL']]
+            trades_entry = trades_entry.set_index('EntryTime')
+
+            trades_exit = trades[['ExitBar', 'ExitPrice', 'ExitTime']]
+            trades_exit = trades_exit.set_index('ExitTime')
+
+            equity = pd.concat([equity, trades_entry], axis=1)
+            equity = pd.concat([equity, trades_exit], axis=1)
+
+            for index, row in equity.iterrows():
+                direction = None
+
+                if not np.isnan(row['EntryPrice']):
+                    direction = 'b'
+                if not np.isnan(row['ExitPrice']):
+                    direction = 's'
+                if not np.isnan(row['EntryPrice']) and not np.isnan(row['ExitPrice']):
+                    direction = 'b&s'
+
+                eq_list.append({
+                    'dt': index,
+                    'eq': row['Equity']/float(cash),
+                    'ddp': row['DrawdownPct'],
+                    'ddd': row['DrawdownDuration'],
+                    'bs': direction,
+                    'en_p': row['EntryPrice'] if not np.isnan(row['EntryPrice']) else None,
+                    'ex_p': row['ExitPrice'] if not np.isnan(row['ExitPrice']) else None,
+                    'pnl': row['PnL'] if not np.isnan(row['PnL']) else None,
+                    'dur': row['Duration'],
+                })
+
+            return JsonResponse(eq_list, safe=False)
+        except Exception as err:
+            print(err)
+            raise HttpResponseServerError
 
 class OHLCList(APIView):
     # queryset = StockHistoryDaily.objects.filter(freq='D')
@@ -218,6 +329,7 @@ class OHLCList(APIView):
             print(err)
             raise HttpResponseServerError
 
+
 def to_ohlc_list(df):
     ohlc_list = []
     get_ma_df(df)
@@ -228,14 +340,14 @@ def to_ohlc_list(df):
     get_macd_df(df)
     get_kdj_df(df)
 
-    for idx,rows in df.iterrows():
+    for idx, rows in df.iterrows():
         ohlc_list.append({
             'o': rows['Open'],
             'h': rows['High'],
             'l': rows['Low'],
             'c': rows['Close'],
             'v': rows['Volume'],
-            'ma10': rows['ma_10'] if not np.isnan(rows['ma_10']) else None, 
+            'ma10': rows['ma_10'] if not np.isnan(rows['ma_10']) else None,
             'ma20': rows['ma_20'] if not np.isnan(rows['ma_20']) else None,
             'ma60': rows['ma_60'] if not np.isnan(rows['ma_60']) else None,
             'ma120': rows['ma_120'] if not np.isnan(rows['ma_120']) else None,
@@ -263,18 +375,20 @@ def to_ohlc_list(df):
         })
     return ohlc_list
 
+
 def get_ohlc(request, ts_code, freq, period=3):
     try:
         # ohlc_list = []
         ohlc_df = get_data_since(ts_code, freq, period=period)
         ohlc_data = to_ohlc_list(ohlc_df)
-        
+
         return JsonResponse(ohlc_data, safe=False)
     except StockHistoryDaily.DoesNotExist:
         raise Http404
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_ma_df(data_df):
     try:
@@ -290,6 +404,7 @@ def get_ma_df(data_df):
         print(err)
         raise HttpResponseServerError
 
+
 def get_ema_df(data_df):
     try:
         # df_ema = pd.DataFrame()
@@ -303,16 +418,18 @@ def get_ema_df(data_df):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
-        
+
+
 def get_boll_df(data_df):
     try:
-        data_df['boll_upper'],data_df['boll_mid'],data_df['boll_lower'] = ta.BBANDS(data_df['Close'], timeperiod=20,
-                         nbdevup=2, nbdevdn=2, matype=0)
-        
+        data_df['boll_upper'], data_df['boll_mid'], data_df['boll_lower'] = ta.BBANDS(data_df['Close'], timeperiod=20,
+                                                                                      nbdevup=2, nbdevdn=2, matype=0)
+
         return data_df
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_bbi_df(data_df):
     try:
@@ -324,11 +441,12 @@ def get_bbi_df(data_df):
 
         # df_bbi = pd.DataFrame()
         data_df['bbi'] = (df_ma['ma_3'] + df_ma['ma_6'] +
-                         df_ma['ma_12']+df_ma['ma_24'])/4
+                          df_ma['ma_12']+df_ma['ma_24'])/4
         return data_df
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_rsi_df(data_df):
     try:
@@ -342,24 +460,27 @@ def get_rsi_df(data_df):
         print(err)
         raise HttpResponseServerError
 
+
 def get_kdj_df(data_df):
     try:
         # df_kdj = pd.DataFrame()
         data_df['k'], data_df['d'] = ta.STOCH(data_df['High'],
-                                            data_df['Low'],
-                                            data_df['Close'],
-                                            fastk_period=9,
-                                            slowk_period=3,
-                                            slowk_matype=0,
-                                            slowd_period=3,
-                                            slowd_matype=0)
-        data_df['j'] = list(map(lambda x, y: 3*x-2*y, data_df['k'], data_df['d']))
+                                              data_df['Low'],
+                                              data_df['Close'],
+                                              fastk_period=9,
+                                              slowk_period=3,
+                                              slowk_matype=0,
+                                              slowd_period=3,
+                                              slowd_matype=0)
+        data_df['j'] = list(
+            map(lambda x, y: 3*x-2*y, data_df['k'], data_df['d']))
         return data_df
     except StockHistoryDaily.DoesNotExist:
         raise Http404
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_macd_df(data_df):
     try:
@@ -372,6 +493,7 @@ def get_macd_df(data_df):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_ema(request, ts_code, freq, period=3):
     try:
@@ -405,6 +527,7 @@ def get_ema(request, ts_code, freq, period=3):
         print(err)
         raise HttpResponseServerError
 
+
 def get_ma(request, ts_code, freq, period=3):
     try:
         ohlc_list = []
@@ -436,6 +559,7 @@ def get_ma(request, ts_code, freq, period=3):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_sma(request, ts_code, freq, period=3):
     try:
@@ -469,6 +593,7 @@ def get_sma(request, ts_code, freq, period=3):
         print(err)
         raise HttpResponseServerError
 
+
 def get_boll(request, ts_code, freq, period=3):
     try:
         data_df = get_data(ts_code, freq, )
@@ -486,6 +611,7 @@ def get_boll(request, ts_code, freq, period=3):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_bbi(request, ts_code, freq, period=3):
     try:
@@ -511,6 +637,7 @@ def get_bbi(request, ts_code, freq, period=3):
     except Exception as err:
         print(err)
         raise HttpResponseServerError
+
 
 def get_rsi(request, ts_code, freq, period=3):
     try:
