@@ -148,6 +148,13 @@ $(function () {
                 if(equityJsonData == undefined){
                     updateEquityChart(ohlcChartData.equity);
                 }
+                else{
+                    var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
+                    var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
+                    // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
+                    updateEquityChart(resampledEquityData);
+                    updateTradesChart(resampledTradesData);
+                }
             }
             ,
             complete: function (request, status) {
@@ -1325,72 +1332,138 @@ $(function () {
     var updateTradesChart = function (tradeChartData) {
         //添加series
         // mixChartOption.series.slice(7,1);
+        var ohlcDateLabel = ohlcChartData.label;
+        var ohlc = ohlcChartData.ohlc;
         var markData = [];
         var tooltipsData = [];
 
-        $(ohlcChartData).each(function(id, ohlcObj){
-            $(tradeChartData).each(function(idx, tradeObj){
-                if(ohlcObj.label == tradeObj[5]){
-                    if(tradeObj[0]!=null){
-                        if(tradeObj[0]=="b"){
-                            markData.push(
-                                {
-                                    coord: [ohlcObj.label, ohlcObj.ohlc[2]],
-                                    value: "b",
-                                    symbol: "triangle",
-                                    // symbolSize: 20,
-                                    symbolRotate: 180,
-                                    itemStyle: {
-                                      //设置标记点的样式
-                                      normal: { color: "red" },
-                                    },
-                                }
-                            );
+        $(tradeChartData).each(function(idx, tradeObj){
+            if(tradeObj[0]!=null){
+                var indexTradeDate = ohlcDateLabel.indexOf(tradeObj[5]);
+                if(tradeObj[0]=="b"){
+                    markData.push(
+                        {
+                            coord: [tradeObj[5], ohlc[indexTradeDate][2]],
+                            value: "b",
+                            symbol: "pin",
+                            symbolSize: 25,
+                            symbolRotate: 180,
+                            itemStyle: {
+                              //设置标记点的样式
+                              normal: { color: "red" },
+                            },
                         }
-                        if(tradeObj[0]=="s"){
-                            markData.push(
-                                {
-                                    coord: [ohlcObj.label, ohlcObj.ohlc[3]],
-                                    value: "s",
-                                    symbol: "triangle",
-                                    symbolSize: 20,
-                                    symbolRotate: 180,
-                                    itemStyle: {
-                                      //设置标记点的样式
-                                      normal: { color: "green" },
-                                    },
-                                }
-                            );
+                    );
+                }
+                if(tradeObj[0]=="s"){
+                    markData.push(
+                        {
+                            coord: [tradeObj[5], ohlc[indexTradeDate][3]],
+                            value: "s",
+                            symbol: "pin",
+                            symbolSize: 25,
+                            // symbolRotate: 180,
+                            itemStyle: {
+                              //设置标记点的样式
+                              normal: { color: "green" },
+                            },
                         }
-                        if(tradeObj[0]=="b&s"){
-                            markData.push(
-                                [{
-                                    coord: [ohlcObj.label, ohlcObj.ohlc[2]],
-                                    value: "b",
-                                    symbol: "triangle",
-                                    symbolRotate: 180,
-                                    // symbolSize: 20,
-                                    itemStyle: {
-                                      //设置标记点的样式
-                                      normal: { color: "red" },
-                                    },
-                                },
-                                {
-                                    coord: [ohlcObj.label, ohlcObj.ohlc[3]],
-                                    value: "s",
-                                    symbol: "triangle",
-                                    // symbolSize: 20,
-                                    itemStyle: {
-                                      //设置标记点的样式
-                                      normal: { color: "green" },
-                                    },
-                                }]
-                            );
-                        }
-                    }
-                } 
-            });
+                    );
+                }
+                if(tradeObj[0]=="b&s"){
+                    markData.push(
+                        [{
+                            coord: [tradeObj[5], ohlc[indexTradeDate][2]],
+                            value: "b",
+                            symbol: "pin",
+                            symbolRotate: 180,
+                            symbolSize: 25,
+                            itemStyle: {
+                              //设置标记点的样式
+                              normal: { color: "red" },
+                            },
+                        },
+                        {
+                            coord: [tradeObj[5], ohlc[indexTradeDate][3]],
+                            value: "s",
+                            symbol: "pin",
+                            symbolSize: 25,
+                            itemStyle: {
+                              //设置标记点的样式
+                              normal: { color: "green" },
+                            },
+                        }]
+                    );
+                }
+            }
         });
+
+        // $(ohlcChartData).each(function(id, ohlcObj){
+        //     $(tradeChartData).each(function(idx, tradeObj){
+        //         $(ohlcObj.label).each(function(idd, ohlcObjLabel){
+        //             if(ohlcObjLabel == tradeObj[5]){
+        //                 if(tradeObj[0]!=null){
+        //                     if(tradeObj[0]=="b"){
+        //                         markData.push(
+        //                             {
+        //                                 coord: [ohlcObjLabel, ohlcObj.ohlc[2]],
+        //                                 value: "b",
+        //                                 symbol: "triangle",
+        //                                 // symbolSize: 20,
+        //                                 symbolRotate: 180,
+        //                                 itemStyle: {
+        //                                   //设置标记点的样式
+        //                                   normal: { color: "red" },
+        //                                 },
+        //                             }
+        //                         );
+        //                     }
+        //                     if(tradeObj[0]=="s"){
+        //                         markData.push(
+        //                             {
+        //                                 coord: [ohlcObjLabel, ohlcObj.ohlc[3]],
+        //                                 value: "s",
+        //                                 symbol: "triangle",
+        //                                 symbolSize: 20,
+        //                                 symbolRotate: 180,
+        //                                 itemStyle: {
+        //                                   //设置标记点的样式
+        //                                   normal: { color: "green" },
+        //                                 },
+        //                             }
+        //                         );
+        //                     }
+        //                     if(tradeObj[0]=="b&s"){
+        //                         markData.push(
+        //                             [{
+        //                                 coord: [ohlcObjLabel, ohlcObj.ohlc[2]],
+        //                                 value: "b",
+        //                                 symbol: "triangle",
+        //                                 symbolRotate: 180,
+        //                                 // symbolSize: 20,
+        //                                 itemStyle: {
+        //                                   //设置标记点的样式
+        //                                   normal: { color: "red" },
+        //                                 },
+        //                             },
+        //                             {
+        //                                 coord: [ohlcObjLabel, ohlcObj.ohlc[3]],
+        //                                 value: "s",
+        //                                 symbol: "triangle",
+        //                                 // symbolSize: 20,
+        //                                 itemStyle: {
+        //                                   //设置标记点的样式
+        //                                   normal: { color: "green" },
+        //                                 },
+        //                             }]
+        //                         );
+        //                     }
+        //                 }
+        //             } 
+        //         });
+                
+        //     });
+        // });
         
 
         var tradeOption = 
@@ -1600,14 +1673,6 @@ $(function () {
         // initializeBTMixChart(tsCode);
         updateBTMixChart(tsCode);
         updateFundaChart(tsCode, startDate, endDate);
-
-        if(equityJsonData != undefined){
-            var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
-            var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
-            // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
-            updateEquityChart(resampledEquityData);
-            updateTradesChart(resampledTradesData);
-        }
     });
 
     $('input:radio[name="period"]').change(function () {
@@ -1617,13 +1682,13 @@ $(function () {
         updateBTMixChart(tsCode);
         updateFundaChart(tsCode, startDate, endDate);
 
-        if(equityJsonData != undefined){
-            var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
-            var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
-            // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
-            updateEquityChart(resampledEquityData);
-            updateTradesChart(resampledTradesData);
-        }
+        // if(equityJsonData != undefined){
+        //     var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
+        //     var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
+        //     // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
+        //     updateEquityChart(resampledEquityData);
+        //     updateTradesChart(resampledTradesData);
+        // }
     });
 
     /**** 
