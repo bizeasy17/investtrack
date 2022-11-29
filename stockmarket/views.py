@@ -273,6 +273,8 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
 
             trades_exit = trades[['ExitBar', 'ExitPrice', 'ExitTime']]
             trades_exit = trades_exit.set_index('ExitTime')
+            # trades_exit.index.drop_duplicates()
+            trades_exit = trades_exit[~trades_exit.index.duplicated(keep='first')]
 
             equity = pd.concat([equity, trades_entry], axis=1)
             equity = pd.concat([equity, trades_exit], axis=1)
