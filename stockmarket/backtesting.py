@@ -67,6 +67,20 @@ def get_data_since(ts_code, freq='D', sort='asc', period=3):
     data_df = data_df.set_index('Date')
     return data_df
 
+def BBI(close_df):
+    try:
+        df_ma = pd.DataFrame()
+        df_ma['ma_3'] = talib.MA(close_df, timeperiod=3)
+        df_ma['ma_6'] = talib.MA(close_df, timeperiod=6)
+        df_ma['ma_12'] = talib.MA(close_df, timeperiod=12)
+        df_ma['ma_24'] = talib.MA(close_df, timeperiod=24)
+
+        df_bbi = pd.DataFrame()
+        df_bbi['bbi'] = (df_ma['ma_3'] + df_ma['ma_6'] +
+                          df_ma['ma_12']+df_ma['ma_24'])/4
+        return df_bbi
+    except Exception as err:
+        print(err)
 
 def get_ta_indicator(name):
     if name == 'SMA':
@@ -81,6 +95,8 @@ def get_ta_indicator(name):
         return talib.MACD
     if name == 'BOLL':
         return talib.BBANDS
+    if name == 'BBI':
+        return BBI
 
 
 
@@ -160,8 +176,10 @@ class System(Strategy):
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20}
     # SMA_10 = None
     # SMA_20 = None
-    ta_type_a = ['SMA', 'EMA', 'RSI', 'BBI']
+    ta_type_a = ['SMA', 'EMA', 'RSI']
     ta_type_b = ['KDJ', 'MACD', 'BOLL']
+    ta_type_c = ['BBI']
+
 
     ta_indicator_dict = {}
     '''
@@ -213,7 +231,7 @@ class System(Strategy):
         # Compute moving averages the strategy demands
         for k, v in self.ta_indicator_dict.items():
             # 需要重构一下
-            if k.split('_')[0] in self.ta_type_a:  # SMA, EMA, RSI, BBI
+            if k.split('_')[0] in self.ta_type_a:  # SMA, EMA, RSI
                 setattr(self, k, self.I(get_ta_indicator(
                     k.split('_')[0]), self.data.Close, v))
 
@@ -270,6 +288,9 @@ class System(Strategy):
                     setattr(self, k+'_MID', getattr(self, k)[1])
                     setattr(self, k+'_LOWER', getattr(self, k)[2])
 
+            if k.split('_')[0] in self.ta_type_c:  # BBI
+                setattr(self, k, self.I(get_ta_indicator(
+                    k.split('_')[0]), self.data.Close))
                     # setattr(self, k, talib.BBANDS(
                     #     self.data.Close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0))
                     # setattr(self, k+'_HIGH', getattr(self, k)[0])

@@ -44,7 +44,8 @@ $(function () {
     // let strategyCount = [0, 0];
 
     var equityJsonData = undefined;
-    var ohlcCount = 0;
+    var ohlcChartData;
+    // var ohlcCount = 0;
 
     var stockmarketEndpoint = "/stockmarket/";
     var curIndicator = ["SMA", "0", "1", "3"];
@@ -67,7 +68,6 @@ $(function () {
     var typeBParam = ["KDJ","MACD","BOLL"];
 
     var indicaMap = new Map();
-    var ohlcChartData;
     var maChartData;
     var emaChartData;
     var bbiChartData;
@@ -1579,8 +1579,11 @@ $(function () {
             $(obj).text(item.stock_name + " [" + tsCode + "]");
         });
 
-        updateBTMixChart();
-        updateTechIndicatorChart();
+        equityJsonData = undefined;
+        ohlcChartData = undefined;
+
+        updateBTMixChart(tsCode);
+        // updateTechIndicatorChart();
         updateFundaChart(tsCode, startDate, endDate);
     });
 
@@ -1846,7 +1849,7 @@ $(function () {
         for (let indic of taIndicatorSet) {
             // var techIndic = indic.split("_")[0];
             var techIndicParam = indic.split("_")[1];
-            if(techIndicParam == undefined) techIndicParam = -1;
+            if(techIndicParam == undefined || techIndicParam == "BBI") techIndicParam = -1;
             taIndicator += "'" + indic + "':" + techIndicParam;
             count++;
             if (count < taIndicatorSet.size) {
