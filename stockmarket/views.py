@@ -1,5 +1,6 @@
 
 import logging
+import re
 from datetime import date, datetime, timedelta
 from mimetypes import init
 from multiprocessing.resource_sharer import stop
@@ -10,6 +11,7 @@ from backtesting.lib import SignalStrategy, TrailingStrategy
 import json
 import numpy as np
 import pandas as pd
+from pandas import Timedelta
 import tushare as ts
 import talib as ta
 from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat, StockHistory,
@@ -216,34 +218,34 @@ class SystemBacktestingList(APIView):
 
 
 def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, trade_on_close=False, freq='D'):
-        '''
-        tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
-        indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
-        strategy: cross, crossover, 
-        trailing_strategy: 2 * ATR
-        capital: 10,000
-        commission: 0.05
-        leverage: 0.02 mean 50 leverage
-        '''
-        data_df = get_data(ts_code, freq, 'desc')
+    '''
+    tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
+    indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
+    strategy: cross, crossover, 
+    trailing_strategy: 2 * ATR
+    capital: 10,000
+    commission: 0.05
+    leverage: 0.02 mean 50 leverage
+    '''
+    data_df = get_data(ts_code, freq, 'desc')
 
-        # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
-        if type(eval(ta_indicator_dict)) == dict:
-            ta_indicator_dict = eval(ta_indicator_dict)
-        else:
-            raise TypeError('技术指标应为dict类型')
+    # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
+    if type(eval(ta_indicator_dict)) == dict:
+        ta_indicator_dict = eval(ta_indicator_dict)
+    else:
+        raise TypeError('技术指标应为dict类型')
 
-        if type(eval(buy_cond_dict)) == dict:
-            buy_cond_dict = eval(buy_cond_dict)
-        else:
-            raise TypeError('买入条件应为dict类型')
+    if type(eval(buy_cond_dict)) == dict:
+        buy_cond_dict = eval(buy_cond_dict)
+    else:
+        raise TypeError('买入条件应为dict类型')
 
-        if type(eval(sell_cond_dict)) == dict:
-            sell_cond_dict = eval(sell_cond_dict)
-        else:
-            raise TypeError('卖出条件应为dict类型')
-        # strategy_param = {}
-        '''
+    if type(eval(sell_cond_dict)) == dict:
+        sell_cond_dict = eval(sell_cond_dict)
+    else:
+        raise TypeError('卖出条件应为dict类型')
+    # strategy_param = {}
+    '''
         indicator_param - indic10:10,indic20:20,buy: indic10 xover indic20,sell: indic20 xover indic10,
         indicator params example
         输入序列，{'indic5':SMA(close,5)}, {'indic5':EMA(close,5)}
@@ -251,60 +253,138 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
         b: indic10 xover indic20, or indic10.level < 10
         s: indic20 xover indic10, or indic10.level > 90
         '''
-        try:
-            backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage),
-                                   trade_on_close=True if trade_on_close == 1 else False,
-                                   hedging=False, exclusive_orders=False)
+    try:
+        backtesting = Backtest(data_df, get_strategy_by_category(strategy_category), cash=float(cash), commission=float(commission), margin=float(leverage),
+                               trade_on_close=True if trade_on_close == 1 else False,
+                               hedging=False, exclusive_orders=False)
 
-            if strategy_category == 'system':
-                bt_results = backtesting.run(ta_indicator_dict=ta_indicator_dict, buy_cond_dict=buy_cond_dict,
-                                             sell_cond_dict=sell_cond_dict, stoploss=stoploss)
+        if strategy_category == 'system':
+            bt_results = backtesting.run(ta_indicator_dict=ta_indicator_dict, buy_cond_dict=buy_cond_dict,
+                                         sell_cond_dict=sell_cond_dict, stoploss=stoploss)
 
-            # print('strategy')
-            # print(bt_results.loc['_strategy'])
-            # print('equity')
-            eq_list = []
-            equity = bt_results.loc['_equity_curve']
-            trades = bt_results.loc['_trades']
+        # print('strategy')
+        # print(bt_results.loc['_strategy'])
+        # print('equity')
+        eq_list = []
+        equity = bt_results.loc['_equity_curve']
+        trades = bt_results.loc['_trades']
 
-            trades_entry = trades[[
-                'EntryBar', 'EntryPrice', 'EntryTime', 'Duration', 'PnL']]
-            trades_entry = trades_entry.set_index('EntryTime')
+        trades_entry = trades[[
+            'EntryBar', 'EntryPrice', 'EntryTime', 'Duration', 'PnL']]
+        trades_entry = trades_entry.set_index('EntryTime')
 
-            trades_exit = trades[['ExitBar', 'ExitPrice', 'ExitTime']]
-            trades_exit = trades_exit.set_index('ExitTime')
-            # trades_exit.index.drop_duplicates()
-            trades_exit = trades_exit[~trades_exit.index.duplicated(keep='first')]
+        trades_exit = trades[['ExitBar', 'ExitPrice', 'ExitTime']]
+        trades_exit = trades_exit.set_index('ExitTime')
+        # trades_exit.index.drop_duplicates()
+        trades_exit = trades_exit[~trades_exit.index.duplicated(keep='first')]
 
-            equity = pd.concat([equity, trades_entry], axis=1)
-            equity = pd.concat([equity, trades_exit], axis=1)
+        equity = pd.concat([equity, trades_entry], axis=1)
+        equity = pd.concat([equity, trades_exit], axis=1)
 
-            for index, row in equity.iterrows():
-                direction = None
+        for index, row in equity.iterrows():
+            direction = None
 
-                if not np.isnan(row['EntryPrice']):
-                    direction = 'b'
-                if not np.isnan(row['ExitPrice']):
-                    direction = 's'
-                if not np.isnan(row['EntryPrice']) and not np.isnan(row['ExitPrice']):
-                    direction = 'b&s'
+            if not np.isnan(row['EntryPrice']):
+                direction = 'b'
+            if not np.isnan(row['ExitPrice']):
+                direction = 's'
+            if not np.isnan(row['EntryPrice']) and not np.isnan(row['ExitPrice']):
+                direction = 'b&s'
 
-                eq_list.append({
-                    'dt': index,
-                    'eq': row['Equity']/float(cash),
-                    'ddp': row['DrawdownPct'],
-                    'ddd': row['DrawdownDuration'],
-                    'bs': direction,
-                    'en_p': row['EntryPrice'] if not np.isnan(row['EntryPrice']) else None,
-                    'ex_p': row['ExitPrice'] if not np.isnan(row['ExitPrice']) else None,
-                    'pnl': row['PnL'] if not np.isnan(row['PnL']) else None,
-                    'dur': row['Duration'],
-                })
+            eq_list.append({
+                'dt': index,
+                'eq': row['Equity']/float(cash),
+                'ddp': row['DrawdownPct'],
+                'ddd': row['DrawdownDuration'],
+                'bs': direction,
+                'en_p': row['EntryPrice'] if not np.isnan(row['EntryPrice']) else None,
+                'ex_p': row['ExitPrice'] if not np.isnan(row['ExitPrice']) else None,
+                'pnl': row['PnL'] if not np.isnan(row['PnL']) else None,
+                'dur': row['Duration'],
+            })
 
-            return JsonResponse(eq_list, safe=False)
-        except Exception as err:
-            print(err)
-            raise HttpResponseServerError
+        eq_list.append({
+            'stats': get_bt_stats_list(bt_results)
+        })
+        return JsonResponse(eq_list, safe=False)
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+
+def get_bt_stats_list(bt_stats):
+    '''
+    Start                     2004-08-19 00:00:00
+    End                       2013-03-01 00:00:00
+    Duration                   3116 days 00:00:00
+    Exposure Time [%]                     93.9944
+    Equity Final [$]                      51959.9
+    Equity Peak [$]                       75787.4
+    Return [%]                            419.599
+    Buy & Hold Return [%]                 703.458
+    Return (Ann.) [%]                      21.328
+    Volatility (Ann.) [%]                 36.5383
+    Sharpe Ratio                         0.583718
+    Sortino Ratio                         1.09239
+    Calmar Ratio                         0.444518
+    Max. Drawdown [%]                    -47.9801
+    Avg. Drawdown [%]                    -5.92585
+    Max. Drawdown Duration      584 days 00:00:00
+    Avg. Drawdown Duration       41 days 00:00:00
+    # Trades                                   65
+    Win Rate [%]                          46.1538
+    Best Trade [%]                         53.596
+    Worst Trade [%]                      -18.3989
+    Avg. Trade [%]                        2.35371
+    Max. Trade Duration         183 days 00:00:00
+    Avg. Trade Duration          46 days 00:00:00
+    Profit Factor                         2.08802
+    Expectancy [%]                        8.79171
+    SQN                                  0.916893
+    '''
+    bt_result_list = []
+    # bt_stats = bt_stats.rename({'Start':'开始时间','End':'结束时间','Duration':'持续时间',
+    #                             'Exposure Time [%]':'开盘时间 [%]','Equity Final [￥]':'最终资产 [￥]',
+    #                             'Equity Peak [$]':'资产最高值 [￥]',
+    #                             'Return [%]':'收益率 [%]',
+    #                             'Buy & Hold Return [%]':'买入并持有收益率 [%]',
+    #                             'Return (Ann.) [%]':'年化收益率 [%]',
+    #                             'Volatility (Ann.) [%]':'年化波动率 [%]',
+    #                             'Sharpe Ratio':'回报风险率',
+    #                             'Sortino Ratio':'索提诺比率',
+    #                             'Calmar Ratio':'卡玛比率',
+    #                             'Max. Drawdown [%]':'最大回撤 [%]',
+    #                             'Avg. Drawdown [%]':'平均回撤 [%]',
+    #                             'Max. Drawdown Duration':'最大回撤周期',
+    #                             'Avg. Drawdown Duration':'平均回撤周期',
+    #                             'Win Rate [%]':'胜率 [%]',
+    #                             'Best Trade [%]':'最佳交易 [%]',
+    #                             'Worst Trade [%]': '最差交易 [%]',
+    #                             'Avg. Trade [%]':'平均交易 [%]',
+    #                             'Max. Trade Duration':'最长交易周期',
+    #                             'Avg. Trade Duration':'平均交易周期',
+    #                             'Profit Factor':'获利因子',
+    #                             'Expectancy [%]':'期望 [%]',
+    #                             'SQN':'SQN'})
+    for idx, item in bt_stats.iteritems():
+        if idx not in ['_strategy', '_equity_curve', '_trades']:
+            id_label = ''.join(re.findall(r'[A-Za-z]', idx))
+            if type(item) == float:
+                if not np.isnan(item):
+                    item = round(item, 2) 
+                else:
+                    item = 'n/a'
+            elif type(item) == Timedelta:
+                item = Timedelta(item).days
+            elif type(item) == date:
+                item = item
+
+            bt_result_list.append({
+                id_label: item
+            })
+
+    return bt_result_list
+
 
 class OHLCList(APIView):
     # queryset = StockHistoryDaily.objects.filter(freq='D')

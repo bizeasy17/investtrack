@@ -147,6 +147,7 @@ $(function () {
 
                 if(equityJsonData == undefined){
                     updateEquityChart(ohlcChartData.equity);
+                    updateTradesChart([]);
                 }
                 else{
                     var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
@@ -163,6 +164,7 @@ $(function () {
                 // renderKDJChart(tsCode);
                 // renderMACDChart(tsCode);
                 // alert('do smthing');
+                updateFundaChart(tsCode, startDate, endDate);
             }
         });
     }
@@ -1584,7 +1586,6 @@ $(function () {
 
         updateBTMixChart(tsCode);
         // updateTechIndicatorChart();
-        updateFundaChart(tsCode, startDate, endDate);
     });
 
     var setupStrategyCategories = function (strategyCategory) {
@@ -1624,6 +1625,14 @@ $(function () {
         if(curIndicator[0]=="BBI"){
             updateBBIChart(ohlcChartData);
         }
+    }
+
+    var updateBTStatsPanel = function(btStatData){
+        $(btStatData[0].stats).each(function(idx, obj){
+            for(var k in obj){
+                $("#"+k).after("<span class='ml-1 tex-muted font-weight-bold'>"+obj[k]+"</span>");
+            }
+        });
     }
 
     var onPresetOptChange = function (event) {
@@ -1983,6 +1992,7 @@ $(function () {
                 // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
                 updateEquityChart(resampledEquityData);
                 updateTradesChart(resampledTradesData);
+                updateBTStatsPanel(data.slice(-1));
             }
         });
     }

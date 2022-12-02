@@ -392,37 +392,132 @@
               <div class="">
                 <!--  Header - Dropdown -->
                 <div class="d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="font-weight-bold text-muted"><span class="stock_name ml-2"></span></h6>
-                    <hr/>
-                    <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
+                    <div>
+                      <h6 class="font-weight-bold"><span class="stock_name ml-2"></span></h6>
+                    </div>
+                    <div>
+                      <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
+                          <label class="btn btn-light active">
+                              <input type="radio" name="period" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                          </label>
+                          <label class="btn btn-light">
+                              <input type="radio" name="period" autocomplete="off" value="3">{% trans '3年' %} 
+                          </label>
+                          <label class="btn btn-light">
+                              <input type="radio" name="period" autocomplete="off" value="5">{% trans '5年' %} 
+                          </label>
+                          <label class="btn btn-light">
+                              <input type="radio" name="period" autocomplete="off" value="10">{% trans '10年' %} 
+                          </label>
+                          <label class="btn btn-light">
+                              <input type="radio" name="period" autocomplete="off" value="99">{% trans '全部' %} 
+                          </label>
+                      </div>
+                      <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
                         <label class="btn btn-light active">
-                            <input type="radio" name="period" autocomplete="off" value="1" checked>{% trans '1年' %} 
+                            <input type="radio" name="freq" autocomplete="off" value="D" checked>{% trans '日线' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="period" autocomplete="off" value="3">{% trans '3年' %} 
+                            <input type="radio" name="freq" autocomplete="off" value="W">{% trans '周线' %} 
                         </label>
                         <label class="btn btn-light">
-                            <input type="radio" name="period" autocomplete="off" value="5">{% trans '5年' %} 
+                            <input type="radio" name="freq" autocomplete="off" value="M">{% trans '月线' %} 
                         </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="period" autocomplete="off" value="10">{% trans '10年' %} 
                         </label>
-                        <label class="btn btn-light">
-                            <input type="radio" name="period" autocomplete="off" value="99">{% trans '全部' %} 
-                        </label>
+                      </div>
                     </div>
-                    <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
-                      <label class="btn btn-light active">
-                          <input type="radio" name="freq" autocomplete="off" value="D" checked>{% trans '日' %} 
-                      </label>
-                      <label class="btn btn-light">
-                          <input type="radio" name="freq" autocomplete="off" value="W">{% trans '周' %} 
-                      </label>
-                      <label class="btn btn-light">
-                          <input type="radio" name="freq" autocomplete="off" value="M">{% trans '月' %} 
-                      </label>
-                      </label>
+                </div>
+                <div class="col-lg-12 mt-2 mb-2 d-none" id="btStats">
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="Start">开始时间</label>
                     </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="End">结束时间</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="Duration">交易历史[天]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="ExposureTime">开盘时间[%]</label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="EquityFinal">资产总值[￥]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="EquityPeak">资产最高值[￥]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="Return">总回报[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="BuyHoldReturn">买入并持有总回报[%]</label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="ReturnAnn">年化回报[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="VolatilityAnn">年化波动[%]</label>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="SharpeRatio">Sharp[%]</label>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="SortinoRatio">Sortino[%]</label>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="CalmarRatio">Calmar[%]</label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdown">最大回撤[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgDrawdown">平均回撤[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdownDuration">最大回撤时间</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgDrawdownDuration">平均回撤时间</label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="WinRate">胜率[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="BestTrade">最佳交易获利[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="WorstTrade">最差交易获利[%]</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgTrade">平均交易胜率[%]</label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="MaxTradeDuration">最长持有时间</label>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgTradeDuration">平均持有时间</label>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="ProfitFactor">获利因子</label>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="Expectancy">期望[%]</label>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="SQN">SQN指数</label>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-lg-12 mt-2 mb-2">
                     <!-- <div class="">
@@ -431,6 +526,7 @@
                     <div class="">
                       <div id="pnlChart" style="height: 150px"></div>
                     </div> -->
+                    <span class="text-muted">{% trans ' K线 / 技术指标' %}</span>
                     <div class="col-lg-12">
                       <div id="btMixChart" style="height: 900px"></div>
                     </div>
@@ -441,7 +537,7 @@
                       <div id="btFundamentalChart" style="height: 900px"></div>
                     </div>
                 </div>
-            </div>
+              </div>
           </div>
       </div>
     </div>
