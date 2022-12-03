@@ -34,6 +34,7 @@ def get_data(ts_code, freq='D', sort='asc'):
     data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
                             'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
     # data_df = data_df.sort_values(by=['Date'],ascending=False)
+    data_df['Date'] = pd.to_datetime(data_df['Date'])
     data_df = data_df.set_index('Date')
     return data_df
 

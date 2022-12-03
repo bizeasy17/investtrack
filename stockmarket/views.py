@@ -11,7 +11,7 @@ from backtesting.lib import SignalStrategy, TrailingStrategy
 import json
 import numpy as np
 import pandas as pd
-from pandas import Timedelta
+from pandas import Timedelta, Timestamp
 import tushare as ts
 import talib as ta
 from analysis.models import (AnalysisDateSeq, IndustryBasicQuantileStat, StockHistory,
@@ -295,12 +295,12 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
                 'dt': index,
                 'eq': row['Equity']/float(cash),
                 'ddp': row['DrawdownPct'],
-                'ddd': row['DrawdownDuration'],
+                'ddd': row['DrawdownDuration'] if not np.isnan(row['DrawdownDuration']) else None,
                 'bs': direction,
                 'en_p': row['EntryPrice'] if not np.isnan(row['EntryPrice']) else None,
                 'ex_p': row['ExitPrice'] if not np.isnan(row['ExitPrice']) else None,
                 'pnl': row['PnL'] if not np.isnan(row['PnL']) else None,
-                'dur': row['Duration'],
+                'dur': row['Duration'] if not np.isnan(row['Duration']) else None,
             })
 
         eq_list.append({
@@ -378,6 +378,8 @@ def get_bt_stats_list(bt_stats):
                 item = Timedelta(item).days
             elif type(item) == date:
                 item = item
+            elif type(item) == Timestamp:
+                item = item.date()
 
             bt_result_list.append({
                 id_label: item

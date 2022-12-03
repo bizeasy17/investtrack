@@ -393,7 +393,10 @@
                 <!--  Header - Dropdown -->
                 <div class="d-flex flex-row align-items-center justify-content-between">
                     <div>
-                      <h6 class="font-weight-bold"><span class="stock_name ml-2"></span></h6>
+                      <h6 class="font-weight-bold">
+                        <span class="stock_name ml-2"></span>
+                        <a id="expandBTStats" href="javascript:void(0);" class="text-muted small ml-1">{% trans '展开+' %}</a>
+                      </h6>
                     </div>
                     <div>
                       <div class="btn-group btn-group-sm btn-group-toggle small" data-toggle="buttons">
@@ -430,92 +433,92 @@
                 <div class="col-lg-12 mt-2 mb-2 d-none" id="btStats">
                   <div class="row">
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="Start">开始时间</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="Start">开始时间</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="End">结束时间</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="End">结束时间</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="Duration">交易历史[天]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="Duration">交易历史[天]</label><SPAN> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="ExposureTime">开盘时间[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="ExposureTime">开盘时间[%]</label><SPAN> - </span>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="EquityFinal">资产总值[￥]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="EquityFinal">资产总值[￥]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="EquityPeak">资产最高值[￥]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="EquityPeak">资产最高[￥]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="Return">总回报[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="Return">总回报[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="BuyHoldReturn">买入并持有总回报[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="BuyHoldReturn">买入并持有回报[%]</label><span> - </span>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="ReturnAnn">年化回报[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="ReturnAnn">年化回报[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="VolatilityAnn">年化波动[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="VolatilityAnn">年波动[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="SharpeRatio">Sharp[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="SharpeRatio">Sharp[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="SortinoRatio">Sortino[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="SortinoRatio">Sortino[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="CalmarRatio">Calmar[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="CalmarRatio">Calmar[%]</label><span> - </span>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdown">最大回撤[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdown">最大回撤[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="AvgDrawdown">平均回撤[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgDrawdown">平均回撤[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdownDuration">最大回撤时间</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdownDuration">最大回撤[天]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="AvgDrawdownDuration">平均回撤时间</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgDrawdownDuration">平均回撤[天]</label><span> - </span>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="WinRate">胜率[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="WinRate">胜率[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="BestTrade">最佳交易获利[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="BestTrade">最佳交易获利[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="WorstTrade">最差交易获利[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="WorstTrade">最差交易获利[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="AvgTrade">平均交易胜率[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgTrade">平均交易胜率[%]</label><span> - </span>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="MaxTradeDuration">最长持有时间</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="MaxTradeDuration">最长持有时间</label><span> - </span>
                     </div>
                     <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="AvgTradeDuration">平均持有时间</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="AvgTradeDuration">平均持有时间</label><span> - </span>
                     </div>
                     <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="ProfitFactor">获利因子</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="ProfitFactor">获利因子</label><span> - </span>
                     </div>
                     <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="Expectancy">期望[%]</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="Expectancy">期望[%]</label><span> - </span>
                     </div>
                     <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="SQN">SQN指数</label>
+                      <label class="visually-hidden" for="specificSizeInputName" id="SQN">SQN指数</label><span> - </span>
                     </div>
                   </div>
                 </div>

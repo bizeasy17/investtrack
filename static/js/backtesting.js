@@ -1341,11 +1341,12 @@ $(function () {
 
         $(tradeChartData).each(function(idx, tradeObj){
             if(tradeObj[0]!=null){
-                var indexTradeDate = ohlcDateLabel.indexOf(tradeObj[5]);
+                var xCoord = formatDate(new Date(tradeObj[5]), "-");
+                var indexTradeDate = ohlcDateLabel.indexOf(xCoord);
                 if(tradeObj[0]=="b"){
                     markData.push(
                         {
-                            coord: [tradeObj[5], ohlc[indexTradeDate][2]],
+                            coord: [xCoord, ohlc[indexTradeDate][2]],
                             value: "b",
                             symbol: "pin",
                             symbolSize: 25,
@@ -1360,7 +1361,7 @@ $(function () {
                 if(tradeObj[0]=="s"){
                     markData.push(
                         {
-                            coord: [tradeObj[5], ohlc[indexTradeDate][3]],
+                            coord: [xCoord, ohlc[indexTradeDate][3]],
                             value: "s",
                             symbol: "pin",
                             symbolSize: 25,
@@ -1375,7 +1376,7 @@ $(function () {
                 if(tradeObj[0]=="b&s"){
                     markData.push(
                         [{
-                            coord: [tradeObj[5], ohlc[indexTradeDate][2]],
+                            coord: [xCoord, ohlc[indexTradeDate][2]],
                             value: "b",
                             symbol: "pin",
                             symbolRotate: 180,
@@ -1386,7 +1387,7 @@ $(function () {
                             },
                         },
                         {
-                            coord: [tradeObj[5], ohlc[indexTradeDate][3]],
+                            coord: [xCoord, ohlc[indexTradeDate][3]],
                             value: "s",
                             symbol: "pin",
                             symbolSize: 25,
@@ -1628,12 +1629,33 @@ $(function () {
     }
 
     var updateBTStatsPanel = function(btStatData){
+        var fontColor = "text-danger";
         $(btStatData[0].stats).each(function(idx, obj){
             for(var k in obj){
-                $("#"+k).after("<span class='ml-1 tex-muted font-weight-bold'>"+obj[k]+"</span>");
+                $("#"+k).next().remove();
+                if(typeof(obj[k]) == "number"){
+                    if(obj[k] < 0){
+                        fontColor = "text-success";
+                    }else{
+                        fontColor = "text-danger";
+                    }
+                    $("#"+k).after("<span class='ml-1 tex-muted font-weight-bold " + fontColor + "'>"+obj[k].toLocaleString()+"</span>");
+                }else{
+                    $("#"+k).after("<span class='ml-1 tex-muted font-weight-bold'>"+obj[k]+"</span>");
+                }
             }
         });
     }
+
+    $("#expandBTStats").click(function(){
+        if($("#btStats").hasClass("d-none")){
+            $("#btStats").removeClass("d-none");
+            $(this).text("收起-");
+        }else{
+            $("#btStats").addClass("d-none");
+            $(this).text("展开+");
+        }
+    });
 
     var onPresetOptChange = function (event) {
         $(event.data.target).val($(this).val());
@@ -1993,6 +2015,13 @@ $(function () {
                 updateEquityChart(resampledEquityData);
                 updateTradesChart(resampledTradesData);
                 updateBTStatsPanel(data.slice(-1));
+            },
+            complete: function(request, status){
+                // $("#btStats").removeClass("d-none");
+                if($("#btStats").hasClass("d-none")){
+                    $("#btStats").removeClass("d-none");
+                    $("#expandBTStats").text("收起-");
+                }
             }
         });
     }
@@ -2116,7 +2145,7 @@ $(function () {
             // strategyCount[1]++;
             newItem += "<div class='col-lg-8 d-flex justify-content-between align-items-center'>" +
                 "<span class='text-primary small'>" + sStrategyText + "</span>" +
-                "<a href='javascript:void(0)' id='sRM" + sStrategyCount + "'>x</a>" +
+                "<a class='badge rounded-pill' href='javascript:void(0)' id='sRM" + sStrategyCount + "'>x</a>" +
                 "<input type='hidden' value='" + sStrategyValue + "'>" +
                 "</div>";
             $("#sStrategyList").append(newItem);
