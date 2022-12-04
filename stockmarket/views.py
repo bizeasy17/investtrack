@@ -295,12 +295,12 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
                 'dt': index,
                 'eq': row['Equity']/float(cash),
                 'ddp': row['DrawdownPct'],
-                'ddd': row['DrawdownDuration'] if not np.isnan(row['DrawdownDuration']) else None,
+                'ddd': row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT else None,
                 'bs': direction,
                 'en_p': row['EntryPrice'] if not np.isnan(row['EntryPrice']) else None,
                 'ex_p': row['ExitPrice'] if not np.isnan(row['ExitPrice']) else None,
                 'pnl': row['PnL'] if not np.isnan(row['PnL']) else None,
-                'dur': row['Duration'] if not np.isnan(row['Duration']) else None,
+                'dur': row['Duration'] if not row['Duration'] is pd.NaT else None,
             })
 
         eq_list.append({

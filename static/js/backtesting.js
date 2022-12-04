@@ -172,10 +172,10 @@ $(function () {
     var initMixChartOption = function(ohlcChartData) {
         var mixChartOption = {
             animation: true,
-            // legend: {
-            //     top: 5,
-            //     data: ['MA10','MA20','MA60','MA120','MA200']
-            // },
+            legend: {
+                id: "legend",
+                top: 0,
+            },
             // tooltip: {
             //     trigger: 'axis',
             //     axisPointer: {
@@ -571,29 +571,34 @@ $(function () {
     var updateMAChart = function (maChartData) {
         //动态添加series
         var maChartOption = {
+            legend: {
+                id: "legend",
+                data: ['MA10','MA20','MA60','MA120','MA200']
+            },
             series:[
             {
                 id: "indic1",
+                name: "MA10",
                 data: maChartData.ma[0].ma10
             },
             {
                 id: "indic2",
-                // name: 'MA20',
+                name: 'MA20',
                 data: maChartData.ma[0].ma20,
             },
             {
                 id: "indic3",
-                // name: 'MA60',
+                name: 'MA60',
                 data: maChartData.ma[0].ma60,
             },
             {
                 id: "indic4",
-                // name: 'MA120',
+                name: 'MA120',
                 data: maChartData.ma[0].ma120,
             },
             {
                 id: "indic5",
-                // name: 'MA200',
+                name: 'MA200',
                 data: maChartData.ma[0].ma200,
             }]};
 
@@ -605,6 +610,10 @@ $(function () {
     var updateEMAChart = function (chartData) {
         //动态添加series
         var emaChartOption = {
+            legend: {
+                id: "legend",
+                data: ['EMA10','EMA20','EMA60','EMA120','EMA200']
+            },
             series:[
             {
                 id: "indic1",
@@ -640,6 +649,10 @@ $(function () {
     var updateBOLLChart = function (chartData) {
         //动态添加series
         var bollChartOption = {
+            legend: {
+                id: "legend",
+                data: ['BOLL_UPPER','BOLL_MID','BOLL_LOW']
+            },
             series:[
             {
                 id: "indic1",
@@ -673,6 +686,10 @@ $(function () {
     var updateBBIChart = function (chartData) {
         //动态添加series
         var bbiChartOption = {
+            legend: {
+                id: "legend",
+                data: ['BBI']
+            },
             series:[
             {
                 id: "indic1",
@@ -1991,15 +2008,47 @@ $(function () {
     }
 
     var isEmptyStrategySet = function() {
-        if(taBIndicatorSet.size==0 || taSIndicatorSet.size==0) return true;
+        if(taBIndicatorSet.size==0){
+            $("#bMsg").text("买入策略为空，请添加");
+            $("#bMsg").addClass("text-warning");
+            return true;
+        } else{
+            $("#bMsg").text("");
+        }
+        if(taSIndicatorSet.size==0) {
+            $("#sMsg").text("卖出策略为空，请添加");
+            $("#sMsg").addClass("text-warning");
+            return true;
+        }else{
+            $("#sMsg").text("");
+        }
         return false; 
     }
 
-    var executeBT = function () {
+    var executeBT = function (handleButton) {
         if(isEmptyStrategySet()) return;
+        if($(handleButton).hasClass("disabled")) return;
 
         capital = $("#capital").val();
         stoploss = (100 - parseInt($("#stoploss").val()))/100;
+
+        if(capital.toString()=="") {
+            $("#capital").addClass("border-warning");
+            return;
+        }else{
+            $("#capital").removeClass("border-warning");
+        }
+        if($("#stoploss").val().toString()==""){
+            $("#stoploss").addClass("border-warning");
+            return;
+        } else{
+            $("#stoploss").removeClass("border-warning");
+        }
+
+        var startTime = new Date();
+
+        $(handleButton).addClass("disabled");
+        $($(handleButton).children()[0]).removeClass("d-none");
 
         $.ajax({
             url: stockmarketEndpoint + "bt-system/" + tsCode + "/" + strategyCategory + "/" + taIndicator +
@@ -2018,10 +2067,14 @@ $(function () {
             },
             complete: function(request, status){
                 // $("#btStats").removeClass("d-none");
+                var endTime = new Date();
                 if($("#btStats").hasClass("d-none")){
                     $("#btStats").removeClass("d-none");
                     $("#expandBTStats").text("收起-");
                 }
+                $(handleButton).removeClass("disabled");
+                $($(handleButton).children()[0]).addClass("d-none");
+                $(handleButton).next().text("回测用时:" + parseInt((endTime - startTime)/1000).toString() + "秒");
             }
         });
     }
@@ -2329,7 +2382,7 @@ $(function () {
         buildTAIndicator();
         buildBStrategy();
         buildSStrategy();
-        executeBT();
+        executeBT($(this));
     });
 
     initParam();

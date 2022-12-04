@@ -223,8 +223,8 @@
         
       </div> -->
       <div class="col-lg-12 input-group input-group-sm  mb-2 small">
-        <div class="input-group-prepend"><span class="input-group-text">￥</span></div>
-        <input id="capital" type="number" step="1000" class="form-control" placeholder="{% trans '投入资金' %}" aria-label="Amount (to the nearest dollar)">
+        <div class="input-group-prepend"><span class="input-group-text">{% trans '本[￥]' %}</span></div>
+        <input id="capital" type="number" step="1000" class="form-control" value="50000" placeholder="{% trans 'e.g. 50,000' %}" aria-label="Amount (to the nearest dollar)">
         <!-- <span class="input-group-text small">.00</span> -->
         <div class="btn-group btn-group-sm btn-group-toggle ml-1" data-toggle="buttons">
           <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
@@ -232,8 +232,8 @@
           <label class="btn btn-light">
               <input type="radio" name="capital-option" autocomplete="off" value="30000"/>{% trans '30,000' %}
           </label>
-          <label class="btn btn-light">
-              <input type="radio" name="capital-option" autocomplete="off" value="50000"/>{% trans '50,000' %}
+          <label class="btn btn-light active">
+              <input type="radio" name="capital-option" autocomplete="off" value="50000" checked/>{% trans '50,000' %}
           </label>
           <label class="btn btn-light">
             <input type="radio" name="capital-option" autocomplete="off" value="100000"/>{% trans '100,000' %}
@@ -241,13 +241,13 @@
         </div>
       </div>
       <div class="col-lg-12 input-group input-group-sm  mb-3 small">
-        <div class="input-group-prepend"><span class="input-group-text">%</span></div>
-        <input id="stoploss" type="number" step="1" class="form-control" placeholder="{% trans '止损比率' %}" aria-label="Amount (to the nearest dollar)">
+        <div class="input-group-prepend"><span class="input-group-text">{% trans '止损[%]' %}</span></div>
+        <input id="stoploss" type="number" step="1" class="form-control" value="3" placeholder="{% trans 'e.g. 3%' %}" aria-label="Amount (to the nearest dollar)">
         <!-- <span class="input-group-text small">.00</span> -->
         <div class="col-lg-6 btn-group btn-group-sm btn-group-toggle ml-1" data-toggle="buttons">
           <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
-          <label class="btn btn-light">
-              <input type="radio" name="sl-option" autocomplete="off" value="3"/>{% trans '3' %}
+          <label class="btn btn-light active">
+              <input type="radio" name="sl-option" autocomplete="off" value="3" checked/>{% trans '3' %}
           </label>
           <label class="btn btn-light">
               <input type="radio" name="sl-option" autocomplete="off" value="5"/>{% trans '5' %}
@@ -381,8 +381,9 @@
       <div class="col-lg-12 strategy-list mt-1">
         <div class="text-white mt-1">
           <button class="btn btn-primary btn-sm" type="button" id="executeBT">
-            执行回测
+            执行回测 <i class="fa fa-spinner fa-pulse fa-1x fa-fw ml-1 d-none"></i>
           </button>
+          <span class="text-primary ml-1"></span>
         </div>
       </div>
     </div>
@@ -430,7 +431,7 @@
                       </div>
                     </div>
                 </div>
-                <div class="col-lg-12 mt-2 mb-2 d-none" id="btStats">
+                <div class="col-lg-12 mt-4 mb-2 d-none" id="btStats">
                   <div class="row">
                     <div class="col-sm-3">
                       <label class="visually-hidden" for="specificSizeInputName" id="Start">开始时间</label><span> - </span>
