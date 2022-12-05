@@ -423,6 +423,32 @@ $(function () {
                         opacity: 0.5
                     }
                 },
+                {
+                    id: "atr3",
+                    name: 'ATR3',
+                    type: 'line',
+                    // data: calculateMA(200, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.8,
+                        // type: 'dashed',
+                        width: 2,
+                    }
+                },
+                {
+                    id: "atr6",
+                    name: 'ATR6',
+                    type: 'line',
+                    // data: calculateMA(200, chartData),
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        opacity: 0.8,
+                        // type: 'dashed',
+                        width: 2,
+                    }
+                },
                 // {
                 //     id: "ohlctrades",
                 //     // name: 'MA200',
@@ -538,13 +564,22 @@ $(function () {
 
     var updateOHLCChart = function(ohlcChartData){
         var ohlcChartOption = {
-            // xAxis:[ 
-            //     {id: "ohlcxAxis", data: ohlcChartData.label} // OHLC
-            // ],
+            // legend: {
+            //     id: "legend",
+            //     data: ['MA10','MA20','MA60','MA120','MA200']
+            // },
             series:[
                 {
                     id: "ohlc",
                     data: ohlcChartData.ohlc,
+                },
+                {
+                    id: "atr3",
+                    data: ohlcChartData.atr3,
+                },
+                {
+                    id: "atr6",
+                    data: ohlcChartData.atr6,
                 }
             ]};
 
@@ -2074,7 +2109,7 @@ $(function () {
                 }
                 $(handleButton).removeClass("disabled");
                 $($(handleButton).children()[0]).addClass("d-none");
-                $(handleButton).next().text("回测用时:" + parseInt((endTime - startTime)/1000).toString() + "秒");
+                $(handleButton).next().text("回测用时:" + parseFloat((endTime - startTime)/1000).toString() + "秒");
             }
         });
     }
@@ -2302,7 +2337,7 @@ $(function () {
                     $(value).on("blur", { type: 1, txtHolder: indicPickedHolderArray[1][0], vHolder: indicPickedHolderArray[1][1] }, strategyValueInputOnchange);
                 });
                 break;
-            case "3": // close & value
+            case "3": // close & tech indicator
                 $.each(indicatorParamOHLC, function (idx, value) {
                     $(indicHolderArry[0] + " div").append("<a class='dropdown-item' href='javascript:void(0)' value='" + value.split(",")[1] + "'>" + value.split(",")[0] + "</a>");
                 });
@@ -2317,7 +2352,7 @@ $(function () {
                 $(indicHolderArry[1] + " div").append("<div class='dropdown-divider'</div>");
                 $(indicHolderArry[1] + " div").append("<input type='number' step='5' class='dropdown-item form-control form-control-sm border-danger' placeholder='自定义值' autocomplete='off' name='indicator_value'/>");
                 $.each($(indicHolderArry[1] + " div input"), function (idx, value) {
-                    $(value).on("blur", { type: 1, txtHolder: indicPickedHolderArray[1][0], vHolder: indicPickedHolderArray[1][1] }, strategyValueInputOnchange);
+                    $(value).on("blur", { type: 0, txtHolder: indicPickedHolderArray[1][0], vHolder: indicPickedHolderArray[1][1] }, strategyValueInputOnchange);
                 });
                 break;
         }
