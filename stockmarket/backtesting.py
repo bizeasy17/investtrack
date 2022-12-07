@@ -172,6 +172,7 @@ class SimpleCrossoverStrategy(Strategy):
             self.position.close()
             # self.sell()
 
+DEBUG = True
 
 class System(Strategy):
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20}
@@ -328,6 +329,8 @@ class System(Strategy):
                 # crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
                 self._long_order = eval(vv)
 
+
+
                 # if k == 'crossover':
                 #     self._long_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
                 # if k == 'pair_comp':
@@ -342,14 +345,14 @@ class System(Strategy):
                 self._short_order = eval(vv)
 
         if self._long_order:
-            # self.position.close()
-            if self.stoploss:
-                self.buy(sl=float(self.stoploss) * price)
-            else:
-                self.buy()
+            if not self.position:
+                if self.stoploss:
+                    self.buy(sl=float(self.stoploss) * price)
+                else:
+                    self.buy()
         elif self._short_order:
-            # self.sell()
-            self.position.close()
+            if self.position:
+                self.position.close()
         '''
         return
         
