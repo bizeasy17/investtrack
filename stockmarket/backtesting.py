@@ -68,6 +68,7 @@ def get_data_since(ts_code, freq='D', sort='asc', period=3):
     data_df = data_df.set_index('Date')
     return data_df
 
+
 def BBI(close_df):
     try:
         df_ma = pd.DataFrame()
@@ -78,10 +79,11 @@ def BBI(close_df):
 
         df_bbi = pd.DataFrame()
         df_bbi['bbi'] = (df_ma['ma_3'] + df_ma['ma_6'] +
-                          df_ma['ma_12']+df_ma['ma_24'])/4
+                         df_ma['ma_12']+df_ma['ma_24'])/4
         return df_bbi
     except Exception as err:
         print(err)
+
 
 def get_ta_indicator(name):
     if name == 'SMA':
@@ -98,7 +100,6 @@ def get_ta_indicator(name):
         return talib.BBANDS
     if name == 'BBI':
         return BBI
-
 
 
 def get_strategy_by_category(category):
@@ -172,16 +173,17 @@ class SimpleCrossoverStrategy(Strategy):
             self.position.close()
             # self.sell()
 
+
 DEBUG = True
 
-class System(Strategy):
+
+class System(SignalStrategy, TrailingStrategy):
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20}
     # SMA_10 = None
     # SMA_20 = None
     ta_type_a = ['SMA', 'EMA', 'RSI']
     ta_type_b = ['KDJ', 'MACD', 'BOLL']
     ta_type_c = ['BBI']
-
 
     ta_indicator_dict = {}
     '''
@@ -230,6 +232,7 @@ class System(Strategy):
     # stoploss = .92
 
     def init(self):
+        super().init()
         # Compute moving averages the strategy demands
         for k, v in self.ta_indicator_dict.items():
             # 需要重构一下
@@ -240,21 +243,21 @@ class System(Strategy):
             if k.split('_')[0] in self.ta_type_b:  # KDJ, MACD, BOLL
                 # KDJ
                 if k.split('_')[0] == 'KDJ':
-                    setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]), self.data.High, 
-                                                self.data.Low,
-                                                self.data.Close,
-                                                fastk_period=9,
-                                                slowk_period=3,
-                                                slowk_matype=0,
-                                                slowd_period=3,
-                                                slowd_matype=0,
-                                                ))
+                    setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]), self.data.High,
+                                            self.data.Low,
+                                            self.data.Close,
+                                            fastk_period=9,
+                                            slowk_period=3,
+                                            slowk_matype=0,
+                                            slowd_period=3,
+                                            slowd_matype=0,
+                                            ))
                     setattr(self, k+'_K', getattr(self, k)[0])
                     setattr(self, k+'_D', getattr(self, k)[1])
                     setattr(self, k+'_J',
                             list(map(lambda x, y: 3*x-2*y, getattr(self, k)[0], getattr(self, k)[1])))
 
-                    # setattr(self, k, talib.STOCH(self.data.High, 
+                    # setattr(self, k, talib.STOCH(self.data.High,
                     #                             self.data.Low,
                     #                             self.data.Close,
                     #                             fastk_period=9,
@@ -270,7 +273,7 @@ class System(Strategy):
                 # MACD
                 if k.split('_')[0] == 'MACD':
                     setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]),
-                        self.data.Close, fastperiod=12, slowperiod=26, signalperiod=9))
+                                            self.data.Close, fastperiod=12, slowperiod=26, signalperiod=9))
                     setattr(self, k+'_DIFF', getattr(self, k)[0])
                     setattr(self, k+'_DEA', getattr(self, k)[1])
                     setattr(self, k+'_MACD', getattr(self, k)[2])
@@ -285,7 +288,7 @@ class System(Strategy):
                 # upper,middle,lower=talib.BBANDS(closed, matype=talib.MA_Type.T3)
                 if k.split('_')[0] == 'BOLL':
                     setattr(self, k, self.I(get_ta_indicator(k.split('_')[0]),
-                        self.data.Close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0))
+                                            self.data.Close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0))
                     setattr(self, k+'_UPPER', getattr(self, k)[0])
                     setattr(self, k+'_MID', getattr(self, k)[1])
                     setattr(self, k+'_LOWER', getattr(self, k)[2])
@@ -293,33 +296,12 @@ class System(Strategy):
             if k.split('_')[0] in self.ta_type_c:  # BBI
                 setattr(self, k, self.I(get_ta_indicator(
                     k.split('_')[0]), self.data.Close))
-                    # setattr(self, k, talib.BBANDS(
-                    #     self.data.Close, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0))
-                    # setattr(self, k+'_HIGH', getattr(self, k)[0])
-                    # setattr(self, k+'_MID', getattr(self, k)[1])
-                    # setattr(self, k+'_LOW', getattr(self, k)[2])   
-
-                # setattr(self, k, self.I(get_ta_indicator(
-                #     k.split('_')[0]), self.data.Close, v))
-
-        # self.SMA_10 = self.I(get_ta_indicator('SMA'), self.data.Close, 10)
-        # self.SMA_20 = self.I(get_ta_indicator('SMA'), self.data.Close, 20)
-
-        # for k,v in self.buy_cond_dict['attr'].items():
-        #     setattr(System, k, v)
-
-        # for k,v in self.sell_cond_dict['attr'].items():
-        #     setattr(System, k, v)
-
-        # Compute daily RSI(30)
-        # self.daily_rsi = self.I(RSI, self.data.Close, self.d_rsi)
-
-        # To construct weekly RSI, we can use `resample_apply()`
-        # helper function from the library
-        # self.weekly_rsi = resample_apply(
-        #     'W-FRI', RSI, self.data.Close, self.w_rsi)
+        
+        if float(self.stoploss) > 1.0:
+            self.set_trailing_sl(int(self.stoploss))
 
     def next(self):
+        super().next()
 
         price = self.data.Close[-1]
 
@@ -328,8 +310,6 @@ class System(Strategy):
             for kk, vv in self.buy_cond_dict['condition'][k].items():
                 # crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
                 self._long_order = eval(vv)
-
-
 
                 # if k == 'crossover':
                 #     self._long_order = eval(vv) #crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1]))
@@ -346,86 +326,16 @@ class System(Strategy):
 
         if self._long_order:
             if not self.position:
-                if self.stoploss:
+                if float(self.stoploss) > 0.0 and float(self.stoploss) < 1.0:
                     self.buy(sl=float(self.stoploss) * price)
                 else:
                     self.buy()
         elif self._short_order:
             if self.position:
                 self.position.close()
-        '''
-        return
-        
-        price = self.data.Close[-1]
-        # 判断属性是否存在？
-        for k,v in self.buy_cond_dict['condition'].items():
-            for kk,vv in self.buy_cond_dict['condition'][k].items():
-                if k == 'crossover':
-                    self._long_order = crossover(getattr(self, 'SMA_10'), getattr(self, 'SMA_20'))
-            # sign = v.split(':')[0]
-            # threshhold = v.split(':')[1]
-            # if k == 'threshold':
-            #     for kk,vv in self.buy_cond_dict['condition'][k].items():
-            #         self.long_order = eval(vv)
-            # if k == 'cross':
-            #     for kk,vv in self.buy_cond_dict['condition'][k].items():
-            #         self.crossover_cond = eval(vv)
-            # if k == 'pair_comp':
-            #     for kk,vv in self.buy_cond_dict['condition'][k].items():
-            #         self.long_order = eval(vv)
-        
-            # if sign == 'gt':
-            #     self.long_order = eval('getattr(System, k)' + sign + 'threshhold')
-            # if sign == 'gte':
-            #     self.long_order = getattr(System, k) >= threshhold
-            # if sign == 'lt':
-            #     self.long_order = getattr(System, k) < threshhold
-            # if sign == 'lte':
-            #     self.long_order = getattr(System, k) <= threshhold
-            # if sign == 'eq':
-            #     self.long_order = getattr(System, k) == threshhold
-
-        for k,v in self.sell_cond_dict['condition'].items():
-            for kk,vv in self.sell_cond_dict['condition'][k].items():
-                if k == 'crossover':
-                    self._short_order = crossover(getattr(self, 'SMA_20'), getattr(self, 'SMA_10')) #eval(vv)
-            # sign = v.split(':')[0]
-            # threshhold = v.split(':')[1]
-            # if sign == 'gt':
-            #     self.short_order = getattr(System, k) > threshhold
-            # if sign == 'gte':
-            #     self.short_order = getattr(System, k) >= threshhold
-            # if sign == 'lt':
-            #     self.short_order = getattr(System, k) < threshhold
-            # if sign == 'lte':
-            #     self.short_order = getattr(System, k) <= threshhold
-            # if sign == 'eq':
-            #     self.short_order = getattr(System, k) == threshhold
-
-        # If we don't already have a position, and
-        # if all conditions are satisfied, enter long.
-        if self._long_order and not self.position:
-            self.position.close()
-            if self.stoploss:
-                self.buy(sl=float(self.stoploss) * price)
-            else:
-                self.buy()
-        
-        # if self.crossover_cond:
-        #     if self.stoploss:
-        #         self.buy(sl=self.stoploss * price)
-        #     else:
-        #         self.buy()
-
-        # If the price closes 2% or more below 10-day MA
-        # close the position, if any.
-        elif self._short_order:
-            self.position.close()
-            self.sell()
-        '''
 
 
-class SignalStrategy(SignalStrategy, TrailingStrategy):
+class SimpleSignalStrategy(SignalStrategy, TrailingStrategy):
     n1 = 10
     n2 = 25
 

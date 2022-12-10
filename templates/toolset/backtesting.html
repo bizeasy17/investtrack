@@ -212,37 +212,25 @@
         <div class="mt-1" id="sStrategyList">
         </div>
       </div>
-
-      <hr>
-      <!-- <div class="col-lg-12">
-        <label class="small mr-1">
-          {% trans '投入资金' %}
-        </label>
-        
-        <input type="text" class="form-control form-control-sm me-sm-2" id="cash" autocomplete="off" name="cash" placeholder="{% trans '投入资金' %}" value="10,000">
-        
-      </div> -->
-      <div class="col-lg-12 input-group input-group-sm  mb-2 small">
-        <div class="input-group-prepend"><span class="input-group-text">{% trans '本[￥]' %}</span></div>
-        <input id="capital" type="number" step="1000" class="form-control" value="50000" placeholder="{% trans 'e.g. 50,000' %}" aria-label="Amount (to the nearest dollar)">
-        <!-- <span class="input-group-text small">.00</span> -->
-        <div class="btn-group btn-group-sm btn-group-toggle ml-1" data-toggle="buttons">
-          <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
-          
-          <label class="btn btn-light">
-              <input type="radio" name="capital-option" autocomplete="off" value="30000"/>{% trans '30,000' %}
-          </label>
+      <hr/>
+      <div class="col-lg-12">
+        <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+          <span class="mt-1 mr-1 small">{% trans '止损方式' %}</span>
           <label class="btn btn-light active">
-              <input type="radio" name="capital-option" autocomplete="off" value="50000" checked/>{% trans '50,000' %}
+            <input type="radio" name="stoploss" autocomplete="off" value="0" checked/>{% trans '固定止损' %}
+          </label>
+          <label class="btn btn-light ">
+              <input type="radio" name="stoploss" autocomplete="off" value="1" />{% trans '移动止损' %}
           </label>
           <label class="btn btn-light">
-            <input type="radio" name="capital-option" autocomplete="off" value="100000"/>{% trans '100,000' %}
-          </label>
+            <input type="radio" name="stoploss" autocomplete="off" value="-1"/>{% trans '无止损' %}
+        </label>
         </div>
       </div>
-      <div class="col-lg-12 input-group input-group-sm  mb-3 small">
-        <div class="input-group-prepend"><span class="input-group-text">{% trans '止损[%]' %}</span></div>
-        <input id="stoploss" type="number" step="1" class="form-control" value="3" placeholder="{% trans 'e.g. 3%' %}" aria-label="Amount (to the nearest dollar)">
+      <div class="col-lg-12 input-group input-group-sm  mt-1 small">
+        <input id="stoploss" type="number" step="1" min="1" class="form-control" value="3" placeholder="{% trans 'e.g. 3%' %}" aria-label="Amount (to the nearest dollar)">
+        <div class="input-group-prepend"><span class="input-group-text">{% trans '[%]' %}</span></div>
+        
         <!-- <span class="input-group-text small">.00</span> -->
         <div class="col-lg-6 btn-group btn-group-sm btn-group-toggle ml-1" data-toggle="buttons">
           <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
@@ -263,6 +251,61 @@
           </label>
         </div>
       </div>
+      <div class="col-lg-12 input-group input-group-sm mt-1 small d-none">
+        <input id="stoplossATR" type="number" step="1" min="1" class="form-control" value="3" placeholder="{% trans 'e.g. 2' %}" aria-label="Amount (to the nearest dollar)">
+        <div class="input-group-prepend"><span class="input-group-text">{% trans '* ATR' %}</span></div>
+        
+        <!-- <span class="input-group-text small">.00</span> -->
+        <div class="col-lg-6 btn-group btn-group-sm btn-group-toggle ml-1" data-toggle="buttons">
+          <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+          <label class="btn btn-light ">
+              <input type="radio" name="sl-atr" autocomplete="off" value="1" />{% trans '1' %}
+          </label>
+          <label class="btn btn-light active">
+              <input type="radio" name="sl-atr" autocomplete="off" value="2" checked/>{% trans '2' %}
+          </label>
+          <label class="btn btn-light">
+            <input type="radio" name="sl-atr" autocomplete="off" value="3"/>{% trans '3' %}
+          </label>
+          <label class="btn btn-light">
+            <input type="radio" name="sl-atr" autocomplete="off" value="4"/>{% trans '4' %}
+          </label>
+          <label class="btn btn-light">
+            <input type="radio" name="sl-atr" autocomplete="off" value="5"/>{% trans '5' %}
+          </label>
+          <label class="btn btn-light">
+            <input type="radio" name="sl-atr" autocomplete="off" value="6"/>{% trans '6' %}
+          </label>
+        </div>
+      </div>
+      <hr>
+      <!-- <div class="col-lg-12">
+        <label class="small mr-1">
+          {% trans '投入资金' %}
+        </label>
+        
+        <input type="text" class="form-control form-control-sm me-sm-2" id="cash" autocomplete="off" name="cash" placeholder="{% trans '投入资金' %}" value="10,000">
+        
+      </div> -->
+      <div class="col-lg-12 input-group input-group-sm  mb-2 small">
+        <div class="input-group-prepend"><span class="input-group-text">{% trans '本金[￥]' %}</span></div>
+        <input id="capital" type="number" step="1000" class="form-control" value="50000" placeholder="{% trans 'e.g. 50,000' %}" aria-label="Amount (to the nearest dollar)">
+        <!-- <span class="input-group-text small">.00</span> -->
+        <div class="btn-group btn-group-sm btn-group-toggle ml-1" data-toggle="buttons">
+          <!-- <span class="mt-1 mr-1 small">{% trans '板块' %}</span> -->
+          
+          <label class="btn btn-light">
+              <input type="radio" name="capital-option" autocomplete="off" value="30000"/>{% trans '30,000' %}
+          </label>
+          <label class="btn btn-light active">
+              <input type="radio" name="capital-option" autocomplete="off" value="50000" checked/>{% trans '50,000' %}
+          </label>
+          <label class="btn btn-light">
+            <input type="radio" name="capital-option" autocomplete="off" value="100000"/>{% trans '100,000' %}
+          </label>
+        </div>
+      </div>
+      
       <div class="col-lg-12 mt-1">
         <label class="small mr-1">
           {% trans '交易佣金' %}
