@@ -169,7 +169,6 @@ $(function () {
                         updateTradesChart(resampledTradesData);
                     } else {
                         updateTradesChart([]);
-
                     }
                 }
             }
@@ -921,18 +920,48 @@ $(function () {
                 axisPointer: {
                     type: 'cross'
                 },
-                borderWidth: 1,
-                borderColor: '#ccc',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                // borderWidth: 1,
+                // borderColor: '#ccc',
                 padding: 10,
                 textStyle: {
                     color: '#000'
                 },
-                position: function (pos, params, el, elRect, size) {
-                    const obj = {
-                        top: 10
-                    };
-                    obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
-                    return obj;
+                // position: function (pos, params, el, elRect, size) {
+                //     const obj = {
+                //         top: 10
+                //     };
+                //     obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+                //     return obj;
+                // },
+                order: "seriesDesc",
+                textStyle: {
+                    fontSize: 8,
+                    color: "#000",
+                },
+                formatter: function (params, ticket, callback) {
+                    var content = '';
+
+                    //两个for将params中需要的参数嵌入HTML代码块字符串content中
+                    for (var i = 0; i < params.length; i++) {
+                        if (params[i].name) {
+                            content += "<div><b>" + params[i].name + "</b><br/>";
+                            // alert(i)
+                            // alert(params[i].name)
+                            break;
+                        }
+                    }
+                    for (var i = 0, key = {}; i < params.length; i++) {
+                        key = params[i];
+                        if (typeof key.value === 'undefined' || key.value === '-')
+                            key.value = '-';
+                        content += "<div><b>" + key.seriesName + "</b> : " + key.value + "</div>";
+
+                    }
+                    content += '</div>';
+
+                    //return出去后echarts会调用html()函数将content字符串代码化
+                    return content;
                 }
                 // extraCssText: 'width: 170px'
             },
@@ -1911,7 +1940,19 @@ $(function () {
     });
 
     $('input:radio[name="bt-freq"]').change(function () {
+        var freqOpt = $('input:radio[name="freq"]');
         btFreq = $(this).val();
+        freq = $(this).val();
+        $(freqOpt).each(function(idx, obj){
+            if($(obj).val()==btFreq){
+                $(obj).addClass("checked");
+                $(obj).parent().addClass("active");
+            }else{
+                $(obj).removeClass("checked");
+                $(obj).parent().removeClass("active");
+            }
+        });
+        updateBTMixChart(tsCode, "display");
     });
 
     $('input:radio[name="period"]').change(function () {
@@ -2248,7 +2289,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "bt-system/" + tsCode + "/" + strategyCategory + "/" + taIndicator +
                 "/" + bSystem + "/" + sSystem + "/" + stoploss.toString() + "/" + capital.toString() + "/" + commission.toString() +
-                "/" + leverage.toString() + "/" + tradeOnClose.toString() + "/" + freq + "/",
+                "/" + leverage.toString() + "/" + tradeOnClose.toString() + "/" + btFreq + "/",
             success: function (data) {
                 // console.log(data)
                 // 全局equity json
