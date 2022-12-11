@@ -1941,7 +1941,6 @@ $(function () {
 
     $('input:radio[name="bt-freq"]').change(function () {
         var freqOpt = $('input:radio[name="freq"]');
-        btFreq = $(this).val();
         freq = $(this).val();
         $(freqOpt).each(function(idx, obj){
             if($(obj).val()==btFreq){
@@ -2257,6 +2256,8 @@ $(function () {
     var executeBT = function (handleButton) {
         if (isEmptyStrategySet()) return;
         if ($(handleButton).hasClass("disabled")) return;
+        
+        var startTime = new Date();
 
         capital = $("#capital").val();
 
@@ -2281,7 +2282,7 @@ $(function () {
             $("#stoploss").removeClass("border-warning");
         }
 
-        var startTime = new Date();
+        btFreq = $('input:radio[name="bt-freq"]:checked').val();
 
         $(handleButton).addClass("disabled");
         $($(handleButton).children()[0]).removeClass("d-none");
