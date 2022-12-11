@@ -11,16 +11,20 @@ $(function () {
     const sStrategyTextSet = new Set();
 
     var strategyCategory = "system";
+    var slType = "0";
     var taIndicator = "";
     var bSystem = "";
     var sSystem = "";
     var stoploss = .97;
+    var stoplossAtr = 2;
     var capital = 10000;
     var commission = .001;
     var leverage = 1;
     var tradeOnClose = 0;
     var restoration = "bfq";
     var freq = "D";
+    var btFreq = "D";
+
     // <tech_indicator>/<indicator_param>/<strategy_category>/<cash>/<commission>/<leverage>/<freq>/</freq>
     var tsCode;
     var stockName;
@@ -64,8 +68,12 @@ $(function () {
     var macdParam = ["MACD", "DIFF", "DEA"];
     var rsiParam = ["6", "12", "24"];
 
-    var typeAParam = ["SMA","EMA","RSI","BBI"];
-    var typeBParam = ["KDJ","MACD","BOLL"];
+    var typeAParam = ["SMA", "EMA", "RSI", "BBI"];
+    var typeBParam = ["KDJ", "MACD", "BOLL"];
+
+    var cascadeIndicators = ["SMA", "EMA", "BBI", "BOLL"];
+    var nCascadeIndicators = ["RSI", "KDJ", "MACD"];
+    var prevTypeAIndicator = "SMA";
 
     var indicaMap = new Map();
     var maChartData;
@@ -80,17 +88,20 @@ $(function () {
         stockName = $("#hiddenTsCode").attr("name");
 
         capital = $("#capital").val();
-        stoploss = (100 - parseInt($("#stoploss").val()))/100;
+        slType = $('input:radio[name="stoploss"]:checked').val();
+        stoploss = (100 - parseInt($("#stoploss").val())) / 100;
+        stoplossAtr = parseInt($("#stoplossATR").val());
 
         stockHistPeriod = $('input:radio[name="period"]:checked').val();
         tradeOnClose = $('input:radio[name="trade-on-close"]:checked').val();
         restoration = $('input:radio[name="restoration"]:checked').val();
         freq = $('input:radio[name="freq"]:checked').val();
+        btFreq = $('input:radio[name="bt-freq"]:checked').val();
 
         startDate = formatDate(new Date(today.getTime() - (365 * stockHistPeriod * 24 * 60 * 60 * 1000)), "");
         endDate = formatDate(today, "");
 
-        fundaChart = ["pe:6","pe_ttm:7","pb:8","ps:9","ps_ttm:10","turnover_rate:11","volume_ratio:12"];
+        fundaChart = ["pe:6", "pe_ttm:7", "pb:8", "ps:9", "ps_ttm:10", "turnover_rate:11", "volume_ratio:12"];
         btMixChart = echarts.init(document.getElementById('btMixChart'));
         btFundamentalChart = echarts.init(document.getElementById('btFundamentalChart'));
 
@@ -119,11 +130,11 @@ $(function () {
         setupStrategyCategories("#sStrategyCategory");
 
         // stockname display global
-        $(".stock_name").text($("#hiddenTsCode").attr("name")  + " [" + $("#hiddenTsCode").val() + "]");
+        $(".stock_name").text($("#hiddenTsCode").attr("name") + " [" + $("#hiddenTsCode").val() + "]");
     }
 
     // 此处会有新的chart数据更新
-    var updateBTMixChart = function (tsCode) {
+    var updateBTMixChart = function (tsCode, from) {
         // 初始化OHLC，MA，VOL，Equity，MACD，KDJ，RSI，Fundamental Chart Data
         var zoomMin = 0;
         var zoomMax = 100;
@@ -139,22 +150,27 @@ $(function () {
                 btMixChart.setOption(option);
 
                 updateOHLCChart(ohlcChartData);
-                updateTechIndicatorChart();
+                updateTechIndicatorChart(from);
                 updateVolumeChart(ohlcChartData);
                 updateRSIChart(ohlcChartData);
                 updateMACDChart(ohlcChartData);
                 updateKDJChart(ohlcChartData);
 
-                if(equityJsonData == undefined){
+                if (equityJsonData == undefined) {
                     updateEquityChart(ohlcChartData.equity);
                     updateTradesChart([]);
                 }
-                else{
+                else {
                     var resampledEquityData = resampleEquity(equityJsonData, ohlcChartData.label);
                     var resampledTradesData = resampleTrades(equityJsonData, ohlcChartData.label);
                     // resampledTradesData = resampleTrades(equityJsonData, fundaChartData.label);
                     updateEquityChart(resampledEquityData);
-                    updateTradesChart(resampledTradesData);
+                    if (freq == btFreq) {
+                        updateTradesChart(resampledTradesData);
+                    } else {
+                        updateTradesChart([]);
+
+                    }
                 }
             }
             ,
@@ -169,33 +185,93 @@ $(function () {
         });
     }
 
-    var initMixChartOption = function(ohlcChartData) {
+    var initMixChartOption = function (ohlcChartData) {
         var mixChartOption = {
             animation: true,
             legend: {
                 id: "legend",
                 top: 0,
             },
-            // tooltip: {
-            //     trigger: 'axis',
-            //     axisPointer: {
-            //         type: 'cross'
-            //     },
-            //     borderWidth: 1,
-            //     borderColor: '#ccc',
-            //     padding: 10,
-            //     textStyle: {
-            //         color: '#000'
-            //     },
-            //     position: function (pos, params, el, elRect, size) {
-            //         const obj = {
-            //             top: 10
-            //         };
-            //         obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
-            //         return obj;
-            //     }
-            //     // extraCssText: 'width: 170px'
-            // },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross'
+                },
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                // borderWidth: 1,
+                // borderColor: '#ccc',
+                padding: 10,
+                textStyle: {
+                    color: '#000'
+                },
+                // position: function (pos, params, el, elRect, size) {
+                //     const obj = {
+                //         top: 10
+                //     };
+                //     obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+                //     return obj;
+                // },
+                order: "seriesDesc",
+                textStyle: {
+                    fontSize: 8,
+                    color: "#000",
+                },
+                formatter: function (params, ticket, callback) {
+                    var content = '';
+
+                    //两个for将params中需要的参数嵌入HTML代码块字符串content中
+                    for (var i = 0; i < params.length; i++) {
+                        if (params[i].name) {
+                            content += "<div><b>" + params[i].name + "</b><br/>";
+                            // alert(i)
+                            // alert(params[i].name)
+                            break;
+                        }
+                    }
+                    for (var i = 0, key = {}; i < params.length; i++) {
+                        key = params[i];
+                        if (typeof key.value === 'undefined' || key.value === '-')
+                            key.value = '-';
+                        // if(key.seriesName){
+                        //      
+                        // }
+                        else {
+                            // var temp = key.value.split(",");
+                            var seriesValue = "";
+                            if (key.value.length > 1) {
+                                for (var j = 0; j < key.value.length; j++) {
+                                    // o,c,l,h
+                                    switch (j) {
+                                        case 0:
+                                            seriesValue += "#" + key.value[j] + ",";
+                                            break;
+                                        case 1:
+                                            seriesValue += "开:" + key.value[j] + ",";
+                                            break;
+                                        case 2:
+                                            seriesValue += "收:" + key.value[j] + ",";
+                                            break;
+                                        case 3:
+                                            seriesValue += "低:" + key.value[j] + ",";
+                                            break;
+                                        case 4:
+                                            seriesValue += "高:" + key.value[j];
+                                            break;
+                                    }
+                                }
+                                key.value = seriesValue;
+                            }
+                        }
+                        content += "<div><b>" + key.seriesName + "</b> : " + key.value + "</div>";
+
+                    }
+                    content += '</div>';
+
+                    //return出去后echarts会调用html()函数将content字符串代码化
+                    return content;
+                }
+                // extraCssText: 'width: 170px'
+            },
             axisPointer: {
                 link: [
                     {
@@ -240,20 +316,20 @@ $(function () {
             // },
             grid: [
                 //OHLC grid index 0
-                {left: '4%',right: '3%',top: "2%",height: '24%'},
+                { left: '4%', right: '3%', top: "2%", height: '24%' },
                 // reserved for equity grid index 1
                 // {left: '4%',right: '1%',top: "2%",height: '13%'},+8
-                {left: '4%',right: '3%',top: "34%",height: '8%'},
+                { left: '4%', right: '3%', top: "34%", height: '8%' },
 
                 //OHLC grid index 2, volume成交量 +4
-                {left: '4%',right: '3%',top: '46%',height: '8%'},
-                
+                { left: '4%', right: '3%', top: '46%', height: '8%' },
+
                 //OHLC grid index 3, RSI +4
-                {left: '4%',right: '3%',top: '58%',height: '8%'},
+                { left: '4%', right: '3%', top: '58%', height: '8%' },
                 //OHLC grid index 4, MACD +7
-                {left: '4%',right: '3%',top: '73%',height: '8%'},
+                { left: '4%', right: '3%', top: '73%', height: '8%' },
                 //OHLC grid index 5, KDJ +7
-                {left: '4%',right: '3%',top: '88%',height: '8%'},
+                { left: '4%', right: '3%', top: '88%', height: '8%' },
 
                 //Fundamental grid index 5, PE
                 // {left: '4%', top: '52%',height:'7%',width: '42%'},
@@ -267,20 +343,20 @@ $(function () {
                 // {left: '4%',top: '76%',height:'7%',width: '42%'},
                 //Fundamental grid index 9, PS TTM
                 // {right: '3%',top: '76%',height:'7%',width: '42%'},
-                
+
                 //Fundamental grid index 10, Turnover ratio
                 // {left: '4%',top: '89%',height: '7%', width: '42%'},
                 //Fundamental grid index 11, Vol ratio
                 // {right: '3%',top: '89%',height: '7%', width: '42%'}
             ],
             xAxis: [
-                {gridIndex: 0, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false }, id:"ohlcxAxis"}, // OHLC
-                {gridIndex: 1, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id: 'equityxAxis'}, // Equity资产净值
-                {gridIndex: 2, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax',axisLine: { onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }, id:'volxAxis'}, // VOL
-                
-                {gridIndex: 3, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"rsixAxis"}, // RSI
-                {gridIndex: 4, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"macdxAxis"}, // MACD
-                {gridIndex: 5, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id:"kdjxAxis"}, // KDJ
+                { gridIndex: 0, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', axisLine: { onZero: false }, id: "ohlcxAxis" }, // OHLC
+                { gridIndex: 1, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id: 'equityxAxis' }, // Equity资产净值
+                { gridIndex: 2, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', axisLine: { onZero: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false }, id: 'volxAxis' }, // VOL
+
+                { gridIndex: 3, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id: "rsixAxis" }, // RSI
+                { gridIndex: 4, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id: "macdxAxis" }, // MACD
+                { gridIndex: 5, data: ohlcChartData.label, min: 'dataMin', max: 'dataMax', id: "kdjxAxis" }, // KDJ
 
                 // {gridIndex: 6, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
                 // {gridIndex: 7, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
@@ -304,13 +380,13 @@ $(function () {
                 // }
             ],
             yAxis: [
-                {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax'}, // OHLC
-                {gridIndex: 1, scale: true, min: 0, name: '资产净值', nameLocation: 'end',}, // OHLC
-                {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '成交量', nameLocation: 'middle', axisLine: { show: false, onZero: false },axisTick: { show: false },splitLine: { show: false },axisLabel: { show: false }}, // VOL
-                
-                {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: 'RSI(6,12,24)', nameLocation: 'end'}, // RSI
-                {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end'}, // MACD
-                {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end'}, // KDJ
+                { gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax' }, // OHLC
+                { gridIndex: 1, scale: true, min: 0, name: '资产净值', nameLocation: 'end', }, // OHLC
+                { gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '成交量', nameLocation: 'middle', axisLine: { show: false, onZero: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false } }, // VOL
+
+                { gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: 'RSI(6,12,24)', nameLocation: 'end' }, // RSI
+                { gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: 'MACD(12,26,9)', nameLocation: 'end' }, // MACD
+                { gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: 'KDJ(3,9,0)', nameLocation: 'end' }, // KDJ
 
                 // {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈', nameLocation: 'end'}, // PE
                 // {gridIndex: 7, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
@@ -338,7 +414,7 @@ $(function () {
             dataZoom: [
                 {
                     type: 'inside',
-                    xAxisIndex: [0,1,2,3,4,5],
+                    xAxisIndex: [0, 1, 2, 3, 4, 5],
                     start: 0,
                     end: 100
                 }
@@ -365,7 +441,7 @@ $(function () {
                         borderColor0: undefined
                     },
                     markPoint: {
-                        symbol: "triangle", 
+                        symbol: "triangle",
                     }
                 },
                 {
@@ -562,42 +638,44 @@ $(function () {
         return mixChartOption;
     }
 
-    var updateOHLCChart = function(ohlcChartData){
+    var updateOHLCChart = function (ohlcChartData) {
         var ohlcChartOption = {
             // legend: {
             //     id: "legend",
             //     data: ['MA10','MA20','MA60','MA120','MA200']
             // },
-            series:[
+            series: [
                 {
                     id: "ohlc",
                     data: ohlcChartData.ohlc,
                 },
-                {
-                    id: "atr3",
-                    data: ohlcChartData.atr3,
-                },
-                {
-                    id: "atr6",
-                    data: ohlcChartData.atr6,
-                }
-            ]};
+                // {
+                //     id: "atr3",
+                //     data: ohlcChartData.atr3,
+                // },
+                // {
+                //     id: "atr6",
+                //     data: ohlcChartData.atr6,
+                // }
+            ]
+        };
 
         //动态添加 legend.data
         btMixChart.setOption(ohlcChartOption);
     }
 
-    var updateVolumeChart = function(volChartData){
+    var updateVolumeChart = function (volChartData) {
         var volChartOption = {
             // xAxis: 
             //     {id: "volxAxis", data: volChartData.label} // OHLC
             // ,
-            series:[
+            series: [
                 {
                     id: "vol",
                     data: volChartData.volume,
                 }
-            ]};
+            ]
+        };
 
         //动态添加 legend.data
         btMixChart.setOption(volChartOption);
@@ -608,34 +686,35 @@ $(function () {
         var maChartOption = {
             legend: {
                 id: "legend",
-                data: ['MA10','MA20','MA60','MA120','MA200']
+                data: ['MA10', 'MA20', 'MA60', 'MA120', 'MA200']
             },
-            series:[
-            {
-                id: "indic1",
-                name: "MA10",
-                data: maChartData.ma[0].ma10
-            },
-            {
-                id: "indic2",
-                name: 'MA20',
-                data: maChartData.ma[0].ma20,
-            },
-            {
-                id: "indic3",
-                name: 'MA60',
-                data: maChartData.ma[0].ma60,
-            },
-            {
-                id: "indic4",
-                name: 'MA120',
-                data: maChartData.ma[0].ma120,
-            },
-            {
-                id: "indic5",
-                name: 'MA200',
-                data: maChartData.ma[0].ma200,
-            }]};
+            series: [
+                {
+                    id: "indic1",
+                    name: "MA10",
+                    data: maChartData.ma[0].ma10
+                },
+                {
+                    id: "indic2",
+                    name: 'MA20',
+                    data: maChartData.ma[0].ma20,
+                },
+                {
+                    id: "indic3",
+                    name: 'MA60',
+                    data: maChartData.ma[0].ma60,
+                },
+                {
+                    id: "indic4",
+                    name: 'MA120',
+                    data: maChartData.ma[0].ma120,
+                },
+                {
+                    id: "indic5",
+                    name: 'MA200',
+                    data: maChartData.ma[0].ma200,
+                }]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
@@ -647,34 +726,35 @@ $(function () {
         var emaChartOption = {
             legend: {
                 id: "legend",
-                data: ['EMA10','EMA20','EMA60','EMA120','EMA200']
+                data: ['EMA10', 'EMA20', 'EMA60', 'EMA120', 'EMA200']
             },
-            series:[
-            {
-                id: "indic1",
-                name: 'EMA10',
-                data: chartData.ema[0].ema10
-            },
-            {
-                id: "indic2",
-                name: 'EMA20',
-                data: chartData.ema[0].ema20
-            },
-            {
-                id: "indic3",
-                name: 'EMA60',
-                data: chartData.ema[0].ema60
-            },
-            {
-                id: "indic4",
-                name: 'EMA120',
-                data: chartData.ema[0].ema120
-            },
-            {
-                id: "indic5",
-                name: 'EMA200',
-                data: chartData.ema[0].ema200
-            }]};
+            series: [
+                {
+                    id: "indic1",
+                    name: 'EMA10',
+                    data: chartData.ema[0].ema10
+                },
+                {
+                    id: "indic2",
+                    name: 'EMA20',
+                    data: chartData.ema[0].ema20
+                },
+                {
+                    id: "indic3",
+                    name: 'EMA60',
+                    data: chartData.ema[0].ema60
+                },
+                {
+                    id: "indic4",
+                    name: 'EMA120',
+                    data: chartData.ema[0].ema120
+                },
+                {
+                    id: "indic5",
+                    name: 'EMA200',
+                    data: chartData.ema[0].ema200
+                }]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
@@ -686,32 +766,33 @@ $(function () {
         var bollChartOption = {
             legend: {
                 id: "legend",
-                data: ['BOLL_UPPER','BOLL_MID','BOLL_LOW']
+                data: ['BOLL_UPPER', 'BOLL_MID', 'BOLL_LOW']
             },
-            series:[
-            {
-                id: "indic1",
-                name: 'BOLL_UPPER',
-                data: chartData.boll[0].upper,
-            },
-            {
-                id: "indic2",
-                name: 'BOLL_MID',
-                data: chartData.boll[0].mid,
-            },
-            {
-                id: "indic3",
-                name: 'BOLL_LOW',
-                data: chartData.boll[0].lower,
-            },
-            {
-                id: "indic4",
-                data: undefined,
-            },
-            {
-                id: "indic5",
-                data: undefined,
-            }]};
+            series: [
+                {
+                    id: "indic1",
+                    name: 'BOLL_UPPER',
+                    data: chartData.boll[0].upper,
+                },
+                {
+                    id: "indic2",
+                    name: 'BOLL_MID',
+                    data: chartData.boll[0].mid,
+                },
+                {
+                    id: "indic3",
+                    name: 'BOLL_LOW',
+                    data: chartData.boll[0].lower,
+                },
+                {
+                    id: "indic4",
+                    data: undefined,
+                },
+                {
+                    id: "indic5",
+                    data: undefined,
+                }]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
@@ -725,28 +806,29 @@ $(function () {
                 id: "legend",
                 data: ['BBI']
             },
-            series:[
-            {
-                id: "indic1",
-                name: 'BBI',
-                data: chartData.bbi,
-            },
-            {
-                id: "indic2",
-                data: undefined,
-            },
-            {
-                id: "indic3",
-                data: undefined,
-            },
-            {
-                id: "indic4",
-                data: undefined,
-            },
-            {
-                id: "indic5",
-                data: undefined,
-            }]};
+            series: [
+                {
+                    id: "indic1",
+                    name: 'BBI',
+                    data: chartData.bbi,
+                },
+                {
+                    id: "indic2",
+                    data: undefined,
+                },
+                {
+                    id: "indic3",
+                    data: undefined,
+                },
+                {
+                    id: "indic4",
+                    data: undefined,
+                },
+                {
+                    id: "indic5",
+                    data: undefined,
+                }]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
@@ -758,19 +840,20 @@ $(function () {
         //动态添加series
         var mixChartOption = {
             series: [
-            {
-                id: "rsi6",
-                data: chartData.rsi[0].rsi6,
-            },
-            {
-                id: "rsi12",
-                data: chartData.rsi[0].rsi12
-            },
-            {
-                id: "rsi24",
-                data: chartData.rsi[0].rsi24
-            }
-        ]};
+                {
+                    id: "rsi6",
+                    data: chartData.rsi[0].rsi6,
+                },
+                {
+                    id: "rsi12",
+                    data: chartData.rsi[0].rsi12
+                },
+                {
+                    id: "rsi24",
+                    data: chartData.rsi[0].rsi24
+                }
+            ]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
@@ -793,7 +876,8 @@ $(function () {
                 {
                     id: "macdbar",
                     data: chartData.macd[0].bar
-                }]};
+                }]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
@@ -805,7 +889,7 @@ $(function () {
 
         //动态添加series
         var kdjChartOption = {
-            series:[
+            series: [
                 {
                     id: "kdjk",
                     data: chartData.kdj[0].k
@@ -817,40 +901,41 @@ $(function () {
                 {
                     id: "kdjj",
                     data: chartData.kdj[0].j
-                }]};
+                }]
+        };
 
         //动态添加 legend.data
         // mixChartOption.legend.data.push('其他');
         btMixChart.setOption(kdjChartOption);
     }
 
-    var initFundaChartOption = function(fundaChartData) {
+    var initFundaChartOption = function (fundaChartData) {
         var fundaChartOption = {
             animation: true,
             // legend: {
             //     top: 5,
             //     data: ['MA10','MA20','MA60','MA120','MA200']
             // },
-            // tooltip: {
-            //     trigger: 'axis',
-            //     axisPointer: {
-            //         type: 'cross'
-            //     },
-            //     borderWidth: 1,
-            //     borderColor: '#ccc',
-            //     padding: 10,
-            //     textStyle: {
-            //         color: '#000'
-            //     },
-            //     position: function (pos, params, el, elRect, size) {
-            //         const obj = {
-            //             top: 10
-            //         };
-            //         obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
-            //         return obj;
-            //     }
-            //     // extraCssText: 'width: 170px'
-            // },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross'
+                },
+                borderWidth: 1,
+                borderColor: '#ccc',
+                padding: 10,
+                textStyle: {
+                    color: '#000'
+                },
+                position: function (pos, params, el, elRect, size) {
+                    const obj = {
+                        top: 10
+                    };
+                    obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
+                    return obj;
+                }
+                // extraCssText: 'width: 170px'
+            },
             axisPointer: {
                 link: [
                     {
@@ -895,40 +980,40 @@ $(function () {
             // },
             grid: [
                 //Fundamental grid index 5, PE
-                {left: '4%', top: '5%',height:'15%',width: '42%'},
+                { left: '4%', top: '5%', height: '15%', width: '42%' },
                 //Fundamental grid index 6, PE TTM
-                {right: '3%',top: '5%',height:'15%',width: '42%'},
+                { right: '3%', top: '5%', height: '15%', width: '42%' },
 
                 //Fundamental grid index 7, PB
-                {left: '4%', right: '3%',top: '30%',height: '15%'},
+                { left: '4%', right: '3%', top: '30%', height: '15%' },
 
                 //Fundamental grid index 8, PS
-                {left: '4%',top: '55%',height:'15%',width: '42%'},
+                { left: '4%', top: '55%', height: '15%', width: '42%' },
                 //Fundamental grid index 9, PS TTM
-                {right: '3%',top: '55%',height:'15%',width: '42%'},
-                
+                { right: '3%', top: '55%', height: '15%', width: '42%' },
+
                 //Fundamental grid index 10, Turnover ratio
-                {left: '4%',top: '80%',height: '15%', width: '42%'},
+                { left: '4%', top: '80%', height: '15%', width: '42%' },
                 //Fundamental grid index 11, Vol ratio
-                {right: '3%',top: '80%',height: '15%', width: '42%'}
+                { right: '3%', top: '80%', height: '15%', width: '42%' }
             ],
             xAxis: [
-                {gridIndex: 0, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"pexAxis"}, // PE
-                {gridIndex: 1, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"pettmxAxis"}, // PE TTM
-                {gridIndex: 2, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"pbxAxis"}, // PB
-                {gridIndex: 3, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"psxAxis"}, // PS
-                {gridIndex: 4, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"psttmxAxis"}, // PS TTM
-                {gridIndex: 5, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"turnoverxAxis"}, // TO 换手率 
-                {gridIndex: 6, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id:"volratioxAxis"} // VO 量比 
+                { gridIndex: 0, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "pexAxis" }, // PE
+                { gridIndex: 1, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "pettmxAxis" }, // PE TTM
+                { gridIndex: 2, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "pbxAxis" }, // PB
+                { gridIndex: 3, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "psxAxis" }, // PS
+                { gridIndex: 4, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "psttmxAxis" }, // PS TTM
+                { gridIndex: 5, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "turnoverxAxis" }, // TO 换手率 
+                { gridIndex: 6, data: fundaChartData.label, min: 'dataMin', max: 'dataMax', id: "volratioxAxis" } // VO 量比 
             ],
             yAxis: [
-                {gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率', nameLocation: 'end'}, // PE
-                {gridIndex: 1, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end'}, // PE TTM
-                {gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end'}, // PB
-                {gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end'}, // PS
-                {gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率', nameLocation: 'end'}, // PS TTM
-                {gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end'}, // TO 换手率 
-                {gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end'} // VO 量比 
+                { gridIndex: 0, scale: true, min: 'dataMin', max: 'dataMax', name: '市盈率', nameLocation: 'end' }, // PE
+                { gridIndex: 1, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市盈率', nameLocation: 'end' }, // PE TTM
+                { gridIndex: 2, scale: true, min: 'dataMin', max: 'dataMax', name: '市净率', nameLocation: 'end' }, // PB
+                { gridIndex: 3, scale: true, min: 'dataMin', max: 'dataMax', name: '市销率', nameLocation: 'end' }, // PS
+                { gridIndex: 4, scale: true, min: 'dataMin', max: 'dataMax', name: '动态市销率', nameLocation: 'end' }, // PS TTM
+                { gridIndex: 5, scale: true, min: 'dataMin', max: 'dataMax', name: '换手率', nameLocation: 'end' }, // TO 换手率 
+                { gridIndex: 6, scale: true, min: 'dataMin', max: 'dataMax', name: '量比', nameLocation: 'end' } // VO 量比 
 
                 // { scale: true,
                 //     splitArea: {
@@ -948,7 +1033,7 @@ $(function () {
             dataZoom: [
                 {
                     type: 'inside',
-                    xAxisIndex: [0,1,2,3,4,5,6],
+                    xAxisIndex: [0, 1, 2, 3, 4, 5, 6],
                     start: 0,
                     end: 100
                 }
@@ -965,6 +1050,7 @@ $(function () {
             series: [
                 {
                     id: "pe",
+                    name: "PE",
                     type: 'line',
                     xAxisIndex: 0,
                     yAxisIndex: 0,
@@ -979,6 +1065,7 @@ $(function () {
                 },
                 {
                     id: "peL",
+                    name: "PE低位",
                     type: 'line',
                     xAxisIndex: 0,
                     yAxisIndex: 0,
@@ -993,6 +1080,7 @@ $(function () {
                 },
                 {
                     id: "peM",
+                    name: "PE中位",
                     type: 'line',
                     xAxisIndex: 0,
                     yAxisIndex: 0,
@@ -1007,6 +1095,7 @@ $(function () {
                 },
                 {
                     id: "peH",
+                    name: "PE高位",
                     type: 'line',
                     xAxisIndex: 0,
                     yAxisIndex: 0,
@@ -1021,6 +1110,7 @@ $(function () {
                 },
                 {
                     id: "pettm",
+                    name: "动态PE",
                     type: 'line',
                     xAxisIndex: 1,
                     yAxisIndex: 1,
@@ -1035,6 +1125,7 @@ $(function () {
                 },
                 {
                     id: "pettmL",
+                    name: "动态PE低位",
                     type: 'line',
                     xAxisIndex: 1,
                     yAxisIndex: 1,
@@ -1049,6 +1140,7 @@ $(function () {
                 },
                 {
                     id: "pettmM",
+                    name: "动态PE中位",
                     type: 'line',
                     xAxisIndex: 1,
                     yAxisIndex: 1,
@@ -1063,6 +1155,7 @@ $(function () {
                 },
                 {
                     id: "pettmH",
+                    name: "动态PE高位",
                     type: 'line',
                     xAxisIndex: 1,
                     yAxisIndex: 1,
@@ -1077,6 +1170,7 @@ $(function () {
                 },
                 {
                     id: "pb",
+                    name: "PB",
                     type: 'line',
                     xAxisIndex: 2,
                     yAxisIndex: 2,
@@ -1091,6 +1185,7 @@ $(function () {
                 },
                 {
                     id: "pbL",
+                    name: "PB低位",
                     type: 'line',
                     xAxisIndex: 2,
                     yAxisIndex: 2,
@@ -1105,6 +1200,7 @@ $(function () {
                 },
                 {
                     id: "pbM",
+                    name: "PB中位",
                     type: 'line',
                     xAxisIndex: 2,
                     yAxisIndex: 2,
@@ -1119,6 +1215,7 @@ $(function () {
                 },
                 {
                     id: "pbH",
+                    name: "PB高位",
                     type: 'line',
                     xAxisIndex: 2,
                     yAxisIndex: 2,
@@ -1133,6 +1230,7 @@ $(function () {
                 },
                 {
                     id: "ps",
+                    name: "PS",
                     type: 'line',
                     xAxisIndex: 3,
                     yAxisIndex: 3,
@@ -1147,6 +1245,7 @@ $(function () {
                 },
                 {
                     id: "psL",
+                    name: "PS低位",
                     type: 'line',
                     xAxisIndex: 3,
                     yAxisIndex: 3,
@@ -1161,6 +1260,7 @@ $(function () {
                 },
                 {
                     id: "psM",
+                    name: "PS中位",
                     type: 'line',
                     xAxisIndex: 3,
                     yAxisIndex: 3,
@@ -1175,6 +1275,7 @@ $(function () {
                 },
                 {
                     id: "psH",
+                    name: "PS高位",
                     type: 'line',
                     xAxisIndex: 3,
                     yAxisIndex: 3,
@@ -1189,6 +1290,7 @@ $(function () {
                 },
                 {
                     id: "psttm",
+                    name: "动态PS",
                     type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
@@ -1203,6 +1305,7 @@ $(function () {
                 },
                 {
                     id: "psttmL",
+                    name: "动态PS低位",
                     type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
@@ -1217,6 +1320,7 @@ $(function () {
                 },
                 {
                     id: "psttmM",
+                    name: "动态PS中位",
                     type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
@@ -1231,6 +1335,7 @@ $(function () {
                 },
                 {
                     id: "psttmH",
+                    name: "动态PS高位",
                     type: 'line',
                     xAxisIndex: 4,
                     yAxisIndex: 4,
@@ -1245,6 +1350,7 @@ $(function () {
                 },
                 {
                     id: "tr",
+                    name: "换手率",
                     type: 'line',
                     xAxisIndex: 5,
                     yAxisIndex: 5,
@@ -1259,6 +1365,7 @@ $(function () {
                 },
                 {
                     id: "trL",
+                    name: "换手率低位",
                     type: 'line',
                     xAxisIndex: 5,
                     yAxisIndex: 5,
@@ -1273,6 +1380,7 @@ $(function () {
                 },
                 {
                     id: "trM",
+                    name: "换手率中位",
                     type: 'line',
                     xAxisIndex: 5,
                     yAxisIndex: 5,
@@ -1287,6 +1395,7 @@ $(function () {
                 },
                 {
                     id: "trH",
+                    name: "换手率高位",
                     type: 'line',
                     xAxisIndex: 5,
                     yAxisIndex: 5,
@@ -1301,6 +1410,7 @@ $(function () {
                 },
                 {
                     id: "vr",
+                    name: "量比",
                     type: 'line',
                     xAxisIndex: 6,
                     yAxisIndex: 6,
@@ -1315,6 +1425,7 @@ $(function () {
                 },
                 {
                     id: "vrL",
+                    name: "量比低位",
                     type: 'line',
                     xAxisIndex: 6,
                     yAxisIndex: 6,
@@ -1329,6 +1440,7 @@ $(function () {
                 },
                 {
                     id: "vrM",
+                    name: "量比中位",
                     type: 'line',
                     xAxisIndex: 6,
                     yAxisIndex: 6,
@@ -1343,6 +1455,7 @@ $(function () {
                 },
                 {
                     id: "vrH",
+                    name: "量比高位",
                     type: 'line',
                     xAxisIndex: 6,
                     yAxisIndex: 6,
@@ -1370,7 +1483,7 @@ $(function () {
     var updateEquityChart = function (equityChartData) {
         //添加series
         // mixChartOption.series.slice(7,1);
-        var equityOption = 
+        var equityOption =
         {
             series: [
                 {
@@ -1391,11 +1504,11 @@ $(function () {
         var markData = [];
         var tooltipsData = [];
 
-        $(tradeChartData).each(function(idx, tradeObj){
-            if(tradeObj[0]!=null){
+        $(tradeChartData).each(function (idx, tradeObj) {
+            if (tradeObj[0] != null) {
                 var xCoord = formatDate(new Date(tradeObj[5]), "-");
                 var indexTradeDate = ohlcDateLabel.indexOf(xCoord);
-                if(tradeObj[0]=="b"){
+                if (tradeObj[0] == "b") {
                     markData.push(
                         {
                             coord: [xCoord, ohlc[indexTradeDate][2]],
@@ -1404,13 +1517,13 @@ $(function () {
                             symbolSize: 25,
                             symbolRotate: 180,
                             itemStyle: {
-                              //设置标记点的样式
-                              normal: { color: "red" },
+                                //设置标记点的样式
+                                normal: { color: "red" },
                             },
                         }
                     );
                 }
-                if(tradeObj[0]=="s"){
+                if (tradeObj[0] == "s") {
                     markData.push(
                         {
                             coord: [xCoord, ohlc[indexTradeDate][3]],
@@ -1419,13 +1532,13 @@ $(function () {
                             symbolSize: 25,
                             // symbolRotate: 180,
                             itemStyle: {
-                              //设置标记点的样式
-                              normal: { color: "green" },
+                                //设置标记点的样式
+                                normal: { color: "green" },
                             },
                         }
                     );
                 }
-                if(tradeObj[0]=="b&s"){
+                if (tradeObj[0] == "b&s") {
                     markData.push(
                         [{
                             coord: [xCoord, ohlc[indexTradeDate][2]],
@@ -1434,8 +1547,8 @@ $(function () {
                             symbolRotate: 180,
                             symbolSize: 25,
                             itemStyle: {
-                              //设置标记点的样式
-                              normal: { color: "red" },
+                                //设置标记点的样式
+                                normal: { color: "red" },
                             },
                         },
                         {
@@ -1444,8 +1557,8 @@ $(function () {
                             symbol: "pin",
                             symbolSize: 25,
                             itemStyle: {
-                              //设置标记点的样式
-                              normal: { color: "green" },
+                                //设置标记点的样式
+                                normal: { color: "green" },
                             },
                         }]
                     );
@@ -1516,12 +1629,12 @@ $(function () {
         //                 }
         //             } 
         //         });
-                
+
         //     });
         // });
-        
 
-        var tradeOption = 
+
+        var tradeOption =
         {
             series: [
                 {
@@ -1529,7 +1642,7 @@ $(function () {
                     // tooltip:{
 
                     // } ,
-                    markPoint:{
+                    markPoint: {
                         data: markData,
                     }
                 }
@@ -1539,14 +1652,14 @@ $(function () {
         btMixChart.setOption(tradeOption);
     }
 
-    const fundaList = [ 'pe','pettm','pb','ps','psttm','vr','tr' ];
+    const fundaList = ['pe', 'pettm', 'pb', 'ps', 'psttm', 'vr', 'tr'];
 
     var updateFundaChart = function (tsCode, startDate, endDate) {
         $.ajax({
             url: stockmarketEndpoint + "daily-basic-history/" + tsCode + "/" + startDate + "/" + endDate + "/?format=json",
             success: function (data) {
                 var chartData = jsonToFundaChartFormat(data);
-                
+
                 var option = initFundaChartOption(chartData);
                 btFundamentalChart.setOption(option);
 
@@ -1573,9 +1686,9 @@ $(function () {
         // var chartCanvas = echarts.init(canvas);
 
         //动态添加series
-        var mixChartOption = 
-            {
-                series:[
+        var mixChartOption =
+        {
+            series: [
                 {
                     id: fundaId,
                     data: fundaData
@@ -1592,7 +1705,7 @@ $(function () {
                     id: fundaId + 'H',
                     data: fundaQuantile.qt90
                 }]
-            };
+        };
 
         btFundamentalChart.setOption(mixChartOption);
     }
@@ -1653,7 +1766,7 @@ $(function () {
 
     }
 
-    var onIndicatorChange = function () {
+    var onIndicatorChange = function (event) {
         // alert($(this).val());
         curIndicator = $(this).val().split(",");
 
@@ -1661,49 +1774,67 @@ $(function () {
         setupStrategyCategories("#sStrategyCategory");
 
         // showIndicatorChart(indic);
-        updateTechIndicatorChart();
+        updateTechIndicatorChart(event.data.from);
     }
 
     // 无服务器端数据更新情况下，只是更改技术指标
-    var updateTechIndicatorChart = function(){
-        if(curIndicator[0]=="EMA"){
-            updateEMAChart(ohlcChartData);
+    var updateTechIndicatorChart = function (from) {
+        if (cascadeIndicators.indexOf(curIndicator[0]) != -1) {
+            if (curIndicator[0] == "EMA") {
+                updateEMAChart(ohlcChartData);
+            }
+            if (curIndicator[0] == "SMA") {
+                updateMAChart(ohlcChartData);
+            }
+            if (curIndicator[0] == "BOLL") {
+                updateBOLLChart(ohlcChartData);
+            }
+            if (curIndicator[0] == "BBI") {
+                updateBBIChart(ohlcChartData);
+            }
+            prevTypeAIndicator = curIndicator[0];
         }
-        if(curIndicator[0]=="SMA"){
-            updateMAChart(ohlcChartData);
+        if (from !== "indicator" && nCascadeIndicators.indexOf(curIndicator[0]) != -1) {
+            if (prevTypeAIndicator == "EMA") {
+                updateEMAChart(ohlcChartData);
+            }
+            if (prevTypeAIndicator == "SMA") {
+                updateMAChart(ohlcChartData);
+            }
+            if (prevTypeAIndicator == "BOLL") {
+                updateBOLLChart(ohlcChartData);
+            }
+            if (prevTypeAIndicator == "BBI") {
+                updateBBIChart(ohlcChartData);
+            }
         }
-        if(curIndicator[0]=="BOLL"){
-            updateBOLLChart(ohlcChartData);
-        }
-        if(curIndicator[0]=="BBI"){
-            updateBBIChart(ohlcChartData);
-        }
+
     }
 
-    var updateBTStatsPanel = function(btStatData){
+    var updateBTStatsPanel = function (btStatData) {
         var fontColor = "text-danger";
-        $(btStatData[0].stats).each(function(idx, obj){
-            for(var k in obj){
-                $("#"+k).next().remove();
-                if(typeof(obj[k]) == "number"){
-                    if(obj[k] < 0){
+        $(btStatData[0].stats).each(function (idx, obj) {
+            for (var k in obj) {
+                $("#" + k).next().remove();
+                if (typeof (obj[k]) == "number") {
+                    if (obj[k] < 0) {
                         fontColor = "text-success";
-                    }else{
+                    } else {
                         fontColor = "text-danger";
                     }
-                    $("#"+k).after("<span class='ml-1 tex-muted font-weight-bold " + fontColor + "'>"+obj[k].toLocaleString()+"</span>");
-                }else{
-                    $("#"+k).after("<span class='ml-1 tex-muted font-weight-bold'>"+obj[k]+"</span>");
+                    $("#" + k).after("<span class='ml-1 tex-muted font-weight-bold " + fontColor + "'>" + obj[k].toLocaleString() + "</span>");
+                } else {
+                    $("#" + k).after("<span class='ml-1 tex-muted font-weight-bold'>" + obj[k] + "</span>");
                 }
             }
         });
     }
 
-    $("#expandBTStats").click(function(){
-        if($("#btStats").hasClass("d-none")){
+    $("#expandBTStats").click(function () {
+        if ($("#btStats").hasClass("d-none")) {
             $("#btStats").removeClass("d-none");
             $(this).text("收起-");
-        }else{
+        } else {
             $("#btStats").addClass("d-none");
             $(this).text("展开+");
         }
@@ -1715,14 +1846,32 @@ $(function () {
             capital = $(this).val();
         } else if (event.data.type == "stoploss") {
             stoploss = $(this).val();
+        } else if (event.data.type == "stoplossAtr") {
+            stoplossAtr = $(this).val();
         }
     }
 
-    $('input:radio[name="indicator"]').change(onIndicatorChange);
+    $('input:radio[name="indicator"]').change({ from: "indicator" }, onIndicatorChange);
 
     $('input:radio[name="capital-option"]').change({ target: "#capital", type: "capital" }, onPresetOptChange);
 
     $('input:radio[name="sl-option"]').change({ target: "#stoploss", type: "stoploss" }, onPresetOptChange);
+
+    $('input:radio[name="sl-atr"]').change({ target: "#stoplossATR", type: "stoplossAtr" }, onPresetOptChange);
+
+    $('input:radio[name="stoploss"]').change(function () {
+        slType = $(this).val();
+        if (slType == "0") { //固定止损
+            $("#stoploss").parent().removeClass("d-none");
+            $("#stoplossATR").parent().addClass("d-none");
+        } else if (slType == "1") { //移动止损
+            $("#stoploss").parent().addClass("d-none");
+            $("#stoplossATR").parent().removeClass("d-none");
+        } else if (slType == "-1") { //无止损
+            $("#stoploss").parent().addClass("d-none");
+            $("#stoplossATR").parent().addClass("d-none");
+        }
+    });
 
     $('input:radio[name="commission-unit"]').change(function () {
         var unit = $(this).val();
@@ -1757,15 +1906,19 @@ $(function () {
     $('input:radio[name="freq"]').change(function () {
         freq = $(this).val();
         // initializeBTMixChart(tsCode);
-        updateBTMixChart(tsCode);
+        updateBTMixChart(tsCode, "display");
         updateFundaChart(tsCode, startDate, endDate);
+    });
+
+    $('input:radio[name="bt-freq"]').change(function () {
+        btFreq = $(this).val();
     });
 
     $('input:radio[name="period"]').change(function () {
         stockHistPeriod = $(this).val();
         startDate = formatDate(new Date(today.getTime() - (365 * stockHistPeriod * 24 * 60 * 60 * 1000)), "");
         // initializeBTMixChart(tsCode);
-        updateBTMixChart(tsCode);
+        updateBTMixChart(tsCode, "display");
         updateFundaChart(tsCode, startDate, endDate);
 
         // if(equityJsonData != undefined){
@@ -1920,10 +2073,10 @@ $(function () {
     var buildTAIndicator = function () {
         var count = 0;
         var taIndicatorSet = new Set();
-        for(let b of taBIndicatorSet){
+        for (let b of taBIndicatorSet) {
             taIndicatorSet.add(b);
         }
-        for(let s of taSIndicatorSet){
+        for (let s of taSIndicatorSet) {
             taIndicatorSet.add(s);
         }
 
@@ -1932,7 +2085,7 @@ $(function () {
         for (let indic of taIndicatorSet) {
             // var techIndic = indic.split("_")[0];
             var techIndicParam = indic.split("_")[1];
-            if(techIndicParam == undefined || techIndicParam == "BBI") techIndicParam = -1;
+            if (techIndicParam == undefined || techIndicParam == "BBI") techIndicParam = -1;
             taIndicator += "'" + indic + "':" + techIndicParam;
             count++;
             if (count < taIndicatorSet.size) {
@@ -2042,41 +2195,48 @@ $(function () {
         // executeBT();
     }
 
-    var isEmptyStrategySet = function() {
-        if(taBIndicatorSet.size==0){
+    var isEmptyStrategySet = function () {
+        if (taBIndicatorSet.size == 0) {
             $("#bMsg").text("买入策略为空，请添加");
             $("#bMsg").addClass("text-warning");
             return true;
-        } else{
+        } else {
             $("#bMsg").text("");
         }
-        if(taSIndicatorSet.size==0) {
+        if (taSIndicatorSet.size == 0) {
             $("#sMsg").text("卖出策略为空，请添加");
             $("#sMsg").addClass("text-warning");
             return true;
-        }else{
+        } else {
             $("#sMsg").text("");
         }
-        return false; 
+        return false;
     }
 
     var executeBT = function (handleButton) {
-        if(isEmptyStrategySet()) return;
-        if($(handleButton).hasClass("disabled")) return;
+        if (isEmptyStrategySet()) return;
+        if ($(handleButton).hasClass("disabled")) return;
 
         capital = $("#capital").val();
-        stoploss = (100 - parseInt($("#stoploss").val()))/100;
 
-        if(capital.toString()=="") {
+        if (slType == "0") {//固定止损
+            stoploss = (100 - parseInt($("#stoploss").val())) / 100;
+        } else if (slType == "1") {//移动止损
+            stoploss = parseInt($("#stoplossATR").val());
+        } else if (slType == "-1") {//无止损
+            stoploss = -1;
+        }
+
+        if (capital.toString() == "") {
             $("#capital").addClass("border-warning");
             return;
-        }else{
+        } else {
             $("#capital").removeClass("border-warning");
         }
-        if($("#stoploss").val().toString()==""){
+        if ($("#stoploss").val().toString() == "") {
             $("#stoploss").addClass("border-warning");
             return;
-        } else{
+        } else {
             $("#stoploss").removeClass("border-warning");
         }
 
@@ -2100,27 +2260,27 @@ $(function () {
                 updateTradesChart(resampledTradesData);
                 updateBTStatsPanel(data.slice(-1));
             },
-            complete: function(request, status){
+            complete: function (request, status) {
                 // $("#btStats").removeClass("d-none");
                 var endTime = new Date();
-                if($("#btStats").hasClass("d-none")){
+                if ($("#btStats").hasClass("d-none")) {
                     $("#btStats").removeClass("d-none");
                     $("#expandBTStats").text("收起-");
                 }
                 $(handleButton).removeClass("disabled");
                 $($(handleButton).children()[0]).addClass("d-none");
-                $(handleButton).next().text("回测用时:" + parseFloat((endTime - startTime)/1000).toString() + "秒");
+                $(handleButton).next().text("回测用时:" + parseFloat((endTime - startTime) / 1000).toString() + "秒");
             }
         });
     }
 
-    var getIndicatorFrom = function(param){
+    var getIndicatorFrom = function (param) {
         var indic = "";
         var prefix = param.split("_");
 
-        if(typeAParam.includes(prefix[0])){
+        if (typeAParam.includes(prefix[0])) {
             indic = param;
-        } else if(typeBParam.includes(prefix[0])){
+        } else if (typeBParam.includes(prefix[0])) {
             indic = prefix[0]
         }
         return indic;
@@ -2167,21 +2327,21 @@ $(function () {
                 "</div>";
 
             $("#bStrategyList").append(newItem);
-            $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount"), indic1: $("#hiddenBTI1").val(), indic2: $("#hiddenBTI2").val()}, function (event) {
+            $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount"), indic1: $("#hiddenBTI1").val(), indic2: $("#hiddenBTI2").val() }, function (event) {
                 bStrategyCount--;
                 bStrategyTextSet.delete(bStrategyText);
-                
-                if(event.data.indic1!=""){
-                    if(typeAParam.includes(event.data.indic1.split("_")[0])){
+
+                if (event.data.indic1 != "") {
+                    if (typeAParam.includes(event.data.indic1.split("_")[0])) {
                         taBIndicatorSet.delete(event.data.indic1);
-                    }else if(typeBParam.includes(event.data.indic1.split("_")[0])){
+                    } else if (typeBParam.includes(event.data.indic1.split("_")[0])) {
                         taBIndicatorSet.delete(event.data.indic1.split("_")[0]);
                     }
                 }
-                if(event.data.indic2!=""){
-                    if(typeAParam.includes(event.data.indic2.split("_")[0])){
+                if (event.data.indic2 != "") {
+                    if (typeAParam.includes(event.data.indic2.split("_")[0])) {
                         taBIndicatorSet.delete(event.data.indic2);
-                    }else if(typeBParam.includes(event.data.indic2.split("_")[0])){
+                    } else if (typeBParam.includes(event.data.indic2.split("_")[0])) {
                         taBIndicatorSet.delete(event.data.indic2.split("_")[0]);
                     }
                 }
@@ -2241,17 +2401,17 @@ $(function () {
             $("#sRM" + sStrategyCount).on("click", { strategyText: sStrategyText, holder: $("#sStrategyCount"), indic1: $("#hiddenSTI1").val(), indic2: $("#hiddenSTI2").val() }, function (event) {
                 sStrategyCount--;
                 sStrategyTextSet.delete(sStrategyText);
-                if(event.data.indic1!=""){
-                    if(typeAParam.includes(event.data.indic1.split("_")[0])){
+                if (event.data.indic1 != "") {
+                    if (typeAParam.includes(event.data.indic1.split("_")[0])) {
                         taSIndicatorSet.delete(event.data.indic1);
-                    }else if(typeBParam.includes(event.data.indic1.split("_")[0])){
+                    } else if (typeBParam.includes(event.data.indic1.split("_")[0])) {
                         taSIndicatorSet.delete(event.data.indic1.split("_")[0]);
                     }
                 }
-                if(event.data.indic2!=""){
-                    if(typeAParam.includes(event.data.indic2.split("_")[0])){
+                if (event.data.indic2 != "") {
+                    if (typeAParam.includes(event.data.indic2.split("_")[0])) {
                         taSIndicatorSet.delete(event.data.indic2);
-                    }else if(typeBParam.includes(event.data.indic2.split("_")[0])){
+                    } else if (typeBParam.includes(event.data.indic2.split("_")[0])) {
                         taSIndicatorSet.delete(event.data.indic2.split("_")[0]);
                     }
                 }
@@ -2421,6 +2581,6 @@ $(function () {
     });
 
     initParam();
-    updateBTMixChart(tsCode);
+    updateBTMixChart(tsCode, "display");
     updateFundaChart(tsCode, startDate, endDate);
 });

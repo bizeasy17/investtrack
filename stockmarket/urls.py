@@ -18,8 +18,8 @@ urlpatterns = [
     #          views.IndustryCompanyList.as_view(), name='company_list_industry'),
     path('stock-close-history/<ts_code>/<freq>/<int:period>/',
          views.StockCloseHistoryList.as_view(), name='close_history'),  # ??
-    path('ohlc/<ts_code>/<freq>/<int:period>/',
-         views.OHLCList.as_view(), name='ohlc'),  # ??
+#     path('ohlc/<ts_code>/<freq>/<int:period>/',
+#          views.OHLCList.as_view(), name='ohlc'),  # ??
     path('ohlc-indic/<ts_code>/<freq>/<int:period>/',
          views.get_ohlc, name='ohlc_indic'),  # ??
     path('ma/<ts_code>/<freq>/<int:period>/',

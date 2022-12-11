@@ -119,7 +119,7 @@ var jsonToChartOHLCFormat = function (jsonData) {
 }
 
 var jsonToMixChartFormat = function (jsonData) {
-    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [], 'equity': [] };
+    var chartFormat = { 'ohlc': [], 'label': [], 'volume': [], 'ma': [], 'ema': [], 'boll': [], 'bbi': [], 'macd': [], 'kdj': [], 'rsi': [], 'atr': [],'atr3': [],'atr6': [], 'equity': [] };
     var maFormat = { 'ma10': [], 'ma20': [], 'ma60': [], 'ma120': [], 'ma200': [] };
     var emaFormat = { 'ema10': [], 'ema20': [], 'ema60': [], 'ema120': [], 'ema200': [] };
     var bollFormat = { 'upper': [], 'mid': [], 'lower': [] };
@@ -161,6 +161,11 @@ var jsonToMixChartFormat = function (jsonData) {
         chartFormat.boll[0].lower.push(obj['bolllower']);
 
         chartFormat.bbi.push(obj['bbi']);
+        // newly added for 止损
+        chartFormat.atr.push(obj['atr']);
+        // chartFormat.atr3.push(obj['3atr']);
+        // chartFormat.atr6.push(obj['6atr']);
+
 
         chartFormat.kdj[0].k.push(obj['kdjk']);
         chartFormat.kdj[0].d.push(obj['kdjd']);

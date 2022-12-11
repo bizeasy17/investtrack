@@ -205,7 +205,7 @@ class SystemBacktestingList(APIView):
 
             # print(equity)
             # print('trades')
-            # print(trades)
+            print(trades)
             serializer = EquitySerializer(eq_list, many=True)
             # backtesting.plot()
 
@@ -306,6 +306,7 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
         eq_list.append({
             'stats': get_bt_stats_list(bt_results)
         })
+        print(trades)
         return JsonResponse(eq_list, safe=False)
     except Exception as err:
         print(err)
@@ -371,7 +372,7 @@ def get_bt_stats_list(bt_stats):
             id_label = ''.join(re.findall(r'[A-Za-z]', idx))
             if type(item) == float:
                 if not np.isnan(item):
-                    item = round(item, 2) 
+                    item = round(item, 2)
                 else:
                     item = 'n/a'
             elif type(item) == Timedelta:
@@ -423,6 +424,7 @@ def to_ohlc_list(df):
     get_rsi_df(df)
     get_macd_df(df)
     get_kdj_df(df)
+    get_atr_df(df, 14)
 
     for idx, rows in df.iterrows():
         ohlc_list.append({
@@ -454,6 +456,9 @@ def to_ohlc_list(df):
             'macddif': rows['dif'] if not np.isnan(rows['dif']) else None,
             'macddea': rows['dea'] if not np.isnan(rows['dea']) else None,
             'macdbar': rows['bar'] if not np.isnan(rows['bar']) else None,
+            'atr': rows['atr'] if not np.isnan(rows['atr']) else None,
+            # '3atr': rows['3atr_exit'] if not np.isnan(rows['3atr_exit']) else None,
+            # '6atr': rows['6atr_exit'] if not np.isnan(rows['6atr_exit']) else None,
             'eq': 1.0,
             'd': idx,
         })
@@ -477,11 +482,16 @@ def get_ohlc(request, ts_code, freq, period=3):
 def get_ma_df(data_df):
     try:
         # df_ma = pd.DataFrame()
-        data_df['ma_10'] = ta.MA(data_df['Close'], timeperiod=10, matype=0)
-        data_df['ma_20'] = ta.MA(data_df['Close'], timeperiod=20, matype=0)
-        data_df['ma_60'] = ta.MA(data_df['Close'], timeperiod=60, matype=0)
-        data_df['ma_120'] = ta.MA(data_df['Close'], timeperiod=120, matype=0)
-        data_df['ma_200'] = ta.MA(data_df['Close'], timeperiod=200, matype=0)
+        data_df['ma_10'] = round(
+            ta.MA(data_df['Close'], timeperiod=10, matype=0), 2)
+        data_df['ma_20'] = round(
+            ta.MA(data_df['Close'], timeperiod=20, matype=0), 2)
+        data_df['ma_60'] = round(
+            ta.MA(data_df['Close'], timeperiod=60, matype=0), 2)
+        data_df['ma_120'] = round(
+            ta.MA(data_df['Close'], timeperiod=120, matype=0), 2)
+        data_df['ma_200'] = round(
+            ta.MA(data_df['Close'], timeperiod=200, matype=0), 2)
 
         return data_df
     except Exception as err:
@@ -492,11 +502,16 @@ def get_ma_df(data_df):
 def get_ema_df(data_df):
     try:
         # df_ema = pd.DataFrame()
-        data_df['ema_10'] = ta.MA(data_df['Close'], timeperiod=10, matype=1)
-        data_df['ema_20'] = ta.MA(data_df['Close'], timeperiod=20, matype=1)
-        data_df['ema_60'] = ta.MA(data_df['Close'], timeperiod=60, matype=1)
-        data_df['ema_120'] = ta.MA(data_df['Close'], timeperiod=120, matype=1)
-        data_df['ema_200'] = ta.MA(data_df['Close'], timeperiod=200, matype=1)
+        data_df['ema_10'] = round(
+            ta.MA(data_df['Close'], timeperiod=10, matype=1), 2)
+        data_df['ema_20'] = round(
+            ta.MA(data_df['Close'], timeperiod=20, matype=1), 2)
+        data_df['ema_60'] = round(
+            ta.MA(data_df['Close'], timeperiod=60, matype=1), 2)
+        data_df['ema_120'] = round(
+            ta.MA(data_df['Close'], timeperiod=120, matype=1), 2)
+        data_df['ema_200'] = round(
+            ta.MA(data_df['Close'], timeperiod=200, matype=1), 2)
 
         return data_df
     except Exception as err:
@@ -509,6 +524,9 @@ def get_boll_df(data_df):
         data_df['boll_upper'], data_df['boll_mid'], data_df['boll_lower'] = ta.BBANDS(data_df['Close'], timeperiod=20,
                                                                                       nbdevup=2, nbdevdn=2, matype=0)
 
+        data_df['boll_upper'] = round(data_df['boll_upper'], 2)
+        data_df['boll_mid'] = round(data_df['boll_mid'], 2)
+        data_df['boll_lower'] = round(data_df['boll_lower'], 2)
         return data_df
     except Exception as err:
         print(err)
@@ -524,8 +542,21 @@ def get_bbi_df(data_df):
         df_ma['ma_24'] = ta.MA(data_df['Close'], timeperiod=24)
 
         # df_bbi = pd.DataFrame()
-        data_df['bbi'] = (df_ma['ma_3'] + df_ma['ma_6'] +
-                          df_ma['ma_12']+df_ma['ma_24'])/4
+        data_df['bbi'] = round((df_ma['ma_3'] + df_ma['ma_6'] +
+                                df_ma['ma_12']+df_ma['ma_24'])/4, 2)
+        return data_df
+    except Exception as err:
+        print(err)
+        raise HttpResponseServerError
+
+
+def get_atr_df(data_df, timeperiod=14):
+    try:
+        # df_bbi = pd.DataFrame()
+        data_df['atr'] = round(ta.ATR(data_df['High'], data_df['Low'],
+                                      data_df['Close'], timeperiod=timeperiod), 2)
+        # data_df['3atr_exit'] = data_df['Close'] - 3 * data_df['atr']
+        # data_df['6atr_exit'] = data_df['Close'] - 6 * data_df['atr']
         return data_df
     except Exception as err:
         print(err)
@@ -535,9 +566,9 @@ def get_bbi_df(data_df):
 def get_rsi_df(data_df):
     try:
         # df_rsi = pd.DataFrame()
-        data_df['rsi_6'] = ta.RSI(data_df['Close'], timeperiod=6)
-        data_df['rsi_12'] = ta.RSI(data_df['Close'], timeperiod=12)
-        data_df['rsi_24'] = ta.RSI(data_df['Close'], timeperiod=24)
+        data_df['rsi_6'] = round(ta.RSI(data_df['Close'], timeperiod=6), 2)
+        data_df['rsi_12'] = round(ta.RSI(data_df['Close'], timeperiod=12), 2)
+        data_df['rsi_24'] = round(ta.RSI(data_df['Close'], timeperiod=24), 2)
 
         return data_df
     except Exception as err:
@@ -556,8 +587,11 @@ def get_kdj_df(data_df):
                                               slowk_matype=0,
                                               slowd_period=3,
                                               slowd_matype=0)
+        data_df['k'] = round(data_df['k'], 2)
+        data_df['d'] = round(data_df['d'], 2)
         data_df['j'] = list(
             map(lambda x, y: 3*x-2*y, data_df['k'], data_df['d']))
+        data_df['j'] = round(data_df['j'], 2)
         return data_df
     except StockHistoryDaily.DoesNotExist:
         raise Http404
@@ -571,6 +605,9 @@ def get_macd_df(data_df):
         # df_macd = pd.DataFrame()
         data_df['dif'], data_df['dea'], data_df['bar'] = ta.MACD(
             data_df['Close'].values, fastperiod=12, slowperiod=26, signalperiod=9)
+        data_df['dif'] = round(data_df['dif'], 2)
+        data_df['dea'] = round(data_df['dea'], 2)
+        data_df['bar'] = round(data_df['bar'], 2)
         return data_df
     except StockHistoryDaily.DoesNotExist:
         raise Http404
