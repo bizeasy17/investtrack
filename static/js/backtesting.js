@@ -1943,7 +1943,7 @@ $(function () {
         var freqOpt = $('input:radio[name="freq"]');
         freq = $(this).val();
         $(freqOpt).each(function(idx, obj){
-            if($(obj).val()==btFreq){
+            if($(obj).val()==freq){
                 $(obj).addClass("checked");
                 $(obj).parent().addClass("active");
             }else{
