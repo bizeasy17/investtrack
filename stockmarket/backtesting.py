@@ -323,7 +323,7 @@ class System(SignalStrategy, TrailingStrategy):
             for kk, vv in self.sell_cond_dict['condition'][k].items():
                 # crossover(getattr(self, vv.split(',')[0]), getattr(self, vv.split(',')[1])) #eval(vv)
                 self._short_order = eval(vv)
-
+        
         if self._long_order:
             if not self.position:
                 if float(self.stoploss) > 0.0 and float(self.stoploss) < 1.0:

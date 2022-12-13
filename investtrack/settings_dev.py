@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '0u6iuu7lq^s1%)!_ydabj-&hg!1&z72+5ei-@i*uyn7-r&0=ko'
 
 # token settings (not sure should put it here)
-ts.set_token('3ebfccf82c537f1e8010e97707393003c1d98b86907dfd09f9d17589')
+ts.set_token('16f7093d6da6ad3e853ce5a94104d64990db2c262ea46ef64e504df6')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False  # True

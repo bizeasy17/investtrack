@@ -2156,7 +2156,7 @@ $(function () {
         //         'threshold':{}
         //     }
         // }
-        var bCrossover = "'crossver':{";
+        var bCrossover = "'crossover':{";
         var bPairComp = "'pair_comp':{";
         var bThreshold = "'threshold':{";
         var bClose = "'close':{";
@@ -2201,7 +2201,7 @@ $(function () {
         //     }
         // }
         // var sSystem = "";
-        var sCrossover = "'crossver':{";
+        var sCrossover = "'crossover':{";
         var sPairComp = "'pair_comp':{";
         var sThreshold = "'threshold':{";
         var sClose = "'close':{";
@@ -2335,6 +2335,11 @@ $(function () {
 
         if ($("#hiddenStrategyCategory").val() == "") return;
 
+        if($("#bTIPicked1").text()=="参数1") return;
+        if($("#bCondPicked").text()=="判断条件") return;
+        if($("#bTIPicked2").text()=="参数2") return;
+
+
         if ($("#hiddenStrategyCategory").val() == "0") { //crossover，KDJ, MACD (Not Bar), RSI, crossover(self.KDJ_K, self.KDJ_D), crossover(self.MACD.DEA, MACD_DIFF)
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "0:" + $("#hiddenBCond").val() + "(self." + $("#hiddenBTI1").val() + "," + "self." + $("#hiddenBTI2").val() + ")";
@@ -2355,7 +2360,7 @@ $(function () {
         } else if ($("#hiddenStrategyCategory").val() == "3") {//OHLC - close ta compare,  SMA, EMA, BOLL, BBI 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             // 
-            bStrategyValue = "3:" + $("#hiddenBCond").val() + "(self.data." + $("#hiddenBTI1").val() + "[-1]," + "self." + $("#hiddenBTI2").val() + ")";
+            bStrategyValue = "3:" + $("#hiddenBCond").val() + "(self.data." + $("#hiddenBTI1").val() + "," + "self." + $("#hiddenBTI2").val() + ")";
 
             // 收盘价不需要加到TA set
             taBIndicatorSet.add("3."+getIndicatorFrom($("#hiddenBTI2").val()));
@@ -2407,6 +2412,10 @@ $(function () {
 
         if ($("#hiddenSStrategyCategory").val() == "") return;
 
+        if($("#sTIPicked1").text()=="参数1") return;
+        if($("#sCondPicked").text()=="判断条件") return;
+        if($("#sTIPicked2").text()=="参数2") return;
+
         if ($("#hiddenSStrategyCategory").val() == "0") { //crossover
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "0:" + $("#hiddenSCond").val() + "(self." + $("#hiddenSTI2").val() + "," + "self." + $("#hiddenSTI1").val() + ")";
@@ -2426,7 +2435,7 @@ $(function () {
             taSIndicatorSet.add("2."+getIndicatorFrom($("#hiddenSTI1").val()));
         } else if ($("#hiddenSStrategyCategory").val() == "3") {//Close indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
-            sStrategyValue = "3:self.data." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
+            sStrategyValue = "3:" + $("#hiddenSCond").val() + "(self." + $("#hiddenSTI2").val() + "," + "self.data." + $("#hiddenSTI1").val() + ")";
 
             taSIndicatorSet.add("3."+getIndicatorFrom($("#hiddenSTI2").val()));
         }
@@ -2485,13 +2494,13 @@ $(function () {
 
         switch (strategyCategory) {
             case "0": // crossover
+            case "3": // close & value
                 $.each(condParamCrossover, function (idx, value) {
                     $(indicHolderArry[2] + " div").append("<a class='dropdown-item' href='javascript:void(0)' value='" + value.split(",")[1] + "'>" + value.split(",")[0] + "</a>")
                 });
                 break;
             case "1": // two indicator
             case "2": // indicator & value
-            case "3": // close & value
                 $.each(condParamValueCompare, function (idx, value) {
                     $(indicHolderArry[2] + " div").append("<a class='dropdown-item' href='javascript:void(0)' value='" + value.split(",")[1] + "'>" + value.split(",")[0] + "</a>")
                 });
