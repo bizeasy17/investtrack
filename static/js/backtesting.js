@@ -2114,10 +2114,10 @@ $(function () {
         var count = 0;
         var taIndicatorSet = new Set();
         for (let b of taBIndicatorSet) {
-            taIndicatorSet.add(b);
+            taIndicatorSet.add(b.split(".")[1]);
         }
         for (let s of taSIndicatorSet) {
-            taIndicatorSet.add(s);
+            taIndicatorSet.add(s.split(".")[1]);
         }
 
         taIndicator = "";
@@ -2339,25 +2339,26 @@ $(function () {
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "0:" + $("#hiddenBCond").val() + "(self." + $("#hiddenBTI1").val() + "," + "self." + $("#hiddenBTI2").val() + ")";
 
-            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI1").val()));
-            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI2").val()));
+            taBIndicatorSet.add("0."+getIndicatorFrom($("#hiddenBTI1").val()));
+            taBIndicatorSet.add("0."+getIndicatorFrom($("#hiddenBTI2").val()));
         } else if ($("#hiddenStrategyCategory").val() == "1") {//tech indicator pair compare, SMA, EMA, KDJ, MACD, RSI, 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "1:self." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + "self." + $("#hiddenBTI2").val() + "[-1]";
 
-            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI1").val()));
-            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI2").val()));
+            taBIndicatorSet.add("1."+getIndicatorFrom($("#hiddenBTI1").val()));
+            taBIndicatorSet.add("1."+getIndicatorFrom($("#hiddenBTI2").val()));
         } else if ($("#hiddenStrategyCategory").val() == "2") {//tech indicator value threshold, KDJ, MACD, RSI, 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
             bStrategyValue = "2:self." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + $("#hiddenBTI2").val();
 
-            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI1").val()));
+            taBIndicatorSet.add("2."+getIndicatorFrom($("#hiddenBTI1").val()));
         } else if ($("#hiddenStrategyCategory").val() == "3") {//OHLC - close ta compare,  SMA, EMA, BOLL, BBI 
             bStrategyText = $("#bTIPicked1").text() + " " + $("#bCondPicked").text() + " " + $("#bTIPicked2").text();
-            bStrategyValue = "3:self.data." + $("#hiddenBTI1").val() + "[-1]" + $("#hiddenBCond").val() + "self." + $("#hiddenBTI2").val() + "[-1]";
+            // 
+            bStrategyValue = "3:" + $("#hiddenBCond").val() + "(self.data." + $("#hiddenBTI1").val() + "[-1]," + "self." + $("#hiddenBTI2").val() + ")";
 
             // 收盘价不需要加到TA set
-            taBIndicatorSet.add(getIndicatorFrom($("#hiddenBTI2").val()));
+            taBIndicatorSet.add("3."+getIndicatorFrom($("#hiddenBTI2").val()));
         }
 
         if (!bStrategyTextSet.has(bStrategyText)) {
@@ -2369,22 +2370,22 @@ $(function () {
                 "</div>";
 
             $("#bStrategyList").append(newItem);
-            $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount"), indic1: $("#hiddenBTI1").val(), indic2: $("#hiddenBTI2").val() }, function (event) {
+            $("#bRM" + bStrategyCount).on("click", { strategyText: bStrategyText, holder: $("#bStrategyCount"), indic1: $("#hiddenBTI1").val(), indic2: $("#hiddenBTI2").val(), category: $("#hiddenStrategyCategory").val() }, function (event) {
                 bStrategyCount--;
                 bStrategyTextSet.delete(bStrategyText);
 
                 if (event.data.indic1 != "") {
                     if (typeAParam.includes(event.data.indic1.split("_")[0])) {
-                        taBIndicatorSet.delete(event.data.indic1);
+                        taBIndicatorSet.delete(event.data.category + "." + event.data.indic1);
                     } else if (typeBParam.includes(event.data.indic1.split("_")[0])) {
-                        taBIndicatorSet.delete(event.data.indic1.split("_")[0]);
+                        taBIndicatorSet.delete(event.data.category + "." + event.data.indic1.split("_")[0]);
                     }
                 }
                 if (event.data.indic2 != "") {
                     if (typeAParam.includes(event.data.indic2.split("_")[0])) {
-                        taBIndicatorSet.delete(event.data.indic2);
+                        taBIndicatorSet.delete(event.data.category + "." + event.data.indic2);
                     } else if (typeBParam.includes(event.data.indic2.split("_")[0])) {
-                        taBIndicatorSet.delete(event.data.indic2.split("_")[0]);
+                        taBIndicatorSet.delete(event.data.category + "." + event.data.indic2.split("_")[0]);
                     }
                 }
                 event.data.holder.text(bStrategyCount.toString());
@@ -2410,24 +2411,24 @@ $(function () {
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "0:" + $("#hiddenSCond").val() + "(self." + $("#hiddenSTI2").val() + "," + "self." + $("#hiddenSTI1").val() + ")";
 
-            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI1").val()));
-            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI2").val()));
+            taSIndicatorSet.add("0."+getIndicatorFrom($("#hiddenSTI1").val()));
+            taSIndicatorSet.add("0."+getIndicatorFrom($("#hiddenSTI2").val()));
         } else if ($("#hiddenSStrategyCategory").val() == "1") {//tech indicator pair compare
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "1:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
 
-            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI1").val()));
-            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI2").val()));
+            taSIndicatorSet.add("1."+getIndicatorFrom($("#hiddenSTI1").val()));
+            taSIndicatorSet.add("1."+getIndicatorFrom($("#hiddenSTI2").val()));
         } else if ($("#hiddenSStrategyCategory").val() == "2") {//tech indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "2:self." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + $("#hiddenSTI2").val();
 
-            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI1").val()));
+            taSIndicatorSet.add("2."+getIndicatorFrom($("#hiddenSTI1").val()));
         } else if ($("#hiddenSStrategyCategory").val() == "3") {//Close indicator value threshold
             sStrategyText = $("#sTIPicked1").text() + " " + $("#sCondPicked").text() + " " + $("#sTIPicked2").text();
             sStrategyValue = "3:self.data." + $("#hiddenSTI1").val() + "[-1]" + $("#hiddenSCond").val() + "self." + $("#hiddenSTI2").val() + "[-1]";
 
-            taSIndicatorSet.add(getIndicatorFrom($("#hiddenSTI2").val()));
+            taSIndicatorSet.add("3."+getIndicatorFrom($("#hiddenSTI2").val()));
         }
 
         if (!sStrategyTextSet.has(sStrategyText)) {
@@ -2440,21 +2441,21 @@ $(function () {
                 "</div>";
             $("#sStrategyList").append(newItem);
             // $("#sStrategyList div a").on("click", {count: sStrategyCount, holder: $("#sStrategyCount")}, removeElement)
-            $("#sRM" + sStrategyCount).on("click", { strategyText: sStrategyText, holder: $("#sStrategyCount"), indic1: $("#hiddenSTI1").val(), indic2: $("#hiddenSTI2").val() }, function (event) {
+            $("#sRM" + sStrategyCount).on("click", { strategyText: sStrategyText, holder: $("#sStrategyCount"), indic1: $("#hiddenSTI1").val(), indic2: $("#hiddenSTI2").val(), category: $("#hiddenSStrategyCategory").val() }, function (event) {
                 sStrategyCount--;
                 sStrategyTextSet.delete(sStrategyText);
                 if (event.data.indic1 != "") {
                     if (typeAParam.includes(event.data.indic1.split("_")[0])) {
-                        taSIndicatorSet.delete(event.data.indic1);
+                        taSIndicatorSet.delete(event.data.category+"."+event.data.indic1);
                     } else if (typeBParam.includes(event.data.indic1.split("_")[0])) {
-                        taSIndicatorSet.delete(event.data.indic1.split("_")[0]);
+                        taSIndicatorSet.delete(event.data.category+"."+event.data.indic1.split("_")[0]);
                     }
                 }
                 if (event.data.indic2 != "") {
                     if (typeAParam.includes(event.data.indic2.split("_")[0])) {
-                        taSIndicatorSet.delete(event.data.indic2);
+                        taSIndicatorSet.delete(event.data.category+"."+event.data.indic2);
                     } else if (typeBParam.includes(event.data.indic2.split("_")[0])) {
-                        taSIndicatorSet.delete(event.data.indic2.split("_")[0]);
+                        taSIndicatorSet.delete(event.data.category+"."+event.data.indic2.split("_")[0]);
                     }
                 }
                 event.data.holder.text(sStrategyCount.toString());
