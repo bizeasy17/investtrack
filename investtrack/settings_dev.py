@@ -29,7 +29,7 @@ ts.set_token('16f7093d6da6ad3e853ce5a94104d64990db2c262ea46ef64e504df6')
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False  # True
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.31.217', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 # 卖出股票的策略是先进先出FIFO，可选的其他策略有FILO
 STOCK_OUT_STRATEGY = 'FIFO'
 

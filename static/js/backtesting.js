@@ -21,7 +21,7 @@ $(function () {
     var commission = .001;
     var leverage = 1;
     var tradeOnClose = 0;
-    var restoration = "bfq";
+    var adj = "qfq";
     var freq = "D";
     var btFreq = "D";
 
@@ -94,7 +94,7 @@ $(function () {
 
         stockHistPeriod = $('input:radio[name="period"]:checked').val();
         tradeOnClose = $('input:radio[name="trade-on-close"]:checked').val();
-        restoration = $('input:radio[name="restoration"]:checked').val();
+        adj = $('input:radio[name="adj"]:checked').val();
         freq = $('input:radio[name="freq"]:checked').val();
         btFreq = $('input:radio[name="bt-freq"]:checked').val();
 
@@ -139,7 +139,7 @@ $(function () {
         var zoomMin = 0;
         var zoomMax = 100;
         $.ajax({
-            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/",
+            url: stockmarketEndpoint + "ohlc-indic/" + tsCode + "/" + freq + "/" + stockHistPeriod + "/" + adj + "/",
             success: function (data) {
                 ohlcChartData = jsonToMixChartFormat(data);
                 // global OHLC数据
@@ -205,7 +205,7 @@ $(function () {
                 },
                 // position: function (pos, params, el, elRect, size) {
                 //     const obj = {
-                //         top: 10
+                //         // top: 10
                 //     };
                 //     obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
                 //     return obj;
@@ -1928,8 +1928,10 @@ $(function () {
         tradeOnClose = $(this).val();
     });
 
-    $('input:radio[name="restoration"]').change(function () {
-        restoration = $(this).val();
+    $('input:radio[name="adj"]').change(function () {
+        adj = $(this).val();
+        updateBTMixChart(tsCode, "display");
+        // updateFundaChart(tsCode, startDate, endDate);
     });
 
     $('input:radio[name="freq"]').change(function () {
@@ -2290,7 +2292,7 @@ $(function () {
         $.ajax({
             url: stockmarketEndpoint + "bt-system/" + tsCode + "/" + strategyCategory + "/" + taIndicator +
                 "/" + bSystem + "/" + sSystem + "/" + stoploss.toString() + "/" + capital.toString() + "/" + commission.toString() +
-                "/" + leverage.toString() + "/" + tradeOnClose.toString() + "/" + btFreq + "/",
+                "/" + leverage.toString() + "/" + tradeOnClose.toString() + "/" + adj + "/" + btFreq + "/",
             success: function (data) {
                 // console.log(data)
                 // 全局equity json

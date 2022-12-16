@@ -20,7 +20,7 @@ urlpatterns = [
          views.StockCloseHistoryList.as_view(), name='close_history'),  # ??
 #     path('ohlc/<ts_code>/<freq>/<int:period>/',
 #          views.OHLCList.as_view(), name='ohlc'),  # ??
-    path('ohlc-indic/<ts_code>/<freq>/<int:period>/',
+    path('ohlc-indic/<ts_code>/<freq>/<int:period>/<adj>/',
          views.get_ohlc, name='ohlc_indic'),  # ??
     path('ma/<ts_code>/<freq>/<int:period>/',
          views.get_ma),  # ??
@@ -55,7 +55,7 @@ urlpatterns = [
          views.CrossoverBacktestingList.as_view(), name='backtesting_list'),
 #     path('bt-system/<ts_code>/<strategy_category>/<ta_indicator_dict>/<buy_cond_dict>/<sell_cond_dict>/<stoploss>/<cash>/<commission>/<leverage>/<trade_on_close>/<freq>/',
 #          views.SystemBacktestingList.as_view(), name='backtesting_list'),
-    path('bt-system/<ts_code>/<strategy_category>/<ta_indicator_dict>/<buy_cond_dict>/<sell_cond_dict>/<stoploss>/<cash>/<commission>/<leverage>/<trade_on_close>/<freq>/',
+    path('bt-system/<ts_code>/<strategy_category>/<ta_indicator_dict>/<buy_cond_dict>/<sell_cond_dict>/<stoploss>/<cash>/<commission>/<leverage>/<trade_on_close>/<adj>/<freq>/',
          views.get_bt_result),
     path('command/',
          views.command_test),

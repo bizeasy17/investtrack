@@ -248,6 +248,19 @@ class StockHistoryDaily(BaseModel):
         _('价格变化'), blank=True, null=True)
     pct_chg = models.FloatField(
         _('价格变化%'), blank=True, null=True)
+    open_qfq = models.FloatField(
+        _('开盘价_qfq'), blank=True, null=True)
+    high_qfq = models.FloatField(
+        _('最高价_qfq'), blank=True, null=True)
+    low_qfq = models.FloatField(
+        _('最低价_qfq'), blank=True, null=True)
+    pre_close_qfq = models.FloatField(
+        _('前日收盘价_qfq'), blank=True, null=True)
+    close_qfq = models.FloatField(_('收盘价_qfq'), blank=True, null=True)
+    change_qfq = models.FloatField(
+        _('价格变化_qfq'), blank=True, null=True)
+    pct_chg_qfq = models.FloatField(
+        _('价格变化%_qfq'), blank=True, null=True)
     vol = models.FloatField(
         _('交易量'), blank=True, null=True)
     amount = models.FloatField(
@@ -258,20 +271,7 @@ class StockHistoryDaily(BaseModel):
         _('九转序列B'),  blank=True, null=True)
     jiuzhuan_count_s = models.FloatField(
         _('九转序列S'),  blank=True, null=True)
-    ma25 = models.FloatField(
-        _('MA25'),  blank=True, null=True)
-    ma25_slope = models.FloatField(
-        _('MA25斜率'),  blank=True, null=True)
-    ma60 = models.FloatField(
-        _('MA60'),  blank=True, null=True)
-    ma60_slope = models.FloatField(
-        _('MA60斜率'),  blank=True, null=True)
-    ma200 = models.FloatField(
-        _('MA200'),  blank=True, null=True)
-    ma200_slope = models.FloatField(
-        _('MA200斜率'),  blank=True, null=True)
-    slope = models.FloatField(
-        _('斜率'), blank=True, null=True)
+    
 
     freq = models.CharField(
         _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
@@ -324,6 +324,19 @@ class StockHistory(BaseModel):
         _('交易量'), blank=True, null=True)
     amount = models.FloatField(
         _('金额'), blank=True, null=True)
+    open_qfq = models.FloatField(
+        _('开盘价_qfq'), blank=True, null=True)
+    high_qfq = models.FloatField(
+        _('最高价_qfq'), blank=True, null=True)
+    low_qfq = models.FloatField(
+        _('最低价_qfq'), blank=True, null=True)
+    pre_close_qfq = models.FloatField(
+        _('前日收盘价_qfq'), blank=True, null=True)
+    close_qfq = models.FloatField(_('收盘价_qfq'), blank=True, null=True)
+    change_qfq = models.FloatField(
+        _('价格变化_qfq'), blank=True, null=True)
+    pct_chg_qfq = models.FloatField(
+        _('价格变化%_qfq'), blank=True, null=True)
     chg4 = models.FloatField(
         _('与4日前变化'), blank=True, null=True)
     jiuzhuan_count_b = models.FloatField(
@@ -340,71 +353,6 @@ class StockHistory(BaseModel):
     class Meta:
         ordering = ['-trade_date']
         verbose_name = _('股票代码表')
-        verbose_name_plural = verbose_name
-        get_latest_by = 'id'
-
-
-class StockHistoryDailyArc(BaseModel):
-    '''
-    StockHistoryDaily 超过3年的数据都archive到此table
-    '''
-
-    ts_code = models.CharField(
-        _('TS代码'), max_length=15, blank=False, null=False, db_index=True)  # e.g. 000001.SZ
-    trade_date = models.DateField(
-        _('交易日'), max_length=6, blank=False, null=False)  # symbol, e.g. 20200505
-    # new fields
-    open = models.FloatField(
-        _('开盘价'), blank=True, null=True)
-    high = models.FloatField(
-        _('最高价'), blank=True, null=True)
-    low = models.FloatField(
-        _('最低价'), blank=True, null=True)
-    pre_close = models.FloatField(
-        _('前日收盘价'), blank=True, null=True)
-    close = models.FloatField(_('收盘价'), blank=True, null=True)
-    change = models.FloatField(
-        _('价格变化'), blank=True, null=True)
-    pct_chg = models.FloatField(
-        _('价格变化%'), blank=True, null=True)
-    vol = models.FloatField(
-        _('交易量'), blank=True, null=True)
-    amount = models.FloatField(
-        _('金额'), blank=True, null=True)
-    chg4 = models.FloatField(
-        _('与4日前变化'), blank=True, null=True)
-    jiuzhuan_count_b = models.FloatField(
-        _('九转序列B'),  blank=True, null=True)
-    jiuzhuan_count_s = models.FloatField(
-        _('九转序列S'),  blank=True, null=True)
-    ma25 = models.FloatField(
-        _('MA25'),  blank=True, null=True)
-    ma25_slope = models.FloatField(
-        _('MA25斜率'),  blank=True, null=True)
-    ma60 = models.FloatField(
-        _('MA60'),  blank=True, null=True)
-    ma60_slope = models.FloatField(
-        _('MA60斜率'),  blank=True, null=True)
-    ma200 = models.FloatField(
-        _('MA200'),  blank=True, null=True)
-    ma200_slope = models.FloatField(
-        _('MA200斜率'),  blank=True, null=True)
-    slope = models.FloatField(
-        _('斜率'), blank=True, null=True)
-
-    freq = models.CharField(
-        _('周期'), max_length=5, blank=False, null=False, default='D')  # e.g. 000001.SZ
-
-    def __str__(self):
-        return self.ts_code
-
-    # def save(self, *args, **kwargs):
-    #     self.stock_code = self.stock_code + '.' + self.market
-    #     super.save(*args, **kwargs)
-
-    class Meta:
-        ordering = ['-last_mod_time']
-        verbose_name = _('股票收盘备份')
         verbose_name_plural = verbose_name
         get_latest_by = 'id'
 

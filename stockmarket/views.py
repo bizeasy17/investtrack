@@ -217,7 +217,7 @@ class SystemBacktestingList(APIView):
             raise HttpResponseServerError
 
 
-def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, trade_on_close=False, freq='D'):
+def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_cond_dict, sell_cond_dict, stoploss=.98, cash=10-000, commission=.001, leverage=1, trade_on_close=False, adj='qfq', freq='D'):
     '''
     tech_indicator: SMA, EMA, BOLL, STOCH, KDJ, etc
     indicator_param: SMA,5,10,20,60,120,250 or EMA,5,10,20,60,120,250 or STOCH,10,25
@@ -227,7 +227,7 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
     commission: 0.05
     leverage: 0.02 mean 50 leverage
     '''
-    data_df = get_data(ts_code, freq, 'desc')
+    data_df = get_data(ts_code, freq, 'desc', adj)
 
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
     if type(eval(ta_indicator_dict)) == dict:
@@ -465,10 +465,10 @@ def to_ohlc_list(df):
     return ohlc_list
 
 
-def get_ohlc(request, ts_code, freq, period=3):
+def get_ohlc(request, ts_code, freq, period=3, adj='qfq'):
     try:
         # ohlc_list = []
-        ohlc_df = get_data_since(ts_code, freq, period=period)
+        ohlc_df = get_data_since(ts_code, freq, period=period, adj=adj)
         ohlc_data = to_ohlc_list(ohlc_df)
 
         return JsonResponse(ohlc_data, safe=False)

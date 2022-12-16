@@ -3,9 +3,11 @@ from datetime import date, datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from users.models import User
-from analysis.stock_hist import process_stock_download, proess_stock_download_new
+from analysis.stock_hist import (process_stock_download,
+                                 proess_stock_download_new)
 from stockmarket.models import StockNameCodeMap
+from users.models import User
+
 # from analysis.utils import init_eventlog, set_event_completed, is_event_completed
 
 

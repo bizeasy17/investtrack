@@ -12,7 +12,7 @@
 import talib
 import pandas as pd
 from datetime import date, datetime, timedelta
-
+from django.db.models import F
 from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 # from backtesting.test import SMA
@@ -22,24 +22,32 @@ from analysis.models import StockHistory, StockHistoryDaily
 # from backtesting.lib import resample_apply
 
 
-def get_data(ts_code, freq='D', sort='asc'):
+def get_data(ts_code, freq='D', sort='asc', adj='qfq'):
     if freq == 'D':
-        data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
-            'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+        if adj=='qfq':
+            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
+                Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+        else:
+            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
+                Close = F('close'), High = F('high'), Low=F('low'), Open=F('open'), Date=F('trade_date'), Volume=F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
     else:
-        data = StockHistory.objects.filter(
-            ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+        if adj=='qfq':
+            data = StockHistory.objects.filter(ts_code=ts_code, freq=freq).values(
+                Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+        else:
+            data = StockHistory.objects.filter(
+                ts_code=ts_code, freq=freq).values(Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
 
-    data_df = pd.DataFrame.from_records(data)
-    data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
-                            'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
+    data_df = pd.DataFrame.from_records(data) 
+    # data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
+    #                         'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
     # data_df = data_df.sort_values(by=['Date'],ascending=False)
     data_df['Date'] = pd.to_datetime(data_df['Date'])
     data_df = data_df.set_index('Date')
     return data_df
 
 
-def get_data_since(ts_code, freq='D', sort='asc', period=3):
+def get_data_since(ts_code, freq='D', sort='asc', period=3, adj='qfq'):
     start_date = None
     if period <= 10:
         start_date = date.today() - timedelta(days=365 * period)
@@ -48,26 +56,44 @@ def get_data_since(ts_code, freq='D', sort='asc', period=3):
 
     if freq == 'D':
         if start_date is None:
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
-                'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+            if adj=='qfq':
+                data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
+                    Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+            else:
+                data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq).values(
+                    Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
         else:
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq, trade_date__gte=start_date).values(
-                'close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+            if adj=='qfq':
+                data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq, trade_date__gte=start_date).values(
+                    Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+            else:
+                data = StockHistoryDaily.objects.filter(ts_code=ts_code, freq=freq, trade_date__gte=start_date).values(
+                Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
     else:
         if start_date is None:
-            data = StockHistory.objects.filter(
-                ts_code=ts_code, freq=freq).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+            if adj=='qfq':
+                data = StockHistory.objects.filter(ts_code=ts_code, freq=freq).values(
+                    Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+            else:
+                data = StockHistory.objects.filter(
+                    ts_code=ts_code, freq=freq).values(Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
         else:
-            data = StockHistory.objects.filter(
-                ts_code=ts_code, freq=freq, trade_date__gte=start_date).values('close', 'high', 'low', 'open', 'trade_date', 'vol').order_by('trade_date' if sort == 'asc' else '-trade_date')
+            if adj=='qfq':
+                data = StockHistory.objects.filter(ts_code=ts_code, freq=freq, trade_date__gte=start_date).values(
+                    Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+            else:
+                data = StockHistory.objects.filter(
+                    ts_code=ts_code, freq=freq, trade_date__gte=start_date).values(Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol')).order_by('trade_date' if sort == 'asc' else '-trade_date')
 
     data_df = pd.DataFrame.from_records(data)
-    data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
-                            'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
+    # data_df.rename(columns={'trade_date': 'Date', 'open': 'Open',
+    #                         'high': 'High', 'low': 'Low', 'close': 'Close', 'vol': 'Volume'}, inplace=True)
     # data_df = data_df.sort_values(by=['Date'],ascending=False)
     data_df = data_df.set_index('Date')
     return data_df
 
+def resample(dataframe, freq='W'):
+    pass
 
 def BBI(close_df):
     try:
