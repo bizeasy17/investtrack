@@ -141,7 +141,7 @@ var jsonToMixChartFormat = function (jsonData) {
         // ohlc.push(obj['l']);
         // ohlc.push(obj['h']);
         chartFormat.ohlc.push([obj['o'], obj['c'], obj['l'], obj['h']]);
-        chartFormat.label.push(obj['d']);
+        chartFormat.label.push(formatDate(new Date(obj['d']),"-"));
         chartFormat.volume.push(obj['v']);
 
         chartFormat.ma[0].ma10.push(obj['ma10']);
