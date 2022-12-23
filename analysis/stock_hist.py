@@ -264,22 +264,23 @@ def download_hist_data(ts_code, start_date, end_date, freq='D', asset='E'):
             # print(trade_cal[1].strftime('%Y%m%d'))
             df = ts.pro_bar(ts_code=ts_code, asset=asset, freq=freq,
                             start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'))
-            if asset == 'E':
+            if len(df) > 0 and asset == 'E':
                 df_adj = ts.pro_bar(ts_code=ts_code, asset=asset, freq=freq,
                                 start_date=trade_cal[0].strftime('%Y%m%d'), end_date=trade_cal[1].strftime('%Y%m%d'), adj='qfq')
                 # df_adj.rename(columns={'open': 'open_adj',
                 #                 'high': 'high_adj', 'low': 'low_adj', 'close': 'close_adj', 'change': 'change_adj', 'pre_close': 'pre_close_adj', }, inplace=True)
                 # df = df.iloc[::-1]  # 将数据按照时间顺序排列
-                df['open_qfq'] = df_adj['open']
-                df['high_qfq'] = df_adj['high']
-                df['low_qfq'] = df_adj['low']
-                df['close_qfq'] = df_adj['close']
-                df['change_qfq'] = df_adj['change']
-                df['pre_close_qfq'] = df_adj['pre_close']
-                df['pct_chg_qfq'] = round(df_adj['pct_chg'], 2)
+                if df_adj is not None:
+                    df['open_qfq'] = df_adj['open']
+                    df['high_qfq'] = df_adj['high']
+                    df['low_qfq'] = df_adj['low']
+                    df['close_qfq'] = df_adj['close']
+                    df['change_qfq'] = df_adj['change']
+                    df['pre_close_qfq'] = df_adj['pre_close']
+                    df['pct_chg_qfq'] = round(df_adj['pct_chg'], 2)
 
-            df_list.append(df)
-        return pd.concat(df_list)
+                df_list.append(df)
+        return pd.concat(df_list) if len(df_list)>0 else pd.DataFrame()
 
 
 def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq='D'):
@@ -289,6 +290,7 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
     # print(listed_company.ts_code)
     df = download_hist_data(ts_code, start_date, end_date, freq, asset,)
     hist_list = []
+
     for idx, row in df.iterrows():
         hist = None
         if asset == 'E':
@@ -297,11 +299,11 @@ def download_stock_hist(company, ts_code, start_date, end_date, asset='E', freq=
                                         low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
                                         amount=row['amount'],  open_qfq=row['open_qfq'], high_qfq=row['high_qfq'], low_qfq=row['low_qfq'], close_qfq=row['close_qfq'], 
                                         pre_close_qfq=row['pre_close_qfq'], change_qfq=row['change_qfq'], pct_chg_qfq=row['pct_chg_qfq'], freq=freq, company=company)
-            else:
-                hist = StockHistory(ts_code=row['ts_code'], trade_date=datetime.strptime(row['trade_date'], '%Y%m%d'), open=row['open'], high=row['high'],
-                                        low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
-                                        amount=row['amount'], open_qfq=row['open_qfq'], high_qfq=row['high_qfq'], low_qfq=row['low_qfq'], close_qfq=row['close_qfq'], 
-                                        pre_close_qfq=row['pre_close_qfq'], change_qfq=row['change_qfq'], pct_chg_qfq=row['pct_chg_qfq'], freq=freq, company=company)
+            # else:
+            #     hist = StockHistory(ts_code=row['ts_code'], trade_date=datetime.strptime(row['trade_date'], '%Y%m%d'), open=row['open'], high=row['high'],
+            #                             low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
+            #                             amount=row['amount'], open_qfq=row['open_qfq'], high_qfq=row['high_qfq'], low_qfq=row['low_qfq'], close_qfq=row['close_qfq'], 
+            #                             pre_close_qfq=row['pre_close_qfq'], change_qfq=row['change_qfq'], pct_chg_qfq=row['pct_chg_qfq'], freq=freq, company=company)
         else: # 指数信息
             hist = StockIndexHistory(ts_code=row['ts_code'], trade_date=datetime.strptime(row['trade_date'], '%Y%m%d'), open=row['open'], high=row['high'],
                                         low=row['low'], close=row['close'], pre_close=row['pre_close'], change=row['change'], pct_chg=row['pct_chg'], vol=row['vol'],
