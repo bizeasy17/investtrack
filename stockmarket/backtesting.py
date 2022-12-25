@@ -10,6 +10,7 @@
 止损策略 - TrailingStrategy
 '''
 import talib
+import numpy as np
 import pandas as pd
 from datetime import date, datetime, timedelta
 from django.db.models import F
@@ -19,6 +20,7 @@ from backtesting.lib import crossover
 from backtesting.lib import SignalStrategy, TrailingStrategy, resample_apply
 
 from analysis.models import StockHistory, StockHistoryDaily
+from stockmarket.models import StockNameCodeMap
 # from backtesting.lib import resample_apply
 
 
@@ -55,22 +57,29 @@ def get_data_since(ts_code, freq='D', sort='asc', period=3, adj='qfq'):
     if period <= 10:
         start_date = date.today() - timedelta(days=365 * period)
 
+    if start_date is None:
+        company = StockNameCodeMap.objects.get(ts_code=ts_code)
+        start_date = company.list_date
+
+    dow = pd.Period(start_date, 'D').day_of_week
+    start_date = start_date - timedelta(days=dow)
+
         # data_df = data_df.loc[start_date:]
 
-    if start_date is None:
-        if adj=='qfq':
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code,).values(
-                Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
-        else:
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code).values(
-                Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+    # if start_date is None:
+    #     if adj=='qfq':
+    #         data = StockHistoryDaily.objects.filter(ts_code=ts_code,).values(
+    #             Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+    #     else:
+    #         data = StockHistoryDaily.objects.filter(ts_code=ts_code).values(
+    #             Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+    # else:
+    if adj=='qfq':
+        data = StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date).values(
+            Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
     else:
-        if adj=='qfq':
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date).values(
-                Close = F('close_qfq'), High = F('high_qfq'), Low = F('low_qfq'), Open = F('open_qfq'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
-        else:
-            data = StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date).values(
-                Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
+        data = StockHistoryDaily.objects.filter(ts_code=ts_code, trade_date__gte=start_date).values(
+            Close = F('close'), High = F('high'), Low = F('low'), Open = F('open'), Date = F('trade_date'), Volume = F('vol'), PctChg = F('pct_chg')).order_by('trade_date' if sort == 'asc' else '-trade_date')
     # else:
     #     if start_date is None:
     #         if adj=='qfq':
@@ -100,6 +109,21 @@ def get_data_since(ts_code, freq='D', sort='asc', period=3, adj='qfq'):
 
 def resample(stk_history, freq='W-FRI'):
     if freq == 'W-FRI':
+        # 如果第一条交易历史不是从周一开始的，就用NaN补全，为了防止做resample的时候从下周一开始取样导致的周线计算错误
+        ohlc_NaN = {
+            'Open':stk_history['Open'].iloc[0], 
+            'Close': stk_history['Close'].iloc[0], 
+            'High': stk_history['High'].iloc[0], 
+            'Low': stk_history['Low'].iloc[0], 
+            'Volume':stk_history['Volume'].iloc[0], 
+            'PctChg': stk_history['PctChg'].iloc[0], 
+        }
+        dow = pd.Period(stk_history.index[0], 'D').day_of_week
+        for i in range(dow):
+            date_idx = stk_history.index[0] - timedelta(days=dow-i)
+            df = pd.DataFrame(ohlc_NaN, index=[date_idx])
+            stk_history = stk_history.append(df)
+
         resampled_start = stk_history.resample("W-MON").bfill().ffill()
     if freq == 'M':
         resampled_start = stk_history.resample("BMS").bfill().ffill()
@@ -114,7 +138,7 @@ def resample(stk_history, freq='W-FRI'):
     resampled['Low'] = stk_history.resample(freq)['Low'].min().ffill()
     resampled['PctChg'] = round(resampled['Close'].diff() / resampled['Close'], 2)
     
-    return resampled
+    return resampled.drop_duplicates()
 
 def BBI(close_df):
     try:
