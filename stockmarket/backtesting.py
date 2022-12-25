@@ -61,7 +61,7 @@ def get_data_since(ts_code, freq='D', sort='asc', period=3, adj='qfq'):
         company = StockNameCodeMap.objects.get(ts_code=ts_code)
         start_date = company.list_date
 
-    dow = pd.Period(start_date, 'D').day_of_week
+    dow = start_date.weekday()
     start_date = start_date - timedelta(days=dow)
 
         # data_df = data_df.loc[start_date:]
@@ -118,7 +118,7 @@ def resample(stk_history, freq='W-FRI'):
             'Volume':stk_history['Volume'].iloc[0], 
             'PctChg': stk_history['PctChg'].iloc[0], 
         }
-        dow = pd.Period(stk_history.index[0], 'D').day_of_week
+        dow = stk_history.index[0].weekday()
         for i in range(dow):
             date_idx = stk_history.index[0] - timedelta(days=dow-i)
             df = pd.DataFrame(ohlc_NaN, index=[date_idx])
