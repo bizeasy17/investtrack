@@ -439,7 +439,7 @@
                     <div>
                       <h6 class="font-weight-bold">
                         <span class="stock_name ml-2"></span>
-                        <a id="expandBTStats" href="javascript:void(0);" class="text-muted small ml-1">{% trans '展开+' %}</a>
+                        <a id="expandBTStats" href="javascript:void(0);" class="text-muted small ml-1">{% trans '展开回测统计信息+' %}</a>
                       </h6>
                     </div>
                     <div>
@@ -474,7 +474,7 @@
                       </div>
                     </div>
                 </div>
-                <div class="col-lg-12 mt-4 mb-2 d-none" id="btStats">
+                <div class="col-lg-12 mt-2 mb-2 d-none small" id="btStats">
                   <div class="row">
                     <div class="col-sm-3">
                       <label class="visually-hidden" for="specificSizeInputName" id="Start">开始时间</label><span> - </span>
@@ -503,23 +503,7 @@
                       <label class="visually-hidden" for="specificSizeInputName" id="BuyHoldReturn">买入并持有回报[%]</label><span> - </span>
                     </div>
                   </div>
-                  <div class="row">
-                    <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="ReturnAnn">年化回报[%]</label><span> - </span>
-                    </div>
-                    <div class="col-sm-3">
-                      <label class="visually-hidden" for="specificSizeInputName" id="VolatilityAnn">年波动[%]</label><span> - </span>
-                    </div>
-                    <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="SharpeRatio">Sharp[%]</label><span> - </span>
-                    </div>
-                    <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="SortinoRatio">Sortino[%]</label><span> - </span>
-                    </div>
-                    <div class="col-sm-2">
-                      <label class="visually-hidden" for="specificSizeInputName" id="CalmarRatio">Calmar[%]</label><span> - </span>
-                    </div>
-                  </div>
+                  
                   <div class="row">
                     <div class="col-sm-3">
                       <label class="visually-hidden" for="specificSizeInputName" id="MaxDrawdown">最大回撤[%]</label><span> - </span>
@@ -546,6 +530,23 @@
                     </div>
                     <div class="col-sm-3">
                       <label class="visually-hidden" for="specificSizeInputName" id="AvgTrade">平均交易胜率[%]</label><span> - </span>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="ReturnAnn">年化回报[%]</label><span> - </span>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="visually-hidden" for="specificSizeInputName" id="VolatilityAnn">年波动[%]</label><span> - </span>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="SharpeRatio">Sharp[%]</label><span> - </span>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="SortinoRatio">Sortino[%]</label><span> - </span>
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="visually-hidden" for="specificSizeInputName" id="CalmarRatio">Calmar[%]</label><span> - </span>
                     </div>
                   </div>
                   <div class="row">
