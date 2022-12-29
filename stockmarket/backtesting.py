@@ -372,7 +372,7 @@ class System(SignalStrategy, TrailingStrategy):
             self.set_trailing_sl(int(self.stoploss))
 
     def next(self):
-        super().next()
+        # super().next()
 
         price = self.data.Close[-1]
 

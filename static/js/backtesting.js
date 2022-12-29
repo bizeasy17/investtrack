@@ -441,6 +441,10 @@ $(function () {
                     },
                     markPoint: {
                         symbol: "triangle",
+                    },
+                    encode: {
+                      x: 0,
+                      y: [1, 4, 3, 2]
                     }
                 },
                 {

@@ -227,7 +227,9 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
     commission: 0.05
     leverage: 0.02 mean 50 leverage
     '''
-    data_df = get_data(ts_code, freq, 'desc', adj)
+    data_df = get_data_since(ts_code, freq, period=99)
+    data_df = data_df.sort_index(ascending=False)
+    # data_df = get_data(ts_code, freq, 'desc', adj)
 
     # {'SMA_10': 10,'SMA_20':20,'RSI_20':20} or SMA
     if type(eval(ta_indicator_dict)) == dict:
@@ -295,12 +297,12 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
                 'dt': index,
                 'eq': row['Equity']/float(cash),
                 'ddp': row['DrawdownPct'],
-                'ddd': row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT else None,
+                'ddd': row['DrawdownDuration'] if not row['DrawdownDuration'] is pd.NaT and (type(row['DrawdownDuration'])==float and not np.isnan(row['DrawdownDuration'])) else None,
                 'bs': direction,
                 'en_p': row['EntryPrice'] if not np.isnan(row['EntryPrice']) else None,
                 'ex_p': row['ExitPrice'] if not np.isnan(row['ExitPrice']) else None,
                 'pnl': row['PnL'] if not np.isnan(row['PnL']) else None,
-                'dur': row['Duration'] if not row['Duration'] is pd.NaT else None,
+                'dur': row['Duration'] if not row['Duration'] is pd.NaT and (type(row['Duration'])==float and not np.isnan(row['Duration'])) else None,
             })
 
         eq_list.append({
