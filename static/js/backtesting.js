@@ -433,19 +433,19 @@ $(function () {
                     name: 'k线',
                     type: 'candlestick',
                     // data: chartData.value,
-                    itemStyle: {
-                        color: upColor,
-                        color0: downColor,
-                        borderColor: undefined,
-                        borderColor0: undefined
-                    },
+                    // itemStyle: {
+                    //     color: upColor,
+                    //     color0: downColor,
+                    //     borderColor: undefined,
+                    //     borderColor0: undefined
+                    // },
                     markPoint: {
                         symbol: "triangle",
                     },
-                    encode: {
-                      x: 0,
-                      y: [1, 4, 3, 2]
-                    }
+                    // encode: {
+                    //   x: 0,
+                    //   y: [1, 4, 3, 2]
+                    // }
                 },
                 {
                     id: "indic1",
