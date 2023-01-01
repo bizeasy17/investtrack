@@ -449,7 +449,7 @@ $(function () {
                 },
                 {
                     id: "indic1",
-                    // name: 'MA10',
+                    // name: 'MA10', 
                     type: 'line',
                     // data: calculateMA(10, chartData),
                     showSymbol: false,

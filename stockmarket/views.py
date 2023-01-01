@@ -28,7 +28,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from search.utils import pinyin_abbrev
 from users.models import UserActionTrace, UserBackTestTrace, UserQueryTrace
-from stockmarket.backtesting import get_data, get_data_since, get_ta_indicator, get_strategy_by_category
+from stockmarket.backtesting import calibrate_annual_return, get_data, get_data_since, get_ta_indicator, get_strategy_by_category
 from stockmarket.models import (City, CompanyBasic, Industry, Province,
                                 StockNameCodeMap)
 
@@ -270,6 +270,9 @@ def get_bt_result(request, ts_code, strategy_category, ta_indicator_dict, buy_co
         eq_list = []
         equity = bt_results.loc['_equity_curve']
         trades = bt_results.loc['_trades']
+
+        if freq in ['W', 'M']:
+            calibrate_annual_return(bt_results, equity, data_df, freq, 0.0)
 
         trades_entry = trades[[
             'EntryBar', 'EntryPrice', 'EntryTime', 'Duration', 'PnL']]

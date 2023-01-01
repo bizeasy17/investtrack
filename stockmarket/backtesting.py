@@ -18,7 +18,7 @@ from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 # from backtesting.test import SMA
 from backtesting.lib import SignalStrategy, TrailingStrategy, resample_apply
-
+from backtesting._stats import compute_drawdown_duration_peaks, geometric_mean
 from analysis.models import StockHistory, StockHistoryDaily
 from stockmarket.models import StockNameCodeMap
 # from backtesting.lib import resample_apply
@@ -139,6 +139,43 @@ def resample(stk_history, freq='W-FRI'):
     resampled['PctChg'] = round(resampled['Close'].diff() / resampled['Close'], 2)
     
     return resampled.drop_duplicates()
+
+
+def calibrate_annual_return(s:pd.Series, equity_df: pd.DataFrame, ohlc_data: pd.DataFrame, freq, risk_free_rate: float = 0,):
+    assert -1 < risk_free_rate < 1
+    
+    index = ohlc_data.index
+    dd = equity_df['DrawdownPct']
+
+    gmean_day_return: float = 0
+    day_returns = np.array(np.nan)
+    annual_trading_days = np.nan
+    if isinstance(index, pd.DatetimeIndex):
+        day_returns = equity_df['Equity'].resample('D').last().dropna().pct_change()
+        gmean_day_return = geometric_mean(day_returns)
+        annual_trading_days = float(
+            52 if freq=='W' else
+            12)
+
+     # Annualized return and risk metrics are computed based on the (mostly correct)
+    # assumption that the returns are compounded. See: https://dx.doi.org/10.2139/ssrn.3054517
+    # Our annualized return matches `empyrical.annual_return(day_returns)` whereas
+    # our risk doesn't; they use the simpler approach below.
+    annualized_return = (1 + gmean_day_return)**annual_trading_days - 1
+    s.loc['Return (Ann.) [%]'] = annualized_return * 100
+    s.loc['Volatility (Ann.) [%]'] = np.sqrt((day_returns.var(ddof=int(bool(day_returns.shape))) + (1 + gmean_day_return)**2)**annual_trading_days - (1 + gmean_day_return)**(2*annual_trading_days)) * 100  # noqa: E501
+    # s.loc['Return (Ann.) [%]'] = gmean_day_return * annual_trading_days * 100
+    # s.loc['Risk (Ann.) [%]'] = day_returns.std(ddof=1) * np.sqrt(annual_trading_days) * 100
+
+    # Our Sharpe mismatches `empyrical.sharpe_ratio()` because they use arithmetic mean return
+    # and simple standard deviation
+    s.loc['Sharpe Ratio'] = np.clip((s.loc['Return (Ann.) [%]'] - risk_free_rate) / (s.loc['Volatility (Ann.) [%]'] or np.nan), 0, np.inf)  # noqa: E501
+    # Our Sortino mismatches `empyrical.sortino_ratio()` because they use arithmetic mean return
+    s.loc['Sortino Ratio'] = np.clip((annualized_return - risk_free_rate) / (np.sqrt(np.mean(day_returns.clip(-np.inf, 0)**2)) * np.sqrt(annual_trading_days)), 0, np.inf)  # noqa: E501
+    max_dd = -np.nan_to_num(dd.max())
+    s.loc['Calmar Ratio'] = np.clip(annualized_return / (-max_dd or np.nan), 0, np.inf)
+    
+
 
 def BBI(close_df):
     try:
