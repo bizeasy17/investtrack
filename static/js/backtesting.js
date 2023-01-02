@@ -1573,7 +1573,7 @@ $(function () {
                 }
                 if (tradeObj[0] == "b&s") {
                     markData.push(
-                        [{
+                        {
                             coord: [xCoord, ohlc[indexTradeDate][2]],
                             value: "b",
                             symbol: "pin",
@@ -1583,7 +1583,8 @@ $(function () {
                                 //设置标记点的样式
                                 normal: { color: "red" },
                             },
-                        },
+                        });
+                    markData.push(
                         {
                             coord: [xCoord, ohlc[indexTradeDate][3]],
                             value: "s",
@@ -1593,8 +1594,8 @@ $(function () {
                                 //设置标记点的样式
                                 normal: { color: "green" },
                             },
-                        }]
-                    );
+                        });
+                    
                 }
             }
         });
